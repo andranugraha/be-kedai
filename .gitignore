@@ -1,0 +1,12 @@
+# Environment variable
+.env
+
+# Build output
+.sh
+
+# Hot reload files
+.air.toml
+tmp
+
+# Coverage output
+coverage.*
