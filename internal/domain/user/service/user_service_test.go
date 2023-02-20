@@ -4,10 +4,11 @@ import (
 	"errors"
 	"kedai/backend/be-kedai/internal/domain/user/model"
 
-	// "kedai/backend/be-kedai/internal/domain/user/service"
-	// "kedai/backend/be-kedai/mocks"
+	"kedai/backend/be-kedai/internal/domain/user/service"
+	"kedai/backend/be-kedai/mocks"
 	"testing"
-	// "github.com/stretchr/testify/assert"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestUserUsecase_GetByID(t *testing.T) {
@@ -66,16 +67,16 @@ func TestUserUsecase_GetByID(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.description, func(t *testing.T) {
-			// mockRepo := mocks.NewUserRepository(t)
-			// mockRepo.On("GetByID", tc.input.id).Return(tc.input.data, tc.input.err)
-			// uc := service.NewUserService(&service.UserSConfig{
-			// 	Repository: mockRepo,
-			// })
+			mockRepo := mocks.NewUserRepository(t)
+			mockRepo.On("GetByID", tc.input.id).Return(tc.input.data, tc.input.err)
+			uc := service.NewUserService(&service.UserSConfig{
+				Repository: mockRepo,
+			})
 
-			// actualUser, actualErr := uc.GetByID(tc.input.id)
+			actualUser, actualErr := uc.GetByID(tc.input.id)
 
-			// assert.Equal(t, tc.expected.user, actualUser)
-			// assert.Equal(t, actualErr, tc.expected.err)
+			assert.Equal(t, tc.expected.user, actualUser)
+			assert.Equal(t, actualErr, tc.expected.err)
 		})
 	}
 }
