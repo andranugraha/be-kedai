@@ -11,7 +11,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestUserUsecase_GetByID(t *testing.T) {
+func TestUserService_GetByID(t *testing.T) {
 	type input struct {
 		id   int
 		data *model.User
