@@ -2,8 +2,8 @@ package usecase_test
 
 import (
 	"errors"
-	"kedai/backend/be-kedai/internal/domain/user/entity"
-	"kedai/backend/be-kedai/internal/domain/user/usecase"
+	entity "kedai/backend/be-kedai/internal/domain/user/model"
+	usecase "kedai/backend/be-kedai/internal/domain/user/service"
 	"kedai/backend/be-kedai/mocks"
 	"testing"
 

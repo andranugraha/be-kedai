@@ -1,7 +1,7 @@
 package usecase
 
 import (
-	"kedai/backend/be-kedai/internal/domain/user/entity"
+	entity "kedai/backend/be-kedai/internal/domain/user/model"
 	"kedai/backend/be-kedai/internal/domain/user/repository"
 )
 

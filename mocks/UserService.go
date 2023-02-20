@@ -3,7 +3,7 @@
 package mocks
 
 import (
-	entity "kedai/backend/be-kedai/internal/domain/user/entity"
+	entity "kedai/backend/be-kedai/internal/domain/user/model"
 
 	mock "github.com/stretchr/testify/mock"
 )
