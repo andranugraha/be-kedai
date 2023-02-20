@@ -4,4 +4,5 @@ import "errors"
 
 var (
 	ErrInternalServerError = errors.New("something went wrong in the server")
+	ErrUnauthorized        = errors.New("unauthorized")
 )
