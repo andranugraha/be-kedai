@@ -19,6 +19,28 @@ paths:
         - Location
       summary: Get city list
       description: Get list of cities with pagination, filter by province id, and sort by most shops
+      parameters:
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            default: 0
+          description: No default limit, will get all data if not specified
+        - in: query
+          name: page
+          schema:
+            type: integer
+            default: 1
+        - in: query
+          name: provinceId
+          schema:
+            type: integer
+          description: Filter to get cities by province
+        - in: query
+          name: sort
+          schema:
+            type: string
+          description: most_shops to sort cities by most shops
       responses:
         '200':
           description: successful operation
@@ -35,7 +57,23 @@ paths:
                     example: "Success"
                   data:
                     type: object
-                    $ref: '#/components/schemas/GetCitiesResponse'
+                    properties:
+                      data:
+                       type: array     
+                       items:
+                        $ref: '#/components/schemas/City'
+                      totalRows:
+                        type: integer
+                        example: 1
+                      totalPages:
+                        type: integer
+                        example: 1
+                      limit:
+                        type: integer
+                        example: 10
+                      page:
+                        type: integer
+                        example: 1
         '500':
           description: Internal server error
           content:
@@ -63,25 +101,6 @@ components:
         provinceId:
           type: integer
           example: 6
-    GetCitiesResponse:
-      type: object
-      properties:
-        data:
-         type: array
-         items:
-          $ref: '#/components/schemas/City'
-        totalRows:
-          type: integer
-          example: 1
-        totalPages:
-          type: integer
-          example: 1
-        limit:
-          type: integer
-          example: 10
-        page:
-          type: integer
-          example: 1
   securitySchemes:
     BearerAuth:
       type: http
