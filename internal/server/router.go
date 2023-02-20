@@ -2,16 +2,20 @@ package server
 
 import (
 	"kedai/backend/be-kedai/config"
-	locationHandler "kedai/backend/be-kedai/internal/domain/location/handler"
+	userHandler "kedai/backend/be-kedai/internal/domain/user/handler"
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 )
 
-type RouterConfig struct{}
+type RouterConfig struct{
+	UserHandler userHandler.Handler
+}
 
 func NewRouter(cfg *RouterConfig) *gin.Engine {
 	r := gin.Default()
+
+	userHandler := cfg.UserHandler
 
 	corsCfg := cors.DefaultConfig()
 	corsCfg.AllowOrigins = config.Origin
@@ -22,13 +26,11 @@ func NewRouter(cfg *RouterConfig) *gin.Engine {
 
 	r.Static("/docs", "swagger-ui")
 
-	locHandler := locationHandler.New(&locationHandler.Config{})
-
 	v1 := r.Group("/v1")
 	{
-		location := v1.Group("/location")
+		users := v1.Group("/users")
 		{
-			location.GET("/cities", locHandler.GetCities)
+			users.POST("/register", userHandler.UserRegistration)
 		}
 	}
 
