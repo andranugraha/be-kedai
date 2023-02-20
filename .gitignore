@@ -8,5 +8,7 @@
 .air.toml
 tmp
 
+mocks
+
 # Coverage output
 coverage.*
