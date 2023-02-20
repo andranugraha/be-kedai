@@ -24,7 +24,7 @@ func NewRouter(cfg *RouterConfig) *gin.Engine {
 	corsCfg.ExposeHeaders = []string{"Content-Length"}
 	r.Use(cors.New(corsCfg))
 
-	r.Static("/docs", "swagger-ui")
+	r.Static("/docs", "swagger")
 
 	v1 := r.Group("/v1")
 	{

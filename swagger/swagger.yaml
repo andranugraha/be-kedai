@@ -12,7 +12,32 @@ servers:
   - url: http://localhost:8080
 tags:
   - name: Location
+  - name: User
 paths:
+  /v1/users:
+    get:
+      tags:
+        - User
+      summary: Get user profile
+      description: Get user profile data
+      responses:
+        '200':
+          description: successful operation
+          content:
+            aplication/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "OK"
+                  message:
+                    type: string
+                    example: "success"
+                  data:
+                    type: object
+                    $ref: '#/components/schemas/User'
+
   /v1/locations/cities:
     get:
       tags:
@@ -51,6 +76,49 @@ paths:
                     example: "error message"
 components:
   schemas:
+    User:
+      type: object
+      properties:
+        id:
+          type: number
+          example: 1
+        email:
+          type: string
+          format: email
+          example: user@email.com
+        username:
+          type: string
+          example: user_name
+        profile:
+          $ref: '#/components/schemas/UserProfile'
+    UserProfile:
+      type: object
+      properties:
+        id:
+          type: number
+          example: 1
+        name:
+          type: string
+          example: user
+        phoneNumber:
+          type: string
+          example: 0123456789
+        dob:
+          type: string
+          format: date
+          example: 2006-01-02
+        gender:
+          type: string
+          example: male
+        photoUrl:
+          type: string
+          example: http://photo.url.com
+        userId:
+          type: number
+          example: 1
+        defaultAddressId:
+          type: number
+          example: 1
     City:
       type: object
       properties:
