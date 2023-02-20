@@ -141,7 +141,7 @@ func TestUserWishlist_AddUserWishlist(t *testing.T) {
 			expected: expected{
 				data: &response.Response{
 					Code:    code.CREATED,
-					Message: "ok",
+					Message: "wishlist success created successfully",
 					Data:    wishlist,
 				},
 				statusCode: http.StatusCreated,
@@ -163,7 +163,7 @@ func TestUserWishlist_AddUserWishlist(t *testing.T) {
 			})
 
 			payload := testutils.MakeRequestBody(tc.input.data)
-			c.Request, _ = http.NewRequest(http.MethodPost, "/user/wishlists", payload)
+			c.Request, _ = http.NewRequest(http.MethodPost, "/users/wishlists", payload)
 
 			handler.AddUserWishlist(c)
 
