@@ -29,7 +29,7 @@ func NewRouter(cfg *RouterConfig) *gin.Engine {
 			users.POST("/wishlists", cfg.UserHandler.AddUserWishlist)
 		}
 	}
-	r.Static("/docs", "swagger-ui")
+	r.Static("/docs", "swagger")
 
 	return r
 }

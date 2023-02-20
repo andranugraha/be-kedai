@@ -12,6 +12,8 @@ servers:
   - url: http://localhost:8080
 tags:
   - name: Location
+  - name: User
+  - name: Wishlist
 paths:
   /v1/locations/cities:
     get:
@@ -34,7 +36,6 @@ paths:
                     type: string
                     example: "Success"
                   data:
-                    type: object
                     $ref: '#/components/schemas/GetCitiesResponse'
         '500':
           description: Internal server error
@@ -49,6 +50,74 @@ paths:
                   message:
                     type: string
                     example: "error message"
+  /v1/users/wishlists:
+    post:
+      tags:
+        - Wishlist
+        - User
+      summary: Add product to wishlist
+      description: Add product to wishlist
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserWishlistRequest'
+      responses:
+        '201':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "CREATED"
+                  message:
+                    type: string
+                    example: "wishlist success created successfully"
+                  data:
+                    $ref: '#/components/schemas/UserWishlist'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "BAD_REQUEST"
+                  message:
+                    type: string
+                    example: "error message"     
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "USER_NOT_FOUND"
+                  message:
+                    type: string
+                    example: "error message"                   
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "INTERNAL_SERVER_ERROR"
+                  message:
+                    type: string
+                    example: "error message"
+
 components:
   schemas:
     City:
@@ -82,6 +151,25 @@ components:
         page:
           type: integer
           example: 1
+    UserWishlist:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        userId:
+          type: integer
+          example: 1
+        productId:
+          type: integer
+          example: 1
+    UserWishlistRequest:
+      type: object
+      properties:
+        productCode:
+          type: string
+          example: "ITEM-001"
+  
   securitySchemes:
     BearerAuth:
       type: http
