@@ -1,6 +1,7 @@
 package repository
 
 import (
+	errs "kedai/backend/be-kedai/internal/common/error"
 	"kedai/backend/be-kedai/internal/domain/user/model"
 
 	"gorm.io/gorm"
@@ -43,7 +44,10 @@ func NewUserWishlistRepository(cfg *UserWishlistRConfig) UserWishlistRepository 
 func (r *userWishlistRepositoryImpl) AddUserWishlist(userWishlist *model.UserWishlist) (*model.UserWishlist, error) {
 	err := r.db.Create(userWishlist).Error
 	if err != nil {
-		return userWishlist, err
+		if errs.IsDuplicateKeyError(err) {
+			return nil, errs.ErrProductInWishlist
+		}
+		return nil, err
 	}
 
 	return userWishlist, nil

@@ -1,7 +1,7 @@
 package service
 
 import (
-	productRepo "kedai/backend/be-kedai/internal/domain/product/repository"
+	productService "kedai/backend/be-kedai/internal/domain/product/service"
 	"kedai/backend/be-kedai/internal/domain/user/dto"
 	"kedai/backend/be-kedai/internal/domain/user/model"
 	"kedai/backend/be-kedai/internal/domain/user/repository"
@@ -13,33 +13,33 @@ type UserWishlistService interface {
 
 type userWishlistServiceImpl struct {
 	userWishlistRepository repository.UserWishlistRepository
-	userRepository         repository.UserRepository
-	productRepository      productRepo.ProductRepository
+	userService            UserService
+	productService         productService.ProductService
 }
 
 type UserWishlistSConfig struct {
 	UserWishlistRepository repository.UserWishlistRepository
-	UserRepository         repository.UserRepository
-	ProductRepository      productRepo.ProductRepository
+	UserService            UserService
+	ProductService         productService.ProductService
 }
 
 func NewUserWishlistService(cfg *UserWishlistSConfig) UserWishlistService {
 	return &userWishlistServiceImpl{
 		userWishlistRepository: cfg.UserWishlistRepository,
-		userRepository:         cfg.UserRepository,
-		productRepository:      cfg.ProductRepository,
+		userService:            cfg.UserService,
+		productService:         cfg.ProductService,
 	}
 }
 
 func (s *userWishlistServiceImpl) AddUserWishlist(req *dto.UserWishlistRequest) (*model.UserWishlist, error) {
 	var userWishlist model.UserWishlist
 
-	user, err := s.userRepository.GetByID(req.UserID)
+	user, err := s.userService.GetByID(req.UserID)
 	if err != nil {
 		return nil, err
 	}
 
-	product, err := s.productRepository.GetByCode(req.ProductCode)
+	product, err := s.productService.GetByCode(req.ProductCode)
 	if err != nil {
 		return nil, err
 	}
