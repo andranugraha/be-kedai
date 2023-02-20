@@ -8,18 +8,18 @@ type Product struct {
 	Name         string  `json:"email"`
 	Description  string  `json:"description"`
 	View         int     `json:"view"`
-	IsHazardous  bool    `json:"is_hazardous"`
+	IsHazardous  bool    `json:"isHazardous"`
 	Weight       float64 `json:"weight"`
 	Length       float64 `json:"length"`
 	Width        float64 `json:"width"`
 	Height       float64 `json:"height"`
-	PackagedSize float64 `json:"packaged_size"`
-	IsNew        bool    `json:"is_new"`
-	IsActive     bool    `json:"is_active"`
+	PackagedSize float64 `json:"packagedSize"`
+	IsNew        bool    `json:"isNew"`
+	IsActive     bool    `json:"isActive"`
 	Rating       float64 `json:"rating"`
 
-	ShopID     int `json:"shop_id"`
-	CategoryId int `json:"category_id"`
+	ShopID     int `json:"shopId"`
+	CategoryId int `json:"categoryId"`
 
 	gorm.Model `json:"-"`
 }

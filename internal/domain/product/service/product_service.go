@@ -6,23 +6,28 @@ import (
 )
 
 type ProductService interface {
+	GetByID(id int) (*model.Product, error)
 	GetByCode(code string) (*model.Product, error)
 }
 
 type productServiceImpl struct {
-	repository repository.ProductRepository
+	productRepository repository.ProductRepository
 }
 
 type ProductSConfig struct {
-	Repository repository.ProductRepository
+	ProductRepository repository.ProductRepository
 }
 
 func NewProductService(cfg *ProductSConfig) ProductService {
 	return &productServiceImpl{
-		repository: cfg.Repository,
+		productRepository: cfg.ProductRepository,
 	}
 }
 
+func (s *productServiceImpl) GetByID(id int) (*model.Product, error) {
+	return s.productRepository.GetByID(id)
+}
+
 func (s *productServiceImpl) GetByCode(code string) (*model.Product, error) {
-	return s.repository.GetByCode(code)
+	return s.productRepository.GetByCode(code)
 }
