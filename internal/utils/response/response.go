@@ -4,14 +4,14 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-type response struct {
+type Response struct {
 	Code    string      `json:"code"`
 	Message string      `json:"message"`
 	Data    interface{} `json:"data,omitempty"`
 }
 
 func Success(c *gin.Context, statusCode int, code, message string, data interface{}) {
-	c.JSON(statusCode, response{
+	c.JSON(statusCode, Response{
 		Code:    code,
 		Message: message,
 		Data:    data,
@@ -19,7 +19,7 @@ func Success(c *gin.Context, statusCode int, code, message string, data interfac
 }
 
 func Error(c *gin.Context, statusCode int, code, message string) {
-	c.JSON(statusCode, response{
+	c.JSON(statusCode, Response{
 		Code:    code,
 		Message: message,
 	})
