@@ -1,12 +1,13 @@
 package service
 
 import (
-	"kedai/backend/be-kedai/internal/domain/location/dto"
+	"kedai/backend/be-kedai/internal/common/dto"
+	locationDto "kedai/backend/be-kedai/internal/domain/location/dto"
 	"kedai/backend/be-kedai/internal/domain/location/repository"
 )
 
 type CityService interface {
-	GetCities(dto.GetCitiesRequest) (*dto.GetCitiesResponse, error)
+	GetCities(locationDto.GetCitiesRequest) (*dto.PaginationResponse, error)
 }
 
 type cityServiceImpl struct {
@@ -23,18 +24,18 @@ func NewCityService(cfg *CitySConfig) CityService {
 	}
 }
 
-func (c *cityServiceImpl) GetCities(req dto.GetCitiesRequest) (res *dto.GetCitiesResponse, err error) {
+func (c *cityServiceImpl) GetCities(req locationDto.GetCitiesRequest) (res *dto.PaginationResponse, err error) {
 	cities, totalRows, totalPages, err := c.cityRepo.GetAll(req)
 	if err != nil {
 		return
 	}
 
-	res = &dto.GetCitiesResponse{
+	res = &dto.PaginationResponse{
 		Data:       cities,
-		TotalRows:  totalRows,
-		TotalPages: totalPages,
 		Limit:      req.Limit,
 		Page:       req.Page,
+		TotalRows:  totalRows,
+		TotalPages: totalPages,
 	}
 
 	return

@@ -1,8 +1,6 @@
 package dto
 
 import (
-	"kedai/backend/be-kedai/internal/domain/location/model"
-
 	"gorm.io/gorm"
 )
 
@@ -38,12 +36,4 @@ func (r *GetCitiesRequest) Scope() func(db *gorm.DB) *gorm.DB {
 
 func (r *GetCitiesRequest) Offset() int {
 	return int((r.Page - 1) * r.Limit)
-}
-
-type GetCitiesResponse struct {
-	Data       []*model.City `json:"data"`
-	Limit      int           `json:"limit"`
-	Page       int           `json:"page"`
-	TotalRows  int64         `json:"totalRows"`
-	TotalPages int           `json:"totalPages"`
 }

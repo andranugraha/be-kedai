@@ -3,8 +3,9 @@ package handler_test
 import (
 	"encoding/json"
 	"kedai/backend/be-kedai/internal/common/code"
+	"kedai/backend/be-kedai/internal/common/dto"
 	errorResponse "kedai/backend/be-kedai/internal/common/error"
-	"kedai/backend/be-kedai/internal/domain/location/dto"
+	locationDto "kedai/backend/be-kedai/internal/domain/location/dto"
 	"kedai/backend/be-kedai/internal/domain/location/handler"
 	"kedai/backend/be-kedai/internal/domain/location/model"
 	"kedai/backend/be-kedai/internal/server"
@@ -19,12 +20,12 @@ import (
 
 func TestGetCities(t *testing.T) {
 	var (
-		req = dto.GetCitiesRequest{
+		req = locationDto.GetCitiesRequest{
 			Limit: 0,
 			Page:  1,
 		}
 
-		res = &dto.GetCitiesResponse{
+		res = &dto.PaginationResponse{
 			Data: []*model.City{
 				{
 					ID:         1,
@@ -41,7 +42,7 @@ func TestGetCities(t *testing.T) {
 
 	tests := []struct {
 		name         string
-		getCitiesRes *dto.GetCitiesResponse
+		getCitiesRes *dto.PaginationResponse
 		getCitiesErr error
 		want         response.Response
 		code         int

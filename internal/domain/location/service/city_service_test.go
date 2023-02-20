@@ -1,8 +1,9 @@
 package service_test
 
 import (
+	"kedai/backend/be-kedai/internal/common/dto"
 	errorResponse "kedai/backend/be-kedai/internal/common/error"
-	"kedai/backend/be-kedai/internal/domain/location/dto"
+	locationDto "kedai/backend/be-kedai/internal/domain/location/dto"
 	"kedai/backend/be-kedai/internal/domain/location/model"
 	"kedai/backend/be-kedai/internal/domain/location/service"
 	"kedai/backend/be-kedai/mocks"
@@ -14,18 +15,18 @@ import (
 func TestGetCities(t *testing.T) {
 	tests := []struct {
 		name               string
-		request            dto.GetCitiesRequest
-		wantGetAllResponse *dto.GetCitiesResponse
-		want               *dto.GetCitiesResponse
+		request            locationDto.GetCitiesRequest
+		wantGetAllResponse *dto.PaginationResponse
+		want               *dto.PaginationResponse
 		wantErr            error
 	}{
 		{
 			name: "should return cities with pagination when get all success",
-			request: dto.GetCitiesRequest{
+			request: locationDto.GetCitiesRequest{
 				Limit: 10,
 				Page:  1,
 			},
-			wantGetAllResponse: &dto.GetCitiesResponse{
+			wantGetAllResponse: &dto.PaginationResponse{
 				Data: []*model.City{
 					{
 						ID:         1,
@@ -38,7 +39,7 @@ func TestGetCities(t *testing.T) {
 				TotalRows:  1,
 				TotalPages: 1,
 			},
-			want: &dto.GetCitiesResponse{
+			want: &dto.PaginationResponse{
 				Data: []*model.City{
 					{
 						ID:         1,
@@ -55,11 +56,11 @@ func TestGetCities(t *testing.T) {
 		},
 		{
 			name: "should return error when get all failed",
-			request: dto.GetCitiesRequest{
+			request: locationDto.GetCitiesRequest{
 				Limit: 10,
 				Page:  1,
 			},
-			wantGetAllResponse: &dto.GetCitiesResponse{
+			wantGetAllResponse: &dto.PaginationResponse{
 				Data:       []*model.City{},
 				TotalRows:  0,
 				TotalPages: 0,

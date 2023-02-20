@@ -3,3 +3,6 @@ run:
 
 mock:
 	mockery --all
+
+test:
+	go test ./... --cover
