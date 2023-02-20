@@ -2,6 +2,7 @@ package main
 
 import (
 	"kedai/backend/be-kedai/connection"
+	"kedai/backend/be-kedai/internal/server"
 	"log"
 )
 
@@ -15,4 +16,6 @@ func main() {
 	if err != nil {
 		log.Fatal("couldn't connect to Cache:", err.Error())
 	}
+
+	server.Init()
 }
