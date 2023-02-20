@@ -5,7 +5,6 @@ import (
 	"kedai/backend/be-kedai/internal/common/error"
 	"kedai/backend/be-kedai/internal/domain/location/dto"
 	"kedai/backend/be-kedai/internal/utils/response"
-	"log"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -18,7 +17,6 @@ func (h *Handler) GetCities(c *gin.Context) {
 
 	cities, err := h.cityService.GetCities(req)
 	if err != nil {
-		log.Println(err)
 		response.Error(c, http.StatusInternalServerError, code.INTERNAL_SERVER_ERROR, error.ErrInternalServerError.Error())
 		return
 	}
