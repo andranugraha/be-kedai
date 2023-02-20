@@ -1,0 +1,5 @@
+package code
+
+var (
+	USER_NOT_REGISTERED = "USER_NOT_REGISTERED"
+)
