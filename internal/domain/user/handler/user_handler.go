@@ -15,7 +15,7 @@ func (h *Handler) UserRegistration(c *gin.Context) {
 	var newUser dto.UserRegistration
 	errBinding := c.ShouldBindJSON(&newUser)
 	if errBinding != nil {
-		response.Error(c, http.StatusBadRequest, code.BAD_REQUEST, errBinding.Error())
+		response.ErrorValidator(c, http.StatusBadRequest, errBinding)
 		return
 	}
 
@@ -30,5 +30,5 @@ func (h *Handler) UserRegistration(c *gin.Context) {
 		return
 	}
 
-	response.Success(c, http.StatusCreated, code.CREATED, "OK", user)
+	response.Success(c, http.StatusCreated, code.CREATED, "created", user)
 }
