@@ -1,9 +1,9 @@
-package usecase_test
+package service_test
 
 import (
 	"errors"
-	"kedai/backend/be-kedai/internal/domain/user/entity"
-	"kedai/backend/be-kedai/internal/domain/user/usecase"
+	"kedai/backend/be-kedai/internal/domain/user/model"
+	"kedai/backend/be-kedai/internal/domain/user/service"
 	"kedai/backend/be-kedai/mocks"
 	"testing"
 
@@ -68,7 +68,7 @@ func TestUserUsecase_GetByID(t *testing.T) {
 		t.Run(tc.description, func(t *testing.T) {
 			mockRepo := mocks.NewUserRepository(t)
 			mockRepo.On("GetByID", tc.input.id).Return(tc.input.data, tc.input.err)
-			uc := usecase.NewUserUsecase(&usecase.UserUConfig{
+			uc := service.NewUserService(&service.UserSConfig{
 				Repository: mockRepo,
 			})
 

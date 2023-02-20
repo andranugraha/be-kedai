@@ -2,7 +2,7 @@ package repository
 
 import (
 	"errors"
-	"kedai/backend/be-kedai/internal/domain/user/entity"
+	"kedai/backend/be-kedai/internal/domain/user/model"
 	errs "kedai/backend/be-kedai/internal/domain/user/error"
 
 	"gorm.io/gorm"
