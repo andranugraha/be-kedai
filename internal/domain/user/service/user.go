@@ -1,12 +1,12 @@
 package usecase
 
 import (
-	entity "kedai/backend/be-kedai/internal/domain/user/model"
+	model "kedai/backend/be-kedai/internal/domain/user/model"
 	"kedai/backend/be-kedai/internal/domain/user/repository"
 )
 
 type UserUsecase interface {
-	GetByID(id int) (*entity.User, error)
+	GetByID(id int) (*model.User, error)
 }
 
 type userUsecaseImpl struct {
@@ -23,6 +23,6 @@ func NewUserUsecase(cfg *UserUConfig) UserUsecase {
 	}
 }
 
-func (u *userUsecaseImpl) GetByID(id int) (*entity.User, error) {
+func (u *userUsecaseImpl) GetByID(id int) (*model.User, error) {
 	return u.repository.GetByID(id)
 }

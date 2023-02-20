@@ -3,13 +3,13 @@ package repository
 import (
 	"errors"
 	errs "kedai/backend/be-kedai/internal/domain/user/error"
-	entity "kedai/backend/be-kedai/internal/domain/user/model"
+	model "kedai/backend/be-kedai/internal/domain/user/model"
 
 	"gorm.io/gorm"
 )
 
 type UserRepository interface {
-	GetByID(ID int) (*entity.User, error)
+	GetByID(ID int) (*model.User, error)
 }
 
 type userRepositoryImpl struct {
@@ -26,8 +26,8 @@ func NewUserRepository(cfg *UserRConfig) UserRepository {
 	}
 }
 
-func (r *userRepositoryImpl) GetByID(ID int) (*entity.User, error) {
-	var user entity.User
+func (r *userRepositoryImpl) GetByID(ID int) (*model.User, error) {
+	var user model.User
 
 	err := r.db.Where("user_id = ?", ID).Preload("Profile").First(&user).Error
 	if err != nil {
