@@ -34,7 +34,6 @@ func TestUserUsecase_GetByID(t *testing.T) {
 					Email:    "user@email.com",
 					Username: "user_name",
 					Profile: &entity.UserProfile{
-						Name:   "user",
 						UserID: 1,
 					},
 				},
@@ -45,7 +44,6 @@ func TestUserUsecase_GetByID(t *testing.T) {
 					Email:    "user@email.com",
 					Username: "user_name",
 					Profile: &entity.UserProfile{
-						Name:   "user",
 						UserID: 1,
 					},
 				},
