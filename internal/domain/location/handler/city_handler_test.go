@@ -52,7 +52,7 @@ func TestGetCities(t *testing.T) {
 			getCitiesErr: nil,
 			want: response.Response{
 				Code:    code.OK,
-				Message: "Success",
+				Message: "success",
 				Data:    res,
 			},
 			code: http.StatusOK,

@@ -13,16 +13,30 @@ import (
 
 func TestGetCities(t *testing.T) {
 	tests := []struct {
-		name    string
-		request dto.GetCitiesRequest
-		want    *dto.GetCitiesResponse
-		wantErr error
+		name               string
+		request            dto.GetCitiesRequest
+		wantGetAllResponse *dto.GetCitiesResponse
+		want               *dto.GetCitiesResponse
+		wantErr            error
 	}{
 		{
 			name: "should return cities with pagination when get all success",
 			request: dto.GetCitiesRequest{
 				Limit: 10,
 				Page:  1,
+			},
+			wantGetAllResponse: &dto.GetCitiesResponse{
+				Data: []*model.City{
+					{
+						ID:         1,
+						ProvinceID: 1,
+						Name:       "Kota Jakarta Pusat",
+					},
+				},
+				Limit:      10,
+				Page:       1,
+				TotalRows:  1,
+				TotalPages: 1,
 			},
 			want: &dto.GetCitiesResponse{
 				Data: []*model.City{
@@ -45,6 +59,11 @@ func TestGetCities(t *testing.T) {
 				Limit: 10,
 				Page:  1,
 			},
+			wantGetAllResponse: &dto.GetCitiesResponse{
+				Data:       []*model.City{},
+				TotalRows:  0,
+				TotalPages: 0,
+			},
 			want:    nil,
 			wantErr: errorResponse.ErrInternalServerError,
 		},
@@ -53,7 +72,7 @@ func TestGetCities(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			mockRepo := mocks.NewCityRepository(t)
-			mockRepo.On("GetAll", test.request).Return(test.want.Data, test.want.TotalRows, test.want.TotalPages, test.wantErr)
+			mockRepo.On("GetAll", test.request).Return(test.wantGetAllResponse.Data, test.wantGetAllResponse.TotalRows, test.wantGetAllResponse.TotalPages, test.wantErr)
 			cityService := service.NewCityService(&service.CitySConfig{
 				CityRepo: mockRepo,
 			})
