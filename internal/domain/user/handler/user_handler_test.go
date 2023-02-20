@@ -103,7 +103,7 @@ func TestUserHandler_GetUserByID(t *testing.T) {
 			cfg := handler.HandlerConfig{
 				UserService: userServiceMock,
 			}
-			h := handler.NewHandler(&cfg)
+			h := handler.New(&cfg)
 			c.Request, _ = http.NewRequest("GET", "/users", nil)
 
 			h.GetUserByID(c)

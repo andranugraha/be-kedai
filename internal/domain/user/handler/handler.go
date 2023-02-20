@@ -10,7 +10,7 @@ type HandlerConfig struct {
 	UserService service.UserService
 }
 
-func NewHandler(cfg *HandlerConfig) *Handler {
+func New(cfg *HandlerConfig) *Handler {
 	return &Handler{
 		userService: cfg.UserService,
 	}
