@@ -1,17 +1,27 @@
 package handler
 
 import (
+	"kedai/backend/be-kedai/internal/common/code"
+	"kedai/backend/be-kedai/internal/common/error"
+	"kedai/backend/be-kedai/internal/domain/location/dto"
 	"kedai/backend/be-kedai/internal/utils/response"
+	"log"
+	"net/http"
 
 	"github.com/gin-gonic/gin"
 )
 
 func (h *Handler) GetCities(c *gin.Context) {
-	cities, err := h.cityService.GetCities()
+	var req dto.GetCitiesRequest
+	c.ShouldBindQuery(&req)
+	req.Validate()
+
+	cities, err := h.cityService.GetCities(req)
 	if err != nil {
-		response.Error(c, 500, "ERR-500", "Internal Server Error")
+		log.Println(err)
+		response.Error(c, http.StatusInternalServerError, code.INTERNAL_SERVER_ERROR, error.ErrInternalServerError.Error())
 		return
 	}
 
-	response.Success(c, 200, "OK-200", "Success", cities)
+	response.Success(c, http.StatusOK, code.OK, "success", cities)
 }

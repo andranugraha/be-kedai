@@ -22,11 +22,11 @@ func NewRouter(cfg *RouterConfig) *gin.Engine {
 	corsCfg.ExposeHeaders = []string{"Content-Length"}
 	r.Use(cors.New(corsCfg))
 
-	r.Static("/docs", "swagger-ui")
+	r.Static("/docs", "swagger")
 
 	v1 := r.Group("/v1")
 	{
-		location := v1.Group("/location")
+		location := v1.Group("/locations")
 		{
 			location.GET("/cities", cfg.LocationHandler.GetCities)
 		}
