@@ -1,28 +1,28 @@
-package usecase
+package service
 
 import (
 	model "kedai/backend/be-kedai/internal/domain/user/model"
 	"kedai/backend/be-kedai/internal/domain/user/repository"
 )
 
-type UserUsecase interface {
+type UserService interface {
 	GetByID(id int) (*model.User, error)
 }
 
-type userUsecaseImpl struct {
+type userServiceImpl struct {
 	repository repository.UserRepository
 }
 
-type UserUConfig struct {
+type UserSConfig struct {
 	Repository repository.UserRepository
 }
 
-func NewUserUsecase(cfg *UserUConfig) UserUsecase {
-	return &userUsecaseImpl{
+func NewUserService(cfg *UserSConfig) UserService {
+	return &userServiceImpl{
 		repository: cfg.Repository,
 	}
 }
 
-func (u *userUsecaseImpl) GetByID(id int) (*model.User, error) {
-	return u.repository.GetByID(id)
+func (s *userServiceImpl) GetByID(id int) (*model.User, error) {
+	return s.repository.GetByID(id)
 }
