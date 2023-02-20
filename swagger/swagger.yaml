@@ -26,17 +26,12 @@ paths:
           content:
             aplication/json:
               schema:
-                type: object
-                properties:
-                  code:
-                    type: string
-                    example: "OK"
-                  message:
-                    type: string
-                    example: "success"
-                  data:
-                    type: object
-                    $ref: '#/components/schemas/User'
+                allOf:
+                  - $ref: '#/components/schemas/Response'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/User'
 
   /v1/locations/cities:
     get:
@@ -131,6 +126,17 @@ components:
         provinceId:
           type: integer
           example: 6
+    Response:
+      type: object
+      properties:
+        code:
+          type: string
+          example: CODE
+        message:
+          type: string
+          example: message
+        data:
+          type: any
     GetCitiesResponse:
       type: object
       properties:
