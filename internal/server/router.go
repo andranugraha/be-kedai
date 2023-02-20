@@ -2,15 +2,20 @@ package server
 
 import (
 	"kedai/backend/be-kedai/config"
+	UserHandler "kedai/backend/be-kedai/internal/domain/user/handler"
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 )
 
-type RouterConfig struct{}
+type RouterConfig struct {
+	UserHandler UserHandler.Handler
+}
 
 func NewRouter(cfg *RouterConfig) *gin.Engine {
 	r := gin.Default()
+
+	userHandler := cfg.UserHandler
 
 	corsCfg := cors.DefaultConfig()
 	corsCfg.AllowOrigins = config.Origin
@@ -20,6 +25,14 @@ func NewRouter(cfg *RouterConfig) *gin.Engine {
 	r.Use(cors.New(corsCfg))
 
 	r.Static("/docs", "swagger-ui")
+
+	v1 := r.Group("/v1")
+	{
+		user := v1.Group("/users")
+		{
+			user.GET("", userHandler.GetUserByID)
+		}
+	}
 
 	return r
 }
