@@ -13,11 +13,11 @@ import (
 func TestUserUsecase_GetByID(t *testing.T) {
 	type input struct {
 		id   int
-		data *entity.User
+		data *model.User
 		err  error
 	}
 	type expected struct {
-		user *entity.User
+		user *model.User
 		err  error
 	}
 
@@ -30,20 +30,20 @@ func TestUserUsecase_GetByID(t *testing.T) {
 			description: "it should return user data if user exists",
 			input: input{
 				id: 1,
-				data: &entity.User{
+				data: &model.User{
 					Email:    "user@email.com",
 					Username: "user_name",
-					Profile: &entity.UserProfile{
+					Profile: &model.UserProfile{
 						UserID: 1,
 					},
 				},
 				err: nil,
 			},
 			expected: expected{
-				user: &entity.User{
+				user: &model.User{
 					Email:    "user@email.com",
 					Username: "user_name",
-					Profile: &entity.UserProfile{
+					Profile: &model.UserProfile{
 						UserID: 1,
 					},
 				},

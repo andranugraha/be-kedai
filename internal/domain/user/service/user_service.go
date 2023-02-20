@@ -1,12 +1,12 @@
 package service
 
 import (
-	entity "kedai/backend/be-kedai/internal/domain/user/model"
+	"kedai/backend/be-kedai/internal/domain/user/model"
 	"kedai/backend/be-kedai/internal/domain/user/repository"
 )
 
 type UserService interface {
-	GetByID(id int) (*entity.User, error)
+	GetByID(id int) (*model.User, error)
 }
 
 type userServiceImpl struct {
@@ -23,6 +23,6 @@ func NewUserService(cfg *UserSConfig) UserService {
 	}
 }
 
-func (s *userServiceImpl) GetByID(id int) (*entity.User, error) {
+func (s *userServiceImpl) GetByID(id int) (*model.User, error) {
 	return s.repository.GetByID(id)
 }
