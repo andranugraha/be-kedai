@@ -1,14 +1,19 @@
 package repository
 
 import (
-	"kedai/backend/be-kedai/internal/domain/user/model"
+	"fmt"
 	errs "kedai/backend/be-kedai/internal/common/error"
+	"kedai/backend/be-kedai/internal/domain/user/model"
+	"kedai/backend/be-kedai/internal/utils/hash"
+	"math/rand"
+	"strings"
 
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 type UserRepository interface {
-		SignUp(user *model.User) (*model.User, error)
+	SignUp(user *model.User) (*model.User, error)
 }
 
 type userRepositoryImpl struct {
@@ -26,7 +31,17 @@ func NewUserRepository(cfg *UserRConfig) UserRepository {
 }
 
 func (r *userRepositoryImpl) SignUp(user *model.User) (*model.User, error) {
-	err := r.db.Create(&user)
+	emailString := strings.Split(user.Email, "@")
+
+	username := fmt.Sprintf("%s%d", emailString[0], rand.Intn(999))
+
+	user.Username = username
+
+	hashedPw, _ := hash.HashAndSalt(user.Password)
+
+	user.Password = hashedPw
+
+	err := r.db.Clauses(clause.OnConflict{DoNothing: true}).Create(&user)
 	if err.Error != nil {
 		return nil, err.Error
 	}

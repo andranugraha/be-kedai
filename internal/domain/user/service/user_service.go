@@ -1,13 +1,9 @@
 package service
 
 import (
-	"fmt"
 	"kedai/backend/be-kedai/internal/domain/user/dto"
 	"kedai/backend/be-kedai/internal/domain/user/model"
 	"kedai/backend/be-kedai/internal/domain/user/repository"
-	"kedai/backend/be-kedai/internal/utils/hash"
-	"math/rand"
-	"strings"
 )
 
 type UserService interface {
@@ -30,14 +26,6 @@ func NewUserService(cfg *UserSConfig) UserService {
 
 func (s *userServiceImpl) SignUp(userReg *dto.UserRegistration) (*model.User, error) {
 	user := userReg.ToUser()
-
-	user.Password, _ = hash.HashAndSalt(user.Password)
-
-	emailString := strings.Split(user.Email, "@")
-	
-	username := fmt.Sprintf("%s%d", emailString[0], rand.Intn(999))
-
-	user.Username = username
 
 	return s.repository.SignUp(user)
 }
