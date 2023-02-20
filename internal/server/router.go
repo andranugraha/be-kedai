@@ -8,7 +8,9 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-type RouterConfig struct{}
+type RouterConfig struct {
+	LocationHandler *locationHandler.Handler
+}
 
 func NewRouter(cfg *RouterConfig) *gin.Engine {
 	r := gin.Default()
@@ -22,13 +24,11 @@ func NewRouter(cfg *RouterConfig) *gin.Engine {
 
 	r.Static("/docs", "swagger-ui")
 
-	locHandler := locationHandler.New(&locationHandler.Config{})
-
 	v1 := r.Group("/v1")
 	{
 		location := v1.Group("/location")
 		{
-			location.GET("/cities", locHandler.GetCities)
+			location.GET("/cities", cfg.LocationHandler.GetCities)
 		}
 	}
 
