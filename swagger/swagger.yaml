@@ -38,6 +38,19 @@ paths:
         - User
       summary: Register new user
       description: Register new user data
+      requestBody:
+        description: Create new user register data
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                  example: "user@mail.com"
+                password:
+                  type: string
+                  example: "password"
       responses:
         '201':
           description: successful operation
@@ -49,7 +62,14 @@ paths:
                   - type: object
                     properties:
                       data:
-                        $ref: '#/components/schemas/User'
+                        type: object
+                        properties:
+                          email:
+                            type: string
+                            example: "user@mail.com"
+                          username:
+                            type: string
+                            example: "user145"
         '400':
           description: bad request
           content:
