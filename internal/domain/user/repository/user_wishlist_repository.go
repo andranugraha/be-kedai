@@ -1,14 +1,13 @@
 package repository
 
 import (
-	errs "kedai/backend/be-kedai/internal/common/error"
 	"kedai/backend/be-kedai/internal/domain/user/model"
 
 	"gorm.io/gorm"
 )
 
 type UserWishlistRepository interface {
-	RemoveUserWishlist(userWishlist *model.UserWishlist) error
+	GetUserWishlist(userWishlist *model.UserWishlist) (*model.UserWishlist, error)
 }
 
 type userWishlistRepositoryImpl struct {
@@ -25,15 +24,13 @@ func NewUserWishlistRepository(cfg *UserWishlistRConfig) UserWishlistRepository 
 	}
 }
 
-func (r *userWishlistRepositoryImpl) RemoveUserWishlist(userWishlist *model.UserWishlist) error {
-	res := r.db.Where("user_id = ? AND product_id = ?", userWishlist.UserID, userWishlist.ProductID).Delete(&model.UserWishlist{})
-	if err := res.Error; err != nil {
-		return err
+func (r *userWishlistRepositoryImpl) GetUserWishlist(userWishlist *model.UserWishlist) (*model.UserWishlist, error) {
+	var res model.UserWishlist
+
+	err := r.db.Where("user_id = ? AND product_id = ?", userWishlist.UserID, userWishlist.ProductID).First(&res).Error
+	if err != nil {
+		return nil, err
 	}
 
-	if res.RowsAffected < 1 {
-		return errs.ErrProductNotInWishlist
-	}
-
-	return nil
+	return &res, nil
 }
