@@ -26,7 +26,8 @@ func NewUserWishlistRepository(cfg *UserWishlistRConfig) UserWishlistRepository 
 }
 
 func (r *userWishlistRepositoryImpl) RemoveUserWishlist(userWishlist *model.UserWishlist) error {
-	res := r.db.Where("user_id = ? AND product_id = ?", userWishlist.UserID, userWishlist.ProductID).Delete(&model.UserWishlist{})
+	// hard delete
+	res := r.db.Unscoped().Where("user_id = ? AND product_id = ?", userWishlist.UserID, userWishlist.ProductID).Delete(&model.UserWishlist{})
 	if err := res.Error; err != nil {
 		return err
 	}
