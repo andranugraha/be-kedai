@@ -7,6 +7,7 @@ import (
 	"kedai/backend/be-kedai/internal/domain/user/dto"
 	"kedai/backend/be-kedai/internal/utils/response"
 	"net/http"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 )
@@ -53,4 +54,16 @@ func (h *Handler) UserLogin(c *gin.Context) {
 	}
 
 	response.Success(c, http.StatusOK, code.OK, "ok", token)
+}
+
+func (h *Handler) GetSession(c *gin.Context) {
+	userId := c.GetInt("userId")
+	token := c.GetHeader("authorization")
+	parsedToken := strings.Replace(token, "Bearer ", "", -1)
+
+	err := h.userService.GetSession(userId, parsedToken)
+	if err != nil {
+		response.Error(c, http.StatusUnauthorized, code.UNAUTHORIZED, err.Error())
+		return
+	}
 }

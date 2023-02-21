@@ -14,6 +14,7 @@ type UserService interface {
 	GetByID(id int) (*model.User, error)
 	SignUp(*dto.UserRegistration) (*dto.UserRegistration, error)
 	SignIn(*dto.UserLogin, string) (*dto.Token, error)
+	GetSession(userId int, token string) (error)
 }
 
 type userServiceImpl struct {
@@ -77,4 +78,8 @@ func (s *userServiceImpl) SignIn(userLogin *dto.UserLogin, inputPw string) (*dto
 	}
 
 	return nil, errs.ErrInvalidCredential
+}
+
+func (s *userServiceImpl) GetSession(userId int, accessToken string) (error) {
+	return s.redis.FindToken(userId, accessToken)
 }
