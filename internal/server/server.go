@@ -7,6 +7,9 @@ import (
 	locationHandler "kedai/backend/be-kedai/internal/domain/location/handler"
 	locationRepo "kedai/backend/be-kedai/internal/domain/location/repository"
 	locationService "kedai/backend/be-kedai/internal/domain/location/service"
+	productHandler "kedai/backend/be-kedai/internal/domain/product/handler"
+	productRepo "kedai/backend/be-kedai/internal/domain/product/repository"
+	productService "kedai/backend/be-kedai/internal/domain/product/service"
 	userHandler "kedai/backend/be-kedai/internal/domain/user/handler"
 	userRepository "kedai/backend/be-kedai/internal/domain/user/repository"
 	userService "kedai/backend/be-kedai/internal/domain/user/service"
@@ -40,9 +43,20 @@ func createRouter() *gin.Engine {
 		UserService: userService,
 	})
 
+	productRepo := productRepo.NewProductRepository(&productRepo.ProductRConfig{
+		DB: db,
+	})
+	productService := productService.NewProductService(&productService.ProductSConfig{
+		Repository: productRepo,
+	})
+	productHandler := productHandler.New(&productHandler.HandlerConfig{
+		ProductService: productService,
+	})
+
 	return NewRouter(&RouterConfig{
 		LocationHandler: locHandler,
-		UserHandler: userHandler,
+		UserHandler:     userHandler,
+		ProductHandler:  productHandler,
 	})
 }
 
