@@ -4,6 +4,7 @@ import (
 	"kedai/backend/be-kedai/config"
 	locationHandler "kedai/backend/be-kedai/internal/domain/location/handler"
 	userHandler "kedai/backend/be-kedai/internal/domain/user/handler"
+	"kedai/backend/be-kedai/internal/server/middleware"
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
@@ -27,17 +28,21 @@ func NewRouter(cfg *RouterConfig) *gin.Engine {
 	v1 := r.Group("/v1")
 	{
 		v1.Static("/docs", "swagger")
-
-		location := v1.Group("/locations")
+		users := v1.Group("/users")
 		{
-			location.GET("/cities", cfg.LocationHandler.GetCities)
-			users := v1.Group("/users")
+			authenticated := users.Group("", middleware.JWTAuthorization)
 			{
-				wishlists := users.Group("/wishlists")
+				wishlists := authenticated.Group("/wishlists")
 				{
 					wishlists.DELETE("/:productCode", cfg.UserHandler.RemoveUserWishlist)
 				}
 			}
+		}
+
+		location := v1.Group("/locations")
+		{
+			location.GET("/cities", cfg.LocationHandler.GetCities)
+
 		}
 		r.Static("/docs", "swagger")
 
