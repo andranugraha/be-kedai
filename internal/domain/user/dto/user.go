@@ -8,6 +8,11 @@ type UserRegistration struct {
 	Username string				`json:"username"`
 }
 
+type UserLogin struct {
+	Email string `json:"email" binding:"required,email"`
+	Password string `json:"password" binding:"required"`
+}
+
 func (d *UserRegistration) ToUser() *model.User {
 	return &model.User{
 		Email: d.Email,
@@ -18,4 +23,11 @@ func (d *UserRegistration) ToUser() *model.User {
 func (d *UserRegistration) FromUser(user *model.User) {
 	d.Email = user.Email
 	d.Username = user.Username
+}
+
+func (d *UserLogin) ToUser() *model.User {
+	return &model.User{
+		Email: d.Email,
+		Password: d.Password,
+	}
 }
