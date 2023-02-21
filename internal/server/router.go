@@ -3,6 +3,7 @@ package server
 import (
 	"kedai/backend/be-kedai/config"
 	userHandler "kedai/backend/be-kedai/internal/domain/user/handler"
+	"kedai/backend/be-kedai/internal/server/middleware"
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
@@ -24,16 +25,20 @@ func NewRouter(cfg *RouterConfig) *gin.Engine {
 
 	v1 := r.Group("/v1")
 	{
+		v1.Static("/docs", "swagger")
 		users := v1.Group("/users")
 		{
-			wishlists := users.Group("/wishlists")
+			authenticated := users.Group("", middleware.JWTAuthorization)
 			{
-				wishlists.POST("", cfg.UserHandler.AddUserWishlist)
+				wishlists := authenticated.Group("/wishlists")
+				{
+					wishlists.POST("", cfg.UserHandler.AddUserWishlist)
+				}
 			}
-
 		}
-	}
-	r.Static("/docs", "swagger")
 
+		r.Static("/docs", "swagger")
+
+	}
 	return r
 }
