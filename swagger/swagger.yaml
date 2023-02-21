@@ -13,6 +13,7 @@ servers:
 tags:
   - name: Location
   - name: User
+  - name: Product
 paths:
   /v1/users:
     get:
@@ -109,6 +110,57 @@ paths:
                   message:
                     type: string
                     example: "error message"
+  /v1/products/:code:
+    get:
+      tags:
+        - Product
+      summary: Get product by code
+      description: Get product information (including bulk price, media, and variant) by product code
+      parameters:
+        - in: path
+          name: code
+          schema:
+            type: string
+            example: PRODUCT_CODE
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Response'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/Product'
+        '404':
+          description: not found
+          content:
+            aplication/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "NOT_FOUND"
+                  message:
+                    type: string
+                    example: "error message"
+        '500':
+          description: internal server error
+          content:
+            aplication/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "INTERNAL_SERVER_ERROR"
+                  message:
+                    type: string
+                    example: "error message"
+  
   /v1/locations/cities:
     get:
       tags:
@@ -217,6 +269,128 @@ components:
           example: 1
         defaultAddressId:
           type: number
+          example: 1
+    Product:
+      type: object
+      properties:
+        id:
+          type: number
+          example: 1
+        code:
+          type: string
+          example: PRODUCT_CODE
+        name:
+          type: string
+          example: product name
+        description:
+          type: string
+          example: product description
+        view:
+          type: integer
+          example: 420
+        isHazardous:
+          type: boolean
+          example: false
+        weight:
+          type: float
+          example: 34.5
+        length:
+          type: float
+          example: 10.0
+        width:
+          type: float
+          example: 10.0
+        height:
+          type: float
+          example: 10.0
+        packagedSize:
+          type: float
+          example: 10.0
+        isNew:
+          type: boolean
+          example: true
+        isActive:
+          type: boolean
+          example: true
+        rating:
+          type: float
+          example: 4.9
+        shopId:
+          type: integer
+          example: 1
+        categoryId:
+          type: integer
+          example: 2
+        bulkPrice:
+          $ref: '#/components/schemas/ProductBulkPrice'
+        media:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProductMedia'
+        variantGroup:
+          type: array
+          items:
+            $ref: '#/components/schemas/VariantGroup'
+    ProductBulkPrice:
+      type: object
+      properties:
+        id:
+          type: number
+          example: 1
+        minQuantity:
+          type: number
+          example: 10
+        maxQuantity:
+          type: number
+          example: 70
+        price:
+          type: float
+          example: 340000
+        productId:
+          type: number
+          example: 1
+    ProductMedia:
+      type: object
+      properties:
+        id:
+          type: number
+          example: 1
+        url:
+          type: string
+          example: http://product.media/example.png
+        productId:
+          type: integer
+          example: 1
+    VariantGroup:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        name:
+          type: string
+          example: Size
+        productId:
+          type: integer
+          example: 1
+        variant:
+          type: array
+          items:
+            $ref: '#/components/schemas/Variant'
+    Variant:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        name:
+          type: string
+          example: L
+        mediaUrl:
+          type: string
+          example: http://variant.media/example.png
+        groupId:
+          type: integer
           example: 1
     City:
       type: object
