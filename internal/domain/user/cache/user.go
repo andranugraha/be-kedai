@@ -27,10 +27,10 @@ func NewUserCache(cfg *UserCConfig) UserCache {
 }
 
 func (r *userCacheImpl) StoreToken(userId int, accessToken string, refreshToken string) (error) {
-	refreshKey := fmt.Sprintf("%d:%s", userId, refreshToken)
+	refreshKey := fmt.Sprintf("user_%d:%s", userId, refreshToken)
 	refreshTime := time.Duration(24) * time.Hour
 
-	accessKey := fmt.Sprintf("%d:%s", userId, accessToken)
+	accessKey := fmt.Sprintf("user_%d:%s", userId, accessToken)
 	accessTime := time.Duration(5) * time.Minute
 
 	errRefresh := r.rdc.Set(context.Background(), refreshKey, 0, refreshTime).Err()
