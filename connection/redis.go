@@ -2,6 +2,7 @@ package connection
 
 import (
 	"context"
+	"crypto/tls"
 	"fmt"
 	"kedai/backend/be-kedai/config"
 
@@ -17,9 +18,11 @@ var ctx = context.Background()
 
 func ConnectCache() error {
 	rdc = redis.NewClient(&redis.Options{
-		Addr:     fmt.Sprintf("%s:%s", cacheConfig.Host, cacheConfig.Port),
-		Password: cacheConfig.Password,
-		DB:       0,
+		Addr:      fmt.Sprintf("%s:%s", cacheConfig.Host, cacheConfig.Port),
+		Username:  cacheConfig.Username,
+		Password:  cacheConfig.Password,
+		DB:        0,
+		TLSConfig: &tls.Config{},
 	})
 
 	err := rdc.Ping(ctx).Err()

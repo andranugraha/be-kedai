@@ -1,0 +1,125 @@
+openapi: 3.0.3
+info:
+  title: Kedai API
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  version: 1.0.0
+externalDocs:
+  description: Find out more about Swagger
+  url: http://swagger.io
+servers:
+  - url: http://localhost:8080
+tags:
+  - name: Location
+paths:
+  /v1/locations/cities:
+    get:
+      tags:
+        - Location
+      summary: Get city list
+      description: Get list of cities with pagination, filter by province id, and sort by most shops
+      parameters:
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            default: 0
+          description: No default limit, will get all data if not specified
+        - in: query
+          name: page
+          schema:
+            type: integer
+            default: 1
+        - in: query
+          name: provinceId
+          schema:
+            type: integer
+          description: Filter to get cities by province
+        - in: query
+          name: sort
+          schema:
+            type: string
+          description: most_shops to sort cities by most shops
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Response'
+                  - type: object
+                    properties:
+                      code:
+                        example: 'OK'
+                      message:
+                        example: 'success'
+                      data:
+                        allOf:
+                          - $ref: '#/components/schemas/PaginationResponse'
+                          - type: object
+                            properties:
+                              data:
+                                type: array
+                                items:
+                                  $ref: '#/components/schemas/City'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "INTERNAL_SERVER_ERROR"
+                  message:
+                    type: string
+                    example: "error message"
+components:
+  schemas:
+    City:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 152
+        name:
+          type: string
+          example: 'Jakarta Pusat'
+        provinceId:
+          type: integer
+          example: 6
+    Response:
+      type: object
+      properties:
+        code:
+          type: string
+          example: CODE
+        message:
+          type: string
+          example: message
+        data:
+          type: any
+    PaginationResponse:
+      type: object
+      properties:
+        data:
+         type: any
+        totalRows:
+          type: integer
+          example: 1
+        totalPages:
+          type: integer
+          example: 1
+        limit:
+          type: integer
+          example: 10
+        page:
+          type: integer
+          example: 1
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
