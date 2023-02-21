@@ -33,7 +33,10 @@ func NewRouter(cfg *RouterConfig) *gin.Engine {
 			location.GET("/cities", cfg.LocationHandler.GetCities)
 			users := v1.Group("/users")
 			{
-				users.DELETE("/wishlists/:productCode", cfg.UserHandler.RemoveUserWishlist)
+				wishlists := users.Group("/wishlists")
+				{
+					wishlists.DELETE("/:productCode", cfg.UserHandler.RemoveUserWishlist)
+				}
 			}
 		}
 		r.Static("/docs", "swagger")
