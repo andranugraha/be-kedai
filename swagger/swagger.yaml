@@ -47,33 +47,23 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  code:
-                    type: string
-                    example: "OK"
-                  message:
-                    type: string
-                    example: "Success"
-                  data:
-                    type: object
+                allOf:
+                  - $ref: '#/components/schemas/Response'
+                  - type: object
                     properties:
+                      code:
+                        example: 'OK'
+                      message:
+                        example: 'success'
                       data:
-                       type: array     
-                       items:
-                        $ref: '#/components/schemas/City'
-                      totalRows:
-                        type: integer
-                        example: 1
-                      totalPages:
-                        type: integer
-                        example: 1
-                      limit:
-                        type: integer
-                        example: 10
-                      page:
-                        type: integer
-                        example: 1
+                        allOf:
+                          - $ref: '#/components/schemas/PaginationResponse'
+                          - type: object
+                            properties:
+                              data:
+                                type: array
+                                items:
+                                  $ref: '#/components/schemas/City'
         '500':
           description: Internal server error
           content:
@@ -101,6 +91,34 @@ components:
         provinceId:
           type: integer
           example: 6
+    Response:
+      type: object
+      properties:
+        code:
+          type: string
+          example: CODE
+        message:
+          type: string
+          example: message
+        data:
+          type: any
+    PaginationResponse:
+      type: object
+      properties:
+        data:
+         type: any
+        totalRows:
+          type: integer
+          example: 1
+        totalPages:
+          type: integer
+          example: 1
+        limit:
+          type: integer
+          example: 10
+        page:
+          type: integer
+          example: 1
   securitySchemes:
     BearerAuth:
       type: http
