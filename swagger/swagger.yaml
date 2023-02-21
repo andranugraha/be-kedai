@@ -110,7 +110,7 @@ paths:
                   message:
                     type: string
                     example: "error message"
-  /v1/products/:code:
+  /v1/products/{code}:
     get:
       tags:
         - Product
