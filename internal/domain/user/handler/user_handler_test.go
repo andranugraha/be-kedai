@@ -138,7 +138,7 @@ func TestUserLogin(t *testing.T) {
 
 	type expected struct {
 		statusCode int
-		response response.Response
+		response   response.Response
 	}
 
 	type cases struct {
@@ -152,7 +152,7 @@ func TestUserLogin(t *testing.T) {
 			description: "should return access token when user log in accepted",
 			input: input{
 				dto: &dto.UserLogin{
-					Email: "user@mail.com",
+					Email:    "user@mail.com",
 					Password: "password",
 				},
 				err: nil,
@@ -160,9 +160,9 @@ func TestUserLogin(t *testing.T) {
 			expected: expected{
 				statusCode: http.StatusOK,
 				response: response.Response{
-					Code: code.OK,
+					Code:    code.OK,
 					Message: "ok",
-					Data: &dto.Token{},
+					Data:    &dto.Token{},
 				},
 			},
 		},
@@ -177,7 +177,7 @@ func TestUserLogin(t *testing.T) {
 			expected: expected{
 				statusCode: http.StatusBadRequest,
 				response: response.Response{
-					Code: code.BAD_REQUEST,
+					Code:    code.BAD_REQUEST,
 					Message: "Password is required",
 				},
 			},
@@ -186,7 +186,7 @@ func TestUserLogin(t *testing.T) {
 			description: "should return error when user input wrong password",
 			input: input{
 				dto: &dto.UserLogin{
-					Email: "user@mail.com",
+					Email:    "user@mail.com",
 					Password: "password",
 				},
 				err: errs.ErrInvalidCredential,
@@ -194,7 +194,7 @@ func TestUserLogin(t *testing.T) {
 			expected: expected{
 				statusCode: http.StatusUnauthorized,
 				response: response.Response{
-					Code: code.UNAUTHORIZED,
+					Code:    code.UNAUTHORIZED,
 					Message: errs.ErrInvalidCredential.Error(),
 				},
 			},
@@ -203,7 +203,7 @@ func TestUserLogin(t *testing.T) {
 			description: "should return error when internal server error",
 			input: input{
 				dto: &dto.UserLogin{
-					Email: "user@mail.com",
+					Email:    "user@mail.com",
 					Password: "password",
 				},
 				err: errs.ErrInternalServerError,
@@ -211,7 +211,7 @@ func TestUserLogin(t *testing.T) {
 			expected: expected{
 				statusCode: http.StatusInternalServerError,
 				response: response.Response{
-					Code: code.INTERNAL_SERVER_ERROR,
+					Code:    code.INTERNAL_SERVER_ERROR,
 					Message: errs.ErrInternalServerError.Error(),
 				},
 			},

@@ -8,7 +8,6 @@ import (
 	"kedai/backend/be-kedai/internal/domain/user/service"
 	"kedai/backend/be-kedai/internal/utils/hash"
 	mocks "kedai/backend/be-kedai/mocks"
-	"log"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -118,7 +117,7 @@ func TestSignIn(t *testing.T) {
 			Password: "password",
 		}
 		expectedUser := &model.User{
-			Email: "user@mail.com",
+			Email:    "user@mail.com",
 			Password: hashedPw,
 		}
 		mockRepo := new(mocks.UserRepository)
@@ -128,7 +127,6 @@ func TestSignIn(t *testing.T) {
 		mockRepo.On("SignIn", user).Return(expectedUser, nil)
 
 		result, _ := service.SignIn(dto, dto.Password)
-		log.Print(result)
 
 		assert.NotNil(t, result)
 	})
@@ -144,7 +142,7 @@ func TestSignIn(t *testing.T) {
 			Password: "password1",
 		}
 		expectedUser := &model.User{
-			Email: "user@mail.com",
+			Email:    "user@mail.com",
 			Password: hashedPw,
 		}
 		mockRepo := new(mocks.UserRepository)
