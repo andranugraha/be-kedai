@@ -6,4 +6,5 @@ var (
 	ErrUserWishlistNotExist = errors.New("user wishlist doesn't exist")
 	ErrProductCodeRequired  = errors.New("product code is required")
 	ErrProductInWishlist    = errors.New("product already in wishlist")
+	ErrProductNotInWishlist = errors.New("product not in wishlist")
 )
