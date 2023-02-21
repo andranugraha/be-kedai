@@ -1,17 +1,32 @@
 package server
 
 import (
+	"log"
+
 	"kedai/backend/be-kedai/connection"
+	locationHandler "kedai/backend/be-kedai/internal/domain/location/handler"
+	locationRepo "kedai/backend/be-kedai/internal/domain/location/repository"
+	locationService "kedai/backend/be-kedai/internal/domain/location/service"
 	userHandler "kedai/backend/be-kedai/internal/domain/user/handler"
 	userRepository "kedai/backend/be-kedai/internal/domain/user/repository"
 	userService "kedai/backend/be-kedai/internal/domain/user/service"
-	"log"
 
 	"github.com/gin-gonic/gin"
 )
 
 func createRouter() *gin.Engine {
 	db := connection.GetDB()
+
+	cityRepo := locationRepo.NewCityRepository(&locationRepo.CityRConfig{
+		DB: db,
+	})
+	cityService := locationService.NewCityService(&locationService.CitySConfig{
+		CityRepo: cityRepo,
+	})
+
+	locHandler := locationHandler.New(&locationHandler.Config{
+		CityService: cityService,
+	})
 
 	userRepo := userRepository.NewUserRepository(&userRepository.UserRConfig{
 		DB: db,
@@ -26,7 +41,8 @@ func createRouter() *gin.Engine {
 	})
 
 	return NewRouter(&RouterConfig{
-		UserHandler: *userHandler,
+		LocationHandler: locHandler,
+		UserHandler: userHandler,
 	})
 }
 

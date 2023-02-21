@@ -32,16 +32,46 @@ paths:
                     properties:
                       data:
                         $ref: '#/components/schemas/User'
-
-  /v1/locations/cities:
-    get:
+  /v1/users/register:
+    post:
       tags:
-        - Location
-      summary: Get city list
-      description: Get list of cities with pagination, filter by province id, and sort by most shops
+        - User
+      summary: Register new user
+      description: Register new user data
+      requestBody:
+        description: Create new user register data
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                  example: "user@mail.com"
+                password:
+                  type: string
+                  example: "password"
       responses:
-        '200':
+        '201':
           description: successful operation
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Response'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          email:
+                            type: string
+                            example: "user@mail.com"
+                          username:
+                            type: string
+                            example: "user145"
+        '400':
+          description: bad request
           content:
             application/json:
               schema:
@@ -49,13 +79,87 @@ paths:
                 properties:
                   code:
                     type: string
-                    example: "OK"
+                    example: "BAD_REQUEST"
                   message:
                     type: string
-                    example: "Success"
-                  data:
-                    type: object
-                    $ref: '#/components/schemas/GetCitiesResponse'
+                    example: "Email is required"
+        '409':
+          description: duplicate entry
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "EMAIL_ALREADY_REGISTERED"
+                  message:
+                    type: string
+                    example: "User already exist"
+        '500':
+          description: internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "INTERNAL_SERVER_ERROR"
+                  message:
+                    type: string
+                    example: "error message"
+  /v1/locations/cities:
+    get:
+      tags:
+        - Location
+      summary: Get city list
+      description: Get list of cities with pagination, filter by province id, and sort by most shops
+      parameters:
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            default: 0
+          description: No default limit, will get all data if not specified
+        - in: query
+          name: page
+          schema:
+            type: integer
+            default: 1
+        - in: query
+          name: provinceId
+          schema:
+            type: integer
+          description: Filter to get cities by province
+        - in: query
+          name: sort
+          schema:
+            type: string
+          description: most_shops to sort cities by most shops
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Response'
+                  - type: object
+                    properties:
+                      code:
+                        example: 'OK'
+                      message:
+                        example: 'success'
+                      data:
+                        allOf:
+                          - $ref: '#/components/schemas/PaginationResponse'
+                          - type: object
+                            properties:
+                              data:
+                                type: array
+                                items:
+                                  $ref: '#/components/schemas/City'
         '500':
           description: Internal server error
           content:
@@ -137,13 +241,11 @@ components:
           example: message
         data:
           type: any
-    GetCitiesResponse:
+    PaginationResponse:
       type: object
       properties:
         data:
-         type: array
-         items:
-          $ref: '#/components/schemas/City'
+         type: any
         totalRows:
           type: integer
           example: 1
@@ -160,3 +262,37 @@ components:
     BearerAuth:
       type: http
       scheme: bearer
+openapi: 3.0.3
+info:
+  title: Kedai API
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  version: 1.0.0
+externalDocs:
+  description: Find out more about Swagger
+  url: http://swagger.io
+servers:
+  - url: http://localhost:8080
+tags:
+  - name: Location
+  - name: User
+paths:
+  /v1/users:
+    get:
+      tags:
+        - User
+      summary: Get user profile
+      description: Get user profile data
+      responses:
+        '200':
+          description: successful operation
+          content:
+            aplication/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Response'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/User'
