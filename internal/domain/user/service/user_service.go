@@ -48,14 +48,13 @@ func (s *userServiceImpl) SignUp(userReg *dto.UserRegistration) (*dto.UserRegist
 
 func (s *userServiceImpl) SignIn(userLogin *dto.UserLogin, inputPw string) (*dto.Token, error) {
 	user := userLogin.ToUser()
-	hashedPw, _ := hash.HashAndSalt(inputPw)
 
 	result, err := s.repository.SignIn(user)
 	if err != nil {
 		return nil, err
 	}
 
-	isValid := hash.ComparePassword(result.Password, hashedPw)
+	isValid := hash.ComparePassword(result.Password, inputPw)
 	if isValid {
 		token, _ := jwttoken.GenerateAccessToken(result)
 		return token, nil
