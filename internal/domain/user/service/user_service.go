@@ -2,12 +2,11 @@ package service
 
 import (
 	"kedai/backend/be-kedai/internal/domain/user/dto"
-	"kedai/backend/be-kedai/internal/domain/user/model"
 	"kedai/backend/be-kedai/internal/domain/user/repository"
 )
 
 type UserService interface {
-	SignUp(*dto.UserRegistration) (*model.User, error)
+	SignUp(*dto.UserRegistration) (*dto.UserRegistration, error)
 }
 
 type userServiceImpl struct {
@@ -24,8 +23,15 @@ func NewUserService(cfg *UserSConfig) UserService {
 	}
 }
 
-func (s *userServiceImpl) SignUp(userReg *dto.UserRegistration) (*model.User, error) {
+func (s *userServiceImpl) SignUp(userReg *dto.UserRegistration) (*dto.UserRegistration, error) {
 	user := userReg.ToUser()
 
-	return s.repository.SignUp(user)
+	result, err := s.repository.SignUp(user)
+	if err != nil {
+		return nil, err
+	}
+
+	userReg.FromUser(result)
+
+	return userReg, nil
 }

@@ -21,6 +21,7 @@ func TestSignUp(t *testing.T) {
 
 	type expected struct {
 		user *model.User
+		dto *dto.UserRegistration
 		err error
 	}
 
@@ -46,6 +47,9 @@ func TestSignUp(t *testing.T) {
 				user: &model.User{
 					Email: "user@mail.com",
 				},
+				dto: &dto.UserRegistration{
+					Email: "user@mail.com",
+				},
 				err: nil,
 			},
 		},
@@ -62,6 +66,7 @@ func TestSignUp(t *testing.T) {
 			},
 			expected: expected{
 				user: nil,
+				dto: nil,
 				err: errors.New("server internal error"),
 			},
 		},
@@ -78,6 +83,7 @@ func TestSignUp(t *testing.T) {
 			},
 			expected: expected{
 				user: nil,
+				dto: nil,
 				err: errs.ErrUserAlreadyExist,
 			},
 		},
@@ -89,9 +95,9 @@ func TestSignUp(t *testing.T) {
 			})
 			mockRepo.On("SignUp", tc.input.user).Return(tc.expected.user, tc.expected.err)
 
-			result, err := service.SignUp(tc.dto)
+			result, err := service.SignUp(tc.input.dto)
 
-			assert.Equal(t, tc.expected.user, result)
+			assert.Equal(t, tc.expected.dto, result)
 			assert.Equal(t, tc.expected.err, err)
 		})
 	}

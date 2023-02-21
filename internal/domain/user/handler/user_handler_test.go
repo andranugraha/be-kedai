@@ -7,7 +7,6 @@ import (
 	errs "kedai/backend/be-kedai/internal/common/error"
 	"kedai/backend/be-kedai/internal/domain/user/dto"
 	"kedai/backend/be-kedai/internal/domain/user/handler"
-	"kedai/backend/be-kedai/internal/domain/user/model"
 	"kedai/backend/be-kedai/internal/utils/response"
 	"kedai/backend/be-kedai/internal/utils/test"
 	"kedai/backend/be-kedai/mocks"
@@ -22,12 +21,12 @@ import (
 func TestUserRegister(t *testing.T) {
 	type input struct {
 		user *dto.UserRegistration
-		err error
+		err  error
 	}
 
 	type expected struct {
 		statusCode int
-		response response.Response
+		response   response.Response
 	}
 
 	type cases struct {
@@ -41,7 +40,7 @@ func TestUserRegister(t *testing.T) {
 			description: "should return created user data when successfully registered",
 			input: input{
 				user: &dto.UserRegistration{
-					Email: "user@mail.com",
+					Email:    "user@mail.com",
 					Password: "password",
 				},
 				err: nil,
@@ -49,10 +48,10 @@ func TestUserRegister(t *testing.T) {
 			expected: expected{
 				statusCode: http.StatusCreated,
 				response: response.Response{
-					Code: code.CREATED,
+					Code:    code.CREATED,
 					Message: "created",
-					Data: &model.User{
-						Email: "user@mail.com",
+					Data: &dto.UserRegistration{
+						Email:    "user@mail.com",
 						Password: "password",
 					},
 				},
@@ -69,9 +68,9 @@ func TestUserRegister(t *testing.T) {
 			expected: expected{
 				statusCode: http.StatusBadRequest,
 				response: response.Response{
-					Code: code.BAD_REQUEST,
+					Code:    code.BAD_REQUEST,
 					Message: "Password is required",
-					Data: nil,
+					Data:    nil,
 				},
 			},
 		},
@@ -79,7 +78,7 @@ func TestUserRegister(t *testing.T) {
 			description: "should return error when email already registered",
 			input: input{
 				user: &dto.UserRegistration{
-					Email: "user@mail.com",
+					Email:    "user@mail.com",
 					Password: "password",
 				},
 				err: errs.ErrUserAlreadyExist,
@@ -87,9 +86,9 @@ func TestUserRegister(t *testing.T) {
 			expected: expected{
 				statusCode: http.StatusConflict,
 				response: response.Response{
-					Code: code.EMAIL_ALREADY_REGISTERED,
+					Code:    code.EMAIL_ALREADY_REGISTERED,
 					Message: "user already exist",
-					Data: nil,
+					Data:    nil,
 				},
 			},
 		},
@@ -97,7 +96,7 @@ func TestUserRegister(t *testing.T) {
 			description: "should return error when server internal error",
 			input: input{
 				user: &dto.UserRegistration{
-					Email: "user@mail.com",
+					Email:    "user@mail.com",
 					Password: "password",
 				},
 				err: errs.ErrInternalServerError,
@@ -105,16 +104,16 @@ func TestUserRegister(t *testing.T) {
 			expected: expected{
 				statusCode: http.StatusInternalServerError,
 				response: response.Response{
-					Code: code.INTERNAL_SERVER_ERROR,
+					Code:    code.INTERNAL_SERVER_ERROR,
 					Message: "something went wrong in the server",
-					Data: nil,
+					Data:    nil,
 				},
 			},
 		},
 	} {
 		t.Run(tc.description, func(t *testing.T) {
 			expectedBody, _ := json.Marshal(tc.expected.response)
-			rec := 	httptest.NewRecorder()
+			rec := httptest.NewRecorder()
 			c, _ := gin.CreateTestContext(rec)
 			mockService := new(mocks.UserService)
 			mockService.On("SignUp", tc.input.user).Return(tc.expected.response.Data, tc.input.err)
