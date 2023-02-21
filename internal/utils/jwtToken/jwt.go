@@ -13,8 +13,8 @@ func GenerateAccessToken(user *model.User) (*dto.Token, error) {
 	claims := &model.Claim{
 		UserId: user.ID,
 		RegisteredClaims: jwt.RegisteredClaims{
-			IssuedAt: jwt.NewNumericDate(time.Now()),
-			Issuer: "Kedai",
+			IssuedAt:  jwt.NewNumericDate(time.Now()),
+			Issuer:    "Kedai",
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Hour * 5)),
 		},
 	}
@@ -27,4 +27,23 @@ func GenerateAccessToken(user *model.User) (*dto.Token, error) {
 	}
 
 	return result, nil
+}
+
+func ValidateToken(token string, secretKey string) (*model.Claim, error) {
+	parsedToken, err := jwt.ParseWithClaims(token, &model.Claim{}, func(t *jwt.Token) (interface{}, error) {
+		return []byte(secretKey), nil
+	})
+
+	if err != nil {
+		if ve, ok := err.(*jwt.ValidationError); ok {
+			if ve.Errors&jwt.ValidationErrorMalformed != 0 {
+				return nil, jwt.ErrTokenMalformed
+			}
+			if ve.Errors&(jwt.ValidationErrorExpired|jwt.ValidationErrorNotValidYet) != 0 {
+				return nil, jwt.ErrTokenExpired
+			}
+		}
+	}
+
+	return parsedToken.Claims.(*model.Claim), nil
 }
