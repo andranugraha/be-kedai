@@ -5,9 +5,7 @@ import (
 	errs "kedai/backend/be-kedai/internal/common/error"
 	"kedai/backend/be-kedai/internal/domain/user/dto"
 	"kedai/backend/be-kedai/internal/domain/user/handler"
-	"kedai/backend/be-kedai/internal/domain/user/model"
 	"kedai/backend/be-kedai/internal/utils/response"
-	testutils "kedai/backend/be-kedai/internal/utils/test"
 	"kedai/backend/be-kedai/mocks"
 	"net/http"
 	"net/http/httptest"
@@ -18,18 +16,11 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestUserWishlist_AddUserWishlist(t *testing.T) {
+func TestUserWishlist_RemoveUserWishlist(t *testing.T) {
 	var (
-		userId         = 1
-		invalidRequest = &dto.UserWishlistRequest{}
-		validRequest   = &dto.UserWishlistRequest{
-			ProductCode: "123",
-			UserID:      userId,
-		}
-		wishlist = &model.UserWishlist{
-			ProductID: 1,
-			UserID:    validRequest.UserID,
-		}
+		userId             = 1
+		invalidProductCode = ""
+		validProductCode   = "ITEM-001"
 	)
 	type input struct {
 		data        *dto.UserWishlistRequest
@@ -46,13 +37,20 @@ func TestUserWishlist_AddUserWishlist(t *testing.T) {
 		expected
 	}{
 		{
-			description: "it should return error product code required and bad request if product code is empty",
+			description: "it should return error product code required and status code bad request if product code is empty",
 			input: input{
-				data: invalidRequest,
+				data: &dto.UserWishlistRequest{
+					UserID:      userId,
+					ProductCode: invalidProductCode,
+				},
 				beforeTests: func(mockWishlistService *mocks.UserWishlistService) {
-					mockWishlistService.On("AddUserWishlist", invalidRequest).Return(nil, errs.ErrProductCodeRequired)
+					mockWishlistService.On("RemoveUserWishlist", &dto.UserWishlistRequest{
+						UserID:      userId,
+						ProductCode: invalidProductCode,
+					}).Return(errs.ErrProductCodeRequired)
 				},
 			},
+
 			expected: expected{
 				data: &response.Response{
 					Code:    code.PRODUCT_CODE_IS_REQUIRED,
@@ -61,13 +59,18 @@ func TestUserWishlist_AddUserWishlist(t *testing.T) {
 				statusCode: http.StatusBadRequest,
 			},
 		},
-
 		{
 			description: "it should return error user not exist and status code not found if user is not registered",
 			input: input{
-				data: validRequest,
+				data: &dto.UserWishlistRequest{
+					UserID:      userId,
+					ProductCode: validProductCode,
+				},
 				beforeTests: func(mockWishlistService *mocks.UserWishlistService) {
-					mockWishlistService.On("AddUserWishlist", validRequest).Return(nil, errs.ErrUserDoesNotExist)
+					mockWishlistService.On("RemoveUserWishlist", &dto.UserWishlistRequest{
+						UserID:      userId,
+						ProductCode: validProductCode,
+					}).Return(errs.ErrUserDoesNotExist)
 				},
 			},
 			expected: expected{
@@ -78,13 +81,18 @@ func TestUserWishlist_AddUserWishlist(t *testing.T) {
 				statusCode: http.StatusNotFound,
 			},
 		},
-
 		{
-			description: "it should return error product not exist and status code not found if product is not found",
+			description: "it should return error product not exist and status code not found if product is not registered",
 			input: input{
-				data: validRequest,
+				data: &dto.UserWishlistRequest{
+					UserID:      userId,
+					ProductCode: validProductCode,
+				},
 				beforeTests: func(mockWishlistService *mocks.UserWishlistService) {
-					mockWishlistService.On("AddUserWishlist", validRequest).Return(nil, errs.ErrProductDoesNotExist)
+					mockWishlistService.On("RemoveUserWishlist", &dto.UserWishlistRequest{
+						UserID:      userId,
+						ProductCode: validProductCode,
+					}).Return(errs.ErrProductDoesNotExist)
 				},
 			},
 			expected: expected{
@@ -95,30 +103,40 @@ func TestUserWishlist_AddUserWishlist(t *testing.T) {
 				statusCode: http.StatusNotFound,
 			},
 		},
-
 		{
-			description: "it should return error product in wishlist and bad request if product already in wishlist",
+			description: "it should return error product not exist in wishlist and status code not found if product is not found in wishlist",
 			input: input{
-				data: validRequest,
+				data: &dto.UserWishlistRequest{
+					UserID:      userId,
+					ProductCode: validProductCode,
+				},
 				beforeTests: func(mockWishlistService *mocks.UserWishlistService) {
-					mockWishlistService.On("AddUserWishlist", validRequest).Return(nil, errs.ErrProductInWishlist)
+					mockWishlistService.On("RemoveUserWishlist", &dto.UserWishlistRequest{
+						UserID:      userId,
+						ProductCode: validProductCode,
+					}).Return(errs.ErrProductNotInWishlist)
 				},
 			},
 			expected: expected{
 				data: &response.Response{
-					Code:    code.PRODUCT_ALREADY_IN_WISHLIST,
-					Message: errs.ErrProductInWishlist.Error(),
+					Code:    code.PRODUCT_NOT_IN_WISHLIST,
+					Message: errs.ErrProductNotInWishlist.Error(),
 				},
-				statusCode: http.StatusBadRequest,
+				statusCode: http.StatusNotFound,
 			},
 		},
-
 		{
-			description: "it should return error internal server",
+			description: "it should return error internal server and status code internal server error if error is not expected",
 			input: input{
-				data: validRequest,
+				data: &dto.UserWishlistRequest{
+					UserID:      userId,
+					ProductCode: validProductCode,
+				},
 				beforeTests: func(mockWishlistService *mocks.UserWishlistService) {
-					mockWishlistService.On("AddUserWishlist", validRequest).Return(nil, errs.ErrInternalServerError)
+					mockWishlistService.On("RemoveUserWishlist", &dto.UserWishlistRequest{
+						UserID:      userId,
+						ProductCode: validProductCode,
+					}).Return(errs.ErrInternalServerError)
 				},
 			},
 			expected: expected{
@@ -131,20 +149,25 @@ func TestUserWishlist_AddUserWishlist(t *testing.T) {
 		},
 
 		{
-			description: "it should return user wishlist and status code created if success",
+			description: "it should return success and status code ok if product is removed from wishlist",
 			input: input{
-				data: validRequest,
+				data: &dto.UserWishlistRequest{
+					UserID:      userId,
+					ProductCode: validProductCode,
+				},
 				beforeTests: func(mockWishlistService *mocks.UserWishlistService) {
-					mockWishlistService.On("AddUserWishlist", validRequest).Return(wishlist, nil)
+					mockWishlistService.On("RemoveUserWishlist", &dto.UserWishlistRequest{
+						UserID:      userId,
+						ProductCode: validProductCode,
+					}).Return(nil)
 				},
 			},
 			expected: expected{
 				data: &response.Response{
-					Code:    code.CREATED,
-					Message: "wishlist success created successfully",
-					Data:    wishlist,
+					Code:    code.OK,
+					Message: "wishlist removed successfully",
 				},
-				statusCode: http.StatusCreated,
+				statusCode: http.StatusOK,
 			},
 		},
 	}
@@ -154,6 +177,12 @@ func TestUserWishlist_AddUserWishlist(t *testing.T) {
 			rec := httptest.NewRecorder()
 			c, _ := gin.CreateTestContext(rec)
 			c.Set("userId", userId)
+			c.Params = gin.Params{
+				{
+					Key:   "productCode",
+					Value: tc.input.data.ProductCode,
+				},
+			}
 
 			mockWishlistService := new(mocks.UserWishlistService)
 			tc.beforeTests(mockWishlistService)
@@ -162,15 +191,14 @@ func TestUserWishlist_AddUserWishlist(t *testing.T) {
 				UserWishlistService: mockWishlistService,
 			})
 
-			payload := testutils.MakeRequestBody(tc.input.data)
-			c.Request, _ = http.NewRequest(http.MethodPost, "/users/wishlists", payload)
+			c.Request, _ = http.NewRequest(http.MethodDelete, "/users/wishlists", nil)
 
-			handler.AddUserWishlist(c)
+			handler.RemoveUserWishlist(c)
 
 			expectedJson, _ := json.Marshal(tc.expected.data)
 			assert.Equal(t, expectedJson, rec.Body.Bytes())
 			assert.Equal(t, tc.expected.statusCode, rec.Code)
-
 		})
 	}
+
 }
