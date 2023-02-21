@@ -32,3 +32,25 @@ func (h *Handler) UserRegistration(c *gin.Context) {
 
 	response.Success(c, http.StatusCreated, code.CREATED, "created", user)
 }
+
+func (h *Handler) UserLogin(c *gin.Context) {
+	var newLogin dto.UserLogin
+	errBinding := c.ShouldBindJSON(&newLogin)
+	if errBinding != nil {
+		response.ErrorValidator(c, http.StatusBadRequest, errBinding)
+		return
+	}
+
+	token, err := h.userService.SignIn(&newLogin, newLogin.Password)
+	if err != nil {
+		if errors.Is(err, errs.ErrInvalidCredential) {
+			response.Error(c, http.StatusUnauthorized, code.UNAUTHORIZED, err.Error())
+			return
+		}
+
+		response.Error(c, http.StatusInternalServerError, code.INTERNAL_SERVER_ERROR, err.Error())
+		return
+	}
+
+	response.Success(c, http.StatusOK, code.OK, "ok", token)
+}
