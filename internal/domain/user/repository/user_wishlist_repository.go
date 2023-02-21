@@ -1,6 +1,8 @@
 package repository
 
 import (
+	"errors"
+	errs "kedai/backend/be-kedai/internal/common/error"
 	"kedai/backend/be-kedai/internal/domain/user/model"
 
 	"gorm.io/gorm"
@@ -29,6 +31,10 @@ func (r *userWishlistRepositoryImpl) GetUserWishlist(userWishlist *model.UserWis
 
 	err := r.db.Where("user_id = ? AND product_id = ?", userWishlist.UserID, userWishlist.ProductID).First(&res).Error
 	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, errs.ErrProductNotInWishlist
+		}
+
 		return nil, err
 	}
 
