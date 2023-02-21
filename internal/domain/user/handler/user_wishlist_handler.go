@@ -11,18 +11,17 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func (h *Handler) AddUserWishlist(c *gin.Context) {
+func (h *Handler) RemoveUserWishlist(c *gin.Context) {
 	var req dto.UserWishlistRequest
-	userId := c.GetInt("userId")
+	req.ProductCode = c.Param("productCode")
+	req.UserID = c.GetInt("userId")
 
-	err := c.ShouldBindJSON(&req)
-	if err != nil {
+	if req.ProductCode == "" {
 		response.Error(c, http.StatusBadRequest, code.PRODUCT_CODE_IS_REQUIRED, errs.ErrProductCodeRequired.Error())
 		return
 	}
-	req.UserID = userId
 
-	userWishlist, err := h.userWishlistService.AddUserWishlist(&req)
+	err := h.userWishlistService.RemoveUserWishlist(&req)
 
 	if err != nil {
 		if errors.Is(err, errs.ErrUserDoesNotExist) {
@@ -35,8 +34,8 @@ func (h *Handler) AddUserWishlist(c *gin.Context) {
 			return
 		}
 
-		if errors.Is(err, errs.ErrProductInWishlist) {
-			response.Error(c, http.StatusBadRequest, code.PRODUCT_ALREADY_IN_WISHLIST, err.Error())
+		if errors.Is(err, errs.ErrProductNotInWishlist) {
+			response.Error(c, http.StatusBadRequest, code.PRODUCT_NOT_IN_WISHLIST, err.Error())
 			return
 		}
 
@@ -44,5 +43,5 @@ func (h *Handler) AddUserWishlist(c *gin.Context) {
 		return
 	}
 
-	response.Success(c, http.StatusCreated, code.CREATED, "wishlist success created successfully", userWishlist)
+	response.Success(c, http.StatusOK, code.OK, "wishlist removed successfully", nil)
 }
