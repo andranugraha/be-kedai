@@ -16,6 +16,7 @@ import (
 type UserRepository interface {
 	GetByID(ID int) (*model.User, error)
 	SignUp(user *model.User) (*model.User, error)
+	SignIn(user *model.User) (*model.User, error)
 }
 
 type userRepositoryImpl struct {
@@ -65,6 +66,18 @@ func (r *userRepositoryImpl) SignUp(user *model.User) (*model.User, error) {
 
 	if err.RowsAffected == 0 {
 		return nil, errs.ErrUserAlreadyExist
+	}
+
+	return user, nil
+}
+
+func (r *userRepositoryImpl) SignIn(user *model.User) (*model.User, error) {
+	err := r.db.Where("email = ?", user.Email).First(&user).Error
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, errs.ErrUserDoesNotExist
+		}
+		return nil, err
 	}
 
 	return user, nil
