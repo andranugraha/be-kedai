@@ -21,6 +21,28 @@ paths:
         - Location
       summary: Get city list
       description: Get list of cities with pagination, filter by province id, and sort by most shops
+      parameters:
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            default: 0
+          description: No default limit, will get all data if not specified
+        - in: query
+          name: page
+          schema:
+            type: integer
+            default: 1
+        - in: query
+          name: provinceId
+          schema:
+            type: integer
+          description: Filter to get cities by province
+        - in: query
+          name: sort
+          schema:
+            type: string
+          description: most_shops to sort cities by most shops
       responses:
         '200':
           description: successful operation
@@ -59,6 +81,8 @@ paths:
                     example: "error message"
   /v1/users/wishlists:
     post:
+      security:
+        - BearerAuth: []
       tags:
         - Wishlist
         - User
