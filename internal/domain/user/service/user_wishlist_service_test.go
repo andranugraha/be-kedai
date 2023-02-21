@@ -12,7 +12,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestUserWishlistService_AddUserWishlist(t *testing.T) {
+func TestUserWishlistService_RemoveUserWishlist(t *testing.T) {
 	var (
 		product = &productModel.Product{
 			ID:   1,
@@ -32,8 +32,7 @@ func TestUserWishlistService_AddUserWishlist(t *testing.T) {
 		beforeTests func(mockWishlistRepo *mocks.UserWishlistRepository, mockUserService *mocks.UserService, mockProductService *mocks.ProductService)
 	}
 	type expected struct {
-		data *model.UserWishlist
-		err  error
+		err error
 	}
 
 	cases := []struct {
@@ -42,7 +41,7 @@ func TestUserWishlistService_AddUserWishlist(t *testing.T) {
 		expected
 	}{
 		{
-			description: "it should return nil data and error user not exist if user does not exist",
+			description: "it should return error user not exist if user does not exist",
 			input: input{
 				data: &dto.UserWishlistRequest{
 					UserID:      user.ID,
@@ -54,8 +53,7 @@ func TestUserWishlistService_AddUserWishlist(t *testing.T) {
 				},
 			},
 			expected: expected{
-				data: nil,
-				err:  errs.ErrUserDoesNotExist,
+				err: errs.ErrUserDoesNotExist,
 			},
 		},
 		{
@@ -72,31 +70,29 @@ func TestUserWishlistService_AddUserWishlist(t *testing.T) {
 				},
 			},
 			expected: expected{
-				data: nil,
-				err:  errs.ErrProductDoesNotExist,
+				err: errs.ErrProductDoesNotExist,
 			},
 		},
 		{
-			description: "it should return nil data and error product in wishlist if user wishlist aleardy exists",
+			description: "it should return error product not in wishlist if user wishlist does not exist",
 			input: input{
 				data: &dto.UserWishlistRequest{
 					UserID:      user.ID,
 					ProductCode: product.Code,
 				},
-				err: errs.ErrProductInWishlist,
+				err: errs.ErrProductNotInWishlist,
 				beforeTests: func(mockWishlistRepo *mocks.UserWishlistRepository, mockUserService *mocks.UserService, mockProductService *mocks.ProductService) {
 					mockUserService.On("GetByID", user.ID).Return(user, nil)
 					mockProductService.On("GetByCode", product.Code).Return(product, nil)
-					mockWishlistRepo.On("AddUserWishlist", wishlist).Return(nil, errs.ErrProductInWishlist)
+					mockWishlistRepo.On("RemoveUserWishlist", wishlist).Return(errs.ErrProductNotInWishlist)
 				},
 			},
 			expected: expected{
-				data: nil,
-				err:  errs.ErrProductInWishlist,
+				err: errs.ErrProductNotInWishlist,
 			},
 		},
 		{
-			description: "it should return wishlist data and nil error",
+			description: "it should return nil error and succesfully removed message if user wishlist is removed",
 			input: input{
 				data: &dto.UserWishlistRequest{
 					UserID:      user.ID,
@@ -106,12 +102,11 @@ func TestUserWishlistService_AddUserWishlist(t *testing.T) {
 				beforeTests: func(mockWishlistRepo *mocks.UserWishlistRepository, mockUserService *mocks.UserService, mockProductService *mocks.ProductService) {
 					mockUserService.On("GetByID", user.ID).Return(user, nil)
 					mockProductService.On("GetByCode", product.Code).Return(product, nil)
-					mockWishlistRepo.On("AddUserWishlist", wishlist).Return(wishlist, nil)
+					mockWishlistRepo.On("RemoveUserWishlist", wishlist).Return(nil)
 				},
 			},
 			expected: expected{
-				data: wishlist,
-				err:  nil,
+				err: nil,
 			},
 		},
 	}
@@ -130,10 +125,9 @@ func TestUserWishlistService_AddUserWishlist(t *testing.T) {
 				ProductService:         mockProductService,
 			})
 
-			actualUserWishlist, actualErr := uc.AddUserWishlist(tc.input.data)
+			actualErr := uc.RemoveUserWishlist(tc.input.data)
 
-			assert.Equal(t, tc.expected.data, actualUserWishlist)
-			assert.Equal(t, actualErr, tc.expected.err)
+			assert.Equal(t, tc.expected.err, actualErr)
 		})
 	}
 }
