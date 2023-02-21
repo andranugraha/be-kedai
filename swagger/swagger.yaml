@@ -27,16 +27,23 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  code:
-                    type: string
-                    example: "OK"
-                  message:
-                    type: string
-                    example: "Success"
-                  data:
-                    $ref: '#/components/schemas/GetCitiesResponse'
+                allOf:
+                  - $ref: '#/components/schemas/Response'
+                  - type: object
+                    properties:
+                      code:
+                        example: 'OK'
+                      message:
+                        example: 'success'
+                      data:
+                        allOf:
+                          - $ref: '#/components/schemas/PaginationResponse'
+                          - type: object
+                            properties:
+                              data:
+                                type: array
+                                items:
+                                  $ref: '#/components/schemas/City'
         '500':
           description: Internal server error
           content:
@@ -68,16 +75,16 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  code:
-                    type: string
-                    example: "CREATED"
-                  message:
-                    type: string
-                    example: "wishlist success created successfully"
-                  data:
-                    $ref: '#/components/schemas/UserWishlist'
+                allOf:
+                  - $ref: '#/components/schemas/Response'
+                  - type: object
+                    properties:
+                      code:
+                        example: 'CREATED'
+                      message:
+                        example: 'wishlist success created successfully'
+                      data:
+                        $ref: '#/components/schemas/UserWishlist'
         '400':
           description: Bad Request
           content:
@@ -132,13 +139,22 @@ components:
         provinceId:
           type: integer
           example: 6
-    GetCitiesResponse:
+    Response:
+      type: object
+      properties:
+        code:
+          type: string
+          example: CODE
+        message:
+          type: string
+          example: message
+        data:
+          type: any
+    PaginationResponse:
       type: object
       properties:
         data:
-         type: array
-         items:
-          $ref: '#/components/schemas/City'
+         type: any
         totalRows:
           type: integer
           example: 1
