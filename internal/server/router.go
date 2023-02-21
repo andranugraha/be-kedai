@@ -26,7 +26,11 @@ func NewRouter(cfg *RouterConfig) *gin.Engine {
 	{
 		users := v1.Group("/users")
 		{
-			users.POST("/wishlists", cfg.UserHandler.AddUserWishlist)
+			wishlists := users.Group("/wishlists")
+			{
+				wishlists.POST("", cfg.UserHandler.AddUserWishlist)
+			}
+
 		}
 	}
 	r.Static("/docs", "swagger")
