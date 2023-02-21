@@ -11,7 +11,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func (h *Handler) RemoveUserWishlist(c *gin.Context) {
+func (h *Handler) GetUserWishlist(c *gin.Context) {
 	var req dto.UserWishlistRequest
 	req.ProductCode = c.Param("productCode")
 	req.UserID = c.GetInt("userId")
@@ -21,7 +21,7 @@ func (h *Handler) RemoveUserWishlist(c *gin.Context) {
 		return
 	}
 
-	err := h.userWishlistService.RemoveUserWishlist(&req)
+	wishlist, err := h.userWishlistService.GetUserWishlist(&req)
 
 	if err != nil {
 		if errors.Is(err, errs.ErrUserDoesNotExist) {
@@ -43,5 +43,5 @@ func (h *Handler) RemoveUserWishlist(c *gin.Context) {
 		return
 	}
 
-	response.Success(c, http.StatusOK, code.OK, "wishlist removed successfully", nil)
+	response.Success(c, http.StatusOK, code.OK, "wishlist retrieved successfully", wishlist)
 }
