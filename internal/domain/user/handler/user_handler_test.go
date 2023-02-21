@@ -6,8 +6,8 @@ import (
 	"kedai/backend/be-kedai/internal/common/code"
 	errs "kedai/backend/be-kedai/internal/common/error"
 	"kedai/backend/be-kedai/internal/domain/user/dto"
-	"kedai/backend/be-kedai/internal/domain/user/model"
 	"kedai/backend/be-kedai/internal/domain/user/handler"
+	"kedai/backend/be-kedai/internal/domain/user/model"
 	"kedai/backend/be-kedai/internal/utils/response"
 	"kedai/backend/be-kedai/internal/utils/test"
 	"kedai/backend/be-kedai/mocks"
@@ -131,7 +131,7 @@ func TestUserRegister(t *testing.T) {
 	}
 }
 
-func TestUserHandler_GetUserByID(t *testing.T) {
+func TestGetUserByID(t *testing.T) {
 	type input struct {
 		userId int
 		data   *model.User

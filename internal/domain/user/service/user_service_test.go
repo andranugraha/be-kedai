@@ -103,7 +103,7 @@ func TestSignUp(t *testing.T) {
 	}
 }
 
-func TestUserUsecase_GetByID(t *testing.T) {
+func TestGetByID(t *testing.T) {
 	type input struct {
 		id   int
 		data *model.User
