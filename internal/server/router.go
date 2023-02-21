@@ -35,7 +35,7 @@ func NewRouter(cfg *RouterConfig) *gin.Engine {
 			{
 				wishlists := users.Group("/wishlists")
 				{
-					wishlists.DELETE("/:productCode", cfg.UserHandler.RemoveUserWishlist)
+					wishlists.DELETE("/:productCode", cfg.UserHandler.GetUserWishlist)
 				}
 			}
 		}
