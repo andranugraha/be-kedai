@@ -148,21 +148,21 @@ paths:
                     type: string
                     example: "error message"
   /v1/users/wishlists/{productCode}:
-    delete:
+    get:
       security:
         - BearerAuth: []
       tags:
         - Wishlist
         - User
-      summary: Remove product from wishlist
+      summary: Retrieve product in wishlist
       parameters:
         - in: path
           name: productCode
           schema:
             type: string
           required: true
-          description: Product code of the item to be removed from wishlist
-      description: Remove product from wishlist
+          description: Product code of the item to be retrieved from wishlist
+      description: Retrieve product in wishlist
       responses:
         '200':
           description: successful operation
@@ -170,12 +170,15 @@ paths:
             application/json:
               schema:
                 allOf:
+                  - $ref: '#/components/schemas/Response'
                   - type: object
                     properties:
                       code:
                         example: 'OK'
                       message:
-                        example: 'wishlist removed successfully'
+                        example: 'wishlist retrieved successfully'
+                      data:
+                        $ref: '#/components/schemas/UserWishlist'
         '400':
           description: Bad Request
           content:
@@ -257,6 +260,24 @@ components:
         page:
           type: integer
           example: 1
+    UserWishlist:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        userId:
+          type: integer
+          example: 1
+        productId:
+          type: integer
+          example: 1
+    UserWishlistRequest:
+      type: object
+      properties:
+        productCode:
+          type: string
+          example: "ITEM-001"      
   securitySchemes:
     BearerAuth:
       type: http
