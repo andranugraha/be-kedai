@@ -75,7 +75,7 @@ func (r *userRepositoryImpl) SignIn(user *model.User) (*model.User, error) {
 	err := r.db.Where("email = ?", user.Email).First(&user).Error
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, errs.ErrUserDoesNotExist
+			return nil, errs.ErrInvalidCredential
 		}
 		return nil, err
 	}
