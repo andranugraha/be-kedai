@@ -24,10 +24,10 @@ func NewRouter(cfg *RouterConfig) *gin.Engine {
 	corsCfg.ExposeHeaders = []string{"Content-Length"}
 	r.Use(cors.New(corsCfg))
 
-	r.Static("/docs", "swagger")
-
 	v1 := r.Group("/v1")
 	{
+		v1.Static("/docs", "swagger")
+
 		user := v1.Group("/users")
 		{
 			user.GET("", userHandler.GetUserByID)
