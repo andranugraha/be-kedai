@@ -7,12 +7,14 @@ import (
 	"kedai/backend/be-kedai/internal/utils/hash"
 	"math/rand"
 	"strings"
+	"errors"
 
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 )
 
 type UserRepository interface {
+	GetByID(ID int) (*model.User, error)
 	SignUp(user *model.User) (*model.User, error)
 }
 
@@ -28,6 +30,21 @@ func NewUserRepository(cfg *UserRConfig) UserRepository {
 	return &userRepositoryImpl{
 		db: cfg.DB,
 	}
+}
+
+func (r *userRepositoryImpl) GetByID(ID int) (*model.User, error) {
+	var user model.User
+
+	err := r.db.Where("user_id = ?", ID).Preload("Profile").First(&user).Error
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, errs.ErrUserDoesNotExist
+		}
+
+		return nil, err
+	}
+
+	return &user, nil
 }
 
 func (r *userRepositoryImpl) SignUp(user *model.User) (*model.User, error) {
