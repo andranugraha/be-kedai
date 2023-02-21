@@ -7,6 +7,7 @@ import (
 
 type UserService interface {
 	GetByID(id int) (*model.User, error)
+	GetByEmail(email string) (*model.User, error)
 }
 
 type userServiceImpl struct {
@@ -25,4 +26,8 @@ func NewUserService(cfg *UserSConfig) UserService {
 
 func (s *userServiceImpl) GetByID(id int) (*model.User, error) {
 	return s.repository.GetByID(id)
+}
+
+func (s *userServiceImpl) GetByEmail(email string) (*model.User, error) {
+	return s.repository.GetByEmail(email)
 }
