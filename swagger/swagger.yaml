@@ -109,6 +109,77 @@ paths:
                   message:
                     type: string
                     example: "error message"
+  /v1/users/login:
+    post:
+      tags:
+        - User
+      summary: User login
+      description: User login to get auth token
+      requestBody:
+        description: Create new user login request
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                  example: "user@mail.com"
+                password:
+                  type: string
+                  example: "password"
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Response'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/Token'
+        '400':
+          description: bad request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "BAD_REQUEST"
+                  message:
+                    type: string
+                    example: "Email is required"
+        '401':
+          description: unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "UNAUTHORIZED"
+                  message:
+                    type: string
+                    example: "invalid credential"
+        '500':
+          description: internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "INTERNAL_SERVER_ERROR"
+                  message:
+                    type: string
+                    example: "error message"
+  
   /v1/locations/cities:
     get:
       tags:
@@ -218,6 +289,15 @@ components:
         defaultAddressId:
           type: number
           example: 1
+    Token:
+      type: object
+      properties:
+        accessToken:
+          type: string
+          example: "thisIsToken"
+        refreshToken:
+          type: string
+          example: "thisIsToken"
     City:
       type: object
       properties:
