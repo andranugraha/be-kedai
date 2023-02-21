@@ -8,7 +8,7 @@ import (
 )
 
 type UserWishlistService interface {
-	AddUserWishlist(req *dto.UserWishlistRequest) (*model.UserWishlist, error)
+	RemoveUserWishlist(req *dto.UserWishlistRequest) error
 }
 
 type userWishlistServiceImpl struct {
@@ -31,21 +31,21 @@ func NewUserWishlistService(cfg *UserWishlistSConfig) UserWishlistService {
 	}
 }
 
-func (s *userWishlistServiceImpl) AddUserWishlist(req *dto.UserWishlistRequest) (*model.UserWishlist, error) {
+func (s *userWishlistServiceImpl) RemoveUserWishlist(req *dto.UserWishlistRequest) error {
 	var userWishlist model.UserWishlist
 
 	user, err := s.userService.GetByID(req.UserID)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	product, err := s.productService.GetByCode(req.ProductCode)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	userWishlist.UserID = user.ID
 	userWishlist.ProductID = product.ID
 
-	return s.userWishlistRepository.AddUserWishlist(&userWishlist)
+	return s.userWishlistRepository.RemoveUserWishlist(&userWishlist)
 }
