@@ -32,6 +32,32 @@ paths:
                     properties:
                       data:
                         $ref: '#/components/schemas/User'
+        '404':
+          description: not found
+          content:
+            aplication/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "NOT_FOUND"
+                  message:
+                    type: string
+                    example: "error message"
+        '500':
+          description: internal server error
+          content:
+            aplication/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "INTERNAL_SERVER_ERROR"
+                  message:
+                    type: string
+                    example: "error message"
   /v1/users/register:
     post:
       tags:
@@ -262,37 +288,3 @@ components:
     BearerAuth:
       type: http
       scheme: bearer
-openapi: 3.0.3
-info:
-  title: Kedai API
-  license:
-    name: Apache 2.0
-    url: http://www.apache.org/licenses/LICENSE-2.0.html
-  version: 1.0.0
-externalDocs:
-  description: Find out more about Swagger
-  url: http://swagger.io
-servers:
-  - url: http://localhost:8080
-tags:
-  - name: Location
-  - name: User
-paths:
-  /v1/users:
-    get:
-      tags:
-        - User
-      summary: Get user profile
-      description: Get user profile data
-      responses:
-        '200':
-          description: successful operation
-          content:
-            aplication/json:
-              schema:
-                allOf:
-                  - $ref: '#/components/schemas/Response'
-                  - type: object
-                    properties:
-                      data:
-                        $ref: '#/components/schemas/User'
