@@ -3,6 +3,7 @@ package server
 import (
 	"kedai/backend/be-kedai/config"
 	locationHandler "kedai/backend/be-kedai/internal/domain/location/handler"
+	userHandler "kedai/backend/be-kedai/internal/domain/user/handler"
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
@@ -10,6 +11,7 @@ import (
 
 type RouterConfig struct {
 	LocationHandler *locationHandler.Handler
+	UserHandler *userHandler.Handler
 }
 
 func NewRouter(cfg *RouterConfig) *gin.Engine {
@@ -25,6 +27,11 @@ func NewRouter(cfg *RouterConfig) *gin.Engine {
 	v1 := r.Group("/v1")
 	{
 		v1.Static("/docs", "swagger")
+
+		users := v1.Group("/users")
+		{
+			users.POST("/register", cfg.UserHandler.UserRegistration)
+		}
 
 		location := v1.Group("/locations")
 		{
