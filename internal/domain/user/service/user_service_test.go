@@ -2,9 +2,10 @@ package service_test
 
 import (
 	"errors"
-	"kedai/backend/be-kedai/internal/domain/user/model"
+	model "kedai/backend/be-kedai/internal/domain/user/model"
+
 	"kedai/backend/be-kedai/internal/domain/user/service"
-	"kedai/backend/be-kedai/mocks"
+	mocks "kedai/backend/be-kedai/mocks"
 	"testing"
 
 	"github.com/stretchr/testify/assert"

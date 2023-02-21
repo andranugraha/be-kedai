@@ -3,6 +3,7 @@ package server
 import (
 	"kedai/backend/be-kedai/config"
 	locationHandler "kedai/backend/be-kedai/internal/domain/location/handler"
+	userHandler "kedai/backend/be-kedai/internal/domain/user/handler"
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
@@ -10,6 +11,7 @@ import (
 
 type RouterConfig struct {
 	LocationHandler *locationHandler.Handler
+	UserHandler     *userHandler.Handler
 }
 
 func NewRouter(cfg *RouterConfig) *gin.Engine {
@@ -29,8 +31,13 @@ func NewRouter(cfg *RouterConfig) *gin.Engine {
 		location := v1.Group("/locations")
 		{
 			location.GET("/cities", cfg.LocationHandler.GetCities)
+			users := v1.Group("/users")
+			{
+				users.DELETE("/wishlists/:productCode", cfg.UserHandler.RemoveUserWishlist)
+			}
 		}
-	}
+		r.Static("/docs", "swagger")
 
-	return r
+		return r
+	}
 }
