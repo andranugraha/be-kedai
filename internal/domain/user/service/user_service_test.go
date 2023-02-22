@@ -2,17 +2,11 @@ package service_test
 
 import (
 	"errors"
-<<<<<<< HEAD
-	model "kedai/backend/be-kedai/internal/domain/user/model"
-
-	"kedai/backend/be-kedai/internal/domain/user/service"
-=======
 	errs "kedai/backend/be-kedai/internal/common/error"
 	"kedai/backend/be-kedai/internal/domain/user/dto"
 	"kedai/backend/be-kedai/internal/domain/user/model"
 	"kedai/backend/be-kedai/internal/domain/user/service"
 	"kedai/backend/be-kedai/internal/utils/hash"
->>>>>>> e4fd8db74c2d1f5d9ac94cf1de0592b0a77f3219
 	mocks "kedai/backend/be-kedai/mocks"
 	"testing"
 

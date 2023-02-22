@@ -1,6 +1,7 @@
 package handler_test
 
 import (
+	"fmt"
 	"kedai/backend/be-kedai/internal/common/code"
 	errs "kedai/backend/be-kedai/internal/common/error"
 	"kedai/backend/be-kedai/internal/domain/user/dto"
@@ -50,13 +51,13 @@ func TestUserWishlist_AddUserWishlist(t *testing.T) {
 			input: input{
 				data: invalidRequest,
 				beforeTests: func(mockWishlistService *mocks.UserWishlistService) {
-					mockWishlistService.On("AddUserWishlist", invalidRequest).Return(nil, errs.ErrProductCodeRequired)
+					mockWishlistService.On("AddUserWishlist", invalidRequest).Return(nil, fmt.Errorf("%s is required", "ProductCode	"))
 				},
 			},
 			expected: expected{
 				data: &response.Response{
-					Code:    code.PRODUCT_CODE_IS_REQUIRED,
-					Message: errs.ErrProductCodeRequired.Error(),
+					Code:    code.BAD_REQUEST,
+					Message: "ProductCode is required",
 				},
 				statusCode: http.StatusBadRequest,
 			},
@@ -158,7 +159,7 @@ func TestUserWishlist_AddUserWishlist(t *testing.T) {
 			mockWishlistService := new(mocks.UserWishlistService)
 			tc.beforeTests(mockWishlistService)
 
-			handler := handler.NewHandler(&handler.HandlerConfig{
+			handler := handler.New(&handler.HandlerConfig{
 				UserWishlistService: mockWishlistService,
 			})
 

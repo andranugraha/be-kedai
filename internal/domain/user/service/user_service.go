@@ -1,14 +1,10 @@
 package service
 
 import (
-<<<<<<< HEAD
-	model "kedai/backend/be-kedai/internal/domain/user/model"
-=======
 	errs "kedai/backend/be-kedai/internal/common/error"
 	"kedai/backend/be-kedai/internal/domain/user/cache"
 	"kedai/backend/be-kedai/internal/domain/user/dto"
 	"kedai/backend/be-kedai/internal/domain/user/model"
->>>>>>> e4fd8db74c2d1f5d9ac94cf1de0592b0a77f3219
 	"kedai/backend/be-kedai/internal/domain/user/repository"
 	"kedai/backend/be-kedai/internal/utils/hash"
 	jwttoken "kedai/backend/be-kedai/internal/utils/jwtToken"
@@ -16,29 +12,26 @@ import (
 
 type UserService interface {
 	GetByID(id int) (*model.User, error)
-<<<<<<< HEAD
-	GetByEmail(email string) (*model.User, error)
-=======
+
 	SignUp(*dto.UserRegistration) (*dto.UserRegistration, error)
 	SignIn(*dto.UserLogin, string) (*dto.Token, error)
-	GetSession(userId int, token string) (error)
->>>>>>> e4fd8db74c2d1f5d9ac94cf1de0592b0a77f3219
+	GetSession(userId int, token string) error
 }
 
 type userServiceImpl struct {
 	repository repository.UserRepository
-	redis cache.UserCache
+	redis      cache.UserCache
 }
 
 type UserSConfig struct {
 	Repository repository.UserRepository
-	Redis cache.UserCache
+	Redis      cache.UserCache
 }
 
 func NewUserService(cfg *UserSConfig) UserService {
 	return &userServiceImpl{
 		repository: cfg.Repository,
-		redis: cfg.Redis,
+		redis:      cfg.Redis,
 	}
 }
 
@@ -46,11 +39,6 @@ func (s *userServiceImpl) GetByID(id int) (*model.User, error) {
 	return s.repository.GetByID(id)
 }
 
-<<<<<<< HEAD
-func (s *userServiceImpl) GetByEmail(email string) (*model.User, error) {
-	return s.repository.GetByEmail(email)
-}
-=======
 func (s *userServiceImpl) SignUp(userReg *dto.UserRegistration) (*dto.UserRegistration, error) {
 	user := userReg.ToUser()
 
@@ -76,9 +64,9 @@ func (s *userServiceImpl) SignIn(userLogin *dto.UserLogin, inputPw string) (*dto
 	if isValid {
 		accessToken, _ := jwttoken.GenerateAccessToken(result)
 		refreshToken, _ := jwttoken.GenerateRefreshToken(result)
-		
+
 		token := &dto.Token{
-			AccessToken: accessToken,
+			AccessToken:  accessToken,
 			RefreshToken: refreshToken,
 		}
 
@@ -93,7 +81,6 @@ func (s *userServiceImpl) SignIn(userLogin *dto.UserLogin, inputPw string) (*dto
 	return nil, errs.ErrInvalidCredential
 }
 
-func (s *userServiceImpl) GetSession(userId int, accessToken string) (error) {
+func (s *userServiceImpl) GetSession(userId int, accessToken string) error {
 	return s.redis.FindToken(userId, accessToken)
 }
->>>>>>> e4fd8db74c2d1f5d9ac94cf1de0592b0a77f3219

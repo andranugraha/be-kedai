@@ -19,11 +19,7 @@ func JWTAuthorization(c *gin.Context) {
 
 	if auth == emptyToken {
 		c.AbortWithStatusJSON(http.StatusUnauthorized, response.Response{
-<<<<<<< HEAD
-			Code: code.UNAUTHORIZED,
-=======
 			Code:    code.UNAUTHORIZED,
->>>>>>> e4fd8db74c2d1f5d9ac94cf1de0592b0a77f3219
 			Message: errs.ErrInvalidToken.Error(),
 		})
 		return
@@ -34,19 +30,11 @@ func JWTAuthorization(c *gin.Context) {
 	parsedToken, err := jwttoken.ValidateToken(auth, config.SecretKey)
 	if err != nil {
 		c.AbortWithStatusJSON(http.StatusUnauthorized, response.Response{
-<<<<<<< HEAD
-			Code: code.UNAUTHORIZED,
-=======
 			Code:    code.UNAUTHORIZED,
->>>>>>> e4fd8db74c2d1f5d9ac94cf1de0592b0a77f3219
 			Message: err.Error(),
 		})
 		return
 	}
 
 	c.Set("userId", parsedToken.UserId)
-<<<<<<< HEAD
 }
-=======
-}
->>>>>>> e4fd8db74c2d1f5d9ac94cf1de0592b0a77f3219

@@ -17,7 +17,7 @@ func (h *Handler) AddUserWishlist(c *gin.Context) {
 
 	err := c.ShouldBindJSON(&req)
 	if err != nil {
-		response.Error(c, http.StatusBadRequest, code.PRODUCT_CODE_IS_REQUIRED, errs.ErrProductCodeRequired.Error())
+		response.ErrorValidator(c, http.StatusBadRequest, err)
 		return
 	}
 	req.UserID = userId
