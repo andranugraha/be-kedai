@@ -5,5 +5,6 @@ import (
 )
 
 var (
-	ErrCartItemNotFound = errors.New("cart item not found")
+	ErrSkuQuantityNotEnough = errors.New("sku quantity not enough")
+	ErrCartItemNotFound     = errors.New("cart item not found")
 )

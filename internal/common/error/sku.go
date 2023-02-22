@@ -5,6 +5,5 @@ import (
 )
 
 var (
-	ErrSkuQuantityNotEnough = errors.New("sku quantity not enough")
-	ErrSkuNotFound          = errors.New("sku not found")
+	ErrSkuNotFound = errors.New("sku not found")
 )
