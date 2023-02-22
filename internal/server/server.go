@@ -7,13 +7,15 @@ import (
 	locationHandlerPackage "kedai/backend/be-kedai/internal/domain/location/handler"
 	locationRepoPackage "kedai/backend/be-kedai/internal/domain/location/repository"
 	locationServicePackage "kedai/backend/be-kedai/internal/domain/location/service"
-	productRepoPackage "kedai/backend/be-kedai/internal/domain/product/repository"
-	productServicePackage "kedai/backend/be-kedai/internal/domain/product/service"
-	userCache "kedai/backend/be-kedai/internal/domain/user/cache"
 
+	userCache "kedai/backend/be-kedai/internal/domain/user/cache"
 	userHandlerPackage "kedai/backend/be-kedai/internal/domain/user/handler"
 	userRepoPackage "kedai/backend/be-kedai/internal/domain/user/repository"
 	userServicePackage "kedai/backend/be-kedai/internal/domain/user/service"
+
+	productHandlerPackage "kedai/backend/be-kedai/internal/domain/product/handler"
+	productRepoPackage "kedai/backend/be-kedai/internal/domain/product/repository"
+	productServicePackage "kedai/backend/be-kedai/internal/domain/product/service"
 
 	"github.com/gin-gonic/gin"
 )
@@ -76,9 +78,22 @@ func createRouter() *gin.Engine {
 		UserWishlistService: userWishlistService,
 	})
 
+	categoryRepo := productRepoPackage.NewCategoryRepository(&productRepo.CategoryRConfig{
+		DB: db,
+	})
+
+	categoryService := productServicePackage.NewCategoryService(&productService.CategorySConfig{
+		CategoryRepo: categoryRepo,
+	})
+
+	productHandler := productHandlerPackage.New(&productHandlerPackage.Config{
+		CategoryService: categoryService,
+	})
+
 	return NewRouter(&RouterConfig{
 		UserHandler:     userHandler,
 		LocationHandler: locHandler,
+		ProductHandler:  productHandler,
 	})
 }
 
