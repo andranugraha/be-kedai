@@ -14,23 +14,23 @@ type UserService interface {
 	GetByID(id int) (*model.User, error)
 	SignUp(*dto.UserRegistration) (*dto.UserRegistration, error)
 	SignIn(*dto.UserLogin, string) (*dto.Token, error)
-	GetSession(userId int, token string) (error)
+	GetSession(userId int, token string) error
 }
 
 type userServiceImpl struct {
 	repository repository.UserRepository
-	redis cache.UserCache
+	redis      cache.UserCache
 }
 
 type UserSConfig struct {
 	Repository repository.UserRepository
-	Redis cache.UserCache
+	Redis      cache.UserCache
 }
 
 func NewUserService(cfg *UserSConfig) UserService {
 	return &userServiceImpl{
 		repository: cfg.Repository,
-		redis: cfg.Redis,
+		redis:      cfg.Redis,
 	}
 }
 
@@ -63,9 +63,9 @@ func (s *userServiceImpl) SignIn(userLogin *dto.UserLogin, inputPw string) (*dto
 	if isValid {
 		accessToken, _ := jwttoken.GenerateAccessToken(result)
 		refreshToken, _ := jwttoken.GenerateRefreshToken(result)
-		
+
 		token := &dto.Token{
-			AccessToken: accessToken,
+			AccessToken:  accessToken,
 			RefreshToken: refreshToken,
 		}
 
@@ -80,6 +80,6 @@ func (s *userServiceImpl) SignIn(userLogin *dto.UserLogin, inputPw string) (*dto
 	return nil, errs.ErrInvalidCredential
 }
 
-func (s *userServiceImpl) GetSession(userId int, accessToken string) (error) {
+func (s *userServiceImpl) GetSession(userId int, accessToken string) error {
 	return s.redis.FindToken(userId, accessToken)
 }

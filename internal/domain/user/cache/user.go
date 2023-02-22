@@ -9,8 +9,8 @@ import (
 )
 
 type UserCache interface {
-	StoreToken(userId int, accessToken string, refreshToken string) (error)
-	FindToken(userId int, token string) (error)
+	StoreToken(userId int, accessToken string, refreshToken string) error
+	FindToken(userId int, token string) error
 }
 
 type userCacheImpl struct {
@@ -27,7 +27,7 @@ func NewUserCache(cfg *UserCConfig) UserCache {
 	}
 }
 
-func (r *userCacheImpl) StoreToken(userId int, accessToken string, refreshToken string) (error) {
+func (r *userCacheImpl) StoreToken(userId int, accessToken string, refreshToken string) error {
 	refreshKey := fmt.Sprintf("user_%d:%s", userId, refreshToken)
 	refreshTime := time.Duration(24) * time.Hour
 
@@ -47,10 +47,10 @@ func (r *userCacheImpl) StoreToken(userId int, accessToken string, refreshToken 
 	return nil
 }
 
-func (r *userCacheImpl) FindToken(userId int, token string) (error) {
+func (r *userCacheImpl) FindToken(userId int, token string) error {
 	key := fmt.Sprintf("user_%d:%s", userId, token)
 	err := r.rdc.Get(context.Background(), key).Err()
-	
+
 	if err != nil {
 		return err
 	}

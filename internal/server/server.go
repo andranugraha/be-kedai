@@ -7,10 +7,11 @@ import (
 	locationHandler "kedai/backend/be-kedai/internal/domain/location/handler"
 	locationRepo "kedai/backend/be-kedai/internal/domain/location/repository"
 	locationService "kedai/backend/be-kedai/internal/domain/location/service"
-	userHandler "kedai/backend/be-kedai/internal/domain/user/handler"
-	userRepository "kedai/backend/be-kedai/internal/domain/user/repository"
-	userService "kedai/backend/be-kedai/internal/domain/user/service"
 	userCache "kedai/backend/be-kedai/internal/domain/user/cache"
+
+	userHandler "kedai/backend/be-kedai/internal/domain/user/handler"
+	userRepo "kedai/backend/be-kedai/internal/domain/user/repository"
+	userService "kedai/backend/be-kedai/internal/domain/user/service"
 
 	"github.com/gin-gonic/gin"
 )
@@ -30,7 +31,14 @@ func createRouter() *gin.Engine {
 		CityService: cityService,
 	})
 
-	userRepo := userRepository.NewUserRepository(&userRepository.UserRConfig{
+	walletRepo := userRepo.NewWalletRepository(&userRepo.WalletRConfig{
+		DB: connection.GetDB(),
+	})
+	walletService := userService.NewWalletService(&userService.WalletSConfig{
+		WalletRepo: walletRepo,
+	})
+
+	userRepo := userRepo.NewUserRepository(&userRepo.UserRConfig{
 		DB: db,
 	})
 
@@ -40,16 +48,17 @@ func createRouter() *gin.Engine {
 
 	userService := userService.NewUserService(&userService.UserSConfig{
 		Repository: userRepo,
-		Redis: userCache,
+		Redis:      userCache,
 	})
 
 	userHandler := userHandler.New(&userHandler.HandlerConfig{
-		UserService: userService,
+		UserService:   userService,
+		WalletService: walletService,
 	})
 
 	return NewRouter(&RouterConfig{
 		LocationHandler: locHandler,
-		UserHandler: userHandler,
+		UserHandler:     userHandler,
 	})
 }
 

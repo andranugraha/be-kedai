@@ -31,15 +31,23 @@ func NewRouter(cfg *RouterConfig) *gin.Engine {
 
 		user := v1.Group("/users")
 		{
-			user.GET("", middleware.JWTAuthorization, cfg.UserHandler.GetSession, cfg.UserHandler.GetUserByID)
 			user.POST("/register", cfg.UserHandler.UserRegistration)
 			user.POST("/login", cfg.UserHandler.UserLogin)
+			authenticated := user.Group("", middleware.JWTAuthorization, cfg.UserHandler.GetSession)
+			{
+				authenticated.GET("", cfg.UserHandler.GetUserByID)
+				wallet := authenticated.Group("/wallets")
+				{
+					wallet.POST("", cfg.UserHandler.RegisterWallet)
+				}
+			}
 		}
 
 		location := v1.Group("/locations")
 		{
 			location.GET("/cities", cfg.LocationHandler.GetCities)
 		}
+
 	}
 
 	return r
