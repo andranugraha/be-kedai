@@ -94,6 +94,42 @@ func TestUserRegister(t *testing.T) {
 			},
 		},
 		{
+			description: "should return error when invalid password pattern",
+			input: input{
+				user: &dto.UserRegistration{
+					Email:    "user@mail.com",
+					Password: "password",
+				},
+				err: errs.ErrInvalidPasswordPattern,
+			},
+			expected: expected{
+				statusCode: http.StatusUnprocessableEntity,
+				response: response.Response{
+					Code:    code.INVALID_PASSWORD_PATTERN,
+					Message: "invalid password pattern",
+					Data:    nil,
+				},
+			},
+		},
+		{
+			description: "should return error when password contain email address",
+			input: input{
+				user: &dto.UserRegistration{
+					Email:    "user@mail.com",
+					Password: "passworD1user",
+				},
+				err: errs.ErrContainEmail,
+			},
+			expected: expected{
+				statusCode: http.StatusUnprocessableEntity,
+				response: response.Response{
+					Code:    code.PASSWORD_CONTAIN_EMAIL,
+					Message: "password cannot contain email address",
+					Data:    nil,
+				},
+			},
+		},
+		{
 			description: "should return error when server internal error",
 			input: input{
 				user: &dto.UserRegistration{
