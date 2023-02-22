@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	errs "kedai/backend/be-kedai/internal/common/error"
+
 	"kedai/backend/be-kedai/internal/domain/user/model"
 	"kedai/backend/be-kedai/internal/utils/hash"
 	"math/rand"
@@ -37,6 +38,21 @@ func (r *userRepositoryImpl) GetByID(ID int) (*model.User, error) {
 	var user model.User
 
 	err := r.db.Where("user_id = ?", ID).Preload("Shop").Preload("Profile").First(&user).Error
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, errs.ErrUserDoesNotExist
+		}
+
+		return nil, err
+	}
+
+	return &user, nil
+}
+
+func (r *userRepositoryImpl) GetByEmail(email string) (*model.User, error) {
+	var user model.User
+
+	err := r.db.Where("email = ?", email).Preload("Profile").First(&user).Error
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, errs.ErrUserDoesNotExist

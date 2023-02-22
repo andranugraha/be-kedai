@@ -4,14 +4,16 @@ import (
 	"log"
 
 	"kedai/backend/be-kedai/connection"
-	locationHandler "kedai/backend/be-kedai/internal/domain/location/handler"
-	locationRepo "kedai/backend/be-kedai/internal/domain/location/repository"
-	locationService "kedai/backend/be-kedai/internal/domain/location/service"
+	locationHandlerPackage "kedai/backend/be-kedai/internal/domain/location/handler"
+	locationRepoPackage "kedai/backend/be-kedai/internal/domain/location/repository"
+	locationServicePackage "kedai/backend/be-kedai/internal/domain/location/service"
+	productRepoPackage "kedai/backend/be-kedai/internal/domain/product/repository"
+	productServicePackage "kedai/backend/be-kedai/internal/domain/product/service"
 	userCache "kedai/backend/be-kedai/internal/domain/user/cache"
 
-	userHandler "kedai/backend/be-kedai/internal/domain/user/handler"
-	userRepo "kedai/backend/be-kedai/internal/domain/user/repository"
-	userService "kedai/backend/be-kedai/internal/domain/user/service"
+	userHandlerPackage "kedai/backend/be-kedai/internal/domain/user/handler"
+	userRepoPackage "kedai/backend/be-kedai/internal/domain/user/repository"
+	userServicePackage "kedai/backend/be-kedai/internal/domain/user/service"
 
 	"github.com/gin-gonic/gin"
 )
@@ -20,25 +22,32 @@ func createRouter() *gin.Engine {
 	db := connection.GetDB()
 	redis := connection.GetCache()
 
-	cityRepo := locationRepo.NewCityRepository(&locationRepo.CityRConfig{
+	productRepo := productRepoPackage.NewProductRepository(&productRepoPackage.ProductRConfig{
 		DB: db,
 	})
-	cityService := locationService.NewCityService(&locationService.CitySConfig{
+	productService := productServicePackage.NewProductService(&productServicePackage.ProductSConfig{
+		ProductRepository: productRepo,
+	})
+
+	cityRepo := locationRepoPackage.NewCityRepository(&locationRepoPackage.CityRConfig{
+		DB: db,
+	})
+	cityService := locationServicePackage.NewCityService(&locationServicePackage.CitySConfig{
 		CityRepo: cityRepo,
 	})
 
-	locHandler := locationHandler.New(&locationHandler.Config{
+	locHandler := locationHandlerPackage.New(&locationHandlerPackage.Config{
 		CityService: cityService,
 	})
 
-	walletRepo := userRepo.NewWalletRepository(&userRepo.WalletRConfig{
+	walletRepo := userRepoPackage.NewWalletRepository(&userRepoPackage.WalletRConfig{
 		DB: connection.GetDB(),
 	})
-	walletService := userService.NewWalletService(&userService.WalletSConfig{
+	walletService := userServicePackage.NewWalletService(&userServicePackage.WalletSConfig{
 		WalletRepo: walletRepo,
 	})
 
-	userRepo := userRepo.NewUserRepository(&userRepo.UserRConfig{
+	userRepo := userRepoPackage.NewUserRepository(&userRepoPackage.UserRConfig{
 		DB: db,
 	})
 
@@ -46,24 +55,36 @@ func createRouter() *gin.Engine {
 		RDC: redis,
 	})
 
-	userService := userService.NewUserService(&userService.UserSConfig{
+	userService := userServicePackage.NewUserService(&userServicePackage.UserSConfig{
 		Repository: userRepo,
 		Redis:      userCache,
 	})
 
-	userHandler := userHandler.New(&userHandler.HandlerConfig{
-		UserService:   userService,
-		WalletService: walletService,
+	userWishlistRepo := userRepoPackage.NewUserWishlistRepository(&userRepoPackage.UserWishlistRConfig{
+		DB: db,
+	})
+
+	userWishlistService := userServicePackage.NewUserWishlistService(&userServicePackage.UserWishlistSConfig{
+		UserWishlistRepository: userWishlistRepo,
+		UserService:            userService,
+		ProductService:         productService,
+	})
+
+	userHandler := userHandlerPackage.New(&userHandlerPackage.HandlerConfig{
+		UserService:         userService,
+		WalletService:       walletService,
+		UserWishlistService: userWishlistService,
 	})
 
 	return NewRouter(&RouterConfig{
-		LocationHandler: locHandler,
 		UserHandler:     userHandler,
+		LocationHandler: locHandler,
 	})
 }
 
 func Init() {
 	r := createRouter()
+
 	err := r.Run()
 	if err != nil {
 		log.Println("error while running server", err)
