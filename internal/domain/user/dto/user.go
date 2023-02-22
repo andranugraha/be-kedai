@@ -4,7 +4,7 @@ import "kedai/backend/be-kedai/internal/domain/user/model"
 
 type UserRegistration struct {
 	Email    string `json:"email" binding:"required,email"`
-	Password string `json:"password" binding:"required,min=6"`
+	Password string `json:"password,omitempty" binding:"required,min=8,max=16"`
 	Username string `json:"username"`
 }
 
