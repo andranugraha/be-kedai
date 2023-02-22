@@ -38,9 +38,11 @@ func TestSignUp(t *testing.T) {
 			input: input{
 				user: &model.User{
 					Email: "user@mail.com",
+					Password: "Password2",
 				},
 				dto: &dto.UserRegistration{
 					Email: "user@mail.com",
+					Password: "Password2",
 				},
 				err: nil,
 			},
@@ -59,9 +61,11 @@ func TestSignUp(t *testing.T) {
 			input: input{
 				user: &model.User{
 					Email: "user@mail.com",
+					Password: "Password1",
 				},
 				dto: &dto.UserRegistration{
 					Email: "user@mail.com",
+					Password: "Password1",
 				},
 				err: errors.New("server internal error"),
 			},
@@ -76,9 +80,11 @@ func TestSignUp(t *testing.T) {
 			input: input{
 				user: &model.User{
 					Email: "user@mail.com",
+					Password: "Password1",
 				},
 				dto: &dto.UserRegistration{
 					Email: "user@mail.com",
+					Password: "Password1",
 				},
 				err: errs.ErrUserAlreadyExist,
 			},
