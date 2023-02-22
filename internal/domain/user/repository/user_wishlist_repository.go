@@ -8,6 +8,7 @@ import (
 )
 
 type UserWishlistRepository interface {
+	AddUserWishlist(userWishlist *model.UserWishlist) (*model.UserWishlist, error)
 	RemoveUserWishlist(userWishlist *model.UserWishlist) error
 }
 
@@ -23,6 +24,18 @@ func NewUserWishlistRepository(cfg *UserWishlistRConfig) UserWishlistRepository 
 	return &userWishlistRepositoryImpl{
 		db: cfg.DB,
 	}
+}
+
+func (r *userWishlistRepositoryImpl) AddUserWishlist(userWishlist *model.UserWishlist) (*model.UserWishlist, error) {
+	err := r.db.Create(userWishlist).Error
+	if err != nil {
+		if errs.IsDuplicateKeyError(err) {
+			return nil, errs.ErrProductInWishlist
+		}
+		return nil, err
+	}
+
+	return userWishlist, nil
 }
 
 func (r *userWishlistRepositoryImpl) RemoveUserWishlist(userWishlist *model.UserWishlist) error {

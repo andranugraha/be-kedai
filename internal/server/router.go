@@ -11,8 +11,8 @@ import (
 )
 
 type RouterConfig struct {
-	LocationHandler *locationHandler.Handler
 	UserHandler     *userHandler.Handler
+	LocationHandler *locationHandler.Handler
 }
 
 func NewRouter(cfg *RouterConfig) *gin.Engine {
@@ -28,12 +28,21 @@ func NewRouter(cfg *RouterConfig) *gin.Engine {
 	v1 := r.Group("/v1")
 	{
 		v1.Static("/docs", "swagger")
-		users := v1.Group("/users")
+
+		user := v1.Group("/users")
 		{
-			authenticated := users.Group("", middleware.JWTAuthorization)
+			user.POST("/register", cfg.UserHandler.UserRegistration)
+			user.POST("/login", cfg.UserHandler.UserLogin)
+			userAuthenticated := user.Group("", middleware.JWTAuthorization, cfg.UserHandler.GetSession)
 			{
-				wishlists := authenticated.Group("/wishlists")
+				userAuthenticated.GET("", cfg.UserHandler.GetUserByID)
+				wallet := userAuthenticated.Group("/wallets")
 				{
+					wallet.POST("", cfg.UserHandler.RegisterWallet)
+				}
+				wishlists := userAuthenticated.Group("/wishlists")
+				{
+					wishlists.POST("", cfg.UserHandler.AddUserWishlist)
 					wishlists.DELETE("/:productCode", cfg.UserHandler.RemoveUserWishlist)
 				}
 			}

@@ -4,60 +4,81 @@ import (
 	"log"
 
 	"kedai/backend/be-kedai/connection"
-	locationHandler "kedai/backend/be-kedai/internal/domain/location/handler"
-	locationRepo "kedai/backend/be-kedai/internal/domain/location/repository"
-	locationService "kedai/backend/be-kedai/internal/domain/location/service"
-	productRepoImport "kedai/backend/be-kedai/internal/domain/product/repository"
-	productServiceImport "kedai/backend/be-kedai/internal/domain/product/service"
-	userHandlerImport "kedai/backend/be-kedai/internal/domain/user/handler"
-	userRepoImport "kedai/backend/be-kedai/internal/domain/user/repository"
-	userServiceImport "kedai/backend/be-kedai/internal/domain/user/service"
+	locationHandlerPackage "kedai/backend/be-kedai/internal/domain/location/handler"
+	locationRepoPackage "kedai/backend/be-kedai/internal/domain/location/repository"
+	locationServicePackage "kedai/backend/be-kedai/internal/domain/location/service"
+	productRepoPackage "kedai/backend/be-kedai/internal/domain/product/repository"
+	productServicePackage "kedai/backend/be-kedai/internal/domain/product/service"
+	userCache "kedai/backend/be-kedai/internal/domain/user/cache"
+
+	userHandlerPackage "kedai/backend/be-kedai/internal/domain/user/handler"
+	userRepoPackage "kedai/backend/be-kedai/internal/domain/user/repository"
+	userServicePackage "kedai/backend/be-kedai/internal/domain/user/service"
 
 	"github.com/gin-gonic/gin"
 )
 
 func createRouter() *gin.Engine {
-	cityRepo := locationRepo.NewCityRepository(&locationRepo.CityRConfig{
-		DB: connection.GetDB(),
-	})
-	cityService := locationService.NewCityService(&locationService.CitySConfig{
-		CityRepo: cityRepo,
-	})
+	db := connection.GetDB()
+	redis := connection.GetCache()
 
-	locHandler := locationHandler.New(&locationHandler.Config{
-		CityService: cityService,
+	productRepo := productRepoPackage.NewProductRepository(&productRepoPackage.ProductRConfig{
+		DB: db,
 	})
-
-	userWishlistRepo := userRepoImport.NewUserWishlistRepository(&userRepoImport.UserWishlistRConfig{
-		DB: connection.GetDB(),
-	})
-	userRepo := userRepoImport.NewUserRepository(&userRepoImport.UserRConfig{
-		DB: connection.GetDB(),
-	})
-	productRepo := productRepoImport.NewProductRepository(&productRepoImport.ProductRConfig{
-		DB: connection.GetDB(),
-	})
-	userService := userServiceImport.NewUserService(&userServiceImport.UserSConfig{
-		Repository: userRepo,
-	})
-
-	productService := productServiceImport.NewProductService(&productServiceImport.ProductSConfig{
+	productService := productServicePackage.NewProductService(&productServicePackage.ProductSConfig{
 		ProductRepository: productRepo,
 	})
 
-	userWishlistService := userServiceImport.NewUserWishlistService(&userServiceImport.UserWishlistSConfig{
+	cityRepo := locationRepoPackage.NewCityRepository(&locationRepoPackage.CityRConfig{
+		DB: db,
+	})
+	cityService := locationServicePackage.NewCityService(&locationServicePackage.CitySConfig{
+		CityRepo: cityRepo,
+	})
+
+	locHandler := locationHandlerPackage.New(&locationHandlerPackage.Config{
+		CityService: cityService,
+	})
+
+	walletRepo := userRepoPackage.NewWalletRepository(&userRepoPackage.WalletRConfig{
+		DB: connection.GetDB(),
+	})
+	walletService := userServicePackage.NewWalletService(&userServicePackage.WalletSConfig{
+		WalletRepo: walletRepo,
+	})
+
+	userRepo := userRepoPackage.NewUserRepository(&userRepoPackage.UserRConfig{
+		DB: db,
+	})
+
+	userCache := userCache.NewUserCache(&userCache.UserCConfig{
+		RDC: redis,
+	})
+
+	userService := userServicePackage.NewUserService(&userServicePackage.UserSConfig{
+		Repository: userRepo,
+		Redis:      userCache,
+	})
+
+	userWishlistRepo := userRepoPackage.NewUserWishlistRepository(&userRepoPackage.UserWishlistRConfig{
+		DB: db,
+	})
+
+	userWishlistService := userServicePackage.NewUserWishlistService(&userServicePackage.UserWishlistSConfig{
 		UserWishlistRepository: userWishlistRepo,
 		UserService:            userService,
 		ProductService:         productService,
 	})
 
-	userHandler := userHandlerImport.NewHandler(&userHandlerImport.HandlerConfig{
+	userHandler := userHandlerPackage.New(&userHandlerPackage.HandlerConfig{
+		UserService:         userService,
+		WalletService:       walletService,
 		UserWishlistService: userWishlistService,
 	})
 
 	return NewRouter(&RouterConfig{
-		LocationHandler: locHandler,
 		UserHandler:     userHandler,
+		LocationHandler: locHandler,
 	})
 }
 

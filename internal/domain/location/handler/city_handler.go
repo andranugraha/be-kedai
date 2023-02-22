@@ -12,7 +12,7 @@ import (
 
 func (h *Handler) GetCities(c *gin.Context) {
 	var req dto.GetCitiesRequest
-	c.ShouldBindQuery(&req)
+	_ = c.ShouldBindQuery(&req)
 	req.Validate()
 
 	cities, err := h.cityService.GetCities(req)

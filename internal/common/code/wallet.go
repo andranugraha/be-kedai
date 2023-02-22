@@ -1,0 +1,5 @@
+package code
+
+const (
+	WALLET_ALREADY_EXIST = "WALLET_ALREADY_EXIST"
+)
