@@ -51,9 +51,8 @@ func TestUserRegister(t *testing.T) {
 				response: response.Response{
 					Code:    code.CREATED,
 					Message: "created",
-					Data: &dto.UserRegistration{
+					Data: &dto.UserRegistrationResponse{
 						Email:    "user@mail.com",
-						Password: "password",
 					},
 				},
 			},

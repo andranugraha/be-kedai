@@ -22,7 +22,7 @@ func TestSignUp(t *testing.T) {
 
 	type expected struct {
 		user *model.User
-		dto  *dto.UserRegistration
+		dto  *dto.UserRegistrationResponse
 		err  error
 	}
 
@@ -50,7 +50,7 @@ func TestSignUp(t *testing.T) {
 				user: &model.User{
 					Email: "user@mail.com",
 				},
-				dto: &dto.UserRegistration{
+				dto: &dto.UserRegistrationResponse{
 					Email: "user@mail.com",
 				},
 				err: nil,
