@@ -12,7 +12,71 @@ servers:
   - url: http://localhost:8080
 tags:
   - name: Location
+  - name: User
 paths:
+  /v1/users/wallets:
+    post:
+      tags:
+        - User
+      summary: Register user wallet
+      description: Create wallet for current authenticated user
+      requestBody:
+        $ref: '#/components/requestBodies/WalletBody'
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Response'
+                  - type: object
+                    properties:
+                      code:
+                        example: 'CREATED'
+                      message:
+                        example: 'wallet registered successfully'
+                      data:
+                        $ref: '#/components/schemas/Wallet'
+        '400':
+          description: Invalid pin
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "BAD_REQUEST"
+                  message:
+                    type: string
+                    example: "pin must be numeric and have 6 characters"
+        '409':
+          description: User already has a wallet
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "WALLET_ALREADY_EXIST"
+                  message:
+                    type: string
+                    example: "user only allowed to have one wallet"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "INTERNAL_SERVER_ERROR"
+                  message:
+                    type: string
+                    example: "error message"
   /v1/locations/cities:
     get:
       tags:
@@ -43,7 +107,7 @@ paths:
           description: most_shops to sort cities by most shops
       responses:
         '200':
-          description: successful operation
+          description: Successful operation
           content:
             application/json:
               schema:
@@ -91,6 +155,17 @@ components:
         provinceId:
           type: integer
           example: 6
+    Wallet:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        userId:
+          type: integer
+          example: 1
+        balance:
+          type: integer
     Response:
       type: object
       properties:
@@ -119,6 +194,17 @@ components:
         page:
           type: integer
           example: 1
+  requestBodies:
+    WalletBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              pin:
+                type: string
+                example: '123456'
   securitySchemes:
     BearerAuth:
       type: http
