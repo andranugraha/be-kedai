@@ -8,6 +8,11 @@ type UserRegistration struct {
 	Username string `json:"username"`
 }
 
+type UserRegistrationResponse struct {
+	Email    string `json:"email"`
+	Username string `json:"username"`
+}
+
 type UserLogin struct {
 	Email    string `json:"email" binding:"required,email"`
 	Password string `json:"password" binding:"required"`
@@ -20,7 +25,7 @@ func (d *UserRegistration) ToUser() *model.User {
 	}
 }
 
-func (d *UserRegistration) FromUser(user *model.User) {
+func (d *UserRegistrationResponse) FromUser(user *model.User) {
 	d.Email = user.Email
 	d.Username = user.Username
 }

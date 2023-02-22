@@ -15,7 +15,7 @@ import (
 type UserService interface {
 	GetByID(id int) (*model.User, error)
 
-	SignUp(*dto.UserRegistration) (*dto.UserRegistration, error)
+	SignUp(*dto.UserRegistration) (*dto.UserRegistrationResponse, error)
 	SignIn(*dto.UserLogin, string) (*dto.Token, error)
 	GetSession(userId int, token string) error
 }
@@ -41,7 +41,7 @@ func (s *userServiceImpl) GetByID(id int) (*model.User, error) {
 	return s.repository.GetByID(id)
 }
 
-func (s *userServiceImpl) SignUp(userReg *dto.UserRegistration) (*dto.UserRegistration, error) {
+func (s *userServiceImpl) SignUp(userReg *dto.UserRegistration) (*dto.UserRegistrationResponse, error) {
 	isValidPassword := pwValidator.VerifyPassword(userReg.Password)
 	if !isValidPassword {
 		return nil, errs.ErrInvalidPasswordPattern
@@ -61,10 +61,10 @@ func (s *userServiceImpl) SignUp(userReg *dto.UserRegistration) (*dto.UserRegist
 		return nil, err
 	}
 
-	userReg.FromUser(result)
-	userReg.Password = ""
+	var response dto.UserRegistrationResponse
+	response.FromUser(result)	
 
-	return userReg, nil
+	return &response, nil
 }
 
 func (s *userServiceImpl) SignIn(userLogin *dto.UserLogin, inputPw string) (*dto.Token, error) {
