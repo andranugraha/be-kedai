@@ -33,14 +33,14 @@ func NewRouter(cfg *RouterConfig) *gin.Engine {
 		{
 			user.POST("/register", cfg.UserHandler.UserRegistration)
 			user.POST("/login", cfg.UserHandler.UserLogin)
-			authenticated := user.Group("", middleware.JWTAuthorization, cfg.UserHandler.GetSession)
+			userAuthenticated := user.Group("", middleware.JWTAuthorization, cfg.UserHandler.GetSession)
 			{
-				authenticated.GET("", cfg.UserHandler.GetUserByID)
-				wallet := authenticated.Group("/wallets")
+				userAuthenticated.GET("", cfg.UserHandler.GetUserByID)
+				wallet := userAuthenticated.Group("/wallets")
 				{
 					wallet.POST("", cfg.UserHandler.RegisterWallet)
 				}
-				wishlists := authenticated.Group("/wishlists")
+				wishlists := userAuthenticated.Group("/wishlists")
 				{
 					wishlists.POST("", cfg.UserHandler.AddUserWishlist)
 				}
