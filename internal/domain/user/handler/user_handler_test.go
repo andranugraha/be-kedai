@@ -352,7 +352,7 @@ func TestGetUserByID(t *testing.T) {
 			},
 		},
 		{
-			description: "it should return status code 500 when something went wrong went trying to get user data",
+			description: "it should return status code 500 if something went wrong when trying to get user data",
 			input: input{
 				userId: 1,
 				data:   nil,
