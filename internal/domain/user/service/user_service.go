@@ -14,6 +14,7 @@ import (
 
 type UserService interface {
 	GetByID(id int) (*model.User, error)
+
 	SignUp(*dto.UserRegistration) (*dto.UserRegistration, error)
 	SignIn(*dto.UserLogin, string) (*dto.Token, error)
 	GetSession(userId int, token string) error
