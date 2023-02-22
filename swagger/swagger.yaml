@@ -10,12 +10,15 @@ externalDocs:
   url: http://swagger.io
 servers:
   - url: http://localhost:8080
+  - url: https://dev-kedai-y3gq8.ondigitalocean.app
 tags:
   - name: Location
   - name: User
 paths:
   /v1/users/wallets:
     post:
+      security:
+        - BearerAuth: []
       tags:
         - User
       summary: Register user wallet
@@ -422,6 +425,8 @@ components:
             properties:
               pin:
                 type: string
+                minLength: 6
+                description: numeric
                 example: '123456'
   securitySchemes:
     BearerAuth:
