@@ -68,11 +68,9 @@ func (r *userRepositoryImpl) SignUp(user *model.User) (*model.User, error) {
 	emailString := strings.Split(user.Email, "@")
 
 	username := fmt.Sprintf("%s%d", emailString[0], rand.Intn(999))
-
 	user.Username = username
 
 	hashedPw, _ := hash.HashAndSalt(user.Password)
-
 	user.Password = hashedPw
 
 	err := r.db.Clauses(clause.OnConflict{DoNothing: true}).Create(&user)

@@ -21,7 +21,7 @@ import (
 
 func TestUserRegister(t *testing.T) {
 	type input struct {
-		user *dto.UserRegistration
+		user *dto.UserRegistrationRequest
 		err  error
 	}
 
@@ -40,7 +40,7 @@ func TestUserRegister(t *testing.T) {
 		{
 			description: "should return created user data when successfully registered",
 			input: input{
-				user: &dto.UserRegistration{
+				user: &dto.UserRegistrationRequest{
 					Email:    "user@mail.com",
 					Password: "password",
 				},
@@ -51,9 +51,8 @@ func TestUserRegister(t *testing.T) {
 				response: response.Response{
 					Code:    code.CREATED,
 					Message: "created",
-					Data: &dto.UserRegistration{
-						Email:    "user@mail.com",
-						Password: "password",
+					Data: &dto.UserRegistrationResponse{
+						Email: "user@mail.com",
 					},
 				},
 			},
@@ -61,7 +60,7 @@ func TestUserRegister(t *testing.T) {
 		{
 			description: "should return error when required input not met condition",
 			input: input{
-				user: &dto.UserRegistration{
+				user: &dto.UserRegistrationRequest{
 					Email: "user@mail.com",
 				},
 				err: errors.New("bad request"),
@@ -78,7 +77,7 @@ func TestUserRegister(t *testing.T) {
 		{
 			description: "should return error when email already registered",
 			input: input{
-				user: &dto.UserRegistration{
+				user: &dto.UserRegistrationRequest{
 					Email:    "user@mail.com",
 					Password: "password",
 				},
@@ -94,9 +93,45 @@ func TestUserRegister(t *testing.T) {
 			},
 		},
 		{
+			description: "should return error when invalid password pattern",
+			input: input{
+				user: &dto.UserRegistrationRequest{
+					Email:    "user@mail.com",
+					Password: "password",
+				},
+				err: errs.ErrInvalidPasswordPattern,
+			},
+			expected: expected{
+				statusCode: http.StatusUnprocessableEntity,
+				response: response.Response{
+					Code:    code.INVALID_PASSWORD_PATTERN,
+					Message: "invalid password pattern",
+					Data:    nil,
+				},
+			},
+		},
+		{
+			description: "should return error when password contain email address",
+			input: input{
+				user: &dto.UserRegistrationRequest{
+					Email:    "user@mail.com",
+					Password: "passworD1user",
+				},
+				err: errs.ErrContainEmail,
+			},
+			expected: expected{
+				statusCode: http.StatusUnprocessableEntity,
+				response: response.Response{
+					Code:    code.PASSWORD_CONTAIN_EMAIL,
+					Message: "password cannot contain email address",
+					Data:    nil,
+				},
+			},
+		},
+		{
 			description: "should return error when server internal error",
 			input: input{
-				user: &dto.UserRegistration{
+				user: &dto.UserRegistrationRequest{
 					Email:    "user@mail.com",
 					Password: "password",
 				},
