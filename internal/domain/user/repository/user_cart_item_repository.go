@@ -11,6 +11,7 @@ import (
 type UserCartItemRepository interface {
 	CreateCartItem(cartItem *model.UserCartItem) (*model.UserCartItem, error)
 	GetCartItemByUserIdAndSkuId(userId int, skuId int) (*model.UserCartItem, error)
+	UpdateCartItem(cartItem *model.UserCartItem) (*model.UserCartItem, error)
 }
 
 type userCartItemRepository struct {
@@ -50,4 +51,17 @@ func (r *userCartItemRepository) GetCartItemByUserIdAndSkuId(userId int, skuId i
 	}
 
 	return &cartItem, nil
+}
+
+func (r *userCartItemRepository) UpdateCartItem(cartItem *model.UserCartItem) (*model.UserCartItem, error) {
+	res := r.db.Model(&cartItem).Updates(cartItem)
+	if err := res.Error; err != nil {
+		return nil, err
+	}
+
+	if res.RowsAffected < 1 {
+		return nil, errs.ErrCartItemNotFound
+	}
+
+	return cartItem, nil
 }
