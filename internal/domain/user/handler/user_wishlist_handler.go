@@ -12,7 +12,7 @@ import (
 )
 
 func (h *Handler) AddUserWishlist(c *gin.Context) {
-	var req dto.UserWishlistRequest
+	var req dto.AddUserWishlistRequest
 	userId := c.GetInt("userId")
 
 	err := c.ShouldBindJSON(&req)

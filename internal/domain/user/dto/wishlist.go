@@ -1,6 +1,6 @@
 package dto
 
-type UserWishlistRequest struct {
+type AddUserWishlistRequest struct {
 	UserID    int `json:"userId"`
-	ProductId int `json:"productCode" binding:"required"`
+	ProductID int `json:"productId" binding:"required"`
 }
