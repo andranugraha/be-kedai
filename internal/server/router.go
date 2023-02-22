@@ -35,7 +35,7 @@ func NewRouter(cfg *RouterConfig) *gin.Engine {
 			user.POST("/login", cfg.UserHandler.UserLogin)
 			authenticated := user.Group("", middleware.JWTAuthorization, cfg.UserHandler.GetSession)
 			{
-				authenticated.GET("", middleware.JWTAuthorization, cfg.UserHandler.GetSession, cfg.UserHandler.GetUserByID)
+				authenticated.GET("", cfg.UserHandler.GetUserByID)
 				wallet := authenticated.Group("/wallets")
 				{
 					wallet.POST("", cfg.UserHandler.RegisterWallet)
