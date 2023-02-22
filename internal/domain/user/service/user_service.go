@@ -8,6 +8,8 @@ import (
 	"kedai/backend/be-kedai/internal/domain/user/repository"
 	"kedai/backend/be-kedai/internal/utils/hash"
 	jwttoken "kedai/backend/be-kedai/internal/utils/jwtToken"
+	pwValidator "kedai/backend/be-kedai/internal/utils/string"
+	"strings"
 )
 
 type UserService interface {
@@ -39,6 +41,16 @@ func (s *userServiceImpl) GetByID(id int) (*model.User, error) {
 }
 
 func (s *userServiceImpl) SignUp(userReg *dto.UserRegistration) (*dto.UserRegistration, error) {
+	isValidPassword := pwValidator.VerifyPassword(userReg.Password)
+	if !isValidPassword {
+		return nil, errs.ErrInvalidPasswordPattern
+	}
+
+	isContainEmail := strings.Contains(strings.ToLower(userReg.Password), strings.ToLower(userReg.Email))
+	if isContainEmail {
+		return nil, errs.ErrContainEmail
+	}
+
 	user := userReg.ToUser()
 
 	result, err := s.repository.SignUp(user)
@@ -47,6 +59,7 @@ func (s *userServiceImpl) SignUp(userReg *dto.UserRegistration) (*dto.UserRegist
 	}
 
 	userReg.FromUser(result)
+	userReg.Password = ""
 
 	return userReg, nil
 }
