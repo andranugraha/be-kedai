@@ -105,34 +105,6 @@ func TestSignUp(t *testing.T) {
 }
 
 func TestSignIn(t *testing.T) {
-	// t.Run("should return access token when user logged in", func(t *testing.T) {
-	// 	hashedPw, _ := hash.HashAndSalt("password")
-	// 	user := &model.User{
-	// 		Email:    "user@mail.com",
-	// 		Password: "password",
-	// 	}
-	// 	dto := &dto.UserLogin{
-	// 		Email:    "user@mail.com",
-	// 		Password: "password",
-	// 	}
-	// 	expectedUser := &model.User{
-	// 		Email:    "user@mail.com",
-	// 		Password: hashedPw,
-	// 	}
-	// 	mockRepo := new(mocks.UserRepository)
-	// 	mockRedis := new(mocks.UserCache)
-	// 	service := service.NewUserService(&service.UserSConfig{
-	// 		Repository: mockRepo,
-	// 		Redis: mockRedis,
-	// 	})
-	// 	mockRepo.On("SignIn", user).Return(expectedUser, nil)
-	// 	mockRedis.On("StoreToken", 0, "token", "token").Return(nil)
-
-	// 	result, _ := service.SignIn(dto, dto.Password)
-
-	// 	assert.NotNil(t, result)
-	// })
-
 	t.Run("should return error when invalid credential", func(t *testing.T) {
 		hashedPw, _ := hash.HashAndSalt("password")
 		user := &model.User{
