@@ -83,6 +83,8 @@ paths:
                     example: "error message"
   /v1/users:
     get:
+      security:
+        - BearerAuth: []
       tags:
         - User
       summary: Get user profile
@@ -350,7 +352,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/UserWishlistRequest'
+              $ref: '#/components/requestBodies/AddWishlistBody'
       responses:
         '201':
           description: successful operation
@@ -571,12 +573,6 @@ components:
         productId:
           type: integer
           example: 1
-    UserWishlistRequest:
-      type: object
-      properties:
-        productId:
-          type: integer
-          example: "ITEM-001"
   requestBodies:
     WalletBody:
       required: true
@@ -590,6 +586,12 @@ components:
                 minLength: 6
                 description: numeric
                 example: '123456'
+    AddWishlistBody:
+      type: object
+      properties:
+        productId:
+          type: integer
+          example: 1
   securitySchemes:
     BearerAuth:
       type: http
