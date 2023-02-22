@@ -14,7 +14,6 @@ servers:
 tags:
   - name: Location
   - name: User
-  - name: Wishlist
 paths:
   /v1/users/wallets:
     post:
@@ -134,18 +133,7 @@ paths:
       summary: Register new user
       description: Register new user data
       requestBody:
-        description: Create new user register data
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                email:
-                  type: string
-                  example: "user@mail.com"
-                password:
-                  type: string
-                  example: "password"
+        $ref: '#/components/requestBodies/RegisterUserBody'
       responses:
         '201':
           description: successful operation
@@ -224,18 +212,7 @@ paths:
       summary: User login
       description: User login to get auth token
       requestBody:
-        description: Create new user login request
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                email:
-                  type: string
-                  example: "user@mail.com"
-                password:
-                  type: string
-                  example: "password"
+        $ref: '#/components/requestBodies/LoginUserBody'
       responses:
         '200':
           description: successful operation
@@ -287,7 +264,6 @@ paths:
                   message:
                     type: string
                     example: "error message"
-  
   /v1/locations/cities:
     get:
       tags:
@@ -357,15 +333,11 @@ paths:
       security:
         - BearerAuth: []
       tags:
-        - Wishlist
         - User
       summary: Add product to wishlist
       description: Add product to wishlist
       requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/requestBodies/AddWishlistBody'
+        $ref: '#/components/requestBodies/AddWishlistBody'
       responses:
         '201':
           description: successful operation
@@ -593,18 +565,62 @@ components:
         application/json:
           schema:
             type: object
+            required:
+              - pin
             properties:
               pin:
                 type: string
                 minLength: 6
                 description: numeric
                 example: '123456'
+    RegisterUserBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - email
+              - password
+            properties:
+              email:
+                type: string
+                example: "user@mail.com"
+                description: email is case insensitive
+              password:
+                type: string
+                minLength: 8
+                maxLength: 16
+                description: password must include at least one uppercase letter, one lowercase letter, and one numeric. Also password must not include email name
+                example: "P4ssword"
+    LoginUserBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - email
+              - password
+            properties:
+              email:
+                type: string
+                example: "user@mail.com"
+              password:
+                type: string
+                example: "password"
     AddWishlistBody:
-      type: object
-      properties:
-        productId:
-          type: integer
-          example: 1
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - productId
+            properties:
+              productId:
+                type: integer
+                example: 1
   securitySchemes:
     BearerAuth:
       type: http
