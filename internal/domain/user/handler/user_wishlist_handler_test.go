@@ -19,13 +19,13 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestUserWishlist_AddUserWishlist(t *testing.T) {
+func TestAddUserWishlist(t *testing.T) {
 	var (
 		userId         = 1
 		productId      = 1
-		invalidRequest = &dto.UserWishlistRequest{}
-		validRequest   = &dto.UserWishlistRequest{
-			ProductId: productId,
+		invalidRequest = &dto.AddUserWishlistRequest{}
+		validRequest   = &dto.AddUserWishlistRequest{
+			ProductID: productId,
 			UserID:    userId,
 		}
 		wishlist = &model.UserWishlist{
@@ -34,7 +34,7 @@ func TestUserWishlist_AddUserWishlist(t *testing.T) {
 		}
 	)
 	type input struct {
-		data        *dto.UserWishlistRequest
+		data        *dto.AddUserWishlistRequest
 		beforeTests func(mockUserWishlistService *mocks.UserWishlistService)
 	}
 	type expected struct {
