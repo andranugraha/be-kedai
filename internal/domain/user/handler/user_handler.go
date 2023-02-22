@@ -42,6 +42,14 @@ func (h *Handler) UserRegistration(c *gin.Context) {
 			response.Error(c, http.StatusConflict, code.EMAIL_ALREADY_REGISTERED, errs.ErrUserAlreadyExist.Error())
 			return
 		}
+		if errors.Is(err, errs.ErrInvalidPasswordPattern) {
+			response.Error(c, http.StatusUnprocessableEntity, code.INVALID_PASSWORD_PATTERN, err.Error())
+			return
+		}
+		if errors.Is(err, errs.ErrContainEmail) {
+			response.Error(c, http.StatusUnprocessableEntity, code.PASSWORD_CONTAIN_EMAIL, err.Error())
+			return
+		}
 
 		response.Error(c, http.StatusInternalServerError, code.INTERNAL_SERVER_ERROR, err.Error())
 		return
