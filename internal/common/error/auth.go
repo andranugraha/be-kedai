@@ -2,6 +2,6 @@ package error
 
 import "errors"
 
-var(
+var (
 	ErrInvalidToken = errors.New("failed to authenticate")
 )
