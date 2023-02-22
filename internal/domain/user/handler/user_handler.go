@@ -7,6 +7,7 @@ import (
 	"kedai/backend/be-kedai/internal/domain/user/dto"
 	"kedai/backend/be-kedai/internal/utils/response"
 	"net/http"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 )
@@ -31,4 +32,38 @@ func (h *Handler) UserRegistration(c *gin.Context) {
 	}
 
 	response.Success(c, http.StatusCreated, code.CREATED, "created", user)
+}
+
+func (h *Handler) UserLogin(c *gin.Context) {
+	var newLogin dto.UserLogin
+	errBinding := c.ShouldBindJSON(&newLogin)
+	if errBinding != nil {
+		response.ErrorValidator(c, http.StatusBadRequest, errBinding)
+		return
+	}
+
+	token, err := h.userService.SignIn(&newLogin, newLogin.Password)
+	if err != nil {
+		if errors.Is(err, errs.ErrInvalidCredential) {
+			response.Error(c, http.StatusUnauthorized, code.UNAUTHORIZED, err.Error())
+			return
+		}
+
+		response.Error(c, http.StatusInternalServerError, code.INTERNAL_SERVER_ERROR, err.Error())
+		return
+	}
+
+	response.Success(c, http.StatusOK, code.OK, "ok", token)
+}
+
+func (h *Handler) GetSession(c *gin.Context) {
+	userId := c.GetInt("userId")
+	token := c.GetHeader("authorization")
+	parsedToken := strings.Replace(token, "Bearer ", "", -1)
+
+	err := h.userService.GetSession(userId, parsedToken)
+	if err != nil {
+		response.Error(c, http.StatusUnauthorized, code.UNAUTHORIZED, err.Error())
+		return
+	}
 }
