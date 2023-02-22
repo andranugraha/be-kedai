@@ -54,6 +54,7 @@ func (s *userServiceImpl) SignUp(userReg *dto.UserRegistration) (*dto.UserRegist
 	}
 
 	user := userReg.ToUser()
+	user.Email = strings.ToLower(user.Email)
 
 	result, err := s.repository.SignUp(user)
 	if err != nil {
