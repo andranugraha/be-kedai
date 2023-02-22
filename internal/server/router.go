@@ -28,9 +28,10 @@ func NewRouter(cfg *RouterConfig) *gin.Engine {
 	{
 		v1.Static("/docs", "swagger")
 
-		users := v1.Group("/users")
+		user := v1.Group("/users")
 		{
-			users.POST("/register", cfg.UserHandler.UserRegistration)
+			user.POST("/register", cfg.UserHandler.UserRegistration)
+			user.POST("/login", cfg.UserHandler.UserLogin)
 		}
 
 		location := v1.Group("/locations")
