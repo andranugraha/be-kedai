@@ -97,7 +97,7 @@ func TestUserWishlist_AddUserWishlist(t *testing.T) {
 		},
 
 		{
-			description: "it should return error product in wishlist and bad request if product already in wishlist",
+			description: "it should return error product in wishlist and status code conflict if product already in wishlist",
 			input: input{
 				data: validRequest,
 				beforeTests: func(mockWishlistService *mocks.UserWishlistService) {
@@ -109,7 +109,7 @@ func TestUserWishlist_AddUserWishlist(t *testing.T) {
 					Code:    code.PRODUCT_ALREADY_IN_WISHLIST,
 					Message: errs.ErrProductInWishlist.Error(),
 				},
-				statusCode: http.StatusBadRequest,
+				statusCode: http.StatusConflict,
 			},
 		},
 

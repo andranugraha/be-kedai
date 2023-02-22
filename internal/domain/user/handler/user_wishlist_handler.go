@@ -36,7 +36,7 @@ func (h *Handler) AddUserWishlist(c *gin.Context) {
 		}
 
 		if errors.Is(err, errs.ErrProductInWishlist) {
-			response.Error(c, http.StatusBadRequest, code.PRODUCT_ALREADY_IN_WISHLIST, err.Error())
+			response.Error(c, http.StatusConflict, code.PRODUCT_ALREADY_IN_WISHLIST, err.Error())
 			return
 		}
 
