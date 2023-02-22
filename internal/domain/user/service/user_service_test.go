@@ -105,35 +105,6 @@ func TestSignUp(t *testing.T) {
 }
 
 func TestSignIn(t *testing.T) {
-
-	// t.Run("should return access token when user logged in", func(t *testing.T) {
-	// 	hashedPw, _ := hash.HashAndSalt("password")
-	// 	user := &model.User{
-	// 		Email:    "user@mail.com",
-	// 		Password: "password",
-	// 	}
-	// 	dto := &dto.UserLogin{
-	// 		Email:    "user@mail.com",
-	// 		Password: "password",
-	// 	}
-	// 	expectedUser := &model.User{
-	// 		Email:    "user@mail.com",
-	// 		Password: hashedPw,
-	// 	}
-	// 	mockRepo := new(mocks.UserRepository)
-	// 	mockRedis := new(mocks.UserCache)
-	// 	service := service.NewUserService(&service.UserSConfig{
-	// 		Repository: mockRepo,
-	// 		Redis: mockRedis,
-	// 	})
-	// 	mockRepo.On("SignIn", user).Return(expectedUser, nil)
-	// 	mockRedis.On("StoreToken", 0, "token", "token").Return(nil)
-
-	// 	result, _ := service.SignIn(dto, dto.Password)
-
-	// 	assert.NotNil(t, result)
-	// })
-
 	t.Run("should return error when invalid credential", func(t *testing.T) {
 		hashedPw, _ := hash.HashAndSalt("password")
 		user := &model.User{
@@ -232,7 +203,7 @@ func TestSignIn(t *testing.T) {
 	}
 }
 
-func TestUserUsecase_GetByID(t *testing.T) {
+func TestGetByID(t *testing.T) {
 	type input struct {
 		id   int
 		data *model.User
@@ -305,8 +276,8 @@ func TestUserUsecase_GetByID(t *testing.T) {
 func TestGetSession(t *testing.T) {
 	type input struct {
 		userId int
-		token string
-		err error
+		token  string
+		err    error
 	}
 
 	type expected struct {
@@ -324,8 +295,8 @@ func TestGetSession(t *testing.T) {
 			description: "should return nil error when session available",
 			input: input{
 				userId: 1,
-				token: "token",
-				err: nil,
+				token:  "token",
+				err:    nil,
 			},
 			expected: expected{
 				err: nil,
@@ -335,8 +306,8 @@ func TestGetSession(t *testing.T) {
 			description: "should return error when session unavailable",
 			input: input{
 				userId: 1,
-				token: "token",
-				err: errors.New("error"),
+				token:  "token",
+				err:    errors.New("error"),
 			},
 			expected: expected{
 				err: errors.New("error"),
