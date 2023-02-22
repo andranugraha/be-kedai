@@ -76,6 +76,44 @@ func TestSignUp(t *testing.T) {
 			},
 		},
 		{
+			description: "should return error when invalid password pattern",
+			input: input{
+				user: &model.User{
+					Email: "user@mail.com",
+					Password: "Password",
+				},
+				dto: &dto.UserRegistration{
+					Email: "user@mail.com",
+					Password: "Password",
+				},
+				err: errs.ErrInvalidPasswordPattern,
+			},
+			expected: expected{
+				user: nil,
+				dto:  nil,
+				err:  errs.ErrInvalidPasswordPattern,
+			},
+		},
+		{
+			description: "should return error when password contain email address",
+			input: input{
+				user: &model.User{
+					Email: "user@mail.com",
+					Password: "Password1user",
+				},
+				dto: &dto.UserRegistration{
+					Email: "user@mail.com",
+					Password: "Password1user",
+				},
+				err: errs.ErrContainEmail,
+			},
+			expected: expected{
+				user: nil,
+				dto:  nil,
+				err:  errs.ErrContainEmail,
+			},
+		},
+		{
 			description: "should return error when registering same user 2 times",
 			input: input{
 				user: &model.User{
