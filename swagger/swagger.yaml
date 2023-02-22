@@ -287,6 +287,8 @@ components:
           example: user_name
         profile:
           $ref: '#/components/schemas/UserProfile'
+        shop:
+          $ref: '#/components/schemas/Shop'
     UserProfile:
       type: object
       properties:
@@ -314,6 +316,25 @@ components:
           example: 1
         defaultAddressId:
           type: number
+          example: 1
+    Shop:
+      type: object
+      properties:
+        id: 
+          type: integer
+          example: 1
+        name:
+          type: string
+          example: user shop
+        rating:
+          type: float
+          example: 4.9
+        joinedDate:
+          type: string
+          format: datetime
+          example: 2006-01-02T00:00:00Z
+        userId:
+          type: integer
           example: 1
     Token:
       type: object
