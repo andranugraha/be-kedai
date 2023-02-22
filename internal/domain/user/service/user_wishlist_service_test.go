@@ -45,8 +45,8 @@ func TestAddUserWishlist(t *testing.T) {
 			description: "it should return nil data and error user not exist if user does not exist",
 			input: input{
 				data: &dto.AddUserWishlistRequest{
-					UserID:    user.ID,
-					ProductID: product.ID,
+					UserId:    user.ID,
+					ProductId: product.ID,
 				},
 				err: errs.ErrUserDoesNotExist,
 				beforeTests: func(mockWishlistRepo *mocks.UserWishlistRepository, mockUserService *mocks.UserService, mockProductService *mocks.ProductService) {
@@ -62,8 +62,8 @@ func TestAddUserWishlist(t *testing.T) {
 			description: "it should return nil data and error product not exist if product does not exist",
 			input: input{
 				data: &dto.AddUserWishlistRequest{
-					UserID:    user.ID,
-					ProductID: product.ID,
+					UserId:    user.ID,
+					ProductId: product.ID,
 				},
 				err: errs.ErrProductDoesNotExist,
 				beforeTests: func(mockWishlistRepo *mocks.UserWishlistRepository, mockUserService *mocks.UserService, mockProductService *mocks.ProductService) {
@@ -80,8 +80,8 @@ func TestAddUserWishlist(t *testing.T) {
 			description: "it should return nil data and error product in wishlist if user wishlist aleardy exists",
 			input: input{
 				data: &dto.AddUserWishlistRequest{
-					UserID:    user.ID,
-					ProductID: product.ID,
+					UserId:    user.ID,
+					ProductId: product.ID,
 				},
 				err: errs.ErrProductInWishlist,
 				beforeTests: func(mockWishlistRepo *mocks.UserWishlistRepository, mockUserService *mocks.UserService, mockProductService *mocks.ProductService) {
@@ -99,8 +99,8 @@ func TestAddUserWishlist(t *testing.T) {
 			description: "it should return wishlist data and nil error",
 			input: input{
 				data: &dto.AddUserWishlistRequest{
-					UserID:    user.ID,
-					ProductID: product.ID,
+					UserId:    user.ID,
+					ProductId: product.ID,
 				},
 				err: nil,
 				beforeTests: func(mockWishlistRepo *mocks.UserWishlistRepository, mockUserService *mocks.UserService, mockProductService *mocks.ProductService) {

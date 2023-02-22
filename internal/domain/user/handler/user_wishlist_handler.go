@@ -20,7 +20,7 @@ func (h *Handler) AddUserWishlist(c *gin.Context) {
 		response.ErrorValidator(c, http.StatusBadRequest, err)
 		return
 	}
-	req.UserID = userId
+	req.UserId = userId
 
 	userWishlist, err := h.userWishlistService.AddUserWishlist(&req)
 

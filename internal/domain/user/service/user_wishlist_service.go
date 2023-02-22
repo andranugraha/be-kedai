@@ -34,12 +34,12 @@ func NewUserWishlistService(cfg *UserWishlistSConfig) UserWishlistService {
 func (s *userWishlistServiceImpl) AddUserWishlist(req *dto.AddUserWishlistRequest) (*model.UserWishlist, error) {
 	var userWishlist model.UserWishlist
 
-	user, err := s.userService.GetByID(req.UserID)
+	user, err := s.userService.GetByID(req.UserId)
 	if err != nil {
 		return nil, err
 	}
 
-	product, err := s.productService.GetByID(req.ProductID)
+	product, err := s.productService.GetByID(req.ProductId)
 	if err != nil {
 		return nil, err
 	}

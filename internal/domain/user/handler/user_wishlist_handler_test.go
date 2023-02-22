@@ -25,12 +25,12 @@ func TestAddUserWishlist(t *testing.T) {
 		productId      = 1
 		invalidRequest = &dto.AddUserWishlistRequest{}
 		validRequest   = &dto.AddUserWishlistRequest{
-			ProductID: productId,
-			UserID:    userId,
+			ProductId: productId,
+			UserId:    userId,
 		}
 		wishlist = &model.UserWishlist{
 			ProductID: 1,
-			UserID:    validRequest.UserID,
+			UserID:    validRequest.UserId,
 		}
 	)
 	type input struct {
@@ -172,7 +172,6 @@ func TestAddUserWishlist(t *testing.T) {
 			expectedJson, _ := json.Marshal(tc.expected.data)
 			assert.Equal(t, expectedJson, rec.Body.Bytes())
 			assert.Equal(t, tc.expected.statusCode, rec.Code)
-
 		})
 	}
 }
