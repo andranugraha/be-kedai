@@ -47,7 +47,8 @@ func (s *userServiceImpl) SignUp(userReg *dto.UserRegistration) (*dto.UserRegist
 		return nil, errs.ErrInvalidPasswordPattern
 	}
 
-	isContainEmail := strings.Contains(strings.ToLower(userReg.Password), strings.ToLower(userReg.Email))
+	emailSplit := strings.Split(userReg.Email, "@")
+	isContainEmail := strings.Contains(strings.ToLower(userReg.Password), strings.ToLower(emailSplit[0]))
 	if isContainEmail {
 		return nil, errs.ErrContainEmail
 	}
