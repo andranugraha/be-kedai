@@ -43,6 +43,7 @@ func NewRouter(cfg *RouterConfig) *gin.Engine {
 				wishlists := userAuthenticated.Group("/wishlists")
 				{
 					wishlists.POST("", cfg.UserHandler.AddUserWishlist)
+					wishlists.DELETE("/:productId", cfg.UserHandler.RemoveUserWishlist)
 				}
 			}
 		}
@@ -50,9 +51,10 @@ func NewRouter(cfg *RouterConfig) *gin.Engine {
 		location := v1.Group("/locations")
 		{
 			location.GET("/cities", cfg.LocationHandler.GetCities)
+
 		}
+		r.Static("/docs", "swagger")
 
+		return r
 	}
-
-	return r
 }

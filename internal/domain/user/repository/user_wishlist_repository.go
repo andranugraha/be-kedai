@@ -9,6 +9,7 @@ import (
 
 type UserWishlistRepository interface {
 	AddUserWishlist(userWishlist *model.UserWishlist) (*model.UserWishlist, error)
+	RemoveUserWishlist(userWishlist *model.UserWishlist) error
 }
 
 type userWishlistRepositoryImpl struct {
@@ -35,4 +36,18 @@ func (r *userWishlistRepositoryImpl) AddUserWishlist(userWishlist *model.UserWis
 	}
 
 	return userWishlist, nil
+}
+
+func (r *userWishlistRepositoryImpl) RemoveUserWishlist(userWishlist *model.UserWishlist) error {
+	// hard delete
+	res := r.db.Unscoped().Where("user_id = ? AND product_id = ?", userWishlist.UserID, userWishlist.ProductID).Delete(&model.UserWishlist{})
+	if err := res.Error; err != nil {
+		return err
+	}
+
+	if res.RowsAffected < 1 {
+		return errs.ErrProductNotInWishlist
+	}
+
+	return nil
 }
