@@ -6,6 +6,7 @@ func VerifyPassword(pw string) bool {
 	var containUpper bool
 	var containLower bool
 	var containNumeric bool
+	var containLetter bool
 
 	for _, c := range pw {
 		switch {
@@ -15,10 +16,12 @@ func VerifyPassword(pw string) bool {
 			containLower = true
 		case unicode.IsNumber(c):
 			containNumeric = true
+		case unicode.IsLetter(c):
+			containLetter = true
 		}
 	}
 
-	if containNumeric && containUpper && containLower {
+	if containNumeric && containUpper && containLower && containLetter {
 		return true
 	}
 
