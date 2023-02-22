@@ -131,32 +131,30 @@ func TestUserRegister(t *testing.T) {
 	}
 }
 
-func TestGetUserByID(t *testing.T) {
+func TestUserLogin(t *testing.T) {
 	type input struct {
-		userId int
-		data   *model.User
-		err    error
+		dto *dto.UserLogin
+		err error
 	}
+
 	type expected struct {
 		statusCode int
 		response   response.Response
 	}
 
-	cases := []struct {
+	type cases struct {
 		description string
 		input
 		expected
-	}{
+	}
+
+	for _, tc := range []cases{
 		{
-			description: "it should return user data with status code 200 if successed getting user data",
+			description: "should return access token when user log in accepted",
 			input: input{
-				userId: 1,
-				data: &model.User{
-					Email:    "user@email.com",
-					Username: "user_name",
-					Profile: &model.UserProfile{
-						UserID: 1,
-					},
+				dto: &dto.UserLogin{
+					Email:    "user@mail.com",
+					Password: "password",
 				},
 				err: nil,
 			},
@@ -165,37 +163,51 @@ func TestGetUserByID(t *testing.T) {
 				response: response.Response{
 					Code:    code.OK,
 					Message: "ok",
-					Data: &model.User{
-						Email:    "user@email.com",
-						Username: "user_name",
-						Profile: &model.UserProfile{
-							UserID: 1,
-						},
-					},
+					Data:    &dto.Token{},
 				},
 			},
 		},
 		{
-			description: "it should return status code 404 when user does not exist",
+			description: "should return error when required input not met condition",
 			input: input{
-				userId: 1,
-				data:   nil,
-				err:    errs.ErrUserDoesNotExist,
+				dto: &dto.UserLogin{
+					Email: "user@mail.com",
+				},
+				err: errors.New("bad request"),
 			},
 			expected: expected{
-				statusCode: http.StatusNotFound,
+				statusCode: http.StatusBadRequest,
 				response: response.Response{
-					Code:    code.USER_NOT_REGISTERED,
-					Message: errs.ErrUserDoesNotExist.Error(),
+					Code:    code.BAD_REQUEST,
+					Message: "Password is required",
 				},
 			},
 		},
 		{
-			description: "it should return status code 500 when something went wrong went trying to get user data",
+			description: "should return error when user input wrong password",
 			input: input{
-				userId: 1,
-				data:   nil,
-				err:    errs.ErrInternalServerError,
+				dto: &dto.UserLogin{
+					Email:    "user@mail.com",
+					Password: "password",
+				},
+				err: errs.ErrInvalidCredential,
+			},
+			expected: expected{
+				statusCode: http.StatusUnauthorized,
+				response: response.Response{
+					Code:    code.UNAUTHORIZED,
+					Message: errs.ErrInvalidCredential.Error(),
+				},
+			},
+		},
+		{
+			description: "should return error when internal server error",
+			input: input{
+				dto: &dto.UserLogin{
+					Email:    "user@mail.com",
+					Password: "password",
+				},
+				err: errs.ErrInternalServerError,
 			},
 			expected: expected{
 				statusCode: http.StatusInternalServerError,
@@ -205,26 +217,77 @@ func TestGetUserByID(t *testing.T) {
 				},
 			},
 		},
+	} {
+		t.Run(tc.description, func(t *testing.T) {
+			expectedBody, _ := json.Marshal(tc.expected.response)
+			rec := httptest.NewRecorder()
+			c, _ := gin.CreateTestContext(rec)
+			mockService := new(mocks.UserService)
+			mockService.On("SignIn", tc.input.dto, tc.input.dto.Password).Return(tc.expected.response.Data, tc.input.err)
+			h := handler.New(&handler.HandlerConfig{
+				UserService: mockService,
+			})
+			c.Request = httptest.NewRequest("POST", "/users/login", test.MakeRequestBody(tc.input.dto))
+
+			h.UserLogin(c)
+
+			assert.Equal(t, tc.expected.statusCode, rec.Code)
+			assert.Equal(t, string(expectedBody), rec.Body.String())
+		})
+	}
+}
+
+func TestGetSession(t *testing.T) {
+	type input struct {
+		userId int
+		token string
+		err error
 	}
 
-	for _, tc := range cases {
+	type expected struct {
+		statusCode int
+		response response.Response
+	}
+
+	type cases struct {
+		description string
+		input
+		expected
+	}
+
+	for _, tc := range []cases{
+		{
+			description: "should return error when a session is unavailable",
+			input: input{
+				userId: 1,
+				token: "",
+				err: errors.New("error"),
+			},
+			expected: expected{
+				statusCode: 401,
+				response: response.Response{
+					Code: code.UNAUTHORIZED,
+					Message: "error",
+				},
+			},
+		},
+	} {
 		t.Run(tc.description, func(t *testing.T) {
-			expectedRes, _ := json.Marshal(tc.expected.response)
+			expectedBody, _ := json.Marshal(tc.expected.response)
 			rec := httptest.NewRecorder()
 			c, _ := gin.CreateTestContext(rec)
 			c.Set("userId", tc.input.userId)
-			userServiceMock := mocks.NewUserService(t)
-			userServiceMock.On("GetByID", tc.input.userId).Return(tc.input.data, tc.input.err)
-			cfg := handler.HandlerConfig{
-				UserService: userServiceMock,
-			}
-			h := handler.New(&cfg)
-			c.Request, _ = http.NewRequest("GET", "/users", nil)
+			mockService := new(mocks.UserService)
+			mockService.On("GetSession", tc.input.userId, tc.input.token).Return(tc.input.err)
+			h := handler.New(&handler.HandlerConfig{
+				UserService: mockService,
+			})
+			c.Request = httptest.NewRequest("POST", "/users/login", nil)
 
-			h.GetUserByID(c)
+			h.GetSession(c)
 
 			assert.Equal(t, tc.expected.statusCode, rec.Code)
-			assert.Equal(t, string(expectedRes), rec.Body.String())
+			assert.Equal(t, string(expectedBody), rec.Body.String())
 		})
 	}
 }

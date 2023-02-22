@@ -6,6 +6,7 @@ import (
 	"kedai/backend/be-kedai/internal/domain/user/dto"
 	"kedai/backend/be-kedai/internal/domain/user/model"
 	"kedai/backend/be-kedai/internal/domain/user/service"
+	"kedai/backend/be-kedai/internal/utils/hash"
 	mocks "kedai/backend/be-kedai/mocks"
 	"testing"
 
@@ -103,6 +104,133 @@ func TestSignUp(t *testing.T) {
 	}
 }
 
+func TestSignIn(t *testing.T) {
+	// t.Run("should return access token when user logged in", func(t *testing.T) {
+	// 	hashedPw, _ := hash.HashAndSalt("password")
+	// 	user := &model.User{
+	// 		Email:    "user@mail.com",
+	// 		Password: "password",
+	// 	}
+	// 	dto := &dto.UserLogin{
+	// 		Email:    "user@mail.com",
+	// 		Password: "password",
+	// 	}
+	// 	expectedUser := &model.User{
+	// 		Email:    "user@mail.com",
+	// 		Password: hashedPw,
+	// 	}
+	// 	mockRepo := new(mocks.UserRepository)
+	// 	mockRedis := new(mocks.UserCache)
+	// 	service := service.NewUserService(&service.UserSConfig{
+	// 		Repository: mockRepo,
+	// 		Redis: mockRedis,
+	// 	})
+	// 	mockRepo.On("SignIn", user).Return(expectedUser, nil)
+	// 	mockRedis.On("StoreToken", 0, "token", "token").Return(nil)
+
+	// 	result, _ := service.SignIn(dto, dto.Password)
+
+	// 	assert.NotNil(t, result)
+	// })
+
+	t.Run("should return error when invalid credential", func(t *testing.T) {
+		hashedPw, _ := hash.HashAndSalt("password")
+		user := &model.User{
+			Email:    "user@mail.com",
+			Password: "password1",
+		}
+		dto := &dto.UserLogin{
+			Email:    "user@mail.com",
+			Password: "password1",
+		}
+		expectedUser := &model.User{
+			Email:    "user@mail.com",
+			Password: hashedPw,
+		}
+		mockRepo := new(mocks.UserRepository)
+		service := service.NewUserService(&service.UserSConfig{
+			Repository: mockRepo,
+		})
+		mockRepo.On("SignIn", user).Return(expectedUser, nil)
+
+		_, err := service.SignIn(dto, dto.Password)
+
+		assert.Error(t, errs.ErrInvalidCredential, err)
+	})
+
+	type input struct {
+		user *model.User
+		dto  *dto.UserLogin
+		err  error
+	}
+
+	type expected struct {
+		user *model.User
+		dto  *dto.Token
+		err  error
+	}
+
+	type cases struct {
+		description string
+		input
+		expected
+	}
+
+	for _, tc := range []cases{
+		{
+			description: "should return error when user input invalid credential",
+			input: input{
+				user: &model.User{
+					Email:    "user@mail.com",
+					Password: "password",
+				},
+				dto: &dto.UserLogin{
+					Email:    "user@mail.com",
+					Password: "password",
+				},
+				err: errs.ErrInvalidCredential,
+			},
+			expected: expected{
+				user: nil,
+				dto:  nil,
+				err:  errs.ErrInvalidCredential,
+			},
+		},
+		{
+			description: "should return error when internal server error",
+			input: input{
+				user: &model.User{
+					Email:    "user@mail.com",
+					Password: "password",
+				},
+				dto: &dto.UserLogin{
+					Email:    "user@mail.com",
+					Password: "password",
+				},
+				err: errs.ErrInternalServerError,
+			},
+			expected: expected{
+				user: nil,
+				dto:  nil,
+				err:  errs.ErrInternalServerError,
+			},
+		},
+	} {
+		t.Run(tc.description, func(t *testing.T) {
+			mockRepo := new(mocks.UserRepository)
+			service := service.NewUserService(&service.UserSConfig{
+				Repository: mockRepo,
+			})
+			mockRepo.On("SignIn", tc.input.user).Return(tc.expected.user, tc.expected.err)
+
+			result, err := service.SignIn(tc.input.dto, tc.input.dto.Password)
+
+			assert.Equal(t, tc.expected.dto, result)
+			assert.Equal(t, tc.expected.err, err)
+		})
+	}
+}
+
 func TestGetByID(t *testing.T) {
 	type input struct {
 		id   int
@@ -169,6 +297,61 @@ func TestGetByID(t *testing.T) {
 
 			assert.Equal(t, tc.expected.user, actualUser)
 			assert.Equal(t, actualErr, tc.expected.err)
+		})
+	}
+}
+
+func TestGetSession(t *testing.T) {
+	type input struct {
+		userId int
+		token  string
+		err    error
+	}
+
+	type expected struct {
+		err error
+	}
+
+	type cases struct {
+		description string
+		input
+		expected
+	}
+
+	for _, tc := range []cases{
+		{
+			description: "should return nil error when session available",
+			input: input{
+				userId: 1,
+				token:  "token",
+				err:    nil,
+			},
+			expected: expected{
+				err: nil,
+			},
+		},
+		{
+			description: "should return error when session unavailable",
+			input: input{
+				userId: 1,
+				token:  "token",
+				err:    errors.New("error"),
+			},
+			expected: expected{
+				err: errors.New("error"),
+			},
+		},
+	} {
+		t.Run(tc.description, func(t *testing.T) {
+			mockRedis := new(mocks.UserCache)
+			service := service.NewUserService(&service.UserSConfig{
+				Redis: mockRedis,
+			})
+			mockRedis.On("FindToken", tc.input.userId, tc.input.token).Return(tc.expected.err)
+
+			result := service.GetSession(tc.input.userId, tc.input.token)
+
+			assert.Equal(t, tc.expected.err, result)
 		})
 	}
 }
