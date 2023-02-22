@@ -22,10 +22,11 @@ import (
 func TestUserWishlist_AddUserWishlist(t *testing.T) {
 	var (
 		userId         = 1
+		productId      = 1
 		invalidRequest = &dto.UserWishlistRequest{}
 		validRequest   = &dto.UserWishlistRequest{
-			ProductCode: "123",
-			UserID:      userId,
+			ProductId: productId,
+			UserID:    userId,
 		}
 		wishlist = &model.UserWishlist{
 			ProductID: 1,
@@ -51,13 +52,13 @@ func TestUserWishlist_AddUserWishlist(t *testing.T) {
 			input: input{
 				data: invalidRequest,
 				beforeTests: func(mockWishlistService *mocks.UserWishlistService) {
-					mockWishlistService.On("AddUserWishlist", invalidRequest).Return(nil, fmt.Errorf("%s is required", "ProductCode	"))
+					mockWishlistService.On("AddUserWishlist", invalidRequest).Return(nil, fmt.Errorf("%s is required", "ProductId"))
 				},
 			},
 			expected: expected{
 				data: &response.Response{
 					Code:    code.BAD_REQUEST,
-					Message: "ProductCode is required",
+					Message: "ProductId is required",
 				},
 				statusCode: http.StatusBadRequest,
 			},

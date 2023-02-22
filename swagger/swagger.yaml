@@ -574,8 +574,8 @@ components:
     UserWishlistRequest:
       type: object
       properties:
-        productCode:
-          type: string
+        productId:
+          type: integer
           example: "ITEM-001"
   requestBodies:
     WalletBody:
