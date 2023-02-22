@@ -191,6 +191,19 @@ paths:
                   message:
                     type: string
                     example: "User already exist"
+        '422':
+          description: invalid password pattern
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "INVALID_PASSWORD_PATTERN"
+                  message:
+                    type: string
+                    example: "invalid password pattern"
         '500':
           description: internal server error
           content:
