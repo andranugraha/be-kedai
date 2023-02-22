@@ -31,7 +31,7 @@ func NewRouter(cfg *RouterConfig) *gin.Engine {
 
 		user := v1.Group("/users")
 		{
-			authenticated := user.Group("", middleware.JWTAuthorization)
+			authenticated := user.Group("", middleware.JWTAuthorization, cfg.UserHandler.GetSession)
 			{
 				wallet := authenticated.Group("/wallets")
 				{
