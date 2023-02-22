@@ -4,6 +4,7 @@ import (
 	"kedai/backend/be-kedai/config"
 	locationHandler "kedai/backend/be-kedai/internal/domain/location/handler"
 	userHandler "kedai/backend/be-kedai/internal/domain/user/handler"
+	"kedai/backend/be-kedai/internal/server/middleware"
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
@@ -30,7 +31,7 @@ func NewRouter(cfg *RouterConfig) *gin.Engine {
 
 		user := v1.Group("/users")
 		{
-			user.GET("", cfg.UserHandler.GetUserByID)
+			user.GET("", middleware.JWTAuthorization, cfg.UserHandler.GetSession, cfg.UserHandler.GetUserByID)
 			user.POST("/register", cfg.UserHandler.UserRegistration)
 			user.POST("/login", cfg.UserHandler.UserLogin)
 		}
