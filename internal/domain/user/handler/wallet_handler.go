@@ -13,7 +13,7 @@ import (
 func (h *Handler) RegisterWallet(c *gin.Context) {
 	var req dto.RegisterWalletRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		response.Error(c, http.StatusBadRequest, code.BAD_REQUEST, error.ErrInvalidPin.Error())
+		response.ErrorValidator(c, http.StatusBadRequest, err)
 		return
 	}
 

@@ -33,17 +33,21 @@ func ErrorValidator(c *gin.Context, statusCode int, err error) {
 	castedErr, _ := err.(validator.ValidationErrors)
 	for _, validator := range castedErr {
 		switch validator.Tag() {
-		case "required" :
+		case "required":
 			message = fmt.Sprintf("%s is required", validator.Field())
-		case "email" :
+		case "email":
 			message = fmt.Sprintf("%s must be an email format", validator.Field())
-		case "min" :
+		case "min":
 			message = fmt.Sprintf("%s must be greater than %s", validator.Field(), validator.Param())
+		case "len":
+			message = fmt.Sprintf("%s must be %s characters", validator.Field(), validator.Param())
+		case "numeric":
+			message = fmt.Sprintf("%s must be numeric", validator.Field())
 		}
 	}
 
 	c.JSON(statusCode, Response{
-		Code: "BAD_REQUEST",
+		Code:    "BAD_REQUEST",
 		Message: message,
 	})
 }

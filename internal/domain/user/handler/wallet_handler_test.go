@@ -64,7 +64,7 @@ func TestRegisterWallet(t *testing.T) {
 			code:                  http.StatusBadRequest,
 			want: response.Response{
 				Code:    code.BAD_REQUEST,
-				Message: errRes.ErrInvalidPin.Error(),
+				Message: "Pin must be 6 characters",
 				Data:    nil,
 			},
 			wantErr:    errRes.ErrInvalidPin,
