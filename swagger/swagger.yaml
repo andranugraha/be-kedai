@@ -425,16 +425,16 @@ paths:
       security:
         - BearerAuth: []
       tags:
-        - Wishlist
         - User
       summary: Remove product from wishlist
       parameters:
         - in: path
           name: productId
-          schema:
-            type: integer
           required: true
           description: Product id of the item to be removed from wishlist
+          schema:
+            type: integer
+            example: 1
       description: Remove product from wishlist
       responses:
         '200':
