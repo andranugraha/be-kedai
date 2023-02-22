@@ -234,5 +234,59 @@ func TestUserLogin(t *testing.T) {
 			assert.Equal(t, string(expectedBody), rec.Body.String())
 		})
 	}
+}
 
+func TestGetSession(t *testing.T) {
+	type input struct {
+		userId int
+		token string
+		err error
+	}
+
+	type expected struct {
+		statusCode int
+		response response.Response
+	}
+
+	type cases struct {
+		description string
+		input
+		expected
+	}
+
+	for _, tc := range []cases{
+		{
+			description: "should return error when a session is unavailable",
+			input: input{
+				userId: 1,
+				token: "",
+				err: errors.New("error"),
+			},
+			expected: expected{
+				statusCode: 401,
+				response: response.Response{
+					Code: code.UNAUTHORIZED,
+					Message: "error",
+				},
+			},
+		},
+	} {
+		t.Run(tc.description, func(t *testing.T) {
+			expectedBody, _ := json.Marshal(tc.expected.response)
+			rec := httptest.NewRecorder()
+			c, _ := gin.CreateTestContext(rec)
+			c.Set("userId", tc.input.userId)
+			mockService := new(mocks.UserService)
+			mockService.On("GetSession", tc.input.userId, tc.input.token).Return(tc.input.err)
+			h := handler.New(&handler.HandlerConfig{
+				UserService: mockService,
+			})
+			c.Request = httptest.NewRequest("POST", "/users/login", nil)
+
+			h.GetSession(c)
+
+			assert.Equal(t, tc.expected.statusCode, rec.Code)
+			assert.Equal(t, string(expectedBody), rec.Body.String())
+		})
+	}
 }
