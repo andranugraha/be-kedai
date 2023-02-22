@@ -50,9 +50,8 @@ func (h *Handler) AddUserWishlist(c *gin.Context) {
 
 func (h *Handler) RemoveUserWishlist(c *gin.Context) {
 	var req dto.UserWishlistRequest
-	productId, _ := strconv.Atoi(c.Param("productId"))
-
-	if productId < 1 {
+	productId, err := strconv.Atoi(c.Param("productId"))
+	if productId < 1 || err != nil {
 		response.Error(c, http.StatusBadRequest, code.BAD_REQUEST, errs.ErrProductIdRequired.Error())
 		return
 	}
@@ -60,7 +59,7 @@ func (h *Handler) RemoveUserWishlist(c *gin.Context) {
 	req.ProductId = productId
 	req.UserId = c.GetInt("userId")
 
-	err := h.userWishlistService.RemoveUserWishlist(&req)
+	err = h.userWishlistService.RemoveUserWishlist(&req)
 
 	if err != nil {
 		if errors.Is(err, errs.ErrUserDoesNotExist) {
