@@ -2,10 +2,9 @@ package dto
 
 import "kedai/backend/be-kedai/internal/domain/user/model"
 
-type UserRegistration struct {
+type UserRegistrationRequest struct {
 	Email    string `json:"email" binding:"required,email"`
 	Password string `json:"password,omitempty" binding:"required,min=8,max=16"`
-	Username string `json:"username"`
 }
 
 type UserRegistrationResponse struct {
@@ -18,7 +17,7 @@ type UserLogin struct {
 	Password string `json:"password" binding:"required"`
 }
 
-func (d *UserRegistration) ToUser() *model.User {
+func (d *UserRegistrationRequest) ToUser() *model.User {
 	return &model.User{
 		Email:    d.Email,
 		Password: d.Password,

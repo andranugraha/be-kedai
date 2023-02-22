@@ -29,7 +29,7 @@ func (h *Handler) GetUserByID(c *gin.Context) {
 	response.Success(c, http.StatusOK, code.OK, "ok", user)
 }
 func (h *Handler) UserRegistration(c *gin.Context) {
-	var newUser dto.UserRegistration
+	var newUser dto.UserRegistrationRequest
 	errBinding := c.ShouldBindJSON(&newUser)
 	if errBinding != nil {
 		response.ErrorValidator(c, http.StatusBadRequest, errBinding)

@@ -21,7 +21,7 @@ import (
 
 func TestUserRegister(t *testing.T) {
 	type input struct {
-		user *dto.UserRegistration
+		user *dto.UserRegistrationRequest
 		err  error
 	}
 
@@ -40,7 +40,7 @@ func TestUserRegister(t *testing.T) {
 		{
 			description: "should return created user data when successfully registered",
 			input: input{
-				user: &dto.UserRegistration{
+				user: &dto.UserRegistrationRequest{
 					Email:    "user@mail.com",
 					Password: "password",
 				},
@@ -52,7 +52,7 @@ func TestUserRegister(t *testing.T) {
 					Code:    code.CREATED,
 					Message: "created",
 					Data: &dto.UserRegistrationResponse{
-						Email:    "user@mail.com",
+						Email: "user@mail.com",
 					},
 				},
 			},
@@ -60,7 +60,7 @@ func TestUserRegister(t *testing.T) {
 		{
 			description: "should return error when required input not met condition",
 			input: input{
-				user: &dto.UserRegistration{
+				user: &dto.UserRegistrationRequest{
 					Email: "user@mail.com",
 				},
 				err: errors.New("bad request"),
@@ -77,7 +77,7 @@ func TestUserRegister(t *testing.T) {
 		{
 			description: "should return error when email already registered",
 			input: input{
-				user: &dto.UserRegistration{
+				user: &dto.UserRegistrationRequest{
 					Email:    "user@mail.com",
 					Password: "password",
 				},
@@ -95,7 +95,7 @@ func TestUserRegister(t *testing.T) {
 		{
 			description: "should return error when invalid password pattern",
 			input: input{
-				user: &dto.UserRegistration{
+				user: &dto.UserRegistrationRequest{
 					Email:    "user@mail.com",
 					Password: "password",
 				},
@@ -113,7 +113,7 @@ func TestUserRegister(t *testing.T) {
 		{
 			description: "should return error when password contain email address",
 			input: input{
-				user: &dto.UserRegistration{
+				user: &dto.UserRegistrationRequest{
 					Email:    "user@mail.com",
 					Password: "passworD1user",
 				},
@@ -131,7 +131,7 @@ func TestUserRegister(t *testing.T) {
 		{
 			description: "should return error when server internal error",
 			input: input{
-				user: &dto.UserRegistration{
+				user: &dto.UserRegistrationRequest{
 					Email:    "user@mail.com",
 					Password: "password",
 				},
