@@ -7,6 +7,7 @@ import (
 	locationHandler "kedai/backend/be-kedai/internal/domain/location/handler"
 	locationRepo "kedai/backend/be-kedai/internal/domain/location/repository"
 	locationService "kedai/backend/be-kedai/internal/domain/location/service"
+	userCache "kedai/backend/be-kedai/internal/domain/user/cache"
 
 	userHandler "kedai/backend/be-kedai/internal/domain/user/handler"
 	userRepo "kedai/backend/be-kedai/internal/domain/user/repository"
@@ -16,8 +17,11 @@ import (
 )
 
 func createRouter() *gin.Engine {
+	db := connection.GetDB()
+	redis := connection.GetCache()
+
 	cityRepo := locationRepo.NewCityRepository(&locationRepo.CityRConfig{
-		DB: connection.GetDB(),
+		DB: db,
 	})
 	cityService := locationService.NewCityService(&locationService.CitySConfig{
 		CityRepo: cityRepo,
@@ -33,7 +37,22 @@ func createRouter() *gin.Engine {
 	walletService := userService.NewWalletService(&userService.WalletSConfig{
 		WalletRepo: walletRepo,
 	})
+
+	userRepo := userRepo.NewUserRepository(&userRepo.UserRConfig{
+		DB: db,
+	})
+
+	userCache := userCache.NewUserCache(&userCache.UserCConfig{
+		RDC: redis,
+	})
+
+	userService := userService.NewUserService(&userService.UserSConfig{
+		Repository: userRepo,
+		Redis:      userCache,
+	})
+
 	userHandler := userHandler.New(&userHandler.HandlerConfig{
+		UserService:   userService,
 		WalletService: walletService,
 	})
 

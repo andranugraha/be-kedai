@@ -2,31 +2,44 @@ package jwttoken
 
 import (
 	"kedai/backend/be-kedai/config"
-	"kedai/backend/be-kedai/internal/domain/user/dto"
 	"kedai/backend/be-kedai/internal/domain/user/model"
 	"time"
 
 	"github.com/golang-jwt/jwt/v4"
 )
 
-func GenerateAccessToken(user *model.User) (*dto.Token, error) {
+func GenerateAccessToken(user *model.User) (string, error) {
 	claims := &model.Claim{
-		UserId: user.ID,
+		UserId:    user.ID,
+		TokenType: "access",
 		RegisteredClaims: jwt.RegisteredClaims{
 			IssuedAt:  jwt.NewNumericDate(time.Now()),
 			Issuer:    "Kedai",
-			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Hour * 5)),
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Minute * 5)),
 		},
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	tokenString, _ := token.SignedString([]byte(config.SecretKey))
 
-	result := &dto.Token{
-		AccessToken: tokenString,
+	return tokenString, nil
+}
+
+func GenerateRefreshToken(user *model.User) (string, error) {
+	claims := &model.Claim{
+		UserId:    user.ID,
+		TokenType: "refresh",
+		RegisteredClaims: jwt.RegisteredClaims{
+			IssuedAt:  jwt.NewNumericDate(time.Now()),
+			Issuer:    "Kedai",
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Hour * 24)),
+		},
 	}
 
-	return result, nil
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	tokenString, _ := token.SignedString([]byte(config.SecretKey))
+
+	return tokenString, nil
 }
 
 func ValidateToken(token string, secretKey string) (*model.Claim, error) {
@@ -45,5 +58,10 @@ func ValidateToken(token string, secretKey string) (*model.Claim, error) {
 		}
 	}
 
-	return parsedToken.Claims.(*model.Claim), nil
+	parsedClaim := parsedToken.Claims.(*model.Claim)
+	if parsedClaim.TokenType != "access" {
+		return nil, jwt.ErrTokenInvalidClaims
+	}
+
+	return parsedClaim, nil
 }

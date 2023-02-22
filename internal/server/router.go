@@ -38,6 +38,8 @@ func NewRouter(cfg *RouterConfig) *gin.Engine {
 					wallet.POST("", cfg.UserHandler.RegisterWallet)
 				}
 			}
+			user.POST("/register", cfg.UserHandler.UserRegistration)
+			user.POST("/login", cfg.UserHandler.UserLogin)
 		}
 
 		location := v1.Group("/locations")
