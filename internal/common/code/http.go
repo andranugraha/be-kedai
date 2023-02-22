@@ -8,6 +8,11 @@ var (
 
 	BAD_REQUEST           = "BAD_REQUEST"
 	INTERNAL_SERVER_ERROR = "INTERNAL_SERVER_ERROR"
+<<<<<<< HEAD
 	UNAUTHORIZED          = "UNAUTHORIZED"
 	NOT_FOUND             = "NOT_FOUND"
+=======
+	BAD_REQUEST           = "BAD_REQUEST"
+	UNAUTHORIZED          = "UNAUTHORIZED"
+>>>>>>> e4fd8db74c2d1f5d9ac94cf1de0592b0a77f3219
 )

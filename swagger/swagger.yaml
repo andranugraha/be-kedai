@@ -13,8 +13,204 @@ servers:
 tags:
   - name: Location
   - name: User
+<<<<<<< HEAD
   - name: Wishlist
 paths:
+=======
+paths:
+  /v1/users:
+    get:
+      tags:
+        - User
+      summary: Get user profile
+      description: Get user profile data
+      responses:
+        '200':
+          description: successful operation
+          content:
+            aplication/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Response'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/User'
+        '404':
+          description: not found
+          content:
+            aplication/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "NOT_FOUND"
+                  message:
+                    type: string
+                    example: "error message"
+        '500':
+          description: internal server error
+          content:
+            aplication/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "INTERNAL_SERVER_ERROR"
+                  message:
+                    type: string
+                    example: "error message"
+  /v1/users/register:
+    post:
+      tags:
+        - User
+      summary: Register new user
+      description: Register new user data
+      requestBody:
+        description: Create new user register data
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                  example: "user@mail.com"
+                password:
+                  type: string
+                  example: "password"
+      responses:
+        '201':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Response'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          email:
+                            type: string
+                            example: "user@mail.com"
+                          username:
+                            type: string
+                            example: "user145"
+        '400':
+          description: bad request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "BAD_REQUEST"
+                  message:
+                    type: string
+                    example: "Email is required"
+        '409':
+          description: duplicate entry
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "EMAIL_ALREADY_REGISTERED"
+                  message:
+                    type: string
+                    example: "User already exist"
+        '500':
+          description: internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "INTERNAL_SERVER_ERROR"
+                  message:
+                    type: string
+                    example: "error message"
+  /v1/users/login:
+    post:
+      tags:
+        - User
+      summary: User login
+      description: User login to get auth token
+      requestBody:
+        description: Create new user login request
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                  example: "user@mail.com"
+                password:
+                  type: string
+                  example: "password"
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Response'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/Token'
+        '400':
+          description: bad request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "BAD_REQUEST"
+                  message:
+                    type: string
+                    example: "Email is required"
+        '401':
+          description: unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "UNAUTHORIZED"
+                  message:
+                    type: string
+                    example: "invalid credential"
+        '500':
+          description: internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "INTERNAL_SERVER_ERROR"
+                  message:
+                    type: string
+                    example: "error message"
+  
+>>>>>>> e4fd8db74c2d1f5d9ac94cf1de0592b0a77f3219
   /v1/locations/cities:
     get:
       tags:
@@ -79,6 +275,7 @@ paths:
                   message:
                     type: string
                     example: "error message"
+<<<<<<< HEAD
   /v1/users/wishlists:
     post:
       security:
@@ -151,6 +348,83 @@ paths:
 
 components:
   schemas:
+=======
+components:
+  schemas:
+    User:
+      type: object
+      properties:
+        id:
+          type: number
+          example: 1
+        email:
+          type: string
+          format: email
+          example: user@email.com
+        username:
+          type: string
+          example: user_name
+        profile:
+          $ref: '#/components/schemas/UserProfile'
+        shop:
+          $ref: '#/components/schemas/Shop'
+    UserProfile:
+      type: object
+      properties:
+        id:
+          type: number
+          example: 1
+        name:
+          type: string
+          example: user
+        phoneNumber:
+          type: string
+          example: 0123456789
+        dob:
+          type: string
+          format: date
+          example: 2006-01-02
+        gender:
+          type: string
+          example: male
+        photoUrl:
+          type: string
+          example: http://photo.url.com
+        userId:
+          type: number
+          example: 1
+        defaultAddressId:
+          type: number
+          example: 1
+    Shop:
+      type: object
+      properties:
+        id: 
+          type: integer
+          example: 1
+        name:
+          type: string
+          example: user shop
+        rating:
+          type: float
+          example: 4.9
+        joinedDate:
+          type: string
+          format: datetime
+          example: 2006-01-02T00:00:00Z
+        userId:
+          type: integer
+          example: 1
+    Token:
+      type: object
+      properties:
+        accessToken:
+          type: string
+          example: "thisIsToken"
+        refreshToken:
+          type: string
+          example: "thisIsToken"
+>>>>>>> e4fd8db74c2d1f5d9ac94cf1de0592b0a77f3219
     City:
       type: object
       properties:
@@ -191,6 +465,7 @@ components:
         page:
           type: integer
           example: 1
+<<<<<<< HEAD
     UserWishlist:
       type: object
       properties:
@@ -214,3 +489,9 @@ components:
     BearerAuth:
       type: http
       scheme: bearer
+=======
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+>>>>>>> e4fd8db74c2d1f5d9ac94cf1de0592b0a77f3219
