@@ -6,9 +6,14 @@ import (
 	"kedai/backend/be-kedai/internal/utils/hash"
 )
 
+const(
+	TopUp = "Top-up"
+)
+
 type WalletService interface {
 	RegisterWallet(userID int, pin string) (*model.Wallet, error)
 	GetWalletByUserID(userID int) (*model.Wallet, error)
+	TopUp(userId int, amount float64) (*model.WalletHistory, error)
 }
 
 type walletServiceImpl struct {
@@ -39,4 +44,19 @@ func (s *walletServiceImpl) RegisterWallet(userID int, pin string) (*model.Walle
 
 func (s *walletServiceImpl) GetWalletByUserID(userID int) (*model.Wallet, error) {
 	return s.walletRepo.GetByUserID(userID)
+}
+
+func (s *walletServiceImpl) TopUp(userId int, amount float64) (*model.WalletHistory, error) {
+	var history model.WalletHistory
+	
+	wallet, err := s.walletRepo.GetByUserID(userId)
+	if err != nil {
+		return nil, err
+	}
+	
+	history.WalletId = wallet.ID
+	history.Type = TopUp
+	history.Amount = amount
+
+	return s.walletRepo.TopUp(&history, wallet)
 }
