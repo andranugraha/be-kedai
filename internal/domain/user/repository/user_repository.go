@@ -16,6 +16,7 @@ import (
 
 type UserRepository interface {
 	GetByID(ID int) (*model.User, error)
+	GetByUsername(username string) (*model.User, error)
 	SignUp(user *model.User) (*model.User, error)
 	SignIn(user *model.User) (*model.User, error)
 }
@@ -67,8 +68,10 @@ func (r *userRepositoryImpl) GetByEmail(email string) (*model.User, error) {
 func (r *userRepositoryImpl) SignUp(user *model.User) (*model.User, error) {
 	emailString := strings.Split(user.Email, "@")
 
-	username := fmt.Sprintf("%s%d", emailString[0], rand.Intn(999))
-	user.Username = username
+	if user.Username == "" {
+		username := fmt.Sprintf("%s%d", emailString[0], rand.Intn(999))
+		user.Username = username
+	}
 
 	hashedPw, _ := hash.HashAndSalt(user.Password)
 	user.Password = hashedPw
@@ -95,4 +98,19 @@ func (r *userRepositoryImpl) SignIn(user *model.User) (*model.User, error) {
 	}
 
 	return user, nil
+}
+
+func (r *userRepositoryImpl) GetByUsername(username string) (*model.User, error) {
+	var user model.User
+
+	err := r.db.Where("username = ?", username).Preload("Profile").First(&user).Error
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, errs.ErrUserDoesNotExist
+		}
+
+		return nil, err
+	}
+
+	return &user, nil
 }
