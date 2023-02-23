@@ -21,7 +21,9 @@ type UpdateEmailRequest struct {
 	Email string `json:"email" binding:"required,email"`
 }
 
-type UpdateEmailResponse = UserRegistrationResponse
+type UpdateEmailResponse struct {
+	Email string `json:"email"`
+}
 
 func (d *UserRegistrationRequest) ToUser() *model.User {
 	return &model.User{
@@ -39,6 +41,10 @@ func (d *UpdateEmailRequest) ToUser() *model.User {
 	return &model.User{
 		Email: d.Email,
 	}
+}
+
+func (d *UpdateEmailResponse) FromUser(user *model.User) {
+	d.Email = user.Email
 }
 
 func (d *UserLogin) ToUser() *model.User {
