@@ -2,7 +2,10 @@ package server
 
 import (
 	"kedai/backend/be-kedai/config"
+	"kedai/backend/be-kedai/internal/server/middleware"
+
 	locationHandler "kedai/backend/be-kedai/internal/domain/location/handler"
+	productHandler "kedai/backend/be-kedai/internal/domain/product/handler"
 	userHandler "kedai/backend/be-kedai/internal/domain/user/handler"
 
 	"github.com/gin-contrib/cors"
@@ -10,8 +13,9 @@ import (
 )
 
 type RouterConfig struct {
+	UserHandler     *userHandler.Handler
 	LocationHandler *locationHandler.Handler
-	UserHandler *userHandler.Handler
+	ProductHandler  *productHandler.Handler
 }
 
 func NewRouter(cfg *RouterConfig) *gin.Engine {
@@ -28,14 +32,39 @@ func NewRouter(cfg *RouterConfig) *gin.Engine {
 	{
 		v1.Static("/docs", "swagger")
 
-		users := v1.Group("/users")
+		user := v1.Group("/users")
 		{
-			users.POST("/register", cfg.UserHandler.UserRegistration)
+			user.POST("/register", cfg.UserHandler.UserRegistration)
+			user.POST("/login", cfg.UserHandler.UserLogin)
+			userAuthenticated := user.Group("", middleware.JWTAuthorization, cfg.UserHandler.GetSession)
+			{
+				userAuthenticated.GET("", cfg.UserHandler.GetUserByID)
+				wallet := userAuthenticated.Group("/wallets")
+				{
+					wallet.GET("", cfg.UserHandler.GetWalletByUserID)
+					wallet.POST("", cfg.UserHandler.RegisterWallet)
+				}
+				wishlists := userAuthenticated.Group("/wishlists")
+				{
+					wishlists.GET("/:productId", cfg.UserHandler.GetUserWishlist)
+					wishlists.POST("", cfg.UserHandler.AddUserWishlist)
+					wishlists.DELETE("/:productId", cfg.UserHandler.RemoveUserWishlist)
+				}
+			}
 		}
 
 		location := v1.Group("/locations")
 		{
 			location.GET("/cities", cfg.LocationHandler.GetCities)
+
+		}
+
+		product := v1.Group("/products")
+		{
+			category := product.Group("/categories")
+			{
+				category.GET("", cfg.ProductHandler.GetCategories)
+			}
 		}
 	}
 

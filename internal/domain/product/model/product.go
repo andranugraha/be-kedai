@@ -24,7 +24,7 @@ type Product struct {
 
 	ShopId     int            `json:"shopId"`
 	CategoryId int            `json:"categoryId"`
-	Shop       shopModel.Shop `json:"shop" gorm:"foreignKey:ShopId"`
+	Shop       shopModel.Shop `json:"shop,omitempty" gorm:"foreignKey:ShopId"`
 
 	gorm.Model `json:"-"`
 }

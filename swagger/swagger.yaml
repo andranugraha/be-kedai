@@ -10,12 +10,126 @@ externalDocs:
   url: http://swagger.io
 servers:
   - url: http://localhost:8080
+  - url: https://dev-kedai-y3gq8.ondigitalocean.app
 tags:
   - name: Location
   - name: User
+  - name: Product
 paths:
+  /v1/users/wallets:
+    get:
+      security:
+        - BearerAuth: []
+      tags:
+        - User
+      summary: Get wallet information
+      description: Get user's wallet information
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Response'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/Wallet'
+        '404':
+          description: data not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: NOT_FOUND
+                  message:
+                    type: string
+                    example: error message
+        '500':
+          description: internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: INTERNAL_SERVER_ERROR
+                  message:
+                    type: string
+                    example: error message
+    post:
+      security:
+        - BearerAuth: []
+      tags:
+        - User
+      summary: Register user wallet
+      description: Create wallet for current authenticated user
+      requestBody:
+        $ref: '#/components/requestBodies/WalletBody'
+      responses:
+        '201':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Response'
+                  - type: object
+                    properties:
+                      code:
+                        example: 'CREATED'
+                      message:
+                        example: 'wallet registered successfully'
+                      data:
+                        $ref: '#/components/schemas/Wallet'
+        '400':
+          description: Invalid pin
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "BAD_REQUEST"
+                  message:
+                    type: string
+                    example: "pin must be numeric and have 6 characters"
+        '409':
+          description: User already has a wallet
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "WALLET_ALREADY_EXIST"
+                  message:
+                    type: string
+                    example: "user only allowed to have one wallet"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "INTERNAL_SERVER_ERROR"
+                  message:
+                    type: string
+                    example: "error message"
   /v1/users:
     get:
+      security:
+        - BearerAuth: []
       tags:
         - User
       summary: Get user profile
@@ -32,6 +146,32 @@ paths:
                     properties:
                       data:
                         $ref: '#/components/schemas/User'
+        '404':
+          description: not found
+          content:
+            aplication/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "NOT_FOUND"
+                  message:
+                    type: string
+                    example: "error message"
+        '500':
+          description: internal server error
+          content:
+            aplication/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "INTERNAL_SERVER_ERROR"
+                  message:
+                    type: string
+                    example: "error message"
   /v1/users/register:
     post:
       tags:
@@ -39,18 +179,7 @@ paths:
       summary: Register new user
       description: Register new user data
       requestBody:
-        description: Create new user register data
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                email:
-                  type: string
-                  example: "user@mail.com"
-                password:
-                  type: string
-                  example: "password"
+        $ref: '#/components/requestBodies/RegisterUserBody'
       responses:
         '201':
           description: successful operation
@@ -66,6 +195,7 @@ paths:
                         properties:
                           email:
                             type: string
+                            format: email
                             example: "user@mail.com"
                           username:
                             type: string
@@ -96,6 +226,78 @@ paths:
                   message:
                     type: string
                     example: "User already exist"
+        '422':
+          description: invalid password pattern
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "INVALID_PASSWORD_PATTERN"
+                  message:
+                    type: string
+                    example: "invalid password pattern"
+        '500':
+          description: internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "INTERNAL_SERVER_ERROR"
+                  message:
+                    type: string
+                    example: "error message"
+  /v1/users/login:
+    post:
+      tags:
+        - User
+      summary: User login
+      description: User login to get auth token
+      requestBody:
+        $ref: '#/components/requestBodies/LoginUserBody'
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Response'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/Token'
+        '400':
+          description: bad request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "BAD_REQUEST"
+                  message:
+                    type: string
+                    example: "Email is required"
+        '401':
+          description: unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "UNAUTHORIZED"
+                  message:
+                    type: string
+                    example: "invalid credential"
         '500':
           description: internal server error
           content:
@@ -139,7 +341,7 @@ paths:
           description: most_shops to sort cities by most shops
       responses:
         '200':
-          description: successful operation
+          description: Successful operation
           content:
             application/json:
               schema:
@@ -173,6 +375,336 @@ paths:
                   message:
                     type: string
                     example: "error message"
+  /v1/users/wishlists:
+    post:
+      security:
+        - BearerAuth: []
+      tags:
+        - User
+      summary: Add product to wishlist
+      description: Add product to wishlist
+      requestBody:
+        $ref: '#/components/requestBodies/AddWishlistBody'
+      responses:
+        '201':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Response'
+                  - type: object
+                    properties:
+                      code:
+                        example: 'CREATED'
+                      message:
+                        example: 'wishlist success created successfully'
+                      data:
+                        $ref: '#/components/schemas/UserWishlist'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "BAD_REQUEST"
+                  message:
+                    type: string
+                    example: "error message"
+        '401':
+          description: unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "UNAUTHORIZED"
+                  message:
+                    type: string
+                    example: "invalid credential"            
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "USER_NOT_FOUND"
+                  message:
+                    type: string
+                    example: "error message"         
+        '409':
+          description: Product is already in wishlist
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "PRODUCT_ALREADY_IN_WISHLIST"
+                  message:
+                    type: string
+                    example: "product is already in wishlist"            
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "INTERNAL_SERVER_ERROR"
+                  message:
+                    type: string
+                    example: "error message"
+  /v1/users/wishlists/{productId}:
+    get:
+      security:
+        - BearerAuth: []
+      tags:
+        - User
+      summary: Retrieve product in wishlist
+      parameters:
+        - in: path
+          name: productId
+          required: true
+          description: Product code of the item to be retrieved from wishlist
+          schema:
+            type: integer
+            example: 1
+      description: Retrieve product in wishlist
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Response'
+                  - type: object
+                    properties:
+                      code:
+                        example: 'OK'
+                      message:
+                        example: 'wishlist retrieved successfully'
+                      data:
+                        $ref: '#/components/schemas/UserWishlist'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "BAD_REQUEST"
+                  message:
+                    type: string
+                    example: "error message"
+        '401':
+          description: unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "UNAUTHORIZED"
+                  message:
+                    type: string
+                    example: "invalid credential"            
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "USER_NOT_FOUND"
+                  message:
+                    type: string
+                    example: "error message"                   
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "INTERNAL_SERVER_ERROR"
+                  message:
+                    type: string
+                    example: "error message"
+    delete:
+      security:
+        - BearerAuth: []
+      tags:
+        - User
+      summary: Retrieve product in wishlist
+      parameters:
+        - in: path
+          name: productId
+          required: true
+          description: Product id of the item to be removed from wishlist
+          schema:
+            type: integer
+            example: 1
+      description: Remove product from wishlist
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Response'
+                  - type: object
+                    properties:
+                      code:
+                        example: 'OK'
+                      message:
+                        example: 'wishlist retrieved successfully'
+                      data:
+                        type: object
+                        example: 
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "BAD_REQUEST"
+                  message:
+                    type: string
+                    example: "error message"
+        '401':
+          description: unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "UNAUTHORIZED"
+                  message:
+                    type: string
+                    example: "invalid credential"            
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "USER_NOT_FOUND"
+                  message:
+                    type: string
+                    example: "error message"                   
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "INTERNAL_SERVER_ERROR"
+                  message:
+                    type: string
+                    example: "error message"
+  /v1/products/categories:
+    get:
+      tags:
+        - Product
+      summary: Get all categories
+      description: Get list of categories with filter by children depth and parent id, withPrice param, and pagination
+      parameters:
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            default: 0
+          description: 'Return only level 1 categories if not specified'
+        - in: query
+          name: page
+          schema:
+            type: integer
+            default: 1
+        - in: query
+          name: parentId
+          schema:
+            type: integer
+          description: Filter to get categories by category parent id
+        - in: query
+          name: depth
+          schema:
+            type: integer
+            default: 0
+          description: Filter of category's children depth
+        - in: query
+          name: withPrice
+          schema:
+            type: boolean
+          description: Param to get category's least price
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Response'
+                  - type: object
+                    properties:
+                      code:
+                        example: 'OK'
+                      message:
+                        example: 'success'
+                      data:
+                        allOf:
+                          - $ref: '#/components/schemas/PaginationResponse'
+                          - type: object
+                            properties:
+                              data:
+                                type: array
+                                items:
+                                  $ref: '#/components/schemas/Category'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "INTERNAL_SERVER_ERROR"
+                  message:
+                    type: string
+                    example: "error message"
+    
 components:
   schemas:
     User:
@@ -190,6 +722,8 @@ components:
           example: user_name
         profile:
           $ref: '#/components/schemas/UserProfile'
+        shop:
+          $ref: '#/components/schemas/Shop'
     UserProfile:
       type: object
       properties:
@@ -218,6 +752,35 @@ components:
         defaultAddressId:
           type: number
           example: 1
+    Shop:
+      type: object
+      properties:
+        id: 
+          type: integer
+          example: 1
+        name:
+          type: string
+          example: user shop
+        rating:
+          type: integer
+          format: float
+          example: 4.9
+        joinedDate:
+          type: string
+          format: datetime
+          example: 2006-01-02T00:00:00Z
+        userId:
+          type: integer
+          example: 1
+    Token:
+      type: object
+      properties:
+        accessToken:
+          type: string
+          example: "thisIsToken"
+        refreshToken:
+          type: string
+          example: "thisIsToken"
     City:
       type: object
       properties:
@@ -230,6 +793,38 @@ components:
         provinceId:
           type: integer
           example: 6
+    Wallet:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        userId:
+          type: integer
+          example: 1
+        balance:
+          type: integer
+    Category:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        name:
+          type: string
+          example: 'Fashion'
+        imageUrl:
+          type: string
+        minPrice:
+          type: number
+          format: float
+          example: 100000
+        parentId:
+          type: integer
+        children:
+          type: array
+          items: {}
+          example: []
     Response:
       type: object
       properties:
@@ -258,6 +853,83 @@ components:
         page:
           type: integer
           example: 1
+    UserWishlist:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        userId:
+          type: integer
+          example: 1
+        productId:
+          type: integer
+          example: 1
+  requestBodies:
+    WalletBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - pin
+            properties:
+              pin:
+                type: string
+                minLength: 6
+                description: numeric
+                example: '123456'
+    RegisterUserBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - email
+              - password
+            properties:
+              email:
+                type: string
+                format: email
+                example: "user@mail.com"
+                description: email is case insensitive
+              password:
+                type: string
+                minLength: 8
+                maxLength: 16
+                description: password must include at least one uppercase letter, one lowercase letter, and one numeric. Also password must not include email name
+                example: "P4ssword"
+    LoginUserBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - email
+              - password
+            properties:
+              email:
+                type: string
+                format: email
+                example: "user@mail.com"
+              password:
+                type: string
+                example: "password"
+    AddWishlistBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - productId
+            properties:
+              productId:
+                type: integer
+                example: 1
   securitySchemes:
     BearerAuth:
       type: http
