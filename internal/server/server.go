@@ -49,12 +49,13 @@ func createRouter() *gin.Engine {
 		WalletRepo: walletRepo,
 	})
 
-	userRepo := userRepoPackage.NewUserRepository(&userRepoPackage.UserRConfig{
-		DB: db,
-	})
-
 	userCache := userCache.NewUserCache(&userCache.UserCConfig{
 		RDC: redis,
+	})
+
+	userRepo := userRepoPackage.NewUserRepository(&userRepoPackage.UserRConfig{
+		DB:        db,
+		UserCache: userCache,
 	})
 
 	userService := userServicePackage.NewUserService(&userServicePackage.UserSConfig{
