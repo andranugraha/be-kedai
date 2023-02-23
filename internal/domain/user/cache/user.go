@@ -11,6 +11,7 @@ import (
 type UserCache interface {
 	StoreToken(userId int, accessToken string, refreshToken string) error
 	FindToken(userId int, token string) error
+	DeleteAllByID(userId int) error
 }
 
 type userCacheImpl struct {
@@ -56,4 +57,8 @@ func (r *userCacheImpl) FindToken(userId int, token string) error {
 	}
 
 	return nil
+}
+
+func (r *userCacheImpl) DeleteAllByID(userId int) error {
+	return r.rdc.Unlink(context.Background(), fmt.Sprintf("user_%d:*", userId)).Err()
 }

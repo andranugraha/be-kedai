@@ -5,6 +5,7 @@ import (
 	"fmt"
 	errs "kedai/backend/be-kedai/internal/common/error"
 
+	"kedai/backend/be-kedai/internal/domain/user/cache"
 	"kedai/backend/be-kedai/internal/domain/user/model"
 	"kedai/backend/be-kedai/internal/utils/hash"
 	"math/rand"
@@ -21,16 +22,19 @@ type UserRepository interface {
 }
 
 type userRepositoryImpl struct {
-	db *gorm.DB
+	db        *gorm.DB
+	userCache cache.UserCache
 }
 
 type UserRConfig struct {
-	DB *gorm.DB
+	DB        *gorm.DB
+	UserCache cache.UserCache
 }
 
 func NewUserRepository(cfg *UserRConfig) UserRepository {
 	return &userRepositoryImpl{
-		db: cfg.DB,
+		db:        cfg.DB,
+		userCache: cfg.UserCache,
 	}
 }
 
@@ -52,7 +56,7 @@ func (r *userRepositoryImpl) GetByID(ID int) (*model.User, error) {
 func (r *userRepositoryImpl) GetByEmail(email string) (*model.User, error) {
 	var user model.User
 
-	err := r.db.Where("email = ?", email).Preload("Profile").First(&user).Error
+	err := r.db.Where("email = ?", email).First(&user).Error
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, errs.ErrUserDoesNotExist
@@ -95,4 +99,33 @@ func (r *userRepositoryImpl) SignIn(user *model.User) (*model.User, error) {
 	}
 
 	return user, nil
+}
+
+func (r *userRepositoryImpl) UpdateEmail(id int, payload *model.User) (*model.User, error) {
+	_, err := r.GetByEmail(payload.Email)
+	if err == nil {
+		return nil, errs.ErrEmailUsed
+	}
+
+	if !errors.Is(err, errs.ErrUserDoesNotExist) {
+		return nil, err
+	}
+
+	err = r.db.Transaction(func(tx *gorm.DB) error {
+		if err := r.db.Where("id = ?", id).Clauses(clause.Returning{}).Updates(payload).Error; err != nil {
+			return err
+		}
+
+		if err := r.userCache.DeleteAllByID(id); err != nil {
+			return err
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	return payload, nil
 }

@@ -4,6 +4,7 @@ import "errors"
 
 var (
 	ErrUserDoesNotExist       = errors.New("user doesn't exist")
+	ErrEmailUsed              = errors.New("email is used")
 	ErrUserAlreadyExist       = errors.New("user already exist")
 	ErrInvalidCredential      = errors.New("invalid user credential")
 	ErrInvalidPasswordPattern = errors.New("invalid password pattern")
