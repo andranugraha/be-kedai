@@ -21,18 +21,6 @@ type UserLoginWithGoogleRequest struct {
 	Credential string `json:"credential" binding:"required"`
 }
 
-type UserRegistrationWithGoogleRequest struct {
-	Credential string `json:"credential" binding:"required"`
-	Username   string `json:"username" binding:"required"`
-	Password   string `json:"password" binding:"required"`
-}
-
-type UserRegistrationWithGoogle struct {
-	Email    string `json:"email"`
-	Username string `json:"username"`
-	Password string `json:"password"`
-}
-
 type UserLoginWithGoogle struct {
 	Email string
 }
