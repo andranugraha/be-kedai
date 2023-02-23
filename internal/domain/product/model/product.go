@@ -19,7 +19,7 @@ type Product struct {
 	Rating       float64 `json:"rating"`
 
 	ShopID     int `json:"shopId"`
-	CategoryId int `json:"categoryId"`
+	CategoryID int `json:"categoryId"`
 
 	gorm.Model `json:"-"`
 }

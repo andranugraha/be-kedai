@@ -78,11 +78,11 @@ func createRouter() *gin.Engine {
 		UserWishlistService: userWishlistService,
 	})
 
-	categoryRepo := productRepoPackage.NewCategoryRepository(&productRepo.CategoryRConfig{
+	categoryRepo := productRepoPackage.NewCategoryRepository(&productRepoPackage.CategoryRConfig{
 		DB: db,
 	})
 
-	categoryService := productServicePackage.NewCategoryService(&productService.CategorySConfig{
+	categoryService := productServicePackage.NewCategoryService(&productServicePackage.CategorySConfig{
 		CategoryRepo: categoryRepo,
 	})
 
