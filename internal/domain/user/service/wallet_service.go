@@ -8,7 +8,7 @@ import (
 
 type WalletService interface {
 	RegisterWallet(userID int, pin string) (*model.Wallet, error)
-	GetByUserID(userID int) (*model.Wallet, error)
+	GetWalletByUserID(userID int) (*model.Wallet, error)
 }
 
 type walletServiceImpl struct {
@@ -40,7 +40,7 @@ func (s *walletServiceImpl) RegisterWallet(userID int, pin string) (*model.Walle
 	return s.walletRepo.Create(wallet)
 }
 
-func (s *walletServiceImpl) GetByUserID(userID int) (*model.Wallet, error) {
+func (s *walletServiceImpl) GetWalletByUserID(userID int) (*model.Wallet, error) {
 	_, err := s.userService.GetByID(userID)
 	if err != nil {
 		return nil, err
