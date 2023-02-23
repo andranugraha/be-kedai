@@ -44,7 +44,7 @@ func (c *cityRepositoryImpl) GetAll(req dto.GetCitiesRequest) (cities []*model.C
 		totalPages = int(math.Ceil(float64(totalRows) / float64(req.Limit)))
 	}
 
-	err = db.Limit(int(req.Limit)).Offset(req.Offset()).Find(&cities).Error
+	err = db.Limit(req.Limit).Offset(req.Offset()).Find(&cities).Error
 	if err != nil {
 		return
 	}

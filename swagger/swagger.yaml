@@ -14,8 +14,54 @@ servers:
 tags:
   - name: Location
   - name: User
+  - name: Product
 paths:
   /v1/users/wallets:
+    get:
+      security:
+        - BearerAuth: []
+      tags:
+        - User
+      summary: Get wallet information
+      description: Get user's wallet information
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Response'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/Wallet'
+        '404':
+          description: data not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: NOT_FOUND
+                  message:
+                    type: string
+                    example: error message
+        '500':
+          description: internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: INTERNAL_SERVER_ERROR
+                  message:
+                    type: string
+                    example: error message
     post:
       security:
         - BearerAuth: []
@@ -421,21 +467,21 @@ paths:
                     type: string
                     example: "error message"
   /v1/users/wishlists/{productId}:
-    delete:
+    get:
       security:
         - BearerAuth: []
       tags:
         - User
-      summary: Remove product from wishlist
+      summary: Retrieve product in wishlist
       parameters:
         - in: path
           name: productId
           required: true
-          description: Product id of the item to be removed from wishlist
+          description: Product code of the item to be retrieved from wishlist
           schema:
             type: integer
             example: 1
-      description: Remove product from wishlist
+      description: Retrieve product in wishlist
       responses:
         '200':
           description: successful operation
@@ -443,12 +489,15 @@ paths:
             application/json:
               schema:
                 allOf:
+                  - $ref: '#/components/schemas/Response'
                   - type: object
                     properties:
                       code:
                         example: 'OK'
                       message:
-                        example: 'wishlist removed successfully'
+                        example: 'wishlist retrieved successfully'
+                      data:
+                        $ref: '#/components/schemas/UserWishlist'
         '400':
           description: Bad Request
           content:
@@ -501,6 +550,161 @@ paths:
                   message:
                     type: string
                     example: "error message"
+    delete:
+      security:
+        - BearerAuth: []
+      tags:
+        - User
+      summary: Retrieve product in wishlist
+      parameters:
+        - in: path
+          name: productId
+          required: true
+          description: Product id of the item to be removed from wishlist
+          schema:
+            type: integer
+            example: 1
+      description: Remove product from wishlist
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Response'
+                  - type: object
+                    properties:
+                      code:
+                        example: 'OK'
+                      message:
+                        example: 'wishlist retrieved successfully'
+                      data:
+                        type: object
+                        example: 
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "BAD_REQUEST"
+                  message:
+                    type: string
+                    example: "error message"
+        '401':
+          description: unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "UNAUTHORIZED"
+                  message:
+                    type: string
+                    example: "invalid credential"            
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "USER_NOT_FOUND"
+                  message:
+                    type: string
+                    example: "error message"                   
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "INTERNAL_SERVER_ERROR"
+                  message:
+                    type: string
+                    example: "error message"
+  /v1/products/categories:
+    get:
+      tags:
+        - Product
+      summary: Get all categories
+      description: Get list of categories with filter by children depth and parent id, withPrice param, and pagination
+      parameters:
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            default: 0
+          description: 'Return only level 1 categories if not specified'
+        - in: query
+          name: page
+          schema:
+            type: integer
+            default: 1
+        - in: query
+          name: parentId
+          schema:
+            type: integer
+          description: Filter to get categories by category parent id
+        - in: query
+          name: depth
+          schema:
+            type: integer
+            default: 0
+          description: Filter of category's children depth
+        - in: query
+          name: withPrice
+          schema:
+            type: boolean
+          description: Param to get category's least price
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Response'
+                  - type: object
+                    properties:
+                      code:
+                        example: 'OK'
+                      message:
+                        example: 'success'
+                      data:
+                        allOf:
+                          - $ref: '#/components/schemas/PaginationResponse'
+                          - type: object
+                            properties:
+                              data:
+                                type: array
+                                items:
+                                  $ref: '#/components/schemas/Category'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "INTERNAL_SERVER_ERROR"
+                  message:
+                    type: string
+                    example: "error message"
+    
 components:
   schemas:
     User:
@@ -600,6 +804,27 @@ components:
           example: 1
         balance:
           type: integer
+    Category:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        name:
+          type: string
+          example: 'Fashion'
+        imageUrl:
+          type: string
+        minPrice:
+          type: number
+          format: float
+          example: 100000
+        parentId:
+          type: integer
+        children:
+          type: array
+          items: {}
+          example: []
     Response:
       type: object
       properties:

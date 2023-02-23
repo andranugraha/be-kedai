@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"errors"
 	errRes "kedai/backend/be-kedai/internal/common/error"
 	"kedai/backend/be-kedai/internal/domain/user/model"
 
@@ -9,6 +10,7 @@ import (
 
 type WalletRepository interface {
 	Create(wallet *model.Wallet) (*model.Wallet, error)
+	GetByUserID(userID int) (*model.Wallet, error)
 }
 
 type walletRepositoryImpl struct {
@@ -36,4 +38,18 @@ func (r *walletRepositoryImpl) Create(wallet *model.Wallet) (*model.Wallet, erro
 	}
 
 	return wallet, nil
+}
+
+func (r *walletRepositoryImpl) GetByUserID(userID int) (*model.Wallet, error) {
+	var wallet model.Wallet
+	err := r.db.Where("user_id = ?", userID).First(&wallet).Error
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, errRes.ErrWalletDoesNotExist
+		}
+
+		return nil, err
+	}
+
+	return &wallet, nil
 }
