@@ -92,7 +92,7 @@ func (h *Handler) GetSession(c *gin.Context) {
 	}
 }
 
-func (h *Handler) UpdateEmail(c *gin.Context) {
+func (h *Handler) UpdateUserEmail(c *gin.Context) {
 	var request dto.UpdateEmailRequest
 	err := c.ShouldBindJSON(&request)
 	if err != nil {
