@@ -17,6 +17,7 @@ type UserService interface {
 	SignUp(*dto.UserRegistrationRequest) (*dto.UserRegistrationResponse, error)
 	SignIn(*dto.UserLogin, string) (*dto.Token, error)
 	GetSession(userId int, token string) error
+	UpdateEmail(userId int, request *dto.UpdateEmailRequest) (*dto.UpdateEmailResponse, error)
 }
 
 type userServiceImpl struct {
@@ -98,4 +99,18 @@ func (s *userServiceImpl) SignIn(userLogin *dto.UserLogin, inputPw string) (*dto
 
 func (s *userServiceImpl) GetSession(userId int, accessToken string) error {
 	return s.redis.FindToken(userId, accessToken)
+}
+
+func (s *userServiceImpl) UpdateEmail(userId int, request *dto.UpdateEmailRequest) (*dto.UpdateEmailResponse, error) {
+	payload := request.ToUser()
+
+	res, err := s.repository.Update(userId, payload)
+	if err != nil {
+		return nil, err
+	}
+
+	var response dto.UpdateEmailResponse
+	response.FromUser(res)
+
+	return &response, nil
 }
