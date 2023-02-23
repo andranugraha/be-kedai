@@ -6,6 +6,7 @@ import (
 	"kedai/backend/be-kedai/internal/domain/user/dto"
 	"kedai/backend/be-kedai/internal/domain/user/model"
 	"kedai/backend/be-kedai/internal/domain/user/repository"
+	"kedai/backend/be-kedai/internal/utils/google"
 	"kedai/backend/be-kedai/internal/utils/hash"
 	jwttoken "kedai/backend/be-kedai/internal/utils/jwtToken"
 	pwValidator "kedai/backend/be-kedai/internal/utils/string"
@@ -16,7 +17,7 @@ type UserService interface {
 	GetByID(id int) (*model.User, error)
 	SignUp(*dto.UserRegistrationRequest) (*dto.UserRegistrationResponse, error)
 	SignIn(*dto.UserLogin, string) (*dto.Token, error)
-	SignInWithGoogle(*dto.UserLoginWithGoogle) (*dto.Token, error)
+	SignInWithGoogle(userLogin *dto.UserLoginWithGoogleRequest) (*dto.Token, error)
 	GetSession(userId int, token string) error
 }
 
@@ -96,8 +97,13 @@ func (s *userServiceImpl) SignIn(userLogin *dto.UserLogin, inputPw string) (*dto
 	return nil, errs.ErrInvalidCredential
 }
 
-func (s *userServiceImpl) SignInWithGoogle(userLogin *dto.UserLoginWithGoogle) (*dto.Token, error) {
-	result, err := s.repository.SignIn(&model.User{Email: userLogin.Email})
+func (s *userServiceImpl) SignInWithGoogle(userLogin *dto.UserLoginWithGoogleRequest) (*dto.Token, error) {
+	claim, err := google.ValidateGoogleToken(userLogin.Credential)
+	if err != nil {
+		return nil, errs.ErrUnauthorized
+	}
+
+	result, err := s.repository.SignIn(&model.User{Email: claim.Email})
 	if err != nil {
 		return nil, err
 	}
