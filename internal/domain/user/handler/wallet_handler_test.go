@@ -125,3 +125,95 @@ func TestRegisterWallet(t *testing.T) {
 		})
 	}
 }
+
+func TestGetWalletByUserID(t *testing.T) {
+	type input struct {
+		userId int
+		data   *model.Wallet
+		err    error
+	}
+	type expected struct {
+		statusCode int
+		response   response.Response
+	}
+
+	cases := []struct {
+		description string
+		input
+		expected
+	}{
+		{
+			description: "should return wallet with status code 200 when successed fetching user wallet",
+			input: input{
+				userId: 1,
+				data: &model.Wallet{
+					UserID:  1,
+					Balance: 0,
+				},
+				err: nil,
+			},
+			expected: expected{
+				statusCode: http.StatusOK,
+				response: response.Response{
+					Code:    code.OK,
+					Message: "success",
+					Data: &model.Wallet{
+						UserID:  1,
+						Balance: 0,
+					},
+				},
+			},
+		},
+		{
+			description: "should return error with status code 404 when user does not have any wallet yet",
+			input: input{
+				userId: 1,
+				data:   nil,
+				err:    errRes.ErrWalletDoesNotExist,
+			},
+			expected: expected{
+				statusCode: http.StatusNotFound,
+				response: response.Response{
+					Code:    code.WALLET_DOES_NOT_EXIST,
+					Message: errRes.ErrWalletDoesNotExist.Error(),
+					Data:    nil,
+				},
+			},
+		},
+		{
+			description: "should return error with status code 500 when failed to get user wallet",
+			input: input{
+				userId: 1,
+				data:   nil,
+				err:    errRes.ErrInternalServerError,
+			},
+			expected: expected{
+				statusCode: http.StatusInternalServerError,
+				response: response.Response{
+					Code:    code.INTERNAL_SERVER_ERROR,
+					Message: errRes.ErrInternalServerError.Error(),
+					Data:    nil,
+				},
+			},
+		},
+	}
+
+	for _, tc := range cases {
+		expectedRes, _ := json.Marshal(tc.expected.response)
+		rec := httptest.NewRecorder()
+		c, _ := gin.CreateTestContext(rec)
+		c.Set("userId", tc.input.userId)
+		walletService := mocks.NewWalletService(t)
+		walletService.On("GetWalletByUserID", tc.input.userId).Return(tc.input.data, tc.input.err)
+		cfg := handler.HandlerConfig{
+			WalletService: walletService,
+		}
+		h := handler.New(&cfg)
+		c.Request, _ = http.NewRequest("GET", "/users/wallets", nil)
+
+		h.GetWalletByUserID(c)
+
+		assert.Equal(t, tc.expected.statusCode, rec.Code)
+		assert.Equal(t, string(expectedRes), rec.Body.String())
+	}
+}
