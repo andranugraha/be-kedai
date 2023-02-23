@@ -91,3 +91,27 @@ func (h *Handler) GetSession(c *gin.Context) {
 		return
 	}
 }
+
+func (h *Handler) UpdateEmail(c *gin.Context) {
+	var request dto.UpdateEmailRequest
+	err := c.ShouldBindJSON(&request)
+	if err != nil {
+		response.ErrorValidator(c, http.StatusBadRequest, err)
+		return
+	}
+
+	userId := c.GetInt("userId")
+
+	res, err := h.userService.UpdateEmail(userId, &request)
+	if err != nil {
+		if errors.Is(err, errs.ErrEmailUsed) {
+			response.Error(c, http.StatusUnprocessableEntity, code.EMAIL_ALREADY_REGISTERED, err.Error())
+			return
+		}
+
+		response.Error(c, http.StatusInternalServerError, code.INTERNAL_SERVER_ERROR, errs.ErrInternalServerError.Error())
+		return
+	}
+
+	response.Success(c, http.StatusOK, code.UPDATED, "updated", res)
+}
