@@ -69,10 +69,6 @@ func (s *userCartItemServiceImpl) CreateCartItem(cartItemReq *dto.UserCartItemRe
 		return result, err
 	}
 
-	if err != nil {
-		return nil, err
-	}
-
 	return nil, err
 }
 
@@ -90,6 +86,11 @@ func (s *userCartItemServiceImpl) PreCheckCartItem(cartItemReq *dto.UserCartItem
 		return nil, nil, err
 	}
 
+	// check product active
+	if !product.IsActive {
+		return nil, nil, errs.ErrProductDoesNotExist
+	}
+
 	// check user not owner of shop
 	shop, err := s.shopService.FindShopByUserId(cartItemReq.UserId)
 
@@ -101,11 +102,6 @@ func (s *userCartItemServiceImpl) PreCheckCartItem(cartItemReq *dto.UserCartItem
 		if shop.UserId == cartItemReq.UserId {
 			return nil, nil, errs.ErrUserIsShopOwner
 		}
-	}
-
-	// check product active
-	if !product.IsActive {
-		return nil, nil, errs.ErrProductDoesNotExist
 	}
 
 	// Check if cart item already exists
@@ -125,9 +121,6 @@ func (s *userCartItemServiceImpl) PreCheckCartItem(cartItemReq *dto.UserCartItem
 	}
 
 	// return nil if existing cart item not found
-	if errors.Is(err, errs.ErrCartItemNotFound) {
-		return nil, sku, nil
-	}
 
-	return nil, nil, err
+	return nil, sku, nil
 }
