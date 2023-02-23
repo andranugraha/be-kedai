@@ -9,9 +9,9 @@ import (
 )
 
 type UserCartItemRepository interface {
-	CreateCartItem(cartItem *model.UserCartItem) (*model.UserCartItem, error)
-	GetCartItemByUserIdAndSkuId(userId int, skuId int) (*model.UserCartItem, error)
-	UpdateCartItem(cartItem *model.UserCartItem) (*model.UserCartItem, error)
+	CreateCartItem(cartItem *model.CartItem) (*model.CartItem, error)
+	GetCartItemByUserIdAndSkuId(userId int, skuId int) (*model.CartItem, error)
+	UpdateCartItem(cartItem *model.CartItem) (*model.CartItem, error)
 }
 
 type userCartItemRepository struct {
@@ -28,9 +28,9 @@ func NewUserCartItemRepository(cfg *UserCartItemRConfig) UserCartItemRepository 
 	}
 }
 
-func (r *userCartItemRepository) CreateCartItem(cartItem *model.UserCartItem) (*model.UserCartItem, error) {
+func (r *userCartItemRepository) CreateCartItem(cartItem *model.CartItem) (*model.CartItem, error) {
 
-	err := r.db.Create(cartItem).Error
+	err := r.db.Create(cartItem).Preload("Sku.Product.Shop").Error
 	if err != nil {
 		return nil, err
 	}
@@ -39,10 +39,10 @@ func (r *userCartItemRepository) CreateCartItem(cartItem *model.UserCartItem) (*
 
 }
 
-func (r *userCartItemRepository) GetCartItemByUserIdAndSkuId(userId int, skuId int) (*model.UserCartItem, error) {
-	var cartItem model.UserCartItem
+func (r *userCartItemRepository) GetCartItemByUserIdAndSkuId(userId int, skuId int) (*model.CartItem, error) {
+	var cartItem model.CartItem
 
-	err := r.db.Where("user_id = ? AND sku_id = ?", userId, skuId).First(&cartItem).Error
+	err := r.db.Where("user_id = ? AND sku_id = ?", userId, skuId).Preload("Sku.Product.Shop").First(&cartItem).Error
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, errs.ErrCartItemNotFound
@@ -53,7 +53,7 @@ func (r *userCartItemRepository) GetCartItemByUserIdAndSkuId(userId int, skuId i
 	return &cartItem, nil
 }
 
-func (r *userCartItemRepository) UpdateCartItem(cartItem *model.UserCartItem) (*model.UserCartItem, error) {
+func (r *userCartItemRepository) UpdateCartItem(cartItem *model.CartItem) (*model.CartItem, error) {
 	res := r.db.Model(&cartItem).Updates(cartItem)
 	if err := res.Error; err != nil {
 		return nil, err
