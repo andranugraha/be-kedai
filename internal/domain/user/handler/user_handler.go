@@ -105,7 +105,7 @@ func (h *Handler) UpdateUserEmail(c *gin.Context) {
 	res, err := h.userService.UpdateEmail(userId, &request)
 	if err != nil {
 		if errors.Is(err, errs.ErrEmailUsed) {
-			response.Error(c, http.StatusUnprocessableEntity, code.EMAIL_ALREADY_REGISTERED, err.Error())
+			response.Error(c, http.StatusConflict, code.EMAIL_ALREADY_REGISTERED, err.Error())
 			return
 		}
 
