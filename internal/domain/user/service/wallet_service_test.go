@@ -116,3 +116,102 @@ func TestGetWalletByUserID(t *testing.T) {
 		})
 	}
 }
+
+func TestTopUp(t *testing.T) {
+	var (
+		userId  = 1
+		history = &model.WalletHistory{
+			ID:     0,
+			Type:   "Top-up",
+			Amount: 50000,
+			WalletId: 1,
+		}
+		wallet = &model.Wallet{
+			ID: 1,
+		}
+	)
+	type input struct {
+		userId      int
+		history     *model.WalletHistory
+		wallet      *model.Wallet
+		err         error
+		beforeTests func(mockWalletRepo *mocks.WalletRepository)
+	}
+
+	type expected struct {
+		data      *model.WalletHistory
+		err       error
+	}
+
+	type cases struct {
+		description string
+		input
+		expected
+	}
+
+	for _, tc := range []cases{
+		{
+			description: "should return wallet top-up history when success",
+			input: input{
+				userId:    userId,
+				history:   history,
+				wallet:    wallet,
+				err:       nil,
+				beforeTests: func(mockWalletRepo *mocks.WalletRepository) {
+					mockWalletRepo.On("GetByUserID", userId).Return(wallet, nil)
+					mockWalletRepo.On("TopUp", history, wallet).Return(history, nil)
+				},
+			},
+			expected: expected{
+				data: history,
+				err:  nil,
+			},
+		},
+		{
+			description: "should return error when user wallet does not exist",
+			input: input{
+				userId:    userId,
+				history:   history,
+				wallet:    nil,
+				err: errRes.ErrWalletDoesNotExist,
+				beforeTests: func(mockWalletRepo *mocks.WalletRepository) {
+					mockWalletRepo.On("GetByUserID", userId).Return(nil, errRes.ErrWalletDoesNotExist)
+				},
+			},
+			expected: expected{
+				data:      nil,
+				err:       errRes.ErrWalletDoesNotExist,
+			},
+		},
+		{
+			description: "should return error when internal server error",
+			input: input{
+				userId:    1,
+				history:   history,
+				wallet:    wallet,
+				err:       errRes.ErrInternalServerError,
+				beforeTests: func(mockWalletRepo *mocks.WalletRepository) {
+					mockWalletRepo.On("GetByUserID", userId).Return(wallet, nil)
+					mockWalletRepo.On("TopUp", history, wallet).Return(nil, errRes.ErrInternalServerError)
+				},
+			},
+			expected: expected{
+				data:      nil,
+				err:       errRes.ErrInternalServerError,
+			},
+		},
+	} {
+		t.Run(tc.description, func(t *testing.T) {
+			mockWalletRepo := mocks.NewWalletRepository(t)
+			tc.beforeTests(mockWalletRepo)
+			service := service.NewWalletService(&service.WalletSConfig{
+				WalletRepo: mockWalletRepo,
+			})
+
+			result, err := service.TopUp(tc.input.userId, tc.history.Amount)
+
+			assert.Equal(t, tc.expected.err, err)
+			assert.Equal(t, tc.expected.data, result)
+		})
+	}
+}
