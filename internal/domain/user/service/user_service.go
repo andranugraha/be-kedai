@@ -8,7 +8,7 @@ import (
 	"kedai/backend/be-kedai/internal/domain/user/repository"
 	"kedai/backend/be-kedai/internal/utils/hash"
 	jwttoken "kedai/backend/be-kedai/internal/utils/jwtToken"
-	pwValidator "kedai/backend/be-kedai/internal/utils/string"
+	pwValidator "kedai/backend/be-kedai/internal/utils/password"
 	"strings"
 )
 
@@ -68,6 +68,7 @@ func (s *userServiceImpl) SignUp(userReg *dto.UserRegistrationRequest) (*dto.Use
 
 func (s *userServiceImpl) SignIn(userLogin *dto.UserLogin, inputPw string) (*dto.Token, error) {
 	user := userLogin.ToUser()
+	user.Email = strings.ToLower(user.Email)
 
 	result, err := s.repository.SignIn(user)
 	if err != nil {
