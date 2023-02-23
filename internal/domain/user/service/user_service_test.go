@@ -371,3 +371,72 @@ func TestGetSession(t *testing.T) {
 		})
 	}
 }
+
+func TestUpdateEmail(t *testing.T) {
+	type input struct {
+		userId     int
+		request    *dto.UpdateEmailRequest
+		mockReturn *model.User
+		mockErr    error
+	}
+	type expected struct {
+		res *dto.UpdateEmailResponse
+		err error
+	}
+
+	cases := []struct {
+		description string
+		input
+		expected
+	}{
+		{
+			description: "should return error when failed to update email",
+			input: input{
+				userId: 1,
+				request: &dto.UpdateEmailRequest{
+					Email: "new.email@email.com",
+				},
+				mockReturn: nil,
+				mockErr:    errors.New("failed to update email"),
+			},
+			expected: expected{
+				res: nil,
+				err: errors.New("failed to update email"),
+			},
+		},
+		{
+			description: "should return updated email when update email successed",
+			input: input{
+				userId: 1,
+				request: &dto.UpdateEmailRequest{
+					Email: "new.email@email.com",
+				},
+				mockReturn: &model.User{
+					Email: "new.email@email.com",
+				},
+				mockErr: nil,
+			},
+			expected: expected{
+				res: &dto.UpdateEmailResponse{
+					Email: "new.email@email.com",
+				},
+				err: nil,
+			},
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.description, func(t *testing.T) {
+			userRepo := mocks.NewUserRepository(t)
+			userRepo.On("UpdateEmail", tc.input.userId, tc.input.request.ToUser()).Return(tc.input.mockReturn, tc.input.mockErr)
+			userService := service.NewUserService(&service.UserSConfig{
+				Repository: userRepo,
+			})
+
+			res, err := userService.UpdateEmail(tc.input.userId, tc.input.request)
+
+			assert.Equal(t, tc.expected.res, res)
+			assert.Equal(t, tc.expected.err, err)
+		})
+	}
+}
