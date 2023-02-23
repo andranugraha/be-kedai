@@ -37,8 +37,6 @@ func (h *Handler) UserRegistration(c *gin.Context) {
 		return
 	}
 
-	newUser.Username = ""
-
 	user, err := h.userService.SignUp(&newUser)
 	if err != nil {
 		if errors.Is(err, errs.ErrUserAlreadyExist) {
