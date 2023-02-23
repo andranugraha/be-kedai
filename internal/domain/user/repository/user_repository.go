@@ -19,7 +19,7 @@ type UserRepository interface {
 	GetByID(ID int) (*model.User, error)
 	SignUp(user *model.User) (*model.User, error)
 	SignIn(user *model.User) (*model.User, error)
-	Update(id int, payload *model.User) (*model.User, error)
+	UpdateEmail(id int, payload *model.User) (*model.User, error)
 }
 
 type userRepositoryImpl struct {
@@ -102,9 +102,9 @@ func (r *userRepositoryImpl) SignIn(user *model.User) (*model.User, error) {
 	return user, nil
 }
 
-func (r *userRepositoryImpl) Update(id int, payload *model.User) (*model.User, error) {
+func (r *userRepositoryImpl) UpdateEmail(id int, payload *model.User) (*model.User, error) {
 	err := r.db.Transaction(func(tx *gorm.DB) error {
-		res := r.db.Where("id = ?", id).Clauses(clause.Returning{}).Clauses(clause.OnConflict{DoNothing: true}).Updates(payload)
+		res := tx.Where("id = ?", id).Clauses(clause.Returning{}).Clauses(clause.OnConflict{DoNothing: true}).Updates(payload)
 		if res.Error != nil {
 			return res.Error
 		}
