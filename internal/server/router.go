@@ -36,6 +36,7 @@ func NewRouter(cfg *RouterConfig) *gin.Engine {
 				userAuthenticated.GET("", cfg.UserHandler.GetUserByID)
 				wallet := userAuthenticated.Group("/wallets")
 				{
+					wallet.GET("", cfg.UserHandler.GetWalletByUserID)
 					wallet.POST("", cfg.UserHandler.RegisterWallet)
 				}
 				wishlists := userAuthenticated.Group("/wishlists")
