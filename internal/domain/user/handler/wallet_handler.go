@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"errors"
 	"kedai/backend/be-kedai/internal/common/code"
 	"kedai/backend/be-kedai/internal/common/error"
 	"kedai/backend/be-kedai/internal/domain/user/dto"
@@ -30,4 +31,21 @@ func (h *Handler) RegisterWallet(c *gin.Context) {
 	}
 
 	response.Success(c, http.StatusCreated, code.CREATED, "wallet registered successfully", wallet)
+}
+
+func (h *Handler) GetWalletByUserID(c *gin.Context) {
+	userId := c.GetInt("userId")
+
+	wallet, err := h.walletService.GetWalletByUserID(userId)
+	if err != nil {
+		if errors.Is(err, error.ErrWalletDoesNotExist) {
+			response.Error(c, http.StatusNotFound, code.WALLET_DOES_NOT_EXIST, err.Error())
+			return
+		}
+
+		response.Error(c, http.StatusInternalServerError, code.INTERNAL_SERVER_ERROR, error.ErrInternalServerError.Error())
+		return
+	}
+
+	response.Success(c, http.StatusOK, code.OK, "success", wallet)
 }

@@ -29,7 +29,7 @@ func (h *Handler) GetUserByID(c *gin.Context) {
 	response.Success(c, http.StatusOK, code.OK, "ok", user)
 }
 func (h *Handler) UserRegistration(c *gin.Context) {
-	var newUser dto.UserRegistration
+	var newUser dto.UserRegistrationRequest
 	errBinding := c.ShouldBindJSON(&newUser)
 	if errBinding != nil {
 		response.ErrorValidator(c, http.StatusBadRequest, errBinding)
@@ -40,6 +40,14 @@ func (h *Handler) UserRegistration(c *gin.Context) {
 	if err != nil {
 		if errors.Is(err, errs.ErrUserAlreadyExist) {
 			response.Error(c, http.StatusConflict, code.EMAIL_ALREADY_REGISTERED, errs.ErrUserAlreadyExist.Error())
+			return
+		}
+		if errors.Is(err, errs.ErrInvalidPasswordPattern) {
+			response.Error(c, http.StatusUnprocessableEntity, code.INVALID_PASSWORD_PATTERN, err.Error())
+			return
+		}
+		if errors.Is(err, errs.ErrContainEmail) {
+			response.Error(c, http.StatusUnprocessableEntity, code.PASSWORD_CONTAIN_EMAIL, err.Error())
 			return
 		}
 

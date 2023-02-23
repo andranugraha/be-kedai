@@ -8,7 +8,9 @@ import (
 )
 
 type UserWishlistService interface {
-	AddUserWishlist(req *dto.AddUserWishlistRequest) (*model.UserWishlist, error)
+	GetUserWishlist(req *dto.UserWishlistRequest) (*model.UserWishlist, error)
+	RemoveUserWishlist(req *dto.UserWishlistRequest) error
+	AddUserWishlist(req *dto.UserWishlistRequest) (*model.UserWishlist, error)
 }
 
 type userWishlistServiceImpl struct {
@@ -31,7 +33,26 @@ func NewUserWishlistService(cfg *UserWishlistSConfig) UserWishlistService {
 	}
 }
 
-func (s *userWishlistServiceImpl) AddUserWishlist(req *dto.AddUserWishlistRequest) (*model.UserWishlist, error) {
+func (s *userWishlistServiceImpl) GetUserWishlist(req *dto.UserWishlistRequest) (*model.UserWishlist, error) {
+	var userWishlist model.UserWishlist
+
+	user, err := s.userService.GetByID(req.UserId)
+	if err != nil {
+		return nil, err
+	}
+
+	product, err := s.productService.GetByID(req.ProductId)
+	if err != nil {
+		return nil, err
+	}
+
+	userWishlist.UserID = user.ID
+	userWishlist.ProductID = product.ID
+
+	return s.userWishlistRepository.GetUserWishlist(&userWishlist)
+}
+
+func (s *userWishlistServiceImpl) AddUserWishlist(req *dto.UserWishlistRequest) (*model.UserWishlist, error) {
 	var userWishlist model.UserWishlist
 
 	user, err := s.userService.GetByID(req.UserId)
@@ -48,4 +69,23 @@ func (s *userWishlistServiceImpl) AddUserWishlist(req *dto.AddUserWishlistReques
 	userWishlist.ProductID = product.ID
 
 	return s.userWishlistRepository.AddUserWishlist(&userWishlist)
+}
+
+func (s *userWishlistServiceImpl) RemoveUserWishlist(req *dto.UserWishlistRequest) error {
+	var userWishlist model.UserWishlist
+
+	user, err := s.userService.GetByID(req.UserId)
+	if err != nil {
+		return err
+	}
+
+	product, err := s.productService.GetByID(req.ProductId)
+	if err != nil {
+		return err
+	}
+
+	userWishlist.UserID = user.ID
+	userWishlist.ProductID = product.ID
+
+	return s.userWishlistRepository.RemoveUserWishlist(&userWishlist)
 }

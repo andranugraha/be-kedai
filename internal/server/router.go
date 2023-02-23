@@ -30,8 +30,6 @@ func NewRouter(cfg *RouterConfig) *gin.Engine {
 
 	v1 := r.Group("/v1")
 	{
-		v1.Static("/docs", "swagger")
-
 		user := v1.Group("/users")
 		{
 			user.POST("/register", cfg.UserHandler.UserRegistration)
@@ -41,11 +39,14 @@ func NewRouter(cfg *RouterConfig) *gin.Engine {
 				userAuthenticated.GET("", cfg.UserHandler.GetUserByID)
 				wallet := userAuthenticated.Group("/wallets")
 				{
+					wallet.GET("", cfg.UserHandler.GetWalletByUserID)
 					wallet.POST("", cfg.UserHandler.RegisterWallet)
 				}
 				wishlists := userAuthenticated.Group("/wishlists")
 				{
+					wishlists.GET("/:productId", cfg.UserHandler.GetUserWishlist)
 					wishlists.POST("", cfg.UserHandler.AddUserWishlist)
+					wishlists.DELETE("/:productId", cfg.UserHandler.RemoveUserWishlist)
 				}
 			}
 		}
@@ -53,7 +54,9 @@ func NewRouter(cfg *RouterConfig) *gin.Engine {
 		location := v1.Group("/locations")
 		{
 			location.GET("/cities", cfg.LocationHandler.GetCities)
+
 		}
+		r.Static("/docs", "swagger")
 
 		product := v1.Group("/products")
 		{

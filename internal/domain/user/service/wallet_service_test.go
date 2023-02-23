@@ -1,6 +1,7 @@
 package service_test
 
 import (
+	"errors"
 	errRes "kedai/backend/be-kedai/internal/common/error"
 	"kedai/backend/be-kedai/internal/domain/user/model"
 	"kedai/backend/be-kedai/internal/domain/user/service"
@@ -54,6 +55,64 @@ func TestRegisterWallet(t *testing.T) {
 
 			assert.Equal(t, test.want, got)
 			assert.ErrorIs(t, test.wantErr, err)
+		})
+	}
+}
+
+func TestGetWalletByUserID(t *testing.T) {
+	type input struct {
+		userId int
+		data   *model.Wallet
+		err    error
+	}
+	type expected struct {
+		wallet *model.Wallet
+		err    error
+	}
+
+	cases := []struct {
+		description string
+		input
+		expected
+	}{
+		{
+			description: "should return error when failed to get wallet",
+			input: input{
+				userId: 1,
+				data:   nil,
+				err:    errors.New("failed to get wallet"),
+			},
+			expected: expected{
+				wallet: nil,
+				err:    errors.New("failed to get wallet"),
+			},
+		},
+		{
+			description: "should return wallet data when successed fetching user wallet",
+			input: input{
+				userId: 1,
+				data:   &model.Wallet{},
+				err:    nil,
+			},
+			expected: expected{
+				wallet: &model.Wallet{},
+				err:    nil,
+			},
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.description, func(t *testing.T) {
+			walletRepo := mocks.NewWalletRepository(t)
+			walletRepo.On("GetByUserID", tc.input.userId).Return(tc.input.data, tc.input.err)
+			walletService := service.NewWalletService(&service.WalletSConfig{
+				WalletRepo: walletRepo,
+			})
+
+			actualWallet, actualErr := walletService.GetWalletByUserID(tc.userId)
+
+			assert.Equal(t, tc.expected.wallet, actualWallet)
+			assert.Equal(t, tc.expected.err, actualErr)
 		})
 	}
 }

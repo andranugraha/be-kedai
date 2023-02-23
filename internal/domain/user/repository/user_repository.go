@@ -37,7 +37,7 @@ func NewUserRepository(cfg *UserRConfig) UserRepository {
 func (r *userRepositoryImpl) GetByID(ID int) (*model.User, error) {
 	var user model.User
 
-	err := r.db.Where("user_id = ?", ID).Preload("Shop").Preload("Profile").First(&user).Error
+	err := r.db.Where("id = ?", ID).Preload("Shop").Preload("Profile").First(&user).Error
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, errs.ErrUserDoesNotExist
@@ -68,11 +68,9 @@ func (r *userRepositoryImpl) SignUp(user *model.User) (*model.User, error) {
 	emailString := strings.Split(user.Email, "@")
 
 	username := fmt.Sprintf("%s%d", emailString[0], rand.Intn(999))
-
 	user.Username = username
 
 	hashedPw, _ := hash.HashAndSalt(user.Password)
-
 	user.Password = hashedPw
 
 	err := r.db.Clauses(clause.OnConflict{DoNothing: true}).Create(&user)

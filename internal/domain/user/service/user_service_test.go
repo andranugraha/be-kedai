@@ -16,13 +16,13 @@ import (
 func TestSignUp(t *testing.T) {
 	type input struct {
 		user *model.User
-		dto  *dto.UserRegistration
+		dto  *dto.UserRegistrationRequest
 		err  error
 	}
 
 	type expected struct {
 		user *model.User
-		dto  *dto.UserRegistration
+		dto  *dto.UserRegistrationResponse
 		err  error
 	}
 
@@ -37,10 +37,12 @@ func TestSignUp(t *testing.T) {
 			description: "should return created user data when called",
 			input: input{
 				user: &model.User{
-					Email: "user@mail.com",
+					Email:    "user@mail.com",
+					Password: "Password2",
 				},
-				dto: &dto.UserRegistration{
-					Email: "user@mail.com",
+				dto: &dto.UserRegistrationRequest{
+					Email:    "user@mail.com",
+					Password: "Password2",
 				},
 				err: nil,
 			},
@@ -48,7 +50,7 @@ func TestSignUp(t *testing.T) {
 				user: &model.User{
 					Email: "user@mail.com",
 				},
-				dto: &dto.UserRegistration{
+				dto: &dto.UserRegistrationResponse{
 					Email: "user@mail.com",
 				},
 				err: nil,
@@ -58,10 +60,12 @@ func TestSignUp(t *testing.T) {
 			description: "should return error when server error",
 			input: input{
 				user: &model.User{
-					Email: "user@mail.com",
+					Email:    "user@mail.com",
+					Password: "Password1",
 				},
-				dto: &dto.UserRegistration{
-					Email: "user@mail.com",
+				dto: &dto.UserRegistrationRequest{
+					Email:    "user@mail.com",
+					Password: "Password1",
 				},
 				err: errors.New("server internal error"),
 			},
@@ -72,13 +76,53 @@ func TestSignUp(t *testing.T) {
 			},
 		},
 		{
+			description: "should return error when invalid password pattern",
+			input: input{
+				user: &model.User{
+					Email:    "user@mail.com",
+					Password: "Password",
+				},
+				dto: &dto.UserRegistrationRequest{
+					Email:    "user@mail.com",
+					Password: "Password",
+				},
+				err: errs.ErrInvalidPasswordPattern,
+			},
+			expected: expected{
+				user: nil,
+				dto:  nil,
+				err:  errs.ErrInvalidPasswordPattern,
+			},
+		},
+		{
+			description: "should return error when password contain email address",
+			input: input{
+				user: &model.User{
+					Email:    "user@mail.com",
+					Password: "Password1user",
+				},
+				dto: &dto.UserRegistrationRequest{
+					Email:    "user@mail.com",
+					Password: "Password1user",
+				},
+				err: errs.ErrContainEmail,
+			},
+			expected: expected{
+				user: nil,
+				dto:  nil,
+				err:  errs.ErrContainEmail,
+			},
+		},
+		{
 			description: "should return error when registering same user 2 times",
 			input: input{
 				user: &model.User{
-					Email: "user@mail.com",
+					Email:    "user@mail.com",
+					Password: "Password1",
 				},
-				dto: &dto.UserRegistration{
-					Email: "user@mail.com",
+				dto: &dto.UserRegistrationRequest{
+					Email:    "user@mail.com",
+					Password: "Password1",
 				},
 				err: errs.ErrUserAlreadyExist,
 			},
