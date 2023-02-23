@@ -16,6 +16,51 @@ tags:
   - name: User
 paths:
   /v1/users/wallets:
+    get:
+      security:
+        - BearerAuth: []
+      tags:
+        - User
+      summary: Get wallet information
+      description: Get user's wallet information
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Response'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/Wallet'
+        '404':
+          description: data not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: NOT_FOUND
+                  message:
+                    type: string
+                    example: error message
+        '500':
+          description: internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: INTERNAL_SERVER_ERROR
+                  message:
+                    type: string
+                    example: error message
     post:
       security:
         - BearerAuth: []
