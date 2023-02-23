@@ -12,19 +12,16 @@ type WalletService interface {
 }
 
 type walletServiceImpl struct {
-	walletRepo  repository.WalletRepository
-	userService UserService
+	walletRepo repository.WalletRepository
 }
 
 type WalletSConfig struct {
-	WalletRepo  repository.WalletRepository
-	UserService UserService
+	WalletRepo repository.WalletRepository
 }
 
 func NewWalletService(cfg *WalletSConfig) WalletService {
 	return &walletServiceImpl{
-		walletRepo:  cfg.WalletRepo,
-		userService: cfg.UserService,
+		walletRepo: cfg.WalletRepo,
 	}
 }
 
@@ -41,10 +38,5 @@ func (s *walletServiceImpl) RegisterWallet(userID int, pin string) (*model.Walle
 }
 
 func (s *walletServiceImpl) GetWalletByUserID(userID int) (*model.Wallet, error) {
-	_, err := s.userService.GetByID(userID)
-	if err != nil {
-		return nil, err
-	}
-
 	return s.walletRepo.GetByUserID(userID)
 }
