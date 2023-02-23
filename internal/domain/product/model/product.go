@@ -1,11 +1,15 @@
 package model
 
-import "gorm.io/gorm"
+import (
+	shopModel "kedai/backend/be-kedai/internal/domain/shop/model"
+
+	"gorm.io/gorm"
+)
 
 type Product struct {
 	ID           int     `json:"id"`
 	Code         string  `json:"code"`
-	Name         string  `json:"email"`
+	Name         string  `json:"name"`
 	Description  string  `json:"description"`
 	View         int     `json:"view"`
 	IsHazardous  bool    `json:"isHazardous"`
@@ -18,8 +22,15 @@ type Product struct {
 	IsActive     bool    `json:"isActive"`
 	Rating       float64 `json:"rating"`
 
-	ShopID     int `json:"shopId"`
-	CategoryID int `json:"categoryId"`
+	MinPrice         float64 `json:"minPrice" gorm:"<-:false"`
+	MaxPrice         float64 `json:"maxPrice" gorm:"<-:false"`
+	Address          string  `json:"address" gorm:"<-:false"`
+	TotalSold        int     `json:"totalSold" gorm:"<-:false"`
+	PromotionPercent float64 `json:"promotionPercent" gorm:"<-:false"`
+
+	ShopID     int             `json:"shopId"`
+	Shop       *shopModel.Shop `json:"shop,omitempty"`
+	CategoryID int             `json:"categoryId"`
 
 	gorm.Model `json:"-"`
 }

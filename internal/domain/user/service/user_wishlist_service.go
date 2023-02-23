@@ -8,6 +8,7 @@ import (
 )
 
 type UserWishlistService interface {
+	GetUserWishlists(req dto.GetUserWishlistsRequest) ([]*model.UserWishlist, error)
 	GetUserWishlist(req *dto.UserWishlistRequest) (*model.UserWishlist, error)
 	RemoveUserWishlist(req *dto.UserWishlistRequest) error
 	AddUserWishlist(req *dto.UserWishlistRequest) (*model.UserWishlist, error)
@@ -31,6 +32,15 @@ func NewUserWishlistService(cfg *UserWishlistSConfig) UserWishlistService {
 		userService:            cfg.UserService,
 		productService:         cfg.ProductService,
 	}
+}
+
+func (s *userWishlistServiceImpl) GetUserWishlists(req dto.GetUserWishlistsRequest) ([]*model.UserWishlist, error) {
+	_, err := s.userService.GetByID(req.UserId)
+	if err != nil {
+		return nil, err
+	}
+
+	return s.userWishlistRepository.GetUserWishlists(req)
 }
 
 func (s *userWishlistServiceImpl) GetUserWishlist(req *dto.UserWishlistRequest) (*model.UserWishlist, error) {

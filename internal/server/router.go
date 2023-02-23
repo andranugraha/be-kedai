@@ -46,6 +46,7 @@ func NewRouter(cfg *RouterConfig) *gin.Engine {
 				}
 				wishlists := userAuthenticated.Group("/wishlists")
 				{
+					wishlists.GET("", cfg.UserHandler.GetUserWishlists)
 					wishlists.GET("/:productId", cfg.UserHandler.GetUserWishlist)
 					wishlists.POST("", cfg.UserHandler.AddUserWishlist)
 					wishlists.DELETE("/:productId", cfg.UserHandler.RemoveUserWishlist)

@@ -12,6 +12,27 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+func (h *Handler) GetUserWishlists(c *gin.Context) {
+	var req dto.GetUserWishlistsRequest
+	_ = c.ShouldBindQuery(&req)
+
+	req.UserId = c.GetInt("userId")
+
+	wishlists, err := h.userWishlistService.GetUserWishlists(req)
+
+	if err != nil {
+		if errors.Is(err, errs.ErrUserDoesNotExist) {
+			response.Error(c, http.StatusNotFound, code.USER_NOT_REGISTERED, err.Error())
+			return
+		}
+
+		response.Error(c, http.StatusInternalServerError, code.INTERNAL_SERVER_ERROR, err.Error())
+		return
+	}
+
+	response.Success(c, http.StatusOK, code.OK, "wishlist retrieved successfully", wishlists)
+}
+
 func (h *Handler) GetUserWishlist(c *gin.Context) {
 	var req dto.UserWishlistRequest
 	productId, err := strconv.Atoi(c.Param("productId"))
