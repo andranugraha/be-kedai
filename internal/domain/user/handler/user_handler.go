@@ -5,7 +5,6 @@ import (
 	"kedai/backend/be-kedai/internal/common/code"
 	errs "kedai/backend/be-kedai/internal/common/error"
 	"kedai/backend/be-kedai/internal/domain/user/dto"
-	google "kedai/backend/be-kedai/internal/utils/google"
 	"kedai/backend/be-kedai/internal/utils/response"
 	"net/http"
 	"strings"
@@ -89,17 +88,15 @@ func (h *Handler) UserLoginWithGoogle(c *gin.Context) {
 		return
 	}
 
-	claim, err := google.ValidateGoogleToken(newLogin.Credential)
-
-	if err != nil {
-		response.Error(c, http.StatusUnauthorized, code.UNAUTHORIZED, err.Error())
-		return
-	}
-
-	token, err := h.userService.SignInWithGoogle(&dto.UserLoginWithGoogle{Email: claim.Email})
+	token, err := h.userService.SignInWithGoogle(&newLogin)
 	if err != nil {
 		if errors.Is(err, errs.ErrInvalidCredential) {
 			response.Error(c, http.StatusNotFound, code.USER_NOT_REGISTERED, err.Error())
+			return
+		}
+
+		if errors.Is(err, errs.ErrUnauthorized) {
+			response.Error(c, http.StatusUnauthorized, code.UNAUTHORIZED, err.Error())
 			return
 		}
 
