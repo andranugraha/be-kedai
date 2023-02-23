@@ -536,7 +536,7 @@ func TestUpdateEmail(t *testing.T) {
 				UserService: userService,
 			}
 			h := handler.New(&cfg)
-			c.Request, _ = http.NewRequest("PUT", "/v1/users", test.MakeRequestBody(tc.input.request))
+			c.Request, _ = http.NewRequest("PUT", "/v1/users/emails", test.MakeRequestBody(tc.input.request))
 
 			h.UpdateUserEmail(c)
 
