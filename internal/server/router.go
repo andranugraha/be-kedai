@@ -27,8 +27,6 @@ func NewRouter(cfg *RouterConfig) *gin.Engine {
 
 	v1 := r.Group("/v1")
 	{
-		v1.Static("/docs", "swagger")
-
 		user := v1.Group("/users")
 		{
 			user.POST("/register", cfg.UserHandler.UserRegistration)
@@ -42,6 +40,7 @@ func NewRouter(cfg *RouterConfig) *gin.Engine {
 				}
 				wishlists := userAuthenticated.Group("/wishlists")
 				{
+					wishlists.GET("/:productId", cfg.UserHandler.GetUserWishlist)
 					wishlists.POST("", cfg.UserHandler.AddUserWishlist)
 					wishlists.DELETE("/:productId", cfg.UserHandler.RemoveUserWishlist)
 				}

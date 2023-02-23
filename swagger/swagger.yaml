@@ -421,12 +421,95 @@ paths:
                     type: string
                     example: "error message"
   /v1/users/wishlists/{productId}:
+    get:
+      security:
+        - BearerAuth: []
+      tags:
+        - User
+      summary: Retrieve product in wishlist
+      parameters:
+        - in: path
+          name: productId
+          required: true
+          description: Product code of the item to be retrieved from wishlist
+          schema:
+            type: integer
+            example: 1
+      description: Retrieve product in wishlist
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Response'
+                  - type: object
+                    properties:
+                      code:
+                        example: 'OK'
+                      message:
+                        example: 'wishlist retrieved successfully'
+                      data:
+                        $ref: '#/components/schemas/UserWishlist'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "BAD_REQUEST"
+                  message:
+                    type: string
+                    example: "error message"
+        '401':
+          description: unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "UNAUTHORIZED"
+                  message:
+                    type: string
+                    example: "invalid credential"            
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "USER_NOT_FOUND"
+                  message:
+                    type: string
+                    example: "error message"                   
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "INTERNAL_SERVER_ERROR"
+                  message:
+                    type: string
+                    example: "error message"
     delete:
       security:
         - BearerAuth: []
       tags:
         - User
-      summary: Remove product from wishlist
+      summary: Retrieve product in wishlist
       parameters:
         - in: path
           name: productId
@@ -443,12 +526,16 @@ paths:
             application/json:
               schema:
                 allOf:
+                  - $ref: '#/components/schemas/Response'
                   - type: object
                     properties:
                       code:
                         example: 'OK'
                       message:
-                        example: 'wishlist removed successfully'
+                        example: 'wishlist retrieved successfully'
+                      data:
+                        type: object
+                        example: 
         '400':
           description: Bad Request
           content:
