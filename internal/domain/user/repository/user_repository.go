@@ -104,7 +104,7 @@ func (r *userRepositoryImpl) SignIn(user *model.User) (*model.User, error) {
 
 func (r *userRepositoryImpl) UpdateEmail(id int, payload *model.User) (*model.User, error) {
 	err := r.db.Transaction(func(tx *gorm.DB) error {
-		res := tx.Where("id = ?", id).Clauses(clause.Returning{}).Clauses(clause.OnConflict{DoNothing: true}).Updates(payload)
+		res := tx.Where("id = ?", id).Clauses(clause.OnConflict{DoNothing: true}).Updates(payload)
 		if res.Error != nil {
 			return res.Error
 		}
