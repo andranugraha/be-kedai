@@ -10,6 +10,8 @@ import (
 	jwttoken "kedai/backend/be-kedai/internal/utils/jwtToken"
 	pwValidator "kedai/backend/be-kedai/internal/utils/password"
 	"strings"
+
+	"github.com/forPelevin/gomoji"
 )
 
 type UserService interface {
@@ -18,6 +20,7 @@ type UserService interface {
 	SignIn(*dto.UserLogin, string) (*dto.Token, error)
 	GetSession(userId int, token string) error
 	UpdateEmail(userId int, request *dto.UpdateEmailRequest) (*dto.UpdateEmailResponse, error)
+	UpdateUsername(userId int, requst *dto.UpdateUsernameRequest) (*dto.UpdateUsernameResponse, error)
 }
 
 type userServiceImpl struct {
@@ -111,6 +114,23 @@ func (s *userServiceImpl) UpdateEmail(userId int, request *dto.UpdateEmailReques
 
 	var response dto.UpdateEmailResponse
 	response.FromUser(res)
+
+	return &response, nil
+}
+
+func (s *userServiceImpl) UpdateUsername(userId int, request *dto.UpdateUsernameRequest) (*dto.UpdateUsernameResponse, error) {
+	if gomoji.ContainsEmoji(request.Username) {
+		return nil, errs.ErrUsernameContainEmoji
+	}
+
+	res, err := s.repository.UpdateUsername(userId, request.Username)
+	if err != nil {
+		return nil, err
+	}
+
+	response := dto.UpdateUsernameResponse{
+		Username: res.Username,
+	}
 
 	return &response, nil
 }

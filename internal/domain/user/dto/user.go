@@ -21,6 +21,14 @@ type UpdateEmailRequest struct {
 	Email string `json:"email" binding:"required,email"`
 }
 
+type UpdateUsernameRequest struct {
+	Username string `json:"username" binding:"required"`
+}
+
+type UpdateUsernameResponse struct {
+	Username string `json:"username"`
+}
+
 type UpdateEmailResponse struct {
 	Email string `json:"email"`
 }
