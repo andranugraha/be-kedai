@@ -20,6 +20,7 @@ type UserRepository interface {
 	SignUp(user *model.User) (*model.User, error)
 	SignIn(user *model.User) (*model.User, error)
 	UpdateEmail(id int, payload *model.User) (*model.User, error)
+	UpdateUsername(id int, username string) (*model.User, error)
 }
 
 type userRepositoryImpl struct {
@@ -124,4 +125,16 @@ func (r *userRepositoryImpl) UpdateEmail(id int, payload *model.User) (*model.Us
 	}
 
 	return payload, nil
+}
+
+func (r *userRepositoryImpl) UpdateUsername(userId int, username string) (*model.User, error) {
+	res := r.db.Model(&model.User{}).Where("id = ?", userId).Clauses(clause.OnConflict{DoNothing: true}).Update("username", username)
+	if res.Error != nil {
+		return nil, res.Error
+	}
+	if res.RowsAffected == 0 {
+		return nil, errs.ErrUsernameUsed
+	}
+
+	return &model.User{ID: 1, Username: username}, nil
 }
