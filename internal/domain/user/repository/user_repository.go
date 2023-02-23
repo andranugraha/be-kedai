@@ -19,6 +19,7 @@ type UserRepository interface {
 	GetByID(ID int) (*model.User, error)
 	SignUp(user *model.User) (*model.User, error)
 	SignIn(user *model.User) (*model.User, error)
+	Update(id int, payload *model.User) (*model.User, error)
 }
 
 type userRepositoryImpl struct {
@@ -101,19 +102,14 @@ func (r *userRepositoryImpl) SignIn(user *model.User) (*model.User, error) {
 	return user, nil
 }
 
-func (r *userRepositoryImpl) UpdateEmail(id int, payload *model.User) (*model.User, error) {
-	_, err := r.GetByEmail(payload.Email)
-	if err == nil {
-		return nil, errs.ErrEmailUsed
-	}
-
-	if !errors.Is(err, errs.ErrUserDoesNotExist) {
-		return nil, err
-	}
-
-	err = r.db.Transaction(func(tx *gorm.DB) error {
-		if err := r.db.Where("id = ?", id).Clauses(clause.Returning{}).Updates(payload).Error; err != nil {
-			return err
+func (r *userRepositoryImpl) Update(id int, payload *model.User) (*model.User, error) {
+	err := r.db.Transaction(func(tx *gorm.DB) error {
+		res := r.db.Where("id = ?", id).Clauses(clause.Returning{}).Clauses(clause.OnConflict{DoNothing: true}).Updates(payload)
+		if res.Error != nil {
+			return res.Error
+		}
+		if res.RowsAffected == 0 {
+			return errs.ErrEmailUsed
 		}
 
 		if err := r.userCache.DeleteAllByID(id); err != nil {
