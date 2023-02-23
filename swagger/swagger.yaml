@@ -311,6 +311,78 @@ paths:
                   message:
                     type: string
                     example: "error message"
+  /v1/users/google-login:
+    post:
+      tags:
+        - User
+      summary: User login with google
+      description: User login with google to get auth token
+      requestBody:
+        $ref: '#/components/requestBodies/GoogleLoginUserBody'
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Response'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/Token'
+        '400':
+          description: bad request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "BAD_REQUEST"
+                  message:
+                    type: string
+                    example: "Credential is required"
+        '401':
+          description: unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "UNAUTHORIZED"
+                  message:
+                    type: string
+                    example: "invalid credential"
+        '404':
+          description: not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "NOT_FOUND"
+                  message:
+                    type: string
+                    example: "user not found"
+        '500':
+          description: internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "INTERNAL_SERVER_ERROR"
+                  message:
+                    type: string
+                    example: "error message"                  
   /v1/locations/cities:
     get:
       tags:
@@ -918,6 +990,19 @@ components:
               password:
                 type: string
                 example: "password"
+    GoogleLoginUserBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - credential
+            properties:
+              credential:
+                type: string
+                format: email
+                example: "googlejwttokenhere"         
     AddWishlistBody:
       required: true
       content:
