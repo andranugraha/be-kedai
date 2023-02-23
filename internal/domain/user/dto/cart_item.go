@@ -3,14 +3,14 @@ package dto
 import "kedai/backend/be-kedai/internal/domain/user/model"
 
 type UserCartItemRequest struct {
-	Quantity int     `json:"quantity" binding:"required,gte=1"`
-	Notes    *string `json:"notes"`
-	UserId   int     `json:"userId" binding:"required,gte=1"`
-	SkuId    int     `json:"skuId" binding:"required,gte=1"`
+	Quantity int    `json:"quantity" binding:"required,min=1"`
+	Notes    string `json:"notes" binding:"max=50"`
+	UserId   int    `json:"userId"`
+	SkuId    int    `json:"skuId" binding:"required,min=1"`
 }
 
-func (d *UserCartItemRequest) ToUserCartItem() *model.UserCartItem {
-	return &model.UserCartItem{
+func (d *UserCartItemRequest) ToUserCartItem() *model.CartItem {
+	return &model.CartItem{
 		Quantity: d.Quantity,
 		Notes:    d.Notes,
 		UserId:   d.UserId,
