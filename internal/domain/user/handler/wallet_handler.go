@@ -49,3 +49,22 @@ func (h *Handler) GetWalletByUserID(c *gin.Context) {
 
 	response.Success(c, http.StatusOK, code.OK, "success", wallet)
 }
+
+func (h *Handler) TopUp(c *gin.Context) {
+	var newTopUp dto.TopUpRequest
+	errBinding := c.ShouldBindJSON(&newTopUp)
+	if errBinding != nil {
+		response.ErrorValidator(c, http.StatusBadRequest, errBinding)
+		return
+	}
+	
+	userId := c.GetInt("userId")
+	
+	result, err := h.walletService.TopUp(userId, newTopUp.Amount)
+	if err != nil {
+		response.Error(c, http.StatusInternalServerError, code.INTERNAL_SERVER_ERROR, err.Error())
+		return
+	}
+
+	response.Success(c, http.StatusOK, code.OK, "success", result)
+}
