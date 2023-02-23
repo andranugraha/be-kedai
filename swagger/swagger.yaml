@@ -14,6 +14,7 @@ servers:
 tags:
   - name: Location
   - name: User
+  - name: Product
 paths:
   /v1/users/wallets:
     get:
@@ -633,6 +634,77 @@ paths:
                   message:
                     type: string
                     example: "error message"
+  /v1/products/categories:
+    get:
+      tags:
+        - Product
+      summary: Get all categories
+      description: Get list of categories with filter by children depth and parent id, withPrice param, and pagination
+      parameters:
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            default: 0
+          description: 'Return only level 1 categories if not specified'
+        - in: query
+          name: page
+          schema:
+            type: integer
+            default: 1
+        - in: query
+          name: parentId
+          schema:
+            type: integer
+          description: Filter to get categories by category parent id
+        - in: query
+          name: depth
+          schema:
+            type: integer
+            default: 0
+          description: Filter of category's children depth
+        - in: query
+          name: withPrice
+          schema:
+            type: boolean
+          description: Param to get category's least price
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Response'
+                  - type: object
+                    properties:
+                      code:
+                        example: 'OK'
+                      message:
+                        example: 'success'
+                      data:
+                        allOf:
+                          - $ref: '#/components/schemas/PaginationResponse'
+                          - type: object
+                            properties:
+                              data:
+                                type: array
+                                items:
+                                  $ref: '#/components/schemas/Category'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "INTERNAL_SERVER_ERROR"
+                  message:
+                    type: string
+                    example: "error message"
+    
 components:
   schemas:
     User:
@@ -732,6 +804,27 @@ components:
           example: 1
         balance:
           type: integer
+    Category:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        name:
+          type: string
+          example: 'Fashion'
+        imageUrl:
+          type: string
+        minPrice:
+          type: number
+          format: float
+          example: 100000
+        parentId:
+          type: integer
+        children:
+          type: array
+          items: {}
+          example: []
     Response:
       type: object
       properties:
