@@ -5,6 +5,7 @@ import (
 	"kedai/backend/be-kedai/internal/common/code"
 	errs "kedai/backend/be-kedai/internal/common/error"
 	"kedai/backend/be-kedai/internal/domain/user/dto"
+	google "kedai/backend/be-kedai/internal/utils/google"
 	"kedai/backend/be-kedai/internal/utils/response"
 	"net/http"
 	"strings"
@@ -35,6 +36,8 @@ func (h *Handler) UserRegistration(c *gin.Context) {
 		response.ErrorValidator(c, http.StatusBadRequest, errBinding)
 		return
 	}
+
+	newUser.Username = ""
 
 	user, err := h.userService.SignUp(&newUser)
 	if err != nil {
@@ -78,6 +81,35 @@ func (h *Handler) UserLogin(c *gin.Context) {
 	}
 
 	response.Success(c, http.StatusOK, code.OK, "ok", token)
+}
+
+func (h *Handler) UserLoginWithGoogle(c *gin.Context) {
+	var newLogin dto.UserLoginWithGoogleRequest
+	errBinding := c.ShouldBindJSON(&newLogin)
+	if errBinding != nil {
+		response.ErrorValidator(c, http.StatusBadRequest, errBinding)
+		return
+	}
+
+	claim, err := google.ValidateGoogleToken(newLogin.Credential)
+
+	if err != nil {
+		response.Error(c, http.StatusUnauthorized, code.UNAUTHORIZED, err.Error())
+		return
+	}
+
+	token, err := h.userService.SignInWithGoogle(&dto.UserLoginWithGoogle{Email: claim.Email})
+	if err != nil {
+		if errors.Is(err, errs.ErrInvalidCredential) {
+			response.Error(c, http.StatusNotFound, code.USER_NOT_REGISTERED, err.Error())
+			return
+		}
+
+		response.Error(c, http.StatusInternalServerError, code.INTERNAL_SERVER_ERROR, err.Error())
+		return
+	}
+
+	response.Success(c, http.StatusOK, code.OK, "Sign in with google successful", token)
 }
 
 func (h *Handler) GetSession(c *gin.Context) {
