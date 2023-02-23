@@ -311,6 +311,70 @@ paths:
                   message:
                     type: string
                     example: "error message"
+  /v1/users/emails:
+    put:
+      tags:
+        - User
+      summary: Update user email
+      description: Update user email
+      requestBody:
+        $ref: '#/components/requestBodies/UpdateEmailBody'
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Response'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          email:
+                            type: string
+                            format: email
+                            example: user@email.com
+        '400':
+          description: bad request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: BAD_REQUEST
+                  message:
+                    type: string
+                    example: error message
+        '409':
+          description: conflict
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: CONFLICT
+                  message:
+                    type: string
+                    example: error message
+        '500':
+          description: internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: INTERNAL_SERVER_ERROR
+                  message:
+                    type: string
+                    example: error message  
   /v1/locations/cities:
     get:
       tags:
@@ -918,6 +982,19 @@ components:
               password:
                 type: string
                 example: "password"
+    UpdateEmailBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - email
+            properties:
+              email:
+                type: string
+                formatl: email
+                example: user@email.com
     AddWishlistBody:
       required: true
       content:
