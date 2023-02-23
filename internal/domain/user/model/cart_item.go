@@ -6,12 +6,12 @@ import (
 	"gorm.io/gorm"
 )
 
-type UserCartItem struct {
-	ID       int     `json:"id"`
-	Quantity int     `json:"quantity"`
-	Notes    *string `json:"notes"`
-	UserId   int     `json:"userId"`
-	SkuId    int     `json:"skuId"`
+type CartItem struct {
+	ID       int    `json:"id"`
+	Quantity int    `json:"quantity"`
+	Notes    string `json:"notes"`
+	UserId   int    `json:"-"`
+	SkuId    int    `json:"skuId"`
 
 	Sku productModel.Sku `json:"sku" gorm:"foreignKey:SkuId"`
 
