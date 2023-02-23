@@ -5,16 +5,19 @@ import "kedai/backend/be-kedai/internal/domain/user/service"
 type Handler struct {
 	userService         service.UserService
 	userWishlistService service.UserWishlistService
+	walletService       service.WalletService
 }
 
 type HandlerConfig struct {
 	UserService         service.UserService
 	UserWishlistService service.UserWishlistService
+	WalletService       service.WalletService
 }
 
-func NewHandler(cfg *HandlerConfig) *Handler {
+func New(cfg *HandlerConfig) *Handler {
 	return &Handler{
 		userService:         cfg.UserService,
 		userWishlistService: cfg.UserWishlistService,
+		walletService:       cfg.WalletService,
 	}
 }
