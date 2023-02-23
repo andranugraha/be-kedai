@@ -68,6 +68,7 @@ func (s *userServiceImpl) SignUp(userReg *dto.UserRegistrationRequest) (*dto.Use
 
 func (s *userServiceImpl) SignIn(userLogin *dto.UserLogin, inputPw string) (*dto.Token, error) {
 	user := userLogin.ToUser()
+	user.Email = strings.ToLower(user.Email)
 
 	result, err := s.repository.SignIn(user)
 	if err != nil {
