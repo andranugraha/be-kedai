@@ -80,6 +80,33 @@ func (h *Handler) UserLogin(c *gin.Context) {
 	response.Success(c, http.StatusOK, code.OK, "ok", token)
 }
 
+func (h *Handler) UserLoginWithGoogle(c *gin.Context) {
+	var newLogin dto.UserLoginWithGoogleRequest
+	errBinding := c.ShouldBindJSON(&newLogin)
+	if errBinding != nil {
+		response.ErrorValidator(c, http.StatusBadRequest, errBinding)
+		return
+	}
+
+	token, err := h.userService.SignInWithGoogle(&newLogin)
+	if err != nil {
+		if errors.Is(err, errs.ErrInvalidCredential) {
+			response.Error(c, http.StatusNotFound, code.USER_NOT_REGISTERED, err.Error())
+			return
+		}
+
+		if errors.Is(err, errs.ErrUnauthorized) {
+			response.Error(c, http.StatusUnauthorized, code.UNAUTHORIZED, err.Error())
+			return
+		}
+
+		response.Error(c, http.StatusInternalServerError, code.INTERNAL_SERVER_ERROR, err.Error())
+		return
+	}
+
+	response.Success(c, http.StatusOK, code.OK, "Sign in with google successful", token)
+}
+
 func (h *Handler) GetSession(c *gin.Context) {
 	userId := c.GetInt("userId")
 	token := c.GetHeader("authorization")

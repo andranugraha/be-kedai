@@ -7,3 +7,8 @@ type Claim struct {
 	TokenType string `json:"tokenType"`
 	jwt.RegisteredClaims
 }
+
+type GoogleClaim struct {
+	Email string `json:"email"`
+	jwt.RegisteredClaims
+}
