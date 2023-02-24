@@ -3,6 +3,8 @@ package handler_test
 import (
 	"fmt"
 	"kedai/backend/be-kedai/internal/common/code"
+	"kedai/backend/be-kedai/internal/common/constant"
+	commonDto "kedai/backend/be-kedai/internal/common/dto"
 	errs "kedai/backend/be-kedai/internal/common/error"
 	productModel "kedai/backend/be-kedai/internal/domain/product/model"
 	"kedai/backend/be-kedai/internal/domain/user/dto"
@@ -565,5 +567,80 @@ func TestUserWishlist_RemoveUserWishlist(t *testing.T) {
 			assert.Equal(t, tc.expected.statusCode, rec.Code)
 		})
 	}
+}
 
+func TestGetUserWishlists(t *testing.T) {
+	var (
+		userId = 1
+		req    = dto.GetUserWishlistsRequest{
+			UserId: userId,
+			Sort:   constant.SortByRecommended,
+			Limit:  10,
+			Page:   1,
+		}
+		res = &commonDto.PaginationResponse{
+			Data: []*model.UserWishlist{
+				{
+					UserID:    userId,
+					ProductID: 1,
+				},
+			},
+			TotalRows:  1,
+			TotalPages: 1,
+			Limit:      req.Limit,
+			Page:       req.Page,
+		}
+	)
+
+	tests := []struct {
+		name                string
+		getUserWishlistsRes *commonDto.PaginationResponse
+		getUserWishlistsErr error
+		want                response.Response
+		wantStatusCode      int
+	}{
+		{
+			name:                "should return 200 when get user wishlists success",
+			getUserWishlistsRes: res,
+			getUserWishlistsErr: nil,
+			want: response.Response{
+				Code:    code.OK,
+				Message: "wishlist retrieved successfully",
+				Data:    res,
+			},
+			wantStatusCode: http.StatusOK,
+		},
+		{
+			name:                "should return 500 when get user wishlists failed",
+			getUserWishlistsRes: nil,
+			getUserWishlistsErr: errs.ErrInternalServerError,
+			want: response.Response{
+				Code:    code.INTERNAL_SERVER_ERROR,
+				Message: errs.ErrInternalServerError.Error(),
+			},
+			wantStatusCode: http.StatusInternalServerError,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			mockWishlistService := new(mocks.UserWishlistService)
+			mockWishlistService.On("GetUserWishlists", req).Return(test.getUserWishlistsRes, test.getUserWishlistsErr)
+
+			handler := handler.New(&handler.HandlerConfig{
+				UserWishlistService: mockWishlistService,
+			})
+
+			rec := httptest.NewRecorder()
+			c, _ := gin.CreateTestContext(rec)
+			c.Set("userId", userId)
+			c.Request, _ = http.NewRequest(http.MethodGet, "/users/wishlists", nil)
+
+			handler.GetUserWishlists(c)
+
+			expectedJson, _ := json.Marshal(test.want)
+			assert.Equal(t, expectedJson, rec.Body.Bytes())
+			assert.Equal(t, test.wantStatusCode, rec.Code)
+		})
+	}
 }
