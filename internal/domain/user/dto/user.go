@@ -22,7 +22,7 @@ type UpdateEmailRequest struct {
 }
 
 type UpdateUsernameRequest struct {
-	Username string `json:"username" binding:"required,alphanum"`
+	Username string `json:"username" binding:"required,min=6,max=30"`
 }
 
 type UpdateUsernameResponse struct {
