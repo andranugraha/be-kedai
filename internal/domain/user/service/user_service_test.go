@@ -445,8 +445,7 @@ func TestUpdateUsername(t *testing.T) {
 	type input struct {
 		userId     int
 		request    *dto.UpdateUsernameRequest
-		mockReturn *model.User
-		mockErr    error
+		beforeTest func(*mocks.UserRepository)
 	}
 	type expected struct {
 		res *dto.UpdateUsernameResponse
@@ -459,14 +458,29 @@ func TestUpdateUsername(t *testing.T) {
 		expected
 	}{
 		{
+			description: "should return error when username is not valid",
+			input: input{
+				userId: 1,
+				request: &dto.UpdateUsernameRequest{
+					Username: "new_u$ername",
+				},
+				beforeTest: func(ur *mocks.UserRepository) {},
+			},
+			expected: expected{
+				res: nil,
+				err: errs.ErrInvalidUsernamePattern,
+			},
+		},
+		{
 			description: "should return new username when update username successed",
 			input: input{
 				userId: 1,
 				request: &dto.UpdateUsernameRequest{
 					Username: "new_username",
 				},
-				mockReturn: &model.User{Username: "new_username"},
-				mockErr:    nil,
+				beforeTest: func(ur *mocks.UserRepository) {
+					ur.On("UpdateUsername", 1, "new_username").Return(&model.User{Username: "new_username"}, nil)
+				},
 			},
 			expected: expected{
 				res: &dto.UpdateUsernameResponse{Username: "new_username"},
@@ -480,8 +494,9 @@ func TestUpdateUsername(t *testing.T) {
 				request: &dto.UpdateUsernameRequest{
 					Username: "new_username",
 				},
-				mockReturn: nil,
-				mockErr:    errors.New("failed to update username"),
+				beforeTest: func(ur *mocks.UserRepository) {
+					ur.On("UpdateUsername", 1, "new_username").Return(nil, errors.New("failed to update username"))
+				},
 			},
 			expected: expected{
 				res: nil,
@@ -493,7 +508,7 @@ func TestUpdateUsername(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.description, func(t *testing.T) {
 			userRepo := mocks.NewUserRepository(t)
-			userRepo.On("UpdateUsername", tc.input.userId, tc.input.request.Username).Return(tc.input.mockReturn, tc.input.mockErr)
+			tc.beforeTest(userRepo)
 			userService := service.NewUserService(&service.UserSConfig{
 				Repository: userRepo,
 			})

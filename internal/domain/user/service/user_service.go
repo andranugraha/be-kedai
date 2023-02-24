@@ -117,7 +117,13 @@ func (s *userServiceImpl) UpdateEmail(userId int, request *dto.UpdateEmailReques
 }
 
 func (s *userServiceImpl) UpdateUsername(userId int, request *dto.UpdateUsernameRequest) (*dto.UpdateUsernameResponse, error) {
-	res, err := s.repository.UpdateUsername(userId, request.Username)
+	username := strings.ToLower(request.Username)
+
+	if isUsernameValid := credential.VerifyUsername(username); !isUsernameValid {
+		return nil, errs.ErrInvalidUsernamePattern
+	}
+
+	res, err := s.repository.UpdateUsername(userId, username)
 	if err != nil {
 		return nil, err
 	}

@@ -9,6 +9,7 @@ var (
 	ErrUserAlreadyExist       = errors.New("user already exist")
 	ErrInvalidCredential      = errors.New("invalid user credential")
 	ErrInvalidPasswordPattern = errors.New("invalid password pattern")
+	ErrInvalidUsernamePattern = errors.New("invalid username pattern")
 	ErrContainEmail           = errors.New("password cannot contain email address")
 	ErrContainUsername        = errors.New("password cannot contain username")
 	ErrUsernameContainEmoji   = errors.New("username cannot contain emoji")
