@@ -77,7 +77,8 @@ func (r *userCartItemRepository) GetAllCartItem(req *dto.GetCartItemsRequest) (c
 		Joins("left join shops sh on p.shop_id = sh.id").
 		Group("sh.id, cart_items.id").
 		Order("cart_items.created_at").
-		Preload("Sku.Product.Shop").
+		Preload("Sku.Product.Shop.Address.City").
+		Preload("Sku.Product.Shop.Address.Province").
 		Preload("Sku.Variants.Group").
 		Preload("Sku.Promotion")
 

@@ -4,6 +4,7 @@ import (
 	productModel "kedai/backend/be-kedai/internal/domain/product/model"
 	shopModel "kedai/backend/be-kedai/internal/domain/shop/model"
 	"kedai/backend/be-kedai/internal/domain/user/model"
+	"time"
 )
 
 type UserCartItemRequest struct {
@@ -19,9 +20,17 @@ type GetCartItemsRequest struct {
 	Page   int `form:"page"`
 }
 
+type CartItemShopResponse struct {
+	ID         int       `json:"id"`
+	Name       string    `json:"name"`
+	Rating     float64   `json:"rating"`
+	JoinedDate time.Time `json:"joinedDate"`
+	Address    string    `json:"address"`
+}
+
 type GetCartItemsResponse struct {
-	Shop     shopModel.Shop     `json:"shop"`
-	Products []CartItemResponse `json:"cartItems"`
+	Shop     CartItemShopResponse `json:"shop"`
+	Products []CartItemResponse   `json:"cartItems"`
 }
 
 type GetCartItemsResponses struct {
@@ -89,7 +98,13 @@ func (d *CartItemResponse) ToCartItemResponse(cartItem model.CartItem) {
 }
 
 func (d *GetCartItemsResponse) ToGetCartItemsResponse(cartItems []CartItemResponse, shop shopModel.Shop) {
-	d.Shop = shop
+	d.Shop = CartItemShopResponse{
+		ID:         shop.ID,
+		Name:       shop.Name,
+		Rating:     shop.Rating,
+		JoinedDate: shop.JoinedDate,
+		Address:    shop.Address.City.Name + ", " + shop.Address.Province.Name,
+	}
 	d.Products = cartItems
 }
 
@@ -101,8 +116,8 @@ func (d *GetCartItemsResponses) ToGetCartItemsResponses(cartItems []*model.CartI
 
 	for i, cartItem := range cartItems {
 		if i == 0 {
-			shopId = cartItems[0].Sku.Product.ShopId
-			shop = cartItems[0].Sku.Product.Shop
+			shopId = cartItems[0].Sku.Product.ShopID
+			shop = *cartItems[0].Sku.Product.Shop
 		}
 
 		cir := CartItemResponse{}
@@ -110,11 +125,11 @@ func (d *GetCartItemsResponses) ToGetCartItemsResponses(cartItems []*model.CartI
 		cartItemResponses = append(cartItemResponses, cir)
 
 		if i != len(cartItems)-1 {
-			if shopId != cartItems[i+1].Sku.Product.ShopId {
+			if shopId != cartItems[i+1].Sku.Product.ShopID {
 				cartItemsResponse.ToGetCartItemsResponse(cartItemResponses, shop)
 				d.GetCartItemsResponses = append(d.GetCartItemsResponses, cartItemsResponse)
-				shopId = cartItems[i+1].Sku.Product.ShopId
-				shop = cartItems[i+1].Sku.Product.Shop
+				shopId = cartItems[i+1].Sku.Product.ShopID
+				shop = *cartItems[i+1].Sku.Product.Shop
 				cartItemResponses = []CartItemResponse{}
 				cartItemsResponse = GetCartItemsResponse{}
 			}
@@ -122,11 +137,11 @@ func (d *GetCartItemsResponses) ToGetCartItemsResponses(cartItems []*model.CartI
 		}
 
 		if i == len(cartItems)-1 {
-			if shopId != cartItem.Sku.Product.ShopId {
+			if shopId != cartItem.Sku.Product.ShopID {
 				cartItemsResponse.ToGetCartItemsResponse(cartItemResponses, shop)
 				d.GetCartItemsResponses = append(d.GetCartItemsResponses, cartItemsResponse)
-				shopId = cartItem.Sku.Product.ShopId
-				shop = cartItem.Sku.Product.Shop
+				shopId = cartItem.Sku.Product.ShopID
+				shop = *cartItem.Sku.Product.Shop
 				cartItemResponses = []CartItemResponse{}
 				cartItemsResponse = GetCartItemsResponse{}
 				cir.ToCartItemResponse(*cartItem)
