@@ -603,6 +603,95 @@ paths:
                     type: string
                     example: "error message"                  
   /v1/users/wishlists:
+    get:
+      security:
+        - BearerAuth: []
+      tags:
+        - User
+      summary: Get all wishlist products
+      description: Get all products in user wishlists with pagination, filter by category, minimun rating, price range, cities, and sort by recommended, latest, top sales, price low and price high
+      parameters:
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            default: 10
+          description: Set to 10 by default
+        - in: query
+          name: page
+          schema:
+            type: integer
+            default: 1
+        - in: query
+          name: categoryId
+          schema:
+            type: integer
+          description: Filter by categoryId
+        - in: query
+          name: minRating
+          schema:
+            type: integer
+          description: Filter by minimum product rating to be shown (1-5)
+        - in: query
+          name: minPrice
+          schema:
+            type: number
+            format: float
+          description: Filter by minimum product price to be shown
+        - in: query
+          name: maxPrice
+          schema:
+            type: number
+            format: float
+          description: Filter by maximum product price to be shown
+        - in: query
+          name: cityIds
+          schema:
+            type: string
+            example: 350,351
+          description: Filter by product shop city id. For multiple ids, separate with comma (,)
+        - in: query
+          name: sort
+          schema:
+            type: string
+            default: recommended
+          description: Sort by "recommended", "latest", "top_sales", "price_low", "price_high"
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Response'
+                  - type: object
+                    properties:
+                      code:
+                        example: 'OK'
+                      message:
+                        example: 'wishlists retrieved successfully'
+                      data:
+                        allOf:
+                          - $ref: '#/components/schemas/PaginationResponse'
+                          - type: object
+                            properties:
+                              data:
+                                type: array
+                                items:
+                                  $ref: '#/components/schemas/UserWishlist'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "INTERNAL_SERVER_ERROR"
+                  message:
+                    type: string
+                    example: "error message"
     post:
       security:
         - BearerAuth: []
@@ -1080,18 +1169,78 @@ components:
         page:
           type: integer
           example: 1
+    Product:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        code:
+          type: string
+          example: ITEM-001
+        name:
+          type: string
+          example: VGA MSI GeForce RTX 409
+        description:
+          type: string
+        view:
+          type: integer
+        isHazardous:
+          type: boolean
+        weight:
+          type: number
+          format: float
+        length:
+          type: number
+          format: float
+        width:
+          type: number
+          format: float
+        height:
+          type: number
+          format: float
+        packagedSize:
+          type: number
+          format: float
+        isNew:
+          type: boolean
+        isActive:
+          type: boolean
+        rating:
+          type: number
+          format: float
+        sold:
+          type: integer
+        minPrice:
+          type: number
+          format: float
+        maxPrice:
+          type: number
+          format: float
+        address:
+          type: string
+          example: Pekanbaru, Riau
+        promotionPercent:
+          type: number
+          format: float
+          example: 0.16
+        imageUrl:
+          type: string
+        shopId:
+          type: integer
+        categoryId:
+          type: integer
     UserWishlist:
       type: object
       properties:
         id:
           type: integer
           example: 1
-        userId:
-          type: integer
-          example: 1
         productId:
           type: integer
           example: 1
+        product:
+          $ref: '#/components/schemas/Product'
     CartItem:
       type: object
       properties:

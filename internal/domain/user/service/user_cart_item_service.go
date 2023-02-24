@@ -101,7 +101,7 @@ func (s *userCartItemServiceImpl) PreCheckCartItem(cartItemReq *dto.UserCartItem
 	}
 
 	if shop != nil {
-		if shop.UserId == cartItemReq.UserId {
+		if shop.UserID == cartItemReq.UserId {
 			return nil, nil, errs.ErrUserIsShopOwner
 		}
 	}
