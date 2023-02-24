@@ -132,9 +132,9 @@ func (s *userServiceImpl) GetSession(userId int, accessToken string) error {
 }
 
 func (s *userServiceImpl) UpdateEmail(userId int, request *dto.UpdateEmailRequest) (*dto.UpdateEmailResponse, error) {
-	payload := request.ToUser()
+	email := strings.ToLower(request.Email)
 
-	res, err := s.repository.UpdateEmail(userId, payload)
+	res, err := s.repository.UpdateEmail(userId, email)
 	if err != nil {
 		return nil, err
 	}

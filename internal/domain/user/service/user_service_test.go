@@ -428,7 +428,7 @@ func TestUpdateEmail(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.description, func(t *testing.T) {
 			userRepo := mocks.NewUserRepository(t)
-			userRepo.On("UpdateEmail", tc.input.userId, tc.input.request.ToUser()).Return(tc.input.mockReturn, tc.input.mockErr)
+			userRepo.On("UpdateEmail", tc.input.userId, tc.input.request.Email).Return(tc.input.mockReturn, tc.input.mockErr)
 			userService := service.NewUserService(&service.UserSConfig{
 				Repository: userRepo,
 			})

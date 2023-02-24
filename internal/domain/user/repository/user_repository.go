@@ -20,7 +20,7 @@ type UserRepository interface {
 	GetByUsername(username string) (*model.User, error)
 	SignUp(user *model.User) (*model.User, error)
 	SignIn(user *model.User) (*model.User, error)
-	UpdateEmail(id int, payload *model.User) (*model.User, error)
+	UpdateEmail(userId int, email string) (*model.User, error)
 	UpdateUsername(id int, username string) (*model.User, error)
 }
 
@@ -106,9 +106,9 @@ func (r *userRepositoryImpl) SignIn(user *model.User) (*model.User, error) {
 	return user, nil
 }
 
-func (r *userRepositoryImpl) UpdateEmail(id int, payload *model.User) (*model.User, error) {
+func (r *userRepositoryImpl) UpdateEmail(userId int, email string) (*model.User, error) {
 	err := r.db.Transaction(func(tx *gorm.DB) error {
-		res := tx.Where("id = ?", id).Clauses(clause.OnConflict{DoNothing: true}).Updates(payload)
+		res := tx.Model(&model.User{}).Where("id = ?", userId).Clauses(clause.OnConflict{DoNothing: true}).Update("email", email)
 		if res.Error != nil {
 			return res.Error
 		}
@@ -116,7 +116,7 @@ func (r *userRepositoryImpl) UpdateEmail(id int, payload *model.User) (*model.Us
 			return errs.ErrEmailUsed
 		}
 
-		if err := r.userCache.DeleteAllByID(id); err != nil {
+		if err := r.userCache.DeleteAllByID(userId); err != nil {
 			return err
 		}
 
@@ -127,7 +127,7 @@ func (r *userRepositoryImpl) UpdateEmail(id int, payload *model.User) (*model.Us
 		return nil, err
 	}
 
-	return payload, nil
+	return &model.User{ID: userId, Email: email}, nil
 }
 
 func (r *userRepositoryImpl) UpdateUsername(userId int, username string) (*model.User, error) {
@@ -139,7 +139,7 @@ func (r *userRepositoryImpl) UpdateUsername(userId int, username string) (*model
 		return nil, errs.ErrUsernameUsed
 	}
 
-	return &model.User{ID: 1, Username: username}, nil
+	return &model.User{ID: userId, Username: username}, nil
 }
 
 func (r *userRepositoryImpl) GetByUsername(username string) (*model.User, error) {
