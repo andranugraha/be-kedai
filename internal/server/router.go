@@ -36,6 +36,7 @@ func NewRouter(cfg *RouterConfig) *gin.Engine {
 		{
 			user.POST("/register", cfg.UserHandler.UserRegistration)
 			user.POST("/login", cfg.UserHandler.UserLogin)
+			user.POST("/google-login", cfg.UserHandler.UserLoginWithGoogle)
 			userAuthenticated := user.Group("", middleware.JWTAuthorization, cfg.UserHandler.GetSession)
 			{
 				userAuthenticated.GET("", cfg.UserHandler.GetUserByID)
@@ -50,6 +51,10 @@ func NewRouter(cfg *RouterConfig) *gin.Engine {
 					wishlists.GET("/:productId", cfg.UserHandler.GetUserWishlist)
 					wishlists.POST("", cfg.UserHandler.AddUserWishlist)
 					wishlists.DELETE("/:productId", cfg.UserHandler.RemoveUserWishlist)
+				}
+				carts := userAuthenticated.Group("/carts")
+				{
+					carts.POST("", cfg.UserHandler.CreateCartItem)
 				}
 			}
 		}

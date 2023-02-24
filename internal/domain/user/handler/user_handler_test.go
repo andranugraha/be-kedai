@@ -1,8 +1,10 @@
 package handler_test
 
 import (
+	"bytes"
 	"encoding/json"
 	"errors"
+	"io/ioutil"
 	"kedai/backend/be-kedai/internal/common/code"
 	errs "kedai/backend/be-kedai/internal/common/error"
 	"kedai/backend/be-kedai/internal/domain/user/dto"
@@ -418,6 +420,157 @@ func TestGetUserByID(t *testing.T) {
 			c.Request, _ = http.NewRequest("GET", "/users", nil)
 
 			h.GetUserByID(c)
+
+			assert.Equal(t, tc.expected.statusCode, rec.Code)
+			assert.Equal(t, string(expectedRes), rec.Body.String())
+		})
+	}
+}
+
+func TestUserLoginWithGoogle(t *testing.T) {
+	var (
+		validCredential   = "test"
+		invalidCredential = ""
+	)
+	type input struct {
+		dto         *dto.UserLoginWithGoogleRequest
+		beforeTests func(mockUserService *mocks.UserService)
+		err         error
+	}
+	type expected struct {
+		statusCode int
+		response   response.Response
+	}
+
+	cases := []struct {
+		description string
+		input
+		expected
+	}{
+		{
+			description: "it should return credential required and bad request status code if credential is empty",
+			input: input{
+				dto: &dto.UserLoginWithGoogleRequest{
+					Credential: invalidCredential,
+				},
+				err: nil,
+				beforeTests: func(mockUserService *mocks.UserService) {
+
+				},
+			},
+			expected: expected{
+				statusCode: http.StatusBadRequest,
+				response: response.Response{
+					Code:    code.BAD_REQUEST,
+					Message: "Credential is required",
+				},
+			},
+		},
+		{
+			description: "it should return status code 404 when user does not exist",
+			input: input{
+				dto: &dto.UserLoginWithGoogleRequest{
+					Credential: validCredential,
+				},
+				err: errs.ErrInvalidCredential,
+				beforeTests: func(mockUserService *mocks.UserService) {
+					mockUserService.On("SignInWithGoogle", &dto.UserLoginWithGoogleRequest{
+						Credential: validCredential,
+					}).Return(nil, errs.ErrInvalidCredential)
+
+				}},
+			expected: expected{
+				statusCode: http.StatusNotFound,
+				response: response.Response{
+					Code:    code.USER_NOT_REGISTERED,
+					Message: errs.ErrInvalidCredential.Error(),
+				},
+			},
+		},
+		{
+			description: "it should return status code 401 when google jwt token is invalid",
+			input: input{
+				dto: &dto.UserLoginWithGoogleRequest{
+					Credential: validCredential,
+				},
+				err: errs.ErrUnauthorized,
+				beforeTests: func(mockUserService *mocks.UserService) {
+					mockUserService.On("SignInWithGoogle", &dto.UserLoginWithGoogleRequest{
+						Credential: validCredential,
+					}).Return(nil, errs.ErrUnauthorized)
+				},
+			},
+			expected: expected{
+				statusCode: http.StatusUnauthorized,
+				response: response.Response{
+					Code:    code.UNAUTHORIZED,
+					Message: errs.ErrUnauthorized.Error(),
+				},
+			},
+		},
+		{
+			description: "it should return status code 500 if something went wrong when trying to get user data",
+			input: input{
+				dto: &dto.UserLoginWithGoogleRequest{
+					Credential: validCredential,
+				},
+				err: errs.ErrInternalServerError,
+				beforeTests: func(mockUserService *mocks.UserService) {
+					mockUserService.On("SignInWithGoogle", &dto.UserLoginWithGoogleRequest{
+						Credential: validCredential,
+					}).Return(nil, errs.ErrInternalServerError)
+				}},
+			expected: expected{
+				statusCode: http.StatusInternalServerError,
+				response: response.Response{
+					Code:    code.INTERNAL_SERVER_ERROR,
+					Message: errs.ErrInternalServerError.Error(),
+				},
+			},
+		},
+
+		{
+			description: "it should return status code 200 if successed login with google",
+			input: input{
+				dto: &dto.UserLoginWithGoogleRequest{
+					Credential: validCredential,
+				},
+				err: nil,
+				beforeTests: func(mockUserService *mocks.UserService) {
+					mockUserService.On("SignInWithGoogle", &dto.UserLoginWithGoogleRequest{
+						Credential: validCredential,
+					}).Return(&dto.Token{}, nil)
+				},
+			},
+			expected: expected{
+				statusCode: http.StatusOK,
+				response: response.Response{
+					Code:    code.OK,
+					Message: "Sign in with google successful",
+					Data:    &dto.Token{},
+				},
+			},
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.description, func(t *testing.T) {
+			expectedRes, _ := json.Marshal(tc.expected.response)
+			rec := httptest.NewRecorder()
+			c, _ := gin.CreateTestContext(rec)
+			c.Request, _ = http.NewRequest("POST", "/v1/users/google-login", nil)
+			c.Request.Header.Set("Content-Type", "application/json")
+			body, _ := json.Marshal(tc.input.dto)
+			c.Request.Body = ioutil.NopCloser(bytes.NewReader(body))
+
+			userServiceMock := mocks.NewUserService(t)
+			tc.beforeTests(userServiceMock)
+			cfg := handler.HandlerConfig{
+				UserService: userServiceMock,
+			}
+			h := handler.New(&cfg)
+
+			h.UserLoginWithGoogle(c)
 
 			assert.Equal(t, tc.expected.statusCode, rec.Code)
 			assert.Equal(t, string(expectedRes), rec.Body.String())
