@@ -107,13 +107,25 @@ func (r *userRepositoryImpl) SignIn(user *model.User) (*model.User, error) {
 }
 
 func (r *userRepositoryImpl) UpdateEmail(userId int, email string) (*model.User, error) {
-	err := r.db.Transaction(func(tx *gorm.DB) error {
-		res := tx.Model(&model.User{}).Where("id = ?", userId).Clauses(clause.OnConflict{DoNothing: true}).Update("email", email)
-		if res.Error != nil {
-			return res.Error
+	user, err := r.GetByEmail(email)
+	if err == nil {
+		return nil, errs.ErrEmailUsed
+	}
+	if !errors.Is(err, errs.ErrUserDoesNotExist) {
+		return nil, err
+	}
+
+	err = r.db.Transaction(func(tx *gorm.DB) error {
+		if err := tx.Model(&model.User{}).Where("id = ?", userId).Update("email", email).Error; err != nil {
+			return err
 		}
-		if res.RowsAffected == 0 {
-			return errs.ErrEmailUsed
+
+		if err := tx.Create(
+			&model.User{
+				Email:    user.Email,
+				Password: user.Password,
+			}).Error; err != nil {
+			return err
 		}
 
 		if err := r.userCache.DeleteAllByID(userId); err != nil {
