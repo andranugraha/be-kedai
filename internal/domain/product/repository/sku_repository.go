@@ -32,7 +32,7 @@ func (r *skuRepositoryImpl) GetByID(ID int) (*model.Sku, error) {
 	err := r.db.Where("id = ?", ID).First(&sku).Error
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, errs.ErrSkuNotFound
+			return nil, errs.ErrProductDoesNotExist
 		}
 
 		return nil, err
