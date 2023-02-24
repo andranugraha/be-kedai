@@ -56,6 +56,10 @@ func NewRouter(cfg *RouterConfig) *gin.Engine {
 				{
 					carts.POST("", cfg.UserHandler.CreateCartItem)
 				}
+				addresses := userAuthenticated.Group("/addresses")
+				{
+					addresses.POST("", cfg.UserHandler.AddUserAddress)
+				}
 			}
 		}
 

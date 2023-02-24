@@ -34,11 +34,29 @@ func createRouter() *gin.Engine {
 		ProductRepository: productRepo,
 	})
 
+	districtRepo := locationRepoPackage.NewDistrictRepository(&locationRepoPackage.DistrictRConfig{
+		DB: db,
+	})
+	districtService := locationServicePackage.NewDistrictService(&locationServicePackage.DistrictSConfig{
+		DistrictRepo: districtRepo,
+	})
+	subdistrictRepo := locationRepoPackage.NewSubdistrictRepository(&locationRepoPackage.SubdistrictRConfig{
+		DB: db,
+	})
+	subdistrictService := locationServicePackage.NewSubdistrictService(&locationServicePackage.SubdistrictSConfig{
+		SubdistrictRepo: subdistrictRepo,
+	})
 	cityRepo := locationRepoPackage.NewCityRepository(&locationRepoPackage.CityRConfig{
 		DB: db,
 	})
 	cityService := locationServicePackage.NewCityService(&locationServicePackage.CitySConfig{
 		CityRepo: cityRepo,
+	})
+	provinceRepo := locationRepoPackage.NewProvinceRepository(&locationRepoPackage.ProvinceRConfig{
+		DB: db,
+	})
+	provinceService := locationServicePackage.NewProvinceService(&locationServicePackage.ProvinceSConfig{
+		ProvinceRepo: provinceRepo,
 	})
 
 	locHandler := locationHandlerPackage.New(&locationHandlerPackage.Config{
@@ -93,6 +111,17 @@ func createRouter() *gin.Engine {
 	userCartItemRepo := userRepoPackage.NewUserCartItemRepository(&userRepoPackage.UserCartItemRConfig{
 		DB: db,
 	})
+	userAddressRepo := userRepoPackage.NewUserAddressRepository(&userRepoPackage.UserAddressRConfig{
+		DB: db,
+	})
+
+	userAddressService := userServicePackage.NewUserAddressService(&userServicePackage.UserAddressSConfig{
+		UserAddressRepo:    userAddressRepo,
+		ProvinceService:    provinceService,
+		DistrictService:    districtService,
+		SubdistrictService: subdistrictService,
+		CityService:        cityService,
+	})
 
 	userCartItemService := userServicePackage.NewUserCartItemService(&userServicePackage.UserCartItemSConfig{
 		CartItemRepository: userCartItemRepo,
@@ -106,6 +135,7 @@ func createRouter() *gin.Engine {
 		WalletService:       walletService,
 		UserWishlistService: userWishlistService,
 		UserCartItemService: userCartItemService,
+		UserAddressService:  userAddressService,
 	})
 
 	categoryRepo := productRepoPackage.NewCategoryRepository(&productRepoPackage.CategoryRConfig{
