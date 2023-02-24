@@ -22,11 +22,6 @@ func (h *Handler) GetUserWishlists(c *gin.Context) {
 	wishlists, err := h.userWishlistService.GetUserWishlists(req)
 
 	if err != nil {
-		if errors.Is(err, errs.ErrUserDoesNotExist) {
-			response.Error(c, http.StatusNotFound, code.USER_NOT_REGISTERED, err.Error())
-			return
-		}
-
 		response.Error(c, http.StatusInternalServerError, code.INTERNAL_SERVER_ERROR, err.Error())
 		return
 	}
