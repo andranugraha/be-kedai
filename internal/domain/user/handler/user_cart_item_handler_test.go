@@ -85,13 +85,13 @@ func TestCreateCartItem(t *testing.T) {
 			input: input{
 				data: validReq,
 				beforeTests: func(mockUserCartItemService *mocks.UserCartItemService) {
-					mockUserCartItemService.On("CreateCartItem", validReq).Return(nil, errs.ErrSkuNotFound)
+					mockUserCartItemService.On("CreateCartItem", validReq).Return(nil, errs.ErrProductDoesNotExist)
 				},
 			},
 			expected: expected{
 				data: &response.Response{
 					Code:    code.PRODUCT_NOT_EXISTS,
-					Message: errs.ErrSkuNotFound.Error(),
+					Message: errs.ErrProductDoesNotExist.Error(),
 				},
 				statusCode: http.StatusNotFound,
 			},
@@ -101,13 +101,13 @@ func TestCreateCartItem(t *testing.T) {
 			input: input{
 				data: validReq,
 				beforeTests: func(mockUserCartItemService *mocks.UserCartItemService) {
-					mockUserCartItemService.On("CreateCartItem", validReq).Return(nil, errs.ErrSkuQuantityNotEnough)
+					mockUserCartItemService.On("CreateCartItem", validReq).Return(nil, errs.ErrProductQuantityNotEnough)
 				},
 			},
 			expected: expected{
 				data: &response.Response{
 					Code:    code.QUANTITY_NOT_ENOUGH,
-					Message: errs.ErrSkuQuantityNotEnough.Error(),
+					Message: errs.ErrProductQuantityNotEnough.Error(),
 				},
 				statusCode: http.StatusConflict,
 			},

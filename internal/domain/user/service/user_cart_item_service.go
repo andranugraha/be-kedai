@@ -114,7 +114,7 @@ func (s *userCartItemServiceImpl) PreCheckCartItem(cartItemReq *dto.UserCartItem
 	// update cart item quantity if existing cart item found
 	if err == nil {
 		if sameCartItem.Quantity+cartItemReq.Quantity > sku.Stock {
-			return nil, nil, errs.ErrSkuQuantityNotEnough
+			return nil, nil, errs.ErrProductQuantityNotEnough
 		}
 
 		return sameCartItem, sku, nil

@@ -56,12 +56,12 @@ func TestPreCheckCartItem(t *testing.T) {
 					SkuId:    1,
 				},
 				beforeTests: func(mockUserCartItemRepo *mocks.UserCartItemRepository, mockSkuService *mocks.SkuService, mockProductService *mocks.ProductService, shopService *mocks.ShopService) {
-					mockSkuService.On("GetByID", sku.ID).Return(nil, errs.ErrSkuNotFound)
+					mockSkuService.On("GetByID", sku.ID).Return(nil, errs.ErrProductDoesNotExist)
 				},
-				err: errs.ErrSkuNotFound,
+				err: errs.ErrProductDoesNotExist,
 			},
 			expected: expected{
-				err: errs.ErrSkuNotFound,
+				err: errs.ErrProductDoesNotExist,
 			},
 		},
 		{
@@ -189,10 +189,10 @@ func TestPreCheckCartItem(t *testing.T) {
 						Quantity: 1,
 					}, nil)
 				},
-				err: errs.ErrSkuQuantityNotEnough,
+				err: errs.ErrProductQuantityNotEnough,
 			},
 			expected: expected{
-				err:  errs.ErrSkuQuantityNotEnough,
+				err:  errs.ErrProductQuantityNotEnough,
 				data: nil,
 				sku:  nil,
 			},

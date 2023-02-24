@@ -24,12 +24,12 @@ func (h *Handler) CreateCartItem(c *gin.Context) {
 
 	cartItem, err := h.userCartItemService.CreateCartItem(&cartItemReq)
 	if err != nil {
-		if errors.Is(err, errs.ErrSkuNotFound) {
+		if errors.Is(err, errs.ErrProductDoesNotExist) {
 			response.Error(c, http.StatusNotFound, code.PRODUCT_NOT_EXISTS, err.Error())
 			return
 		}
 
-		if errors.Is(err, errs.ErrSkuQuantityNotEnough) {
+		if errors.Is(err, errs.ErrProductQuantityNotEnough) {
 			response.Error(c, http.StatusConflict, code.QUANTITY_NOT_ENOUGH, err.Error())
 			return
 		}
