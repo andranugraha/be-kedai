@@ -2,6 +2,7 @@ package service
 
 import (
 	"errors"
+	commonDto "kedai/backend/be-kedai/internal/common/dto"
 	errs "kedai/backend/be-kedai/internal/common/error"
 	productModel "kedai/backend/be-kedai/internal/domain/product/model"
 	productService "kedai/backend/be-kedai/internal/domain/product/service"
@@ -14,6 +15,7 @@ import (
 type UserCartItemService interface {
 	PreCheckCartItem(*dto.UserCartItemRequest) (*model.CartItem, *productModel.Sku, error)
 	CreateCartItem(*dto.UserCartItemRequest) (*model.CartItem, error)
+	GetAllCartItem(*dto.GetCartItemsRequest) (*commonDto.PaginationResponse, error)
 }
 
 type userCartItemServiceImpl struct {
@@ -123,4 +125,25 @@ func (s *userCartItemServiceImpl) PreCheckCartItem(cartItemReq *dto.UserCartItem
 	// return nil if existing cart item not found
 
 	return nil, sku, nil
+}
+
+func (s *userCartItemServiceImpl) GetAllCartItem(cartItemReq *dto.GetCartItemsRequest) (*commonDto.PaginationResponse, error) {
+	data := dto.GetCartItemsResponses{}
+
+	cartItems, totalRows, totalPages, err := s.cartItemRepository.GetAllCartItem(cartItemReq)
+	if err != nil {
+		return nil, err
+	}
+
+	data.ToGetCartItemsResponses(cartItems)
+
+	res := &commonDto.PaginationResponse{
+		TotalRows:  totalRows,
+		TotalPages: totalPages,
+		Limit:      cartItemReq.Limit,
+		Page:       cartItemReq.Page,
+		Data:       data.GetCartItemsResponses,
+	}
+
+	return res, nil
 }
