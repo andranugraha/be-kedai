@@ -1,6 +1,7 @@
 package service
 
 import (
+	commonDto "kedai/backend/be-kedai/internal/common/dto"
 	productService "kedai/backend/be-kedai/internal/domain/product/service"
 	"kedai/backend/be-kedai/internal/domain/user/dto"
 	"kedai/backend/be-kedai/internal/domain/user/model"
@@ -8,7 +9,7 @@ import (
 )
 
 type UserWishlistService interface {
-	GetUserWishlists(req dto.GetUserWishlistsRequest) ([]*model.UserWishlist, error)
+	GetUserWishlists(req dto.GetUserWishlistsRequest) (*commonDto.PaginationResponse, error)
 	GetUserWishlist(req *dto.UserWishlistRequest) (*model.UserWishlist, error)
 	RemoveUserWishlist(req *dto.UserWishlistRequest) error
 	AddUserWishlist(req *dto.UserWishlistRequest) (*model.UserWishlist, error)
@@ -34,13 +35,24 @@ func NewUserWishlistService(cfg *UserWishlistSConfig) UserWishlistService {
 	}
 }
 
-func (s *userWishlistServiceImpl) GetUserWishlists(req dto.GetUserWishlistsRequest) ([]*model.UserWishlist, error) {
+func (s *userWishlistServiceImpl) GetUserWishlists(req dto.GetUserWishlistsRequest) (*commonDto.PaginationResponse, error) {
 	_, err := s.userService.GetByID(req.UserId)
 	if err != nil {
 		return nil, err
 	}
 
-	return s.userWishlistRepository.GetUserWishlists(req)
+	res, totalRows, totalPages, err := s.userWishlistRepository.GetUserWishlists(req)
+	if err != nil {
+		return nil, err
+	}
+
+	return &commonDto.PaginationResponse{
+		Data:       res,
+		TotalRows:  totalRows,
+		TotalPages: totalPages,
+		Limit:      req.Limit,
+		Page:       req.Page,
+	}, nil
 }
 
 func (s *userWishlistServiceImpl) GetUserWishlist(req *dto.UserWishlistRequest) (*model.UserWishlist, error) {

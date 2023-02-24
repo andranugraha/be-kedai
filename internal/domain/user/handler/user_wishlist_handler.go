@@ -15,6 +15,7 @@ import (
 func (h *Handler) GetUserWishlists(c *gin.Context) {
 	var req dto.GetUserWishlistsRequest
 	_ = c.ShouldBindQuery(&req)
+	req.Validate(c.Query("cityIds"))
 
 	req.UserId = c.GetInt("userId")
 
