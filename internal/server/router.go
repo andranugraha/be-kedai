@@ -51,6 +51,10 @@ func NewRouter(cfg *RouterConfig) *gin.Engine {
 					wishlists.POST("", cfg.UserHandler.AddUserWishlist)
 					wishlists.DELETE("/:productId", cfg.UserHandler.RemoveUserWishlist)
 				}
+				carts := userAuthenticated.Group("/carts")
+				{
+					carts.POST("", cfg.UserHandler.CreateCartItem)
+				}
 			}
 		}
 

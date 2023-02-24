@@ -11,7 +11,8 @@ type Shop struct {
 	Name       string    `json:"name"`
 	Rating     float64   `json:"rating"`
 	JoinedDate time.Time `json:"joinedDate"`
-	UserID     int       `json:"userId"`
+	UserId     int       `json:"userId"`
+	AddressId  int       `json:"addressId"`
 
 	gorm.Model `json:"-"`
 }
