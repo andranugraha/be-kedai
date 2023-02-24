@@ -1,6 +1,7 @@
 package service_test
 
 import (
+	commonDto "kedai/backend/be-kedai/internal/common/dto"
 	errs "kedai/backend/be-kedai/internal/common/error"
 	productModel "kedai/backend/be-kedai/internal/domain/product/model"
 	shopModel "kedai/backend/be-kedai/internal/domain/shop/model"
@@ -523,6 +524,71 @@ func TestCreateCartItem(t *testing.T) {
 			})
 
 			result, err := s.CreateCartItem(c.input.data)
+
+			assert.ErrorIs(t, err, c.expected.err)
+			assert.Equal(t, c.expected.data, result)
+		})
+	}
+
+}
+
+func TestGetAllCartItem(t *testing.T) {
+	type input struct {
+		req        dto.GetCartItemsRequest
+		beforeTest func(mockCartItemRepo *mocks.UserCartItemRepository)
+	}
+
+	type expected struct {
+		data *commonDto.PaginationResponse
+		err  error
+	}
+
+	cases := []struct {
+		description string
+		input       input
+		expected    expected
+	}{
+		{
+			description: "should return nil cart item and error if get all cart item failed",
+			input: input{
+				req: dto.GetCartItemsRequest{UserId: 1},
+				beforeTest: func(mockCartItemRepo *mocks.UserCartItemRepository) {
+					mockCartItemRepo.On("GetAllCartItem", &dto.GetCartItemsRequest{UserId: 1}).Return(nil, int64(0), 0, errs.ErrInternalServerError)
+				}},
+			expected: expected{
+				data: nil,
+				err:  errs.ErrInternalServerError,
+			},
+		},
+		{
+			description: "should return cart item and nil error if get all cart item success",
+			input: input{
+				req: dto.GetCartItemsRequest{UserId: 1},
+				beforeTest: func(mockCartItemRepo *mocks.UserCartItemRepository) {
+					mockCartItemRepo.On("GetAllCartItem", &dto.GetCartItemsRequest{UserId: 1}).Return([]*model.CartItem{}, int64(0), 0, nil)
+				},
+			},
+			expected: expected{
+				data: &commonDto.PaginationResponse{
+					Limit: 0,
+					Data:  dto.GetCartItemsResponses{}.GetCartItemsResponses,
+				},
+				err: nil,
+			},
+		},
+	}
+
+	for _, c := range cases {
+		t.Run(c.description, func(t *testing.T) {
+			mockCartItemRepo := mocks.NewUserCartItemRepository(t)
+
+			c.input.beforeTest(mockCartItemRepo)
+
+			s := service.NewUserCartItemService(&service.UserCartItemSConfig{
+				CartItemRepository: mockCartItemRepo,
+			})
+
+			result, err := s.GetAllCartItem(&c.input.req)
 
 			assert.ErrorIs(t, err, c.expected.err)
 			assert.Equal(t, c.expected.data, result)
