@@ -11,6 +11,7 @@ import (
 type ShopRepository interface {
 	FindShopById(id int) (*model.Shop, error)
 	FindShopByUserId(userId int) (*model.Shop, error)
+	FindShopBySlug(slug string) (*model.Shop, error)
 }
 
 type shopRepositoryImpl struct {
@@ -55,4 +56,17 @@ func (r *shopRepositoryImpl) FindShopByUserId(userId int) (*model.Shop, error) {
 	}
 
 	return &shop, err
+}
+
+func (r *shopRepositoryImpl) FindShopBySlug(slug string) (*model.Shop, error) {
+	var shop model.Shop
+
+	err := r.db.Where("slug = ?", slug).Preload("ShopCategory").First(&shop).Error
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, errs.ErrShopNotFound
+		}
+	}
+
+	return &shop, nil
 }
