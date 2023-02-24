@@ -131,6 +131,22 @@ func TestCreateCartItem(t *testing.T) {
 			},
 		},
 		{
+			description: "response status conflict when cart item quantity exceed limit",
+			input: input{
+				data: validReq,
+				beforeTests: func(mockUserCartItemService *mocks.UserCartItemService) {
+					mockUserCartItemService.On("CreateCartItem", validReq).Return(nil, errs.ErrCartItemLimitExceeded)
+				},
+			},
+			expected: expected{
+				data: &response.Response{
+					Code:    code.CART_ITEM_EXCEED_LIMIT,
+					Message: errs.ErrCartItemLimitExceeded.Error(),
+				},
+				statusCode: http.StatusConflict,
+			},
+		},
+		{
 			description: "response status internal server error when create cart item failed",
 			input: input{
 				data: validReq,

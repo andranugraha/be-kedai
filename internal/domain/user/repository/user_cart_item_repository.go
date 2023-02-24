@@ -32,8 +32,19 @@ func NewUserCartItemRepository(cfg *UserCartItemRConfig) UserCartItemRepository 
 }
 
 func (r *userCartItemRepository) CreateCartItem(cartItem *model.CartItem) (*model.CartItem, error) {
+	var totalCartItem int64
+	maxCartItem := 200
+	err := r.db.Model(&model.CartItem{}).Where("user_id = ?", cartItem.UserId).Count(&totalCartItem).Error
 
-	err := r.db.Create(cartItem).Preload("Sku.Product.Shop").Error
+	if err != nil {
+		return nil, err
+	}
+
+	if totalCartItem >= int64(maxCartItem) {
+		return nil, errs.ErrCartItemLimitExceeded
+	}
+
+	err = r.db.Create(cartItem).Preload("Sku.Product.Shop").Error
 	if err != nil {
 		return nil, err
 	}

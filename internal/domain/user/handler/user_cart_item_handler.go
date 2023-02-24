@@ -39,6 +39,11 @@ func (h *Handler) CreateCartItem(c *gin.Context) {
 			return
 		}
 
+		if errors.Is(err, errs.ErrCartItemLimitExceeded) {
+			response.Error(c, http.StatusConflict, code.CART_ITEM_EXCEED_LIMIT, err.Error())
+			return
+		}
+
 		response.Error(c, http.StatusInternalServerError, code.INTERNAL_SERVER_ERROR, errs.ErrInternalServerError.Error())
 		return
 	}
