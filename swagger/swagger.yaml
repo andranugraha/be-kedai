@@ -448,7 +448,64 @@ paths:
                     type: string
                     example: "error message"
   /v1/users/carts:
+    get:
+      security:
+        - BearerAuth: []
+      tags:
+        - User
+      summary: Get cart items list
+      description: Get list of cart items
+      parameters:
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            default: 0
+          description: No default limit, will get all data if not specified
+        - in: query
+          name: page
+          schema:
+            type: integer
+            default: 1
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Response'
+                  - type: object
+                    properties:
+                      code:
+                        example: 'OK'
+                      message:
+                        example: 'success'
+                      data:
+                        allOf:
+                          - $ref: '#/components/schemas/PaginationResponse'
+                          - type: object
+                            properties:
+                              data:
+                                type: array
+                                items:
+                                  $ref: '#/components/schemas/GetCartItemResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "INTERNAL_SERVER_ERROR"
+                  message:
+                    type: string
+                    example: "error message"
     post:
+      security:
+        - BearerAuth: []
       tags:
         - User
       summary: User add item to cart
@@ -1049,7 +1106,86 @@ components:
           example: this is note
         skuId:
           type: integer
-          example: 1             
+          example: 1
+    GetCartItemResponse:
+      type: object
+      properties:
+        shop:
+          $ref: '#/components/schemas/Shop'
+        cartItems:
+          type: array
+          items:
+            $ref: '#/components/schemas/CartItemResponse'
+    CartItemResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        skuId:
+          type: integer
+          example: 5
+        name:
+          type: string
+          example: Shoes
+        quantity:
+          type: integer
+          example: 29
+        stock:
+          type: integer
+          example: 2012
+        notes:
+          type: string
+          example: "notest test"
+        originalPrice:
+          type: integer
+          format: float
+          example: 30000000
+        promotionType:
+          type: string
+          example: percent
+        promotionAmount:
+          type: integer
+          format: float
+          example: 0.1
+        discountedPrice:
+          type: integer
+          format: float
+          example: 27000000
+        variants:
+          type: array
+          items:
+            $ref: '#/components/schemas/Variant'
+    Variant:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        value:
+          type: string
+          example: Blue
+        mediaUrl:
+          type: string
+          example: test.com/image.jpg
+        groupId:
+          type: integer
+          example: 1
+        group:
+          $ref: '#/components/schemas/GroupVariant'
+    GroupVariant:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        name:
+          type: string
+          example: Color
+        productId:
+          type: integer
+          example: 1
+        
   requestBodies:
     WalletBody:
       required: true
