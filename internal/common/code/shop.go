@@ -1,0 +1,5 @@
+package code
+
+var (
+	SHOP_NOT_REGISTERED = "SHOP_NOT_REGISTERED"
+)

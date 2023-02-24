@@ -17,6 +17,9 @@ import (
 	productRepoPackage "kedai/backend/be-kedai/internal/domain/product/repository"
 	productServicePackage "kedai/backend/be-kedai/internal/domain/product/service"
 
+	shopRepoPackage "kedai/backend/be-kedai/internal/domain/shop/repository"
+	shopServicePackage "kedai/backend/be-kedai/internal/domain/shop/service"
+
 	"github.com/gin-gonic/gin"
 )
 
@@ -49,6 +52,14 @@ func createRouter() *gin.Engine {
 		WalletRepo: walletRepo,
 	})
 
+	shopRepo := shopRepoPackage.NewShopRepository(&shopRepoPackage.ShopRConfig{
+		DB: db,
+	})
+
+	shopService := shopServicePackage.NewShopService(&shopServicePackage.ShopSConfig{
+		ShopRepository: shopRepo,
+	})
+
 	userCache := userCache.NewUserCache(&userCache.UserCConfig{
 		RDC: redis,
 	})
@@ -72,11 +83,30 @@ func createRouter() *gin.Engine {
 		UserService:            userService,
 		ProductService:         productService,
 	})
+	skuRepo := productRepoPackage.NewSkuRepository(&productRepoPackage.SkuRConfig{
+		DB: db,
+	})
+
+	skuService := productServicePackage.NewSkuService(&productServicePackage.SkuSConfig{
+		SkuRepository: skuRepo,
+	})
+
+	userCartItemRepo := userRepoPackage.NewUserCartItemRepository(&userRepoPackage.UserCartItemRConfig{
+		DB: db,
+	})
+
+	userCartItemService := userServicePackage.NewUserCartItemService(&userServicePackage.UserCartItemSConfig{
+		CartItemRepository: userCartItemRepo,
+		SkuService:         skuService,
+		ProductService:     productService,
+		ShopService:        shopService,
+	})
 
 	userHandler := userHandlerPackage.New(&userHandlerPackage.HandlerConfig{
 		UserService:         userService,
 		WalletService:       walletService,
 		UserWishlistService: userWishlistService,
+		UserCartItemService: userCartItemService,
 	})
 
 	categoryRepo := productRepoPackage.NewCategoryRepository(&productRepoPackage.CategoryRConfig{

@@ -33,6 +33,14 @@ type UpdateEmailResponse struct {
 	Email string `json:"email"`
 }
 
+type UserLoginWithGoogleRequest struct {
+	Credential string `json:"credential" binding:"required"`
+}
+
+type UserLoginWithGoogle struct {
+	Email string
+}
+
 func (d *UserRegistrationRequest) ToUser() *model.User {
 	return &model.User{
 		Email:    d.Email,

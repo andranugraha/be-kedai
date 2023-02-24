@@ -3,6 +3,7 @@ package jwttoken
 import (
 	"kedai/backend/be-kedai/config"
 	"kedai/backend/be-kedai/internal/domain/user/model"
+	"strconv"
 	"time"
 
 	"github.com/golang-jwt/jwt/v4"
@@ -64,4 +65,14 @@ func ValidateToken(token string, secretKey string) (*model.Claim, error) {
 	}
 
 	return parsedClaim, nil
+}
+
+func ParseTokenAgeFromENV(age string, tokenType string) time.Duration {
+	ageNum, _ := strconv.Atoi(age)
+
+	if tokenType == "access" {
+		return time.Minute * time.Duration(ageNum)
+	}
+
+	return time.Hour * time.Duration(ageNum)
 }

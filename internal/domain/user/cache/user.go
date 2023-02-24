@@ -3,7 +3,8 @@ package cache
 import (
 	"context"
 	"fmt"
-	"time"
+	"kedai/backend/be-kedai/config"
+	jwttoken "kedai/backend/be-kedai/internal/utils/jwtToken"
 
 	"github.com/redis/go-redis/v9"
 )
@@ -30,10 +31,10 @@ func NewUserCache(cfg *UserCConfig) UserCache {
 
 func (r *userCacheImpl) StoreToken(userId int, accessToken string, refreshToken string) error {
 	refreshKey := fmt.Sprintf("user_%d:%s", userId, refreshToken)
-	refreshTime := time.Duration(24) * time.Hour
+	refreshTime := jwttoken.ParseTokenAgeFromENV(config.GetEnv("REFRESH_TOKEN_AGE", ""), "refresh")
 
 	accessKey := fmt.Sprintf("user_%d:%s", userId, accessToken)
-	accessTime := time.Duration(5) * time.Minute
+	accessTime := jwttoken.ParseTokenAgeFromENV(config.GetEnv("ACCESS_TOKEN_AGE", ""), "access")
 
 	errRefresh := r.rdc.Set(context.Background(), refreshKey, 0, refreshTime).Err()
 	if errRefresh != nil {

@@ -7,6 +7,7 @@ import (
 	"kedai/backend/be-kedai/internal/domain/user/model"
 	"kedai/backend/be-kedai/internal/domain/user/repository"
 	"kedai/backend/be-kedai/internal/utils/credential"
+	"kedai/backend/be-kedai/internal/utils/google"
 	"kedai/backend/be-kedai/internal/utils/hash"
 	jwttoken "kedai/backend/be-kedai/internal/utils/jwtToken"
 	"strings"
@@ -16,6 +17,7 @@ type UserService interface {
 	GetByID(id int) (*model.User, error)
 	SignUp(*dto.UserRegistrationRequest) (*dto.UserRegistrationResponse, error)
 	SignIn(*dto.UserLogin, string) (*dto.Token, error)
+	SignInWithGoogle(userLogin *dto.UserLoginWithGoogleRequest) (*dto.Token, error)
 	GetSession(userId int, token string) error
 	UpdateEmail(userId int, request *dto.UpdateEmailRequest) (*dto.UpdateEmailResponse, error)
 	UpdateUsername(userId int, requst *dto.UpdateUsernameRequest) (*dto.UpdateUsernameResponse, error)
@@ -96,6 +98,33 @@ func (s *userServiceImpl) SignIn(userLogin *dto.UserLogin, inputPw string) (*dto
 	}
 
 	return nil, errs.ErrInvalidCredential
+}
+
+func (s *userServiceImpl) SignInWithGoogle(userLogin *dto.UserLoginWithGoogleRequest) (*dto.Token, error) {
+	claim, err := google.ValidateGoogleToken(userLogin.Credential)
+	if err != nil {
+		return nil, errs.ErrUnauthorized
+	}
+
+	result, err := s.repository.SignIn(&model.User{Email: claim.Email})
+	if err != nil {
+		return nil, err
+	}
+
+	accessToken, _ := jwttoken.GenerateAccessToken(result)
+	refreshToken, _ := jwttoken.GenerateRefreshToken(result)
+
+	token := &dto.Token{
+		AccessToken:  accessToken,
+		RefreshToken: refreshToken,
+	}
+
+	err = s.redis.StoreToken(result.ID, accessToken, refreshToken)
+	if err != nil {
+		return nil, err
+	}
+
+	return token, nil
 }
 
 func (s *userServiceImpl) GetSession(userId int, accessToken string) error {

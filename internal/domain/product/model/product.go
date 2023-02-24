@@ -1,6 +1,10 @@
 package model
 
-import "gorm.io/gorm"
+import (
+	shopModel "kedai/backend/be-kedai/internal/domain/shop/model"
+
+	"gorm.io/gorm"
+)
 
 type Product struct {
 	ID           int     `json:"id"`
@@ -18,8 +22,9 @@ type Product struct {
 	IsActive     bool    `json:"isActive"`
 	Rating       float64 `json:"rating"`
 
-	ShopID     int `json:"shopId"`
-	CategoryID int `json:"categoryId"`
+	ShopId     int            `json:"shopId"`
+	CategoryId int            `json:"categoryId"`
+	Shop       shopModel.Shop `json:"shop,omitempty" gorm:"foreignKey:ShopId"`
 
 	gorm.Model `json:"-"`
 }

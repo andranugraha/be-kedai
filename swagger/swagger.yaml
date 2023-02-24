@@ -311,14 +311,14 @@ paths:
                   message:
                     type: string
                     example: "error message"
-  /v1/users/emails:
-    put:
+  /v1/users/google-login:
+    post:
       tags:
         - User
-      summary: Update user email
-      description: Update user email
+      summary: User login with google
+      description: User login with google to get auth token
       requestBody:
-        $ref: '#/components/requestBodies/UpdateEmailBody'
+        $ref: '#/components/requestBodies/GoogleLoginUserBody'
       responses:
         '200':
           description: successful operation
@@ -330,12 +330,7 @@ paths:
                   - type: object
                     properties:
                       data:
-                        type: object
-                        properties:
-                          email:
-                            type: string
-                            format: email
-                            example: user@email.com
+                        $ref: '#/components/schemas/Token'
         '400':
           description: bad request
           content:
@@ -345,12 +340,12 @@ paths:
                 properties:
                   code:
                     type: string
-                    example: BAD_REQUEST
+                    example: "BAD_REQUEST"
                   message:
                     type: string
-                    example: error message
-        '409':
-          description: conflict
+                    example: "Credential is required"
+        '401':
+          description: unauthorized
           content:
             application/json:
               schema:
@@ -358,10 +353,23 @@ paths:
                 properties:
                   code:
                     type: string
-                    example: CONFLICT
+                    example: "UNAUTHORIZED"
                   message:
                     type: string
-                    example: error message
+                    example: "invalid credential"
+        '404':
+          description: not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "NOT_FOUND"
+                  message:
+                    type: string
+                    example: "user not found"
         '500':
           description: internal server error
           content:
@@ -371,10 +379,10 @@ paths:
                 properties:
                   code:
                     type: string
-                    example: INTERNAL_SERVER_ERROR
+                    example: "INTERNAL_SERVER_ERROR"
                   message:
                     type: string
-                    example: error message  
+                    example: "error message"                  
   /v1/locations/cities:
     get:
       tags:
@@ -439,6 +447,104 @@ paths:
                   message:
                     type: string
                     example: "error message"
+  /v1/users/carts:
+    post:
+      tags:
+        - User
+      summary: User add item to cart
+      description: Add item to cart
+      requestBody:
+        $ref: '#/components/requestBodies/AddCartItemBody'
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Response'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/CartItem'
+        '400':
+          description: bad request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "BAD_REQUEST"
+                  message:
+                    type: string
+                    example: "Quantity is required"
+        '401':
+          description: unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "UNAUTHORIZED"
+                  message:
+                    type: string
+                    example: "invalid credential"
+        '404':
+          description: not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "NOT_FOUND"
+                  message:
+                    type: string
+                    example: "sku not found"
+        '409':
+          description: conflict
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "CONFLICT"
+                  message:
+                    type: string
+                    example: "sku quantity not enough"
+        '403':
+          description: forbidden
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "FORBIDDEN"
+                  message:
+                    type: string
+                    example: "user is shop owner"            
+        '500':
+          description: internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "INTERNAL_SERVER_ERROR"
+                  message:
+                    type: string
+                    example: "error message"                  
   /v1/users/wishlists:
     post:
       security:
@@ -929,6 +1035,21 @@ components:
         productId:
           type: integer
           example: 1
+    CartItem:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        quantity:
+          type: integer
+          example: 1   
+        notes:
+          type: string
+          example: this is note
+        skuId:
+          type: integer
+          example: 1             
   requestBodies:
     WalletBody:
       required: true
@@ -982,19 +1103,19 @@ components:
               password:
                 type: string
                 example: "password"
-    UpdateEmailBody:
+    GoogleLoginUserBody:
       required: true
       content:
         application/json:
           schema:
             type: object
             required:
-              - email
+              - credential
             properties:
-              email:
+              credential:
                 type: string
-                formatl: email
-                example: user@email.com
+                format: email
+                example: "googlejwttokenhere"         
     AddWishlistBody:
       required: true
       content:
@@ -1007,6 +1128,27 @@ components:
               productId:
                 type: integer
                 example: 1
+    AddCartItemBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - quantity
+              - skuId
+            properties:
+              quantity:
+                type: integer
+                example: 1   
+              notes:
+                type: string
+                example: this is note
+              skuId:
+                type: integer
+                example: 1
+         
+                
   securitySchemes:
     BearerAuth:
       type: http
