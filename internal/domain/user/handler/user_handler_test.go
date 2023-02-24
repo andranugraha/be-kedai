@@ -720,7 +720,7 @@ func TestUpdateUsername(t *testing.T) {
 			input: input{
 				userId: 1,
 				request: &dto.UpdateUsernameRequest{
-					Username: "invalid^^^^username",
+					Username: "a_veryveryveryveryveryveryveryveryveryveryveryveryveryveryveryvery_long_username",
 				},
 				beforeTest: func(us *mocks.UserService) {},
 			},
@@ -728,7 +728,28 @@ func TestUpdateUsername(t *testing.T) {
 				statusCode: http.StatusBadRequest,
 				response: response.Response{
 					Code:    code.BAD_REQUEST,
-					Message: "Username must be alphanumeric",
+					Message: "Username must be shorter than 30",
+				},
+			},
+		},
+		{
+			description: "should return error with status code 422 when username is invalid",
+			input: input{
+				userId: 1,
+				request: &dto.UpdateUsernameRequest{
+					Username: "inval1d_u$ername",
+				},
+				beforeTest: func(us *mocks.UserService) {
+					us.On("UpdateUsername", 1, &dto.UpdateUsernameRequest{
+						Username: "inval1d_u$ername",
+					}).Return(nil, errs.ErrInvalidUsernamePattern)
+				},
+			},
+			expected: expected{
+				statusCode: http.StatusUnprocessableEntity,
+				response: response.Response{
+					Code:    code.INVALID_USERNAME_PATTERN,
+					Message: errs.ErrInvalidUsernamePattern.Error(),
 				},
 			},
 		},
