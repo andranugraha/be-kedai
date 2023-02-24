@@ -16,11 +16,9 @@ func (h *Handler) GetUserWishlists(c *gin.Context) {
 	var req dto.GetUserWishlistsRequest
 	_ = c.ShouldBindQuery(&req)
 	req.Validate(c.Query("cityIds"))
-
 	req.UserId = c.GetInt("userId")
 
 	wishlists, err := h.userWishlistService.GetUserWishlists(req)
-
 	if err != nil {
 		response.Error(c, http.StatusInternalServerError, code.INTERNAL_SERVER_ERROR, err.Error())
 		return

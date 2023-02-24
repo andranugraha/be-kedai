@@ -82,7 +82,7 @@ func (r *userWishlistRepositoryImpl) GetUserWishlists(req dto.GetUserWishlistsRe
 
 	switch req.Sort {
 	case constant.SortByRecommended:
-		db = db.Order("user_wishlists.created_at desc")
+		db = db.Order("p.rating desc, p.sold desc")
 	case constant.SortByLatest:
 		db = db.Order("user_wishlists.created_at desc")
 	case constant.SortByTopSales:
