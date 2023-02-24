@@ -1,6 +1,7 @@
 package service_test
 
 import (
+	commonDto "kedai/backend/be-kedai/internal/common/dto"
 	errs "kedai/backend/be-kedai/internal/common/error"
 	productModel "kedai/backend/be-kedai/internal/domain/product/model"
 	"kedai/backend/be-kedai/internal/domain/user/dto"
@@ -12,7 +13,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestUserWishlistService_GetUserWishlist(t *testing.T) {
+func TestGetUserWishlist(t *testing.T) {
 	var (
 		product = &productModel.Product{
 			ID:   1,
@@ -271,7 +272,7 @@ func TestAddUserWishlist(t *testing.T) {
 	}
 }
 
-func TestUserWishlistService_RemoveUserWishlist(t *testing.T) {
+func TestRemoveUserWishlist(t *testing.T) {
 	var (
 		product = &productModel.Product{
 			ID:   1,
@@ -387,6 +388,74 @@ func TestUserWishlistService_RemoveUserWishlist(t *testing.T) {
 			actualErr := uc.RemoveUserWishlist(tc.input.data)
 
 			assert.Equal(t, tc.expected.err, actualErr)
+		})
+	}
+}
+
+func TestGetUserWishlists(t *testing.T) {
+	var (
+		req = dto.GetUserWishlistsRequest{
+			UserId: 1,
+			Limit:  10,
+			Page:   1,
+		}
+		wishlist = &model.UserWishlist{
+			UserID:    req.UserId,
+			ProductID: 1,
+		}
+	)
+
+	tests := []struct {
+		name                         string
+		request                      dto.GetUserWishlistsRequest
+		wantGetUserWishlistsResponse *commonDto.PaginationResponse
+		want                         *commonDto.PaginationResponse
+		wantErr                      error
+	}{
+		{
+			name:    "should return user wishlists with pagination when get user wishlists success",
+			request: req,
+			wantGetUserWishlistsResponse: &commonDto.PaginationResponse{
+				Data: []*model.UserWishlist{
+					wishlist,
+				},
+				TotalRows:  1,
+				TotalPages: 1,
+				Limit:      10,
+				Page:       1,
+			},
+			want: &commonDto.PaginationResponse{
+				Data: []*model.UserWishlist{
+					wishlist,
+				},
+				TotalRows:  1,
+				TotalPages: 1,
+				Limit:      10,
+				Page:       1,
+			},
+			wantErr: nil,
+		},
+		{
+			name:                         "should return error when get user wishlists failed",
+			request:                      req,
+			wantGetUserWishlistsResponse: &commonDto.PaginationResponse{},
+			want:                         nil,
+			wantErr:                      errs.ErrInternalServerError,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			mockWishlistRepo := mocks.NewUserWishlistRepository(t)
+			mockWishlistRepo.On("GetUserWishlists", test.request).Return(test.wantGetUserWishlistsResponse.Data, test.wantGetUserWishlistsResponse.TotalRows, test.wantGetUserWishlistsResponse.TotalPages, test.wantErr)
+			uc := service.NewUserWishlistService(&service.UserWishlistSConfig{
+				UserWishlistRepository: mockWishlistRepo,
+			})
+
+			got, err := uc.GetUserWishlists(test.request)
+
+			assert.Equal(t, test.want, got)
+			assert.ErrorIs(t, test.wantErr, err)
 		})
 	}
 }

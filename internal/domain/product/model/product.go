@@ -9,7 +9,7 @@ import (
 type Product struct {
 	ID           int     `json:"id"`
 	Code         string  `json:"code"`
-	Name         string  `json:"email"`
+	Name         string  `json:"name"`
 	Description  string  `json:"description"`
 	View         int     `json:"view"`
 	IsHazardous  bool    `json:"isHazardous"`
@@ -21,10 +21,17 @@ type Product struct {
 	IsNew        bool    `json:"isNew"`
 	IsActive     bool    `json:"isActive"`
 	Rating       float64 `json:"rating"`
+	Sold         int     `json:"sold"`
 
-	ShopId     int            `json:"shopId"`
-	CategoryId int            `json:"categoryId"`
-	Shop       shopModel.Shop `json:"shop,omitempty" gorm:"foreignKey:ShopId"`
+	MinPrice         float64  `json:"minPrice" gorm:"<-:false"`
+	MaxPrice         float64  `json:"maxPrice" gorm:"<-:false"`
+	Address          string   `json:"address" gorm:"<-:false"`
+	PromotionPercent *float64 `json:"promotionPercent,omitempty" gorm:"<-:false"`
+	ImageURL         string   `json:"imageUrl" gorm:"<-:false"`
+
+	ShopID     int             `json:"shopId"`
+	Shop       *shopModel.Shop `json:"shop,omitempty"`
+	CategoryID int             `json:"categoryId"`
 
 	gorm.Model `json:"-"`
 }

@@ -22,7 +22,7 @@ func TestGetByID(t *testing.T) {
 			requestId: 1,
 			want: &model.Product{
 				ID:         1,
-				CategoryId: 1,
+				CategoryID: 1,
 				Name:       "Baju",
 			},
 			wantErr: nil,
@@ -69,7 +69,7 @@ func TestGetByCode(t *testing.T) {
 			requestCode: "1",
 			want: &model.Product{
 				ID:         1,
-				CategoryId: 1,
+				CategoryID: 1,
 				Name:       "Baju",
 			},
 			wantErr: nil,
