@@ -511,6 +511,77 @@ paths:
                   message:
                     type: string
                     example: error message
+  /v1/users/profiles:
+    put:
+      tags:
+        - User
+      summary: Update user profile
+      description: Update user profile (name, phone number, gender, date of birth, and profile photo)
+      requestBody:
+        $ref: '#/components/requestBodies/UpdateProfileBody'
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Response'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          id:
+                            type: number
+                            example: 1
+                          name:
+                            type: string
+                            example: new name
+                          phoneNumber:
+                            type: string
+                            description: numeric
+                            minLength: 10
+                            maxLength: 15
+                            example: 0123456789
+                          dob:
+                            type: string
+                            format: date
+                            description: date format is YYYY-MM-DD
+                            example: 2006-01-02
+                          gender:
+                            type: string
+                            example: others
+                          photoUrl:
+                            type: string
+                            format: url
+                            example: http://photo.url/example.png
+        '400':
+          description: bad request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: BAD_REQUEST
+                  message:
+                    type: string
+                    example: error message
+        '500':
+          description: internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: INTERNAL_SERVER_ERROR
+                  message:
+                    type: string
+                    example: error message
   /v1/locations/cities:
     get:
       tags:
@@ -1422,6 +1493,41 @@ components:
                 minLength: 6
                 maxLength: 30
                 example: new_us3r.name
+    UpdateProfileBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - name
+              - phoneNumber
+              - dob
+              - gender
+              - photoUrl
+            properties:
+              name:
+                type: string
+                example: new name
+              phoneNumber:
+                type: string
+                format: numeric
+                minLength: 10
+                maxLength: 15
+                example: 0123456789
+              dob:
+                type: string
+                format: date
+                description: date of birth. Required format is YYYY-MM-DD
+                example: 2006-01-02
+              gender:
+                type: string
+                enum: [male, female, others]
+                example: other
+              photoUrl:
+                type: string
+                format: url
+                example: http://photo.url/example.png
     AddWishlistBody:
       required: true
       content:
