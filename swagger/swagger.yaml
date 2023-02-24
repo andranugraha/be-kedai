@@ -15,6 +15,7 @@ tags:
   - name: Location
   - name: User
   - name: Product
+  - name: Shop
 paths:
   /v1/users/wallets:
     get:
@@ -874,7 +875,63 @@ paths:
                   message:
                     type: string
                     example: "error message"
-    
+  /v1/shops/{slug}:
+    get:
+      tags:
+        - Shop
+      summary: Get shop information
+      description: Get shop information by slug
+      parameters:
+        - in: path
+          name: slug
+          description: Slug code of chosen shop
+          required: true
+          schema:
+            type: string
+            example: "shop"
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Response'
+                  - type: object
+                    properties:
+                      code:
+                        example: "OK"
+                      message:
+                        example: "ok"
+                      data:
+                        $ref: '#/components/schemas/Shop'
+        '404':
+          description: shop not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "SHOP_NOT_FOUND"
+                  message:
+                    type: string
+                    example: "error message"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "INTERNAL_SERVER_ERROR"
+                  message:
+                    type: string
+                    example: "error message"
+          
 components:
   schemas:
     User:
@@ -940,6 +997,23 @@ components:
           format: datetime
           example: 2006-01-02T00:00:00Z
         userId:
+          type: integer
+          example: 1
+        slug:
+          type: string
+          example: "user-shop"
+        shopCategories:
+          $ref: '#/components/schemas/ShopCategory'
+    ShopCategory:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        name:
+          type: string
+          example: "electronics"
+        shopId:
           type: integer
           example: 1
     Token:
