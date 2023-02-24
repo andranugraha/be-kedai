@@ -34,10 +34,6 @@ func (h *Handler) CreateCartItem(c *gin.Context) {
 			return
 		}
 
-		if errors.Is(err, errs.ErrProductDoesNotExist) {
-			response.Error(c, http.StatusNotFound, code.PRODUCT_NOT_EXISTS, err.Error())
-			return
-		}
 		if errors.Is(err, errs.ErrUserIsShopOwner) {
 			response.Error(c, http.StatusForbidden, code.FORBIDDEN, err.Error())
 			return
