@@ -45,6 +45,10 @@ func ErrorValidator(c *gin.Context, statusCode int, err error) {
 			message = fmt.Sprintf("%s must be %s characters", validator.Field(), validator.Param())
 		case "numeric":
 			message = fmt.Sprintf("%s must be numeric", validator.Field())
+		case "alphanum":
+			message = fmt.Sprintf("%s must be alphanumeric", validator.Field())
+		case "datetime":
+			message = fmt.Sprintf("%s must be YYYY-MM-DD", validator.Field())
 		}
 	}
 
