@@ -91,6 +91,13 @@ func createRouter() *gin.Engine {
 		Redis:      userCache,
 	})
 
+	userProfileRepo := userRepoPackage.NewUserProfileRepository(&userRepoPackage.UserProfileRConfig{
+		DB: db,
+	})
+	userProfileService := userServicePackage.NewUserProfileService(&userServicePackage.UserProfileSConfig{
+		Repository: userProfileRepo,
+	})
+
 	userWishlistRepo := userRepoPackage.NewUserWishlistRepository(&userRepoPackage.UserWishlistRConfig{
 		DB: db,
 	})
@@ -136,6 +143,7 @@ func createRouter() *gin.Engine {
 		UserWishlistService: userWishlistService,
 		UserCartItemService: userCartItemService,
 		UserAddressService:  userAddressService,
+		UserProfileService:  userProfileService,
 	})
 
 	categoryRepo := productRepoPackage.NewCategoryRepository(&productRepoPackage.CategoryRConfig{
