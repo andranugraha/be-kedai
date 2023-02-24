@@ -115,7 +115,7 @@ func (h *Handler) GetSession(c *gin.Context) {
 	err := h.userService.GetSession(userId, parsedToken)
 	if err != nil {
 		c.AbortWithStatusJSON(http.StatusUnauthorized, response.Response{
-			Code: code.UNAUTHORIZED,
+			Code:    code.UNAUTHORIZED,
 			Message: err.Error(),
 		})
 		return
@@ -160,6 +160,11 @@ func (h *Handler) UpdateUsername(c *gin.Context) {
 	if err != nil {
 		if errors.Is(err, errs.ErrUsernameUsed) {
 			response.Error(c, http.StatusConflict, code.USERNAME_ALREADY_REGISTERED, err.Error())
+			return
+		}
+
+		if errors.Is(err, errs.ErrInvalidUsernamePattern) {
+			response.Error(c, http.StatusUnprocessableEntity, code.INVALID_USERNAME_PATTERN, err.Error())
 			return
 		}
 
