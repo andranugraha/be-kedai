@@ -36,11 +36,6 @@ func NewUserWishlistService(cfg *UserWishlistSConfig) UserWishlistService {
 }
 
 func (s *userWishlistServiceImpl) GetUserWishlists(req dto.GetUserWishlistsRequest) (*commonDto.PaginationResponse, error) {
-	_, err := s.userService.GetByID(req.UserId)
-	if err != nil {
-		return nil, err
-	}
-
 	res, totalRows, totalPages, err := s.userWishlistRepository.GetUserWishlists(req)
 	if err != nil {
 		return nil, err
