@@ -28,11 +28,11 @@ func (h *Handler) AddUserAddress(c *gin.Context) {
 			errors.Is(err, errs.ErrSubdistrictNotFound) ||
 			errors.Is(err, errs.ErrDistrictNotFound) ||
 			errors.Is(err, errs.ErrCityNotFound) {
-			response.Error(c, http.StatusBadRequest, code.NOT_FOUND, err.Error())
+			response.Error(c, http.StatusNotFound, code.NOT_FOUND, err.Error())
 			return
 		}
 
-		response.Error(c, http.StatusInternalServerError, code.INTERNAL_SERVER_ERROR, err.Error())
+		response.Error(c, http.StatusInternalServerError, code.INTERNAL_SERVER_ERROR, errs.ErrInternalServerError.Error())
 		return
 	}
 
