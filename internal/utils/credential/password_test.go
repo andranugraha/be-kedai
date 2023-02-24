@@ -1,7 +1,7 @@
-package password_test
+package credential_test
 
 import (
-	"kedai/backend/be-kedai/internal/utils/password"
+	"kedai/backend/be-kedai/internal/utils/credential"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -42,7 +42,7 @@ func TestVerifyPassword(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.description, func(t *testing.T) {
-			res := password.VerifyPassword(tc.input)
+			res := credential.VerifyPassword(tc.input)
 
 			assert.Equal(t, tc.expected, res)
 		})

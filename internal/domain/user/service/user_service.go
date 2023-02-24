@@ -6,9 +6,9 @@ import (
 	"kedai/backend/be-kedai/internal/domain/user/dto"
 	"kedai/backend/be-kedai/internal/domain/user/model"
 	"kedai/backend/be-kedai/internal/domain/user/repository"
+	"kedai/backend/be-kedai/internal/utils/credential"
 	"kedai/backend/be-kedai/internal/utils/hash"
 	jwttoken "kedai/backend/be-kedai/internal/utils/jwtToken"
-	pwValidator "kedai/backend/be-kedai/internal/utils/password"
 	"strings"
 )
 
@@ -43,7 +43,7 @@ func (s *userServiceImpl) GetByID(id int) (*model.User, error) {
 }
 
 func (s *userServiceImpl) SignUp(userReg *dto.UserRegistrationRequest) (*dto.UserRegistrationResponse, error) {
-	isValidPassword := pwValidator.VerifyPassword(userReg.Password)
+	isValidPassword := credential.VerifyPassword(userReg.Password)
 	if !isValidPassword {
 		return nil, errs.ErrInvalidPasswordPattern
 	}
