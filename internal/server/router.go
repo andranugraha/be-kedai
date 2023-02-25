@@ -40,6 +40,11 @@ func NewRouter(cfg *RouterConfig) *gin.Engine {
 			userAuthenticated := user.Group("", middleware.JWTAuthorization, cfg.UserHandler.GetSession)
 			{
 				userAuthenticated.GET("", cfg.UserHandler.GetUserByID)
+
+				profile := userAuthenticated.Group("/profiles")
+				{
+					profile.PUT("", cfg.UserHandler.UpdateProfile)
+				}
 				wallet := userAuthenticated.Group("/wallets")
 				{
 					wallet.GET("", cfg.UserHandler.GetWalletByUserID)

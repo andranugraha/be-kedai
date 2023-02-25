@@ -13,16 +13,19 @@ type UserAddressRepository interface {
 }
 
 type userAddressRepository struct {
-	db *gorm.DB
+	db              *gorm.DB
+	userProfileRepo UserProfileRepository
 }
 
 type UserAddressRConfig struct {
-	DB *gorm.DB
+	DB              *gorm.DB
+	UserProfileRepo UserProfileRepository
 }
 
 func NewUserAddressRepository(cfg *UserAddressRConfig) UserAddressRepository {
 	return &userAddressRepository{
-		db: cfg.DB,
+		db:              cfg.DB,
+		userProfileRepo: cfg.UserProfileRepo,
 	}
 }
 
@@ -39,9 +42,21 @@ func (r *userAddressRepository) AddUserAddress(newAddress *model.UserAddress) (*
 		return nil, errs.ErrMaxAddress
 	}
 
+	tx := r.db.Begin()
+	defer tx.Commit()
+
 	err = r.db.Create(newAddress).Error
 	if err != nil {
+		tx.Rollback()
 		return nil, err
+	}
+
+	if newAddress.IsDefault {
+		err = r.userProfileRepo.UpdateDefaultAddressId(tx, newAddress.UserID, newAddress.ID)
+		if err != nil {
+			tx.Rollback()
+			return nil, err
+		}
 	}
 
 	return newAddress, nil
