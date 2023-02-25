@@ -32,6 +32,11 @@ func (h *Handler) AddUserAddress(c *gin.Context) {
 			return
 		}
 
+		if errors.Is(err, errs.ErrMaxAddress) {
+			response.Error(c, http.StatusConflict, code.MAX_ADDRESS_REACHED, err.Error())
+			return
+		}
+
 		response.Error(c, http.StatusInternalServerError, code.INTERNAL_SERVER_ERROR, errs.ErrInternalServerError.Error())
 		return
 	}

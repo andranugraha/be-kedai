@@ -41,6 +41,7 @@ func TestAddUserAddress(t *testing.T) {
 					SubdistrictID: 1,
 					Street:        "asd",
 					Name:          "asd",
+					IsDefault:     true,
 				},
 				beforeTests: func(mockUserAddressService *mocks.UserAddressService) {
 					mockUserAddressService.On("AddUserAddress", &dto.AddAddressRequest{
@@ -65,6 +66,7 @@ func TestAddUserAddress(t *testing.T) {
 					Street:        "asd",
 					Name:          "asd",
 					UserID:        1,
+					IsDefault:     true,
 				},
 				beforeTests: func(mockUserAddressService *mocks.UserAddressService) {
 					mockUserAddressService.On("AddUserAddress", &dto.AddAddressRequest{
@@ -73,6 +75,7 @@ func TestAddUserAddress(t *testing.T) {
 						Street:        "asd",
 						Name:          "asd",
 						UserID:        1,
+						IsDefault:     true,
 					}).Return(nil, errs.ErrProvinceNotFound)
 				},
 			},
@@ -85,7 +88,7 @@ func TestAddUserAddress(t *testing.T) {
 			},
 		},
 		{
-			description: "response status Internal Server Error when error is not ErrProvinceNotFound or ErrCityNotFound or ErrSubdistrictNotFound or ErrDistrictNotFound",
+			description: "response status conflic when error is ErrMaxAddress",
 			input: input{
 				data: &dto.AddAddressRequest{
 					PhoneNumber:   "123456789123",
@@ -93,6 +96,7 @@ func TestAddUserAddress(t *testing.T) {
 					Street:        "asd",
 					Name:          "asd",
 					UserID:        1,
+					IsDefault:     true,
 				},
 				beforeTests: func(mockUserAddressService *mocks.UserAddressService) {
 					mockUserAddressService.On("AddUserAddress", &dto.AddAddressRequest{
@@ -101,6 +105,37 @@ func TestAddUserAddress(t *testing.T) {
 						Street:        "asd",
 						Name:          "asd",
 						UserID:        1,
+						IsDefault:     true,
+					}).Return(nil, errs.ErrMaxAddress)
+				},
+			},
+			expected: expected{
+				data: &response.Response{
+					Code:    code.MAX_ADDRESS_REACHED,
+					Message: errs.ErrMaxAddress.Error(),
+				},
+				statusCode: http.StatusConflict,
+			},
+		},
+		{
+			description: "response status Internal Server Error when error is not ErrProvinceNotFound or ErrCityNotFound or ErrSubdistrictNotFound or ErrDistrictNotFound",
+			input: input{
+				data: &dto.AddAddressRequest{
+					PhoneNumber:   "123456789123",
+					SubdistrictID: 1,
+					Street:        "asd",
+					Name:          "asd",
+					UserID:        1,
+					IsDefault:     true,
+				},
+				beforeTests: func(mockUserAddressService *mocks.UserAddressService) {
+					mockUserAddressService.On("AddUserAddress", &dto.AddAddressRequest{
+						PhoneNumber:   "123456789123",
+						SubdistrictID: 1,
+						Street:        "asd",
+						Name:          "asd",
+						UserID:        1,
+						IsDefault:     true,
 					}).Return(nil, errs.ErrInternalServerError)
 				},
 			},
@@ -121,6 +156,7 @@ func TestAddUserAddress(t *testing.T) {
 					Street:        "asd",
 					Name:          "asd",
 					UserID:        1,
+					IsDefault:     true,
 				},
 				beforeTests: func(mockUserAddressService *mocks.UserAddressService) {
 					mockUserAddressService.On("AddUserAddress", &dto.AddAddressRequest{
@@ -129,6 +165,7 @@ func TestAddUserAddress(t *testing.T) {
 						Street:        "asd",
 						Name:          "asd",
 						UserID:        1,
+						IsDefault:     true,
 					}).Return(&model.UserAddress{
 						PhoneNumber:   "123456789123",
 						SubdistrictID: 1,
