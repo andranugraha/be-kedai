@@ -18,6 +18,7 @@ type userAddressService struct {
 	districtService    locationService.DistrictService
 	subdistrictService locationService.SubdistrictService
 	cityService        locationService.CityService
+	userProfileService UserProfileService
 }
 
 type UserAddressSConfig struct {
@@ -26,6 +27,7 @@ type UserAddressSConfig struct {
 	DistrictService    locationService.DistrictService
 	SubdistrictService locationService.SubdistrictService
 	CityService        locationService.CityService
+	UserProfileService UserProfileService
 }
 
 func NewUserAddressService(cfg *UserAddressSConfig) UserAddressService {
@@ -35,6 +37,7 @@ func NewUserAddressService(cfg *UserAddressSConfig) UserAddressService {
 		districtService:    cfg.DistrictService,
 		subdistrictService: cfg.SubdistrictService,
 		cityService:        cfg.CityService,
+		userProfileService: cfg.UserProfileService,
 	}
 }
 
@@ -75,5 +78,21 @@ func (s *userAddressService) AddUserAddress(newAddress *dto.AddAddressRequest) (
 }
 
 func (s *userAddressService) GetAllUserAddress(userId int) ([]*model.UserAddress, error) {
-	return s.userAddressRepo.GetAllUserAddress(userId)
+	profile, err := s.userProfileService.GetProfile(userId)
+	if err != nil {
+		return nil, err
+	}
+
+	adresses, err := s.userAddressRepo.GetAllUserAddress(userId)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, address := range adresses {
+		if &address.ID == profile.DefaultAddressID {
+			address.IsDefault = true
+		}
+	}
+
+	return adresses, nil
 }
