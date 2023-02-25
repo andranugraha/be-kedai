@@ -7,7 +7,6 @@ import (
 
 type UserProfileService interface {
 	UpdateProfile(userId int, request *dto.UpdateProfileRequest) (*dto.UpdateProfileResponse, error)
-	UpdateDefaultAddressId(userId int, addressId int) error
 }
 
 type userProfileServiceImpl struct {
@@ -36,8 +35,4 @@ func (s *userProfileServiceImpl) UpdateProfile(userId int, request *dto.UpdatePr
 	response.FromUserProfile(res)
 
 	return &response, nil
-}
-
-func (s *userProfileServiceImpl) UpdateDefaultAddressId(userId int, addressId int) error {
-	return s.repository.UpdateDefaultAddressId(userId, addressId)
 }
