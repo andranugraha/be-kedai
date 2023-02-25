@@ -50,7 +50,12 @@ func (r *userAddressRepository) AddUserAddress(newAddress *model.UserAddress) (*
 func (r *userAddressRepository) GetAllUserAddress(userId int) ([]*model.UserAddress, error) {
 	var addresses []*model.UserAddress
 
-	err := r.db.Where("user_id = ?", userId).Find(&addresses).Error
+	err := r.db.Where("user_id = ?", userId).
+		Preload("Subdistrict").
+		Preload("District").
+		Preload("City").
+		Preload("Province").
+		Find(&addresses).Error
 	if err != nil {
 		return nil, err
 	}

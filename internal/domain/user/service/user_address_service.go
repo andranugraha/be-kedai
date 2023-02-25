@@ -9,6 +9,7 @@ import (
 
 type UserAddressService interface {
 	AddUserAddress(*dto.AddAddressRequest) (*model.UserAddress, error)
+	GetAllUserAddress(userId int) ([]*model.UserAddress, error)
 }
 
 type userAddressService struct {
@@ -71,4 +72,8 @@ func (s *userAddressService) AddUserAddress(newAddress *dto.AddAddressRequest) (
 	}
 
 	return address, nil
+}
+
+func (s *userAddressService) GetAllUserAddress(userId int) ([]*model.UserAddress, error) {
+	return s.userAddressRepo.GetAllUserAddress(userId)
 }

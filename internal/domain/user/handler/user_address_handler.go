@@ -43,3 +43,15 @@ func (h *Handler) AddUserAddress(c *gin.Context) {
 
 	response.Success(c, http.StatusCreated, code.CREATED, "created", address)
 }
+
+func (h *Handler) GetAllUserAddress(c *gin.Context) {
+	userId := c.GetInt("userId")
+
+	addresses, err := h.userAddressService.GetAllUserAddress(userId)
+	if err != nil {
+		response.Error(c, http.StatusInternalServerError, code.INTERNAL_SERVER_ERROR, errs.ErrInternalServerError.Error())
+		return
+	}
+
+	response.Success(c, http.StatusOK, code.OK, "success", addresses)
+}
