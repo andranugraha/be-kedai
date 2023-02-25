@@ -89,7 +89,7 @@ func (s *userAddressService) GetAllUserAddress(userId int) ([]*model.UserAddress
 	}
 
 	for _, address := range adresses {
-		if &address.ID == profile.DefaultAddressID {
+		if profile != nil && &address.ID == profile.DefaultAddressID {
 			address.IsDefault = true
 		}
 	}
