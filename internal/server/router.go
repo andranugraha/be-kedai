@@ -58,6 +58,7 @@ func NewRouter(cfg *RouterConfig) *gin.Engine {
 				}
 				addresses := userAuthenticated.Group("/addresses")
 				{
+					addresses.GET("", cfg.UserHandler.GetAllUserAddress)
 					addresses.POST("", cfg.UserHandler.AddUserAddress)
 				}
 			}
