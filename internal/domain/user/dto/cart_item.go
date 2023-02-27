@@ -48,13 +48,13 @@ type CartItemResponse struct {
 	OriginalPrice   float64                `json:"originalPrice"`
 	PromotionType   string                 `json:"promotionType"`
 	PromotionAmount float64                `json:"promotionAmount"`
-	DiscountedPrice float64                `json:"discountedPrice"`
 }
 
 func (r *GetCartItemsRequest) Validate() {
-	if r.Limit < 0 {
-		r.Limit = 0
+	if r.Limit < 10 {
+		r.Limit = 10 // default limit
 	}
+
 	if r.Page < 1 {
 		r.Page = 1
 	}
@@ -86,13 +86,6 @@ func (d *CartItemResponse) ToCartItemResponse(cartItem model.CartItem) {
 	if cartItem.Sku.Promotion != nil {
 		d.PromotionType = cartItem.Sku.Promotion.Type
 		d.PromotionAmount = cartItem.Sku.Promotion.Amount
-
-		if cartItem.Sku.Promotion.Type == "percent" {
-			d.DiscountedPrice = cartItem.Sku.Price - (cartItem.Sku.Promotion.Amount * cartItem.Sku.Price)
-		}
-		if cartItem.Sku.Promotion.Type == "nominal" {
-			d.DiscountedPrice = cartItem.Sku.Price - cartItem.Sku.Promotion.Amount
-		}
 
 	}
 }
