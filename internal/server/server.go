@@ -136,6 +136,7 @@ func createRouter() *gin.Engine {
 		DistrictService:    districtService,
 		SubdistrictService: subdistrictService,
 		CityService:        cityService,
+		UserProfileService: userProfileService,
 	})
 
 	userCartItemService := userServicePackage.NewUserCartItemService(&userServicePackage.UserCartItemSConfig{

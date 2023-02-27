@@ -769,7 +769,7 @@ paths:
       tags:
         - User
       summary: User add item to cart
-      description: Add item to cart
+      description: Add item to cart (The first address added is automatically set as default address)
       requestBody:
         $ref: '#/components/requestBodies/AddCartItemBody'
       responses:
@@ -863,6 +863,57 @@ paths:
                     type: string
                     example: "error message"
   /v1/users/addresses:
+    get:
+      security:
+        - BearerAuth: []
+      tags:
+        - User
+      summary: Get User Addresses
+      description: Get all user addresses
+      responses:
+        '200':
+          description: successful fetch
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Response'
+                  - type: object
+                    properties:
+                      code:
+                        example: 'OK'
+                      message:
+                        example: 'success'
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/UserAddress'
+        '401':
+          description: unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "UNAUTHORIZED"
+                  message:
+                    type: string
+                    example: "invalid credential"            
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "INTERNAL_SERVER_ERROR"
+                  message:
+                    type: string
+                    example: "error message"  
     post:
       security:
         - BearerAuth: []
@@ -2079,7 +2130,6 @@ components:
               isDefault:
                 type: boolean
                 example: true
-         
                 
   securitySchemes:
     BearerAuth:
