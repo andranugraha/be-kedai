@@ -26,19 +26,22 @@ type UserRepository interface {
 }
 
 type userRepositoryImpl struct {
-	db        *gorm.DB
-	userCache cache.UserCache
+	db              *gorm.DB
+	userCache       cache.UserCache
+	userProfileRepo UserProfileRepository
 }
 
 type UserRConfig struct {
-	DB        *gorm.DB
-	UserCache cache.UserCache
+	DB              *gorm.DB
+	UserCache       cache.UserCache
+	UserProfileRepo UserProfileRepository
 }
 
 func NewUserRepository(cfg *UserRConfig) UserRepository {
 	return &userRepositoryImpl{
-		db:        cfg.DB,
-		userCache: cfg.UserCache,
+		db:              cfg.DB,
+		userCache:       cfg.UserCache,
+		userProfileRepo: cfg.UserProfileRepo,
 	}
 }
 
@@ -91,13 +94,24 @@ func (r *userRepositoryImpl) SignUp(user *model.User) (*model.User, error) {
 		return nil, err
 	}
 
-	res := r.db.Clauses(clause.OnConflict{DoNothing: true}).Create(user)
+	tx := r.db.Begin()
+	defer tx.Commit()
+
+	res := tx.Clauses(clause.OnConflict{DoNothing: true}).Create(user)
 	if res.Error != nil {
+		tx.Rollback()
 		return nil, res.Error
 	}
 
 	if res.RowsAffected == 0 {
+		tx.Rollback()
 		return nil, errs.ErrUserAlreadyExist
+	}
+
+	_, err = r.userProfileRepo.Create(tx, &model.UserProfile{UserID: user.ID})
+	if err != nil {
+		tx.Rollback()
+		return nil, err
 	}
 
 	return user, nil
