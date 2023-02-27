@@ -577,3 +577,266 @@ func TestUserLoginWithGoogle(t *testing.T) {
 		})
 	}
 }
+
+func TestUpdateEmail(t *testing.T) {
+	type input struct {
+		userId     int
+		request    *dto.UpdateEmailRequest
+		beforeTest func(*mocks.UserService)
+	}
+	type expected struct {
+		statusCode int
+		response   response.Response
+	}
+
+	cases := []struct {
+		description string
+		input
+		expected
+	}{
+		{
+			description: "should return error with status code 400 when given bad request body",
+			input: input{
+				userId: 1,
+				request: &dto.UpdateEmailRequest{
+					Email: "test",
+				},
+				beforeTest: func(us *mocks.UserService) {},
+			},
+			expected: expected{
+				statusCode: http.StatusBadRequest,
+				response: response.Response{
+					Code:    code.BAD_REQUEST,
+					Message: "Email must be an email format",
+				},
+			},
+		},
+		{
+			description: "should return error with status code 409 when email is already used",
+			input: input{
+				userId: 1,
+				request: &dto.UpdateEmailRequest{
+					Email: "used.email@mail.com",
+				},
+				beforeTest: func(us *mocks.UserService) {
+					us.On("UpdateEmail", 1, &dto.UpdateEmailRequest{
+						Email: "used.email@mail.com",
+					}).Return(nil, errs.ErrEmailUsed)
+				},
+			},
+			expected: expected{
+				statusCode: http.StatusConflict,
+				response: response.Response{
+					Code:    code.EMAIL_ALREADY_REGISTERED,
+					Message: errs.ErrEmailUsed.Error(),
+				},
+			},
+		},
+		{
+			description: "should return error with status code 500 when failed to update email",
+			input: input{
+				userId: 1,
+				request: &dto.UpdateEmailRequest{
+					Email: "new.email@mail.com",
+				},
+				beforeTest: func(us *mocks.UserService) {
+					us.On("UpdateEmail", 1, &dto.UpdateEmailRequest{
+						Email: "new.email@mail.com",
+					}).Return(nil, errors.New("failed to update email"))
+				},
+			},
+			expected: expected{
+				statusCode: http.StatusInternalServerError,
+				response: response.Response{
+					Code:    code.INTERNAL_SERVER_ERROR,
+					Message: errs.ErrInternalServerError.Error(),
+				},
+			},
+		},
+		{
+			description: "should return updated user data with status code 200 when update email successed",
+			input: input{
+				userId: 1,
+				request: &dto.UpdateEmailRequest{
+					Email: "new.email@mail.com",
+				},
+				beforeTest: func(us *mocks.UserService) {
+					us.On("UpdateEmail", 1, &dto.UpdateEmailRequest{
+						Email: "new.email@mail.com",
+					}).Return(&dto.UpdateEmailResponse{Email: "new.email@mail.com"}, nil)
+				},
+			},
+			expected: expected{
+				statusCode: http.StatusOK,
+				response: response.Response{
+					Code:    code.UPDATED,
+					Message: "updated",
+					Data:    &dto.UpdateEmailResponse{Email: "new.email@mail.com"},
+				},
+			},
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.description, func(t *testing.T) {
+			expectedRes, _ := json.Marshal(tc.expected.response)
+			rec := httptest.NewRecorder()
+			c, _ := gin.CreateTestContext(rec)
+			c.Set("userId", tc.input.userId)
+			userService := mocks.NewUserService(t)
+			tc.input.beforeTest(userService)
+			cfg := handler.HandlerConfig{
+				UserService: userService,
+			}
+			h := handler.New(&cfg)
+			c.Request, _ = http.NewRequest("PUT", "/v1/users/emails", test.MakeRequestBody(tc.input.request))
+
+			h.UpdateUserEmail(c)
+
+			assert.Equal(t, tc.expected.statusCode, rec.Code)
+			assert.Equal(t, string(expectedRes), rec.Body.String())
+		})
+	}
+}
+
+func TestUpdateUsername(t *testing.T) {
+	type input struct {
+		userId     int
+		request    *dto.UpdateUsernameRequest
+		beforeTest func(*mocks.UserService)
+	}
+	type expected struct {
+		statusCode int
+		response   response.Response
+	}
+
+	cases := []struct {
+		description string
+		input
+		expected
+	}{
+		{
+			description: "should return error with status code 400 when given bad request body",
+			input: input{
+				userId: 1,
+				request: &dto.UpdateUsernameRequest{
+					Username: "a_veryveryveryveryveryveryveryveryveryveryveryveryveryveryveryvery_long_username",
+				},
+				beforeTest: func(us *mocks.UserService) {},
+			},
+			expected: expected{
+				statusCode: http.StatusBadRequest,
+				response: response.Response{
+					Code:    code.BAD_REQUEST,
+					Message: "Username must be shorter than 30",
+				},
+			},
+		},
+		{
+			description: "should return error with status code 422 when username is invalid",
+			input: input{
+				userId: 1,
+				request: &dto.UpdateUsernameRequest{
+					Username: "inval1d_u$ername",
+				},
+				beforeTest: func(us *mocks.UserService) {
+					us.On("UpdateUsername", 1, &dto.UpdateUsernameRequest{
+						Username: "inval1d_u$ername",
+					}).Return(nil, errs.ErrInvalidUsernamePattern)
+				},
+			},
+			expected: expected{
+				statusCode: http.StatusUnprocessableEntity,
+				response: response.Response{
+					Code:    code.INVALID_USERNAME_PATTERN,
+					Message: errs.ErrInvalidUsernamePattern.Error(),
+				},
+			},
+		},
+		{
+			description: "should return error with status code 409 when username is already used",
+			input: input{
+				userId: 1,
+				request: &dto.UpdateUsernameRequest{
+					Username: "valid123username",
+				},
+				beforeTest: func(us *mocks.UserService) {
+					us.On("UpdateUsername", 1, &dto.UpdateUsernameRequest{
+						Username: "valid123username",
+					}).Return(nil, errs.ErrUsernameUsed)
+				},
+			},
+			expected: expected{
+				statusCode: http.StatusConflict,
+				response: response.Response{
+					Code:    code.USERNAME_ALREADY_REGISTERED,
+					Message: errs.ErrUsernameUsed.Error(),
+				},
+			},
+		},
+		{
+			description: "should return error with status code 500 when failed to update email",
+			input: input{
+				userId: 1,
+				request: &dto.UpdateUsernameRequest{
+					Username: "validUsername",
+				},
+				beforeTest: func(us *mocks.UserService) {
+					us.On("UpdateUsername", 1, &dto.UpdateUsernameRequest{
+						Username: "validUsername",
+					}).Return(nil, errors.New("failed to update username"))
+				},
+			},
+			expected: expected{
+				statusCode: http.StatusInternalServerError,
+				response: response.Response{
+					Code:    code.INTERNAL_SERVER_ERROR,
+					Message: errs.ErrInternalServerError.Error(),
+				},
+			},
+		},
+		{
+			description: "should return updated user data with status code 200 when update username successed",
+			input: input{
+				userId: 1,
+				request: &dto.UpdateUsernameRequest{
+					Username: "newUsername123",
+				},
+				beforeTest: func(us *mocks.UserService) {
+					us.On("UpdateUsername", 1, &dto.UpdateUsernameRequest{
+						Username: "newUsername123",
+					}).Return(&dto.UpdateUsernameResponse{Username: "newUsername123"}, nil)
+				},
+			},
+			expected: expected{
+				statusCode: http.StatusOK,
+				response: response.Response{
+					Code:    code.UPDATED,
+					Message: "updated",
+					Data:    &dto.UpdateUsernameResponse{Username: "newUsername123"},
+				},
+			},
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.description, func(t *testing.T) {
+			expectedRes, _ := json.Marshal(tc.expected.response)
+			rec := httptest.NewRecorder()
+			c, _ := gin.CreateTestContext(rec)
+			c.Set("userId", tc.input.userId)
+			userService := mocks.NewUserService(t)
+			tc.input.beforeTest(userService)
+			cfg := handler.HandlerConfig{
+				UserService: userService,
+			}
+			h := handler.New(&cfg)
+			c.Request, _ = http.NewRequest("PUT", "/v1/users/usernames", test.MakeRequestBody(tc.input.request))
+
+			h.UpdateUsername(c)
+
+			assert.Equal(t, tc.expected.statusCode, rec.Code)
+			assert.Equal(t, string(expectedRes), rec.Body.String())
+		})
+	}
+}

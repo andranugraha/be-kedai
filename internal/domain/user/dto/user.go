@@ -17,6 +17,22 @@ type UserLogin struct {
 	Password string `json:"password" binding:"required"`
 }
 
+type UpdateEmailRequest struct {
+	Email string `json:"email" binding:"required,email"`
+}
+
+type UpdateUsernameRequest struct {
+	Username string `json:"username" binding:"required,min=5,max=30"`
+}
+
+type UpdateUsernameResponse struct {
+	Username string `json:"username"`
+}
+
+type UpdateEmailResponse struct {
+	Email string `json:"email"`
+}
+
 type UserLoginWithGoogleRequest struct {
 	Credential string `json:"credential" binding:"required"`
 }
@@ -35,6 +51,16 @@ func (d *UserRegistrationRequest) ToUser() *model.User {
 func (d *UserRegistrationResponse) FromUser(user *model.User) {
 	d.Email = user.Email
 	d.Username = user.Username
+}
+
+func (d *UpdateEmailRequest) ToUser() *model.User {
+	return &model.User{
+		Email: d.Email,
+	}
+}
+
+func (d *UpdateEmailResponse) FromUser(user *model.User) {
+	d.Email = user.Email
 }
 
 func (d *UserLogin) ToUser() *model.User {

@@ -43,6 +43,8 @@ func NewRouter(cfg *RouterConfig) *gin.Engine {
 			{
 				userAuthenticated.GET("", cfg.UserHandler.GetUserByID)
 
+				userAuthenticated.PUT("/emails", cfg.UserHandler.UpdateUserEmail)
+				userAuthenticated.PUT("/usernames", cfg.UserHandler.UpdateUsername)
 				profile := userAuthenticated.Group("/profiles")
 				{
 					profile.PUT("", cfg.UserHandler.UpdateProfile)
