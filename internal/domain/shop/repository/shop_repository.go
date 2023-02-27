@@ -15,18 +15,18 @@ type ShopRepository interface {
 }
 
 type shopRepositoryImpl struct {
-	db *gorm.DB
+	db          *gorm.DB
 	voucherRepo ShopVoucherRepository
 }
 
 type ShopRConfig struct {
-	DB *gorm.DB
+	DB          *gorm.DB
 	VoucherRepo ShopVoucherRepository
 }
 
 func NewShopRepository(cfg *ShopRConfig) ShopRepository {
 	return &shopRepositoryImpl{
-		db: cfg.DB,
+		db:          cfg.DB,
 		voucherRepo: cfg.VoucherRepo,
 	}
 }
