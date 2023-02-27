@@ -73,9 +73,8 @@ func TestUpdateProfile(t *testing.T) {
 		{
 			description: "should return error with status code 400 when given empty request body",
 			input: input{
-				userId: 1,
-				request: &dto.UpdateProfileRequest{
-				},
+				userId:     1,
+				request:    &dto.UpdateProfileRequest{},
 				beforeTest: func(ups *mocks.UserProfileService) {},
 			},
 			expected: expected{
