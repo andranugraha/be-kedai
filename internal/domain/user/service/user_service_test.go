@@ -10,7 +10,9 @@ import (
 	mocks "kedai/backend/be-kedai/mocks"
 	"testing"
 
+	"github.com/redis/go-redis/v9"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 )
 
 func TestSignUp(t *testing.T) {
@@ -369,6 +371,97 @@ func TestGetSession(t *testing.T) {
 
 			assert.Equal(t, tc.expected.err, result)
 		})
+	}
+}
+
+func TestRenewToken(t *testing.T) {
+	type input struct {
+		userId       int
+		refreshToken string
+		beforeTest   func(*mocks.UserCache)
+	}
+	type expected struct {
+		token *dto.Token
+		err   error
+	}
+
+	tests := []struct {
+		description string
+		input
+		expected
+	}{
+		{
+			description: "should return error when refresh token is expired or does not exist",
+			input: input{
+				userId:       1,
+				refreshToken: "token",
+				beforeTest: func(uc *mocks.UserCache) {
+					uc.On("FindToken", 1, "token").Return(redis.Nil)
+				},
+			},
+			expected: expected{
+				token: nil,
+				err:   errs.ErrExpiredToken,
+			},
+		},
+		{
+			description: "should return error when failed to fetch token from redis",
+			input: input{
+				userId:       1,
+				refreshToken: "token",
+				beforeTest: func(uc *mocks.UserCache) {
+					uc.On("FindToken", 1, "token").Return(errors.New("failed to check token"))
+				},
+			},
+			expected: expected{
+				token: nil,
+				err:   errors.New("failed to check token"),
+			},
+		},
+		{
+			description: "should return error when failed to store renewed tokens",
+			input: input{
+				userId:       1,
+				refreshToken: "token",
+				beforeTest: func(uc *mocks.UserCache) {
+					uc.On("FindToken", 1, "token").Return(nil)
+					uc.On("DeleteToken", "user_1:token").Return(errors.New("failed to delete token"))
+				},
+			},
+			expected: expected{
+				token: nil,
+				err:   errors.New("failed to delete token"),
+			},
+		},
+		{
+			description: "should return error when failed to store renewed tokens",
+			input: input{
+				userId:       1,
+				refreshToken: "token",
+				beforeTest: func(uc *mocks.UserCache) {
+					uc.On("FindToken", 1, "token").Return(nil)
+					uc.On("DeleteToken", "user_1:token").Return(nil)
+					uc.On("StoreToken", mock.Anything, mock.Anything, mock.Anything).Return(errors.New("failed to store token"))
+				},
+			},
+			expected: expected{
+				token: nil,
+				err:   errors.New("failed to store token"),
+			},
+		},
+	}
+
+	for _, tc := range tests {
+		userCache := mocks.NewUserCache(t)
+		tc.beforeTest(userCache)
+		userService := service.NewUserService(&service.UserSConfig{
+			Redis: userCache,
+		})
+
+		actualToken, actualErr := userService.RenewToken(tc.input.userId, tc.input.refreshToken)
+
+		assert.Equal(t, tc.expected.token, actualToken)
+		assert.Equal(t, tc.expected.err, actualErr)
 	}
 }
 
