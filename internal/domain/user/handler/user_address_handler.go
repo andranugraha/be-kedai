@@ -55,3 +55,33 @@ func (h *Handler) GetAllUserAddress(c *gin.Context) {
 
 	response.Success(c, http.StatusOK, code.OK, "success", addresses)
 }
+
+func (h *Handler) UpdateUserAddress(c *gin.Context) {
+	var updateAddress dto.AddressRequest
+	errBinding := c.ShouldBindJSON(&updateAddress)
+	if errBinding != nil {
+		response.ErrorValidator(c, http.StatusBadRequest, errBinding)
+		return
+	}
+	userId := c.GetInt("userId")
+	addressId := c.Param("addressId")
+	updateAddress.UserID = userId
+
+	address, err := h.userAddressService.UpdateUserAddress(&updateAddress)
+	if err != nil {
+
+		if errors.Is(err, errs.ErrProvinceNotFound) ||
+			errors.Is(err, errs.ErrSubdistrictNotFound) ||
+			errors.Is(err, errs.ErrDistrictNotFound) ||
+			errors.Is(err, errs.ErrCityNotFound) ||
+			errors.Is(err, errs.ErrAddressNotFound) {
+			response.Error(c, http.StatusNotFound, code.NOT_FOUND, err.Error())
+			return
+		}
+
+		response.Error(c, http.StatusInternalServerError, code.INTERNAL_SERVER_ERROR, errs.ErrInternalServerError.Error())
+		return
+	}
+
+	response.Success(c, http.StatusOK, code.OK, "updated", address)
+}
