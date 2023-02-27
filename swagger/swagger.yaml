@@ -460,8 +460,8 @@ paths:
           name: limit
           schema:
             type: integer
-            default: 0
-          description: No default limit, will get all data if not specified
+            default: 10
+          description: Default is 10 shop per page
         - in: query
           name: page
           schema:
