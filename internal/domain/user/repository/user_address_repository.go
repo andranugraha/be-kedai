@@ -3,7 +3,6 @@ package repository
 import (
 	errs "kedai/backend/be-kedai/internal/common/error"
 	"kedai/backend/be-kedai/internal/domain/location/model"
-	"log"
 
 	"gorm.io/gorm"
 )
@@ -57,7 +56,6 @@ func (r *userAddressRepository) AddUserAddress(newAddress *model.UserAddress) (*
 	}
 
 	if newAddress.IsDefault {
-		log.Println("test")
 		err = r.DefaultAddressTransaction(tx, newAddress.UserID, newAddress.ID)
 		if err != nil {
 			tx.Rollback()

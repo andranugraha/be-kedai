@@ -801,6 +801,97 @@ paths:
                     example: "INTERNAL_SERVER_ERROR"
                   message:
                     type: string
+                    example: "error message"
+  /v1/users/addresses:
+    post:
+      security:
+        - BearerAuth: []
+      tags:
+        - User
+      summary: Add new address
+      description: Add new user address
+      requestBody:
+        $ref: '#/components/requestBodies/AddAddressBody'
+      responses:
+        '201':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Response'
+                  - type: object
+                    properties:
+                      code:
+                        example: 'CREATED'
+                      message:
+                        example: 'created'
+                      data:
+                        $ref: '#/components/schemas/UserAddress'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "BAD_REQUEST"
+                  message:
+                    type: string
+                    example: "error message"
+        '401':
+          description: unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "UNAUTHORIZED"
+                  message:
+                    type: string
+                    example: "invalid credential"            
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "SUBDISTRICT_NOT_FOUND"
+                  message:
+                    type: string
+                    example: "error message"         
+        '409':
+          description: Conflict
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "MAX_ADDRESS_REACHED"
+                  message:
+                    type: string
+                    example: "max address amount reached"            
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "INTERNAL_SERVER_ERROR"
+                  message:
+                    type: string
                     example: "error message"                  
   /v1/users/wishlists:
     post:
@@ -1318,6 +1409,15 @@ components:
         refreshToken:
           type: string
           example: "thisIsToken"
+    Province:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 11
+        name:
+          type: string
+          example: 'Banten'
     City:
       type: object
       properties:
@@ -1330,6 +1430,34 @@ components:
         provinceId:
           type: integer
           example: 6
+    District:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 4351
+        name:
+          type: string
+          example: 'Driyorejo'
+        cityId:
+          type: integer
+          example: 133
+    Subdistrict:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 27
+        name:
+          type: string
+          example: 'Banjaran'
+        districtId:
+          type: integer
+          example: 4351
+        postalCode:
+          type: string
+          example: 61177
+          
     Wallet:
       type: object
       properties:
@@ -1495,6 +1623,53 @@ components:
         productId:
           type: integer
           example: 1
+    UserAddress:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        userId:
+          type: integer
+          example: 101
+        name:
+          type: string
+          example: John
+        phoneNumber:
+          type: string
+          example: 012314213
+        street:
+          type: string
+          example: Jalan kamboja 123
+        details:
+          type: string
+          example: sopo del
+        subdistrictId:
+          type: integer
+          example: 27
+        subdistrict:
+          $ref: '#/components/schemas/Subdistrict'
+        districtId:
+          type: integer
+          example: 4351
+        district:
+          $ref: '#/components/schemas/District'
+        cityId:
+          type: integer
+          example: 133
+        city:
+          $ref: '#/components/schemas/City'
+        provinceId:
+          type: integer
+          example: 11
+        province:
+          $ref: '#/components/schemas/Province'
+        isDefault:
+          type: boolean
+          example: true
+          
+          
+        
         
   requestBodies:
     WalletBody:
@@ -1657,6 +1832,41 @@ components:
               skuId:
                 type: integer
                 example: 1
+    AddAddressBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - name
+              - phoneNumber
+              - street
+              - subdistrictId
+              - isDefault
+            properties:
+              name:
+                type: string
+                example: john
+                maxLength: 30
+              phoneNumber:
+                type: string
+                example: 08124212421
+                format: numeric
+              street:
+                type: integer
+                example: Jalan kamboja 123
+                maxLength: 200
+              details:
+                type: string
+                example: Sopo del
+                maxLength: 30
+              subdistrictId:
+                type: integer
+                example: 28
+              isDefault:
+                type: boolean
+                example: true
          
                 
   securitySchemes:

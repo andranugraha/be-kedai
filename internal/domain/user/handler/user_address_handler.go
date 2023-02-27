@@ -6,7 +6,6 @@ import (
 	errs "kedai/backend/be-kedai/internal/common/error"
 	"kedai/backend/be-kedai/internal/domain/location/dto"
 	"kedai/backend/be-kedai/internal/utils/response"
-	"log"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -21,7 +20,6 @@ func (h *Handler) AddUserAddress(c *gin.Context) {
 	}
 	userId := c.GetInt("userId")
 	newAddress.UserID = userId
-	log.Println(*newAddress.IsDefault, "asdasdasd")
 
 	address, err := h.userAddressService.AddUserAddress(&newAddress)
 	if err != nil {
