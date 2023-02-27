@@ -8,6 +8,7 @@ import (
 type ShopService interface {
 	FindShopById(id int) (*model.Shop, error)
 	FindShopByUserId(userId int) (*model.Shop, error)
+	FindShopBySlug(slug string) (*model.Shop, error)
 }
 
 type shopServiceImpl struct {
@@ -30,4 +31,8 @@ func (s *shopServiceImpl) FindShopById(id int) (*model.Shop, error) {
 
 func (s *shopServiceImpl) FindShopByUserId(userId int) (*model.Shop, error) {
 	return s.shopRepository.FindShopByUserId(userId)
+}
+
+func (s *shopServiceImpl) FindShopBySlug(slug string) (*model.Shop, error) {
+	return s.shopRepository.FindShopBySlug(slug)
 }
