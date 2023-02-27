@@ -548,7 +548,7 @@ paths:
                             type: string
                             format: date
                             description: date format is YYYY-MM-DD
-                            example: 2006-01-02
+                            example: "2006-01-02"
                           gender:
                             type: string
                             example: others
@@ -1180,8 +1180,6 @@ components:
           example: user_name
         profile:
           $ref: '#/components/schemas/UserProfile'
-        shop:
-          $ref: '#/components/schemas/Shop'
     UserProfile:
       type: object
       properties:
@@ -1197,7 +1195,7 @@ components:
         dob:
           type: string
           format: date
-          example: 2006-01-02
+          example: "2006-01-02T:00:00:00Z"
         gender:
           type: string
           example: male
@@ -1226,7 +1224,7 @@ components:
         joinedDate:
           type: string
           format: datetime
-          example: 2006-01-02T00:00:00Z
+          example: "2006-01-02T00:00:00Z"
         userId:
           type: integer
           example: 1
@@ -1519,7 +1517,7 @@ components:
                 type: string
                 format: date
                 description: date of birth. Required format is YYYY-MM-DD
-                example: 2006-01-02
+                example: "2006-01-02"
               gender:
                 type: string
                 enum: [male, female, others]
