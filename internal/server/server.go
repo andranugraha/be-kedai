@@ -17,6 +17,7 @@ import (
 	productRepoPackage "kedai/backend/be-kedai/internal/domain/product/repository"
 	productServicePackage "kedai/backend/be-kedai/internal/domain/product/service"
 
+	shopHandlerPackage "kedai/backend/be-kedai/internal/domain/shop/handler"
 	shopRepoPackage "kedai/backend/be-kedai/internal/domain/shop/repository"
 	shopServicePackage "kedai/backend/be-kedai/internal/domain/shop/service"
 
@@ -58,6 +59,10 @@ func createRouter() *gin.Engine {
 
 	shopService := shopServicePackage.NewShopService(&shopServicePackage.ShopSConfig{
 		ShopRepository: shopRepo,
+	})
+
+	shopHandler := shopHandlerPackage.New(&shopHandlerPackage.HandlerConfig{
+		ShopService: shopService,
 	})
 
 	userCache := userCache.NewUserCache(&userCache.UserCConfig{
@@ -133,6 +138,7 @@ func createRouter() *gin.Engine {
 		UserHandler:     userHandler,
 		LocationHandler: locHandler,
 		ProductHandler:  productHandler,
+		ShopHandler:     shopHandler,
 	})
 }
 

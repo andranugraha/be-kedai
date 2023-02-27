@@ -10,13 +10,15 @@ import (
 )
 
 func GenerateAccessToken(user *model.User) (string, error) {
+
+	accessTime := ParseTokenAgeFromENV(config.GetEnv("ACCESS_TOKEN_AGE", ""), "access")
 	claims := &model.Claim{
 		UserId:    user.ID,
 		TokenType: "access",
 		RegisteredClaims: jwt.RegisteredClaims{
 			IssuedAt:  jwt.NewNumericDate(time.Now()),
 			Issuer:    "Kedai",
-			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Minute * 5)),
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(accessTime)),
 		},
 	}
 
@@ -27,13 +29,14 @@ func GenerateAccessToken(user *model.User) (string, error) {
 }
 
 func GenerateRefreshToken(user *model.User) (string, error) {
+	refreshTime := ParseTokenAgeFromENV(config.GetEnv("REFRESH_TOKEN_AGE", ""), "refresh")
 	claims := &model.Claim{
 		UserId:    user.ID,
 		TokenType: "refresh",
 		RegisteredClaims: jwt.RegisteredClaims{
 			IssuedAt:  jwt.NewNumericDate(time.Now()),
 			Issuer:    "Kedai",
-			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Hour * 24)),
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(refreshTime)),
 		},
 	}
 
