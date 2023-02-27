@@ -15,7 +15,7 @@ type UserCartItemRequest struct {
 }
 
 type GetCartItemsRequest struct {
-	UserId int `json:"userId"`
+	UserId int
 	Limit  int `form:"limit"`
 	Page   int `form:"page"`
 }
