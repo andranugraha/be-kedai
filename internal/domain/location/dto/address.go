@@ -32,12 +32,16 @@ func (r *AddAddressRequest) ToUserAddress() *model.UserAddress {
 	}
 }
 
-func ToAddressList(addresses []*model.UserAddress, defaultAddressId int) []*model.UserAddress {
+func ToAddressList(addresses []*model.UserAddress, defaultAddressId *int) []*model.UserAddress {
+	if len(addresses) == 0 || defaultAddressId == nil {
+		return addresses
+	}
+
 	var newAddresses []*model.UserAddress
 	var defaultAddressIdx int
 
 	for i, address := range addresses {
-		if address.ID == defaultAddressId {
+		if address.ID == *defaultAddressId {
 			address.IsDefault = true
 			defaultAddressIdx = i
 		}
@@ -46,7 +50,7 @@ func ToAddressList(addresses []*model.UserAddress, defaultAddressId int) []*mode
 	newAddresses = append(newAddresses, addresses[defaultAddressIdx])
 
 	for _, address := range addresses {
-		if address.ID != defaultAddressId {
+		if address.ID != *defaultAddressId {
 			newAddresses = append(newAddresses, address)
 		}
 	}
