@@ -2,6 +2,7 @@ package response
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
@@ -45,6 +46,25 @@ func ErrorValidator(c *gin.Context, statusCode int, err error) {
 			message = fmt.Sprintf("%s must be %s characters", validator.Field(), validator.Param())
 		case "numeric":
 			message = fmt.Sprintf("%s must be numeric", validator.Field())
+		case "alphanum":
+			message = fmt.Sprintf("%s must be alphanumeric", validator.Field())
+		case "datetime":
+			message = fmt.Sprintf("%s must be YYYY-MM-DD", validator.Field())
+		case "url":
+			message = fmt.Sprintf("%s must be a URL", validator.Field())
+		case "oneof":
+			vals := validator.Param()
+			valueList := strings.Split(vals, " ")
+			valMessage := ""
+			for i, v := range valueList {
+				if i == len(valueList)-1 {
+					valMessage += fmt.Sprintf("or %s", v)
+					continue
+				}
+
+				valMessage += fmt.Sprintf("%s, ", v)
+			}
+			message = fmt.Sprintf("%s must be either %s", validator.Field(), valMessage)
 		}
 	}
 

@@ -3,6 +3,7 @@ package handler_test
 import (
 	"encoding/json"
 	"kedai/backend/be-kedai/internal/common/code"
+	commonDto "kedai/backend/be-kedai/internal/common/dto"
 	errs "kedai/backend/be-kedai/internal/common/error"
 	"kedai/backend/be-kedai/internal/domain/user/dto"
 	"kedai/backend/be-kedai/internal/domain/user/handler"
@@ -16,6 +17,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 )
 
 func TestCreateCartItem(t *testing.T) {
@@ -129,6 +131,22 @@ func TestCreateCartItem(t *testing.T) {
 			},
 		},
 		{
+			description: "response status conflict when cart item quantity exceed limit",
+			input: input{
+				data: validReq,
+				beforeTests: func(mockUserCartItemService *mocks.UserCartItemService) {
+					mockUserCartItemService.On("CreateCartItem", validReq).Return(nil, errs.ErrCartItemLimitExceeded)
+				},
+			},
+			expected: expected{
+				data: &response.Response{
+					Code:    code.CART_ITEM_EXCEED_LIMIT,
+					Message: errs.ErrCartItemLimitExceeded.Error(),
+				},
+				statusCode: http.StatusConflict,
+			},
+		},
+		{
 			description: "response status internal server error when create cart item failed",
 			input: input{
 				data: validReq,
@@ -196,4 +214,85 @@ func TestCreateCartItem(t *testing.T) {
 			assert.Equal(t, tc.expected.statusCode, rec.Code)
 		})
 	}
+}
+
+func TestGetAllCartItem(t *testing.T) {
+	type input struct {
+		data        *dto.GetCartItemsRequest
+		beforeTests func(mockUserCartItemService *mocks.UserCartItemService)
+	}
+	type expected struct {
+		data       *response.Response
+		statusCode int
+	}
+
+	cases := []struct {
+		description string
+		input
+		expected
+	}{
+		{
+			description: "response status internal server error when get cart item failed",
+			input: input{
+				data: &dto.GetCartItemsRequest{
+					UserId: 1,
+				},
+				beforeTests: func(mockUserCartItemService *mocks.UserCartItemService) {
+					mockUserCartItemService.On("GetAllCartItem", mock.AnythingOfType("*dto.GetCartItemsRequest")).Return(nil, errs.ErrInternalServerError)
+				},
+			},
+			expected: expected{
+				data: &response.Response{
+					Code:    code.INTERNAL_SERVER_ERROR,
+					Message: errs.ErrInternalServerError.Error(),
+				},
+				statusCode: http.StatusInternalServerError,
+			},
+		},
+		{
+			description: "response status ok when get cart item success",
+			input: input{
+				data: &dto.GetCartItemsRequest{
+					UserId: 1,
+				},
+				beforeTests: func(mockUserCartItemService *mocks.UserCartItemService) {
+					mockUserCartItemService.On("GetAllCartItem", mock.AnythingOfType("*dto.GetCartItemsRequest")).Return(
+						&commonDto.PaginationResponse{}, nil)
+				},
+			},
+			expected: expected{
+				data: &response.Response{
+					Code:    code.OK,
+					Message: "get all cart item successful",
+					Data:    &commonDto.PaginationResponse{},
+				},
+				statusCode: http.StatusOK,
+			},
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.description, func(t *testing.T) {
+			rec := httptest.NewRecorder()
+			c, _ := gin.CreateTestContext(rec)
+			c.Set("userId", tc.input.data.UserId)
+
+			payload := test.MakeRequestBody(tc.input.data)
+			c.Request, _ = http.NewRequest(http.MethodGet, "/users/carts", payload)
+
+			mocCartItemService := new(mocks.UserCartItemService)
+			tc.beforeTests(mocCartItemService)
+
+			handler := handler.New(&handler.HandlerConfig{
+				UserCartItemService: mocCartItemService,
+			})
+
+			handler.GetAllCartItem(c)
+
+			expectedJson, _ := json.Marshal(tc.expected.data)
+			assert.Equal(t, expectedJson, rec.Body.Bytes())
+			assert.Equal(t, tc.expected.statusCode, rec.Code)
+		})
+	}
+
 }

@@ -11,19 +11,23 @@ import (
 type ShopRepository interface {
 	FindShopById(id int) (*model.Shop, error)
 	FindShopByUserId(userId int) (*model.Shop, error)
+	FindShopBySlug(slug string) (*model.Shop, error)
 }
 
 type shopRepositoryImpl struct {
-	db *gorm.DB
+	db          *gorm.DB
+	voucherRepo ShopVoucherRepository
 }
 
 type ShopRConfig struct {
-	DB *gorm.DB
+	DB          *gorm.DB
+	VoucherRepo ShopVoucherRepository
 }
 
 func NewShopRepository(cfg *ShopRConfig) ShopRepository {
 	return &shopRepositoryImpl{
-		db: cfg.DB,
+		db:          cfg.DB,
+		voucherRepo: cfg.VoucherRepo,
 	}
 }
 
@@ -55,4 +59,24 @@ func (r *shopRepositoryImpl) FindShopByUserId(userId int) (*model.Shop, error) {
 	}
 
 	return &shop, err
+}
+
+func (r *shopRepositoryImpl) FindShopBySlug(slug string) (*model.Shop, error) {
+	var shop model.Shop
+
+	err := r.db.Where("slug = ?", slug).Preload("ShopCategory").First(&shop).Error
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, errs.ErrShopNotFound
+		}
+	}
+
+	voucher, errVoucher := r.voucherRepo.GetShopVoucher(shop.ID)
+	if errVoucher != nil {
+		return nil, errVoucher
+	}
+
+	shop.ShopVoucher = voucher
+
+	return &shop, nil
 }
