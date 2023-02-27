@@ -1052,7 +1052,7 @@ components:
         joinedDate:
           type: string
           format: datetime
-          example: 2006-01-02T00:00:00Z
+          example: "2006-01-02T00:00:00Z"
         userId:
           type: integer
           example: 1
@@ -1063,7 +1063,7 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/ShopCategory'
-        shopVoucher:
+        shopVouchers:
           type: array
           items:
             $ref: '#/components/schemas/ShopVoucher'
@@ -1108,7 +1108,7 @@ components:
         expiredAt:
           type: string
           format: dateTime
-          example: 2006-01-02T00:00:00Z
+          example: "2006-01-02T00:00:00Z"
         shopId:
           type: number
           example: 1

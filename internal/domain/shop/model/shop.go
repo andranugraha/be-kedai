@@ -17,8 +17,8 @@ type Shop struct {
 	AddressID    int                        `json:"addressId"`
 	Address      *locationModel.UserAddress `json:"address,omitempty"`
 	Slug         string                     `json:"slug"`
-	ShopCategory []*ShopCategory            `json:"shopCategory,omitempty"`
-	ShopVoucher  []*ShopVoucher             `json:"shopVoucher,omitempty"`
+	ShopCategory []*ShopCategory            `json:"shopCategories,omitempty"`
+	ShopVoucher  []*ShopVoucher             `json:"shopVouchers,omitempty"`
 
 	gorm.Model `json:"-"`
 }
