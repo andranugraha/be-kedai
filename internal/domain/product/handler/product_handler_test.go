@@ -19,25 +19,23 @@ import (
 )
 
 func TestGetRecommendation(t *testing.T) {
-	var(
+	var (
 		req = dto.RecommendationRequest{
 			CategoryId: 1,
 		}
-		invalidReq = dto.RecommendationRequest{
-			
-		}
-		products = []*model.Product{}
+		invalidReq = dto.RecommendationRequest{}
+		products   = []*model.Product{}
 	)
 
 	type input struct {
-		dto dto.RecommendationRequest
+		dto     dto.RecommendationRequest
 		product []*model.Product
-		err error
+		err     error
 	}
 
 	type expected struct {
 		statusCode int
-		response response.Response
+		response   response.Response
 	}
 
 	type cases struct {
@@ -50,30 +48,30 @@ func TestGetRecommendation(t *testing.T) {
 		{
 			description: "should return recommended product list with code 200 when success",
 			input: input{
-				dto: req,
+				dto:     req,
 				product: products,
-				err: nil,
+				err:     nil,
 			},
 			expected: expected{
 				statusCode: http.StatusOK,
 				response: response.Response{
-					Code: code.OK,
+					Code:    code.OK,
 					Message: "ok",
-					Data: products,
+					Data:    products,
 				},
 			},
 		},
 		{
 			description: "should return error with code 400 when required param not met",
 			input: input{
-				dto: invalidReq,
+				dto:     invalidReq,
 				product: nil,
-				err: errs.ErrBadRequest,
+				err:     errs.ErrBadRequest,
 			},
 			expected: expected{
 				statusCode: http.StatusBadRequest,
 				response: response.Response{
-					Code: code.BAD_REQUEST,
+					Code:    code.BAD_REQUEST,
 					Message: "CategoryId is required",
 				},
 			},
@@ -81,14 +79,14 @@ func TestGetRecommendation(t *testing.T) {
 		{
 			description: "should return erro with code 500 when internal server error",
 			input: input{
-				dto: req,
+				dto:     req,
 				product: nil,
-				err: errs.ErrInternalServerError,
+				err:     errs.ErrInternalServerError,
 			},
 			expected: expected{
 				statusCode: http.StatusInternalServerError,
 				response: response.Response{
-					Code: code.INTERNAL_SERVER_ERROR,
+					Code:    code.INTERNAL_SERVER_ERROR,
 					Message: "something went wrong in the server",
 				},
 			},
@@ -102,7 +100,7 @@ func TestGetRecommendation(t *testing.T) {
 			c, _ := gin.CreateTestContext(rec)
 			c.Params = gin.Params{
 				{
-					Key: "categoryId",
+					Key:   "categoryId",
 					Value: "1",
 				},
 			}

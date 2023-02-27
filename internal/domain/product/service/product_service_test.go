@@ -105,19 +105,19 @@ func TestGetByCode(t *testing.T) {
 }
 
 func TestGetRecommendation(t *testing.T) {
-	var(
+	var (
 		categoryId = 1
-		product = []*model.Product{}
+		product    = []*model.Product{}
 	)
-	
+
 	type input struct {
 		categoryid int
-		err error
+		err        error
 	}
 
 	type expected struct {
 		result []*model.Product
-		err error
+		err    error
 	}
 
 	type cases struct {
@@ -131,22 +131,22 @@ func TestGetRecommendation(t *testing.T) {
 			description: "should return list of recommended products when successful",
 			input: input{
 				categoryid: categoryId,
-				err: nil,
+				err:        nil,
 			},
 			expected: expected{
 				result: product,
-				err: nil,
+				err:    nil,
 			},
 		},
 		{
 			description: "should return error when internal server error",
 			input: input{
 				categoryid: categoryId,
-				err: errorResponse.ErrInternalServerError,
+				err:        errorResponse.ErrInternalServerError,
 			},
 			expected: expected{
 				result: nil,
-				err: errorResponse.ErrInternalServerError,
+				err:    errorResponse.ErrInternalServerError,
 			},
 		},
 	} {
