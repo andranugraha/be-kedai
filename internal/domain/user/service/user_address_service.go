@@ -114,7 +114,7 @@ func (s *userAddressService) UpdateUserAddress(newAddress *dto.AddressRequest) (
 		return nil, err
 	}
 
-	if profile.DefaultAddressID != nil && *profile.DefaultAddressID == address.ID {
+	if profile.DefaultAddressID != nil && *profile.DefaultAddressID == address.ID && !*(newAddress.IsDefault) {
 		return nil, errs.ErrMustHaveAtLeastOneDefaultAddress
 	}
 
