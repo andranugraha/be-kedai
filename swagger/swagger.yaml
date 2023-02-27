@@ -1918,7 +1918,6 @@ components:
               isDefault:
                 type: boolean
                 example: true
-         
                 
   securitySchemes:
     BearerAuth:
