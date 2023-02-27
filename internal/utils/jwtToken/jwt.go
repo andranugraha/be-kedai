@@ -63,7 +63,31 @@ func ValidateToken(token string, secretKey string) (*model.Claim, error) {
 	}
 
 	parsedClaim := parsedToken.Claims.(*model.Claim)
-	if parsedClaim.TokenType != "access" && parsedClaim.TokenType != "refresh" {
+	if parsedClaim.TokenType != "access" {
+		return nil, jwt.ErrTokenInvalidClaims
+	}
+
+	return parsedClaim, nil
+}
+
+func ValidateRefreshToken(token string, secretKey string) (*model.Claim, error) {
+	parsedToken, err := jwt.ParseWithClaims(token, &model.Claim{}, func(t *jwt.Token) (interface{}, error) {
+		return []byte(secretKey), nil
+	})
+
+	if err != nil {
+		if ve, ok := err.(*jwt.ValidationError); ok {
+			if ve.Errors&jwt.ValidationErrorMalformed != 0 {
+				return nil, jwt.ErrTokenMalformed
+			}
+			if ve.Errors&(jwt.ValidationErrorExpired|jwt.ValidationErrorNotValidYet) != 0 {
+				return nil, jwt.ErrTokenExpired
+			}
+		}
+	}
+
+	parsedClaim := parsedToken.Claims.(*model.Claim)
+	if parsedClaim.TokenType != "refresh" {
 		return nil, jwt.ErrTokenInvalidClaims
 	}
 
