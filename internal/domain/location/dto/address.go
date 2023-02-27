@@ -5,7 +5,7 @@ import (
 )
 
 type AddressRequest struct {
-	ID            int `binding:"numeric"`
+	ID            int
 	UserID        int
 	Name          string `json:"name" binding:"required,max=30"`
 	PhoneNumber   string `json:"phoneNumber" binding:"required,numeric"`
@@ -13,6 +13,12 @@ type AddressRequest struct {
 	Details       string `json:"details" binding:"max=30"`
 	SubdistrictID int    `json:"subdistrictId" binding:"required,numeric,min=1"`
 	IsDefault     *bool  `json:"isDefault" binding:"required"`
+}
+
+func (r *AddressRequest) ValidateId() {
+	if r.ID <= 0 {
+		r.ID = 0
+	}
 }
 
 func (r *AddressRequest) ToUserAddress() *model.UserAddress {
@@ -23,6 +29,7 @@ func (r *AddressRequest) ToUserAddress() *model.UserAddress {
 	}
 
 	return &model.UserAddress{
+		ID:            r.ID,
 		UserID:        r.UserID,
 		Name:          r.Name,
 		PhoneNumber:   r.PhoneNumber,
