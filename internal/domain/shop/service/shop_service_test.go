@@ -11,20 +11,20 @@ import (
 )
 
 func TestFindShopById(t *testing.T) {
-	var(
-		shopId = 1
+	var (
+		shopId     = 1
 		shopResult = &model.Shop{
 			ID: 1,
 		}
 	)
 	type input struct {
-		id int
+		id  int
 		err error
 	}
 
 	type expected struct {
 		shop *model.Shop
-		err error
+		err  error
 	}
 
 	type cases struct {
@@ -37,23 +37,23 @@ func TestFindShopById(t *testing.T) {
 		{
 			description: "should return shop when success",
 			input: input{
-				id: shopId,
+				id:  shopId,
 				err: nil,
 			},
 			expected: expected{
 				shop: shopResult,
-				err: nil,
+				err:  nil,
 			},
 		},
 		{
 			description: "should return error when shop not found",
 			input: input{
-				id: shopId,
+				id:  shopId,
 				err: errs.ErrShopNotFound,
 			},
 			expected: expected{
 				shop: nil,
-				err: errs.ErrShopNotFound,
+				err:  errs.ErrShopNotFound,
 			},
 		},
 	} {
@@ -63,7 +63,7 @@ func TestFindShopById(t *testing.T) {
 			service := service.NewShopService(&service.ShopSConfig{
 				ShopRepository: mockRepo,
 			})
-			
+
 			result, err := service.FindShopById(tc.input.id)
 
 			assert.Equal(t, tc.expected.shop, result)
@@ -73,20 +73,20 @@ func TestFindShopById(t *testing.T) {
 }
 
 func TestFindShopByUserId(t *testing.T) {
-	var(
-		shopId = 1
+	var (
+		shopId     = 1
 		shopResult = &model.Shop{
 			ID: 1,
 		}
 	)
 	type input struct {
-		id int
+		id  int
 		err error
 	}
 
 	type expected struct {
 		shop *model.Shop
-		err error
+		err  error
 	}
 
 	type cases struct {
@@ -99,23 +99,23 @@ func TestFindShopByUserId(t *testing.T) {
 		{
 			description: "should return shop when success",
 			input: input{
-				id: shopId,
+				id:  shopId,
 				err: nil,
 			},
 			expected: expected{
 				shop: shopResult,
-				err: nil,
+				err:  nil,
 			},
 		},
 		{
 			description: "should return error when shop not found",
 			input: input{
-				id: shopId,
+				id:  shopId,
 				err: errs.ErrShopNotFound,
 			},
 			expected: expected{
 				shop: nil,
-				err: errs.ErrShopNotFound,
+				err:  errs.ErrShopNotFound,
 			},
 		},
 	} {
@@ -125,7 +125,7 @@ func TestFindShopByUserId(t *testing.T) {
 			service := service.NewShopService(&service.ShopSConfig{
 				ShopRepository: mockRepo,
 			})
-			
+
 			result, err := service.FindShopByUserId(tc.input.id)
 
 			assert.Equal(t, tc.expected.shop, result)
@@ -135,20 +135,20 @@ func TestFindShopByUserId(t *testing.T) {
 }
 
 func TestFindShopBySlug(t *testing.T) {
-	var(
-		shopSlug = "shop"
+	var (
+		shopSlug   = "shop"
 		shopResult = &model.Shop{
 			ID: 1,
 		}
 	)
 	type input struct {
 		slug string
-		err error
+		err  error
 	}
 
 	type expected struct {
 		shop *model.Shop
-		err error
+		err  error
 	}
 
 	type cases struct {
@@ -162,22 +162,22 @@ func TestFindShopBySlug(t *testing.T) {
 			description: "should return shop when success",
 			input: input{
 				slug: shopSlug,
-				err: nil,
+				err:  nil,
 			},
 			expected: expected{
 				shop: shopResult,
-				err: nil,
+				err:  nil,
 			},
 		},
 		{
 			description: "should return error when shop not found",
 			input: input{
 				slug: shopSlug,
-				err: errs.ErrShopNotFound,
+				err:  errs.ErrShopNotFound,
 			},
 			expected: expected{
 				shop: nil,
-				err: errs.ErrShopNotFound,
+				err:  errs.ErrShopNotFound,
 			},
 		},
 	} {
@@ -187,7 +187,7 @@ func TestFindShopBySlug(t *testing.T) {
 			service := service.NewShopService(&service.ShopSConfig{
 				ShopRepository: mockRepo,
 			})
-			
+
 			result, err := service.FindShopBySlug(tc.input.slug)
 
 			assert.Equal(t, tc.expected.shop, result)

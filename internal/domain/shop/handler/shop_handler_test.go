@@ -91,7 +91,7 @@ func TestFindShopBySlug(t *testing.T) {
 			c, _ := gin.CreateTestContext(rec)
 			c.Params = gin.Params{
 				{
-					Key: "slug",
+					Key:   "slug",
 					Value: slug,
 				},
 			}
@@ -101,7 +101,7 @@ func TestFindShopBySlug(t *testing.T) {
 				ShopService: mockService,
 			})
 			c.Request, _ = http.NewRequest("GET", "/shops/:slug", nil)
-			
+
 			handler.FindShopBySlug(c)
 
 			assert.Equal(t, tc.expected.statusCode, rec.Code)

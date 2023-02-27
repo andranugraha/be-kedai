@@ -115,7 +115,7 @@ func (h *Handler) GetSession(c *gin.Context) {
 	err := h.userService.GetSession(userId, parsedToken)
 	if err != nil {
 		c.AbortWithStatusJSON(http.StatusUnauthorized, response.Response{
-			Code: code.UNAUTHORIZED,
+			Code:    code.UNAUTHORIZED,
 			Message: err.Error(),
 		})
 		return

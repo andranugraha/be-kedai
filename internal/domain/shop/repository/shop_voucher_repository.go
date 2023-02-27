@@ -6,7 +6,7 @@ import (
 	"gorm.io/gorm"
 )
 
-type ShopVoucherRepository interface{
+type ShopVoucherRepository interface {
 	GetShopVoucher(shopId int) ([]*model.ShopVoucher, error)
 }
 
