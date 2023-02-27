@@ -37,22 +37,20 @@ func ToAddressList(addresses []*model.UserAddress, defaultAddressId *int) []*mod
 		return addresses
 	}
 
-	var newAddresses []*model.UserAddress
-	var defaultAddressIdx int
+	newAddresses := []*model.UserAddress{}
+	defaultAddressIdx := -1
 
 	for i, address := range addresses {
 		if address.ID == *defaultAddressId {
 			address.IsDefault = true
 			defaultAddressIdx = i
+		} else {
+			newAddresses = append(newAddresses, address)
 		}
 	}
 
-	newAddresses = append(newAddresses, addresses[defaultAddressIdx])
-
-	for _, address := range addresses {
-		if address.ID != *defaultAddressId {
-			newAddresses = append(newAddresses, address)
-		}
+	if defaultAddressIdx != -1 {
+		newAddresses = append([]*model.UserAddress{addresses[defaultAddressIdx]}, newAddresses...)
 	}
 
 	return newAddresses
