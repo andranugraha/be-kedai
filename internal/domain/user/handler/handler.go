@@ -7,6 +7,7 @@ type Handler struct {
 	userWishlistService service.UserWishlistService
 	userCartItemService service.UserCartItemService
 	walletService       service.WalletService
+	sealabsPayService   service.SealabsPayService
 }
 
 type HandlerConfig struct {
@@ -14,6 +15,7 @@ type HandlerConfig struct {
 	UserWishlistService service.UserWishlistService
 	UserCartItemService service.UserCartItemService
 	WalletService       service.WalletService
+	SealabsPayService   service.SealabsPayService
 }
 
 func New(cfg *HandlerConfig) *Handler {
@@ -22,5 +24,6 @@ func New(cfg *HandlerConfig) *Handler {
 		userWishlistService: cfg.UserWishlistService,
 		userCartItemService: cfg.UserCartItemService,
 		walletService:       cfg.WalletService,
+		sealabsPayService:   cfg.SealabsPayService,
 	}
 }

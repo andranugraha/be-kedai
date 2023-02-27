@@ -101,11 +101,20 @@ func createRouter() *gin.Engine {
 		ShopService:        shopService,
 	})
 
+	sealabsPayRepo := userRepoPackage.NewSealabsPayRepository(&userRepoPackage.SealabsPayRConfig{
+		DB: db,
+	})
+
+	sealabsPayService := userServicePackage.NewSealabsPayService(&userServicePackage.SealabsPaySConfig{
+		SealabsPayRepo: sealabsPayRepo,
+	})
+
 	userHandler := userHandlerPackage.New(&userHandlerPackage.HandlerConfig{
 		UserService:         userService,
 		WalletService:       walletService,
 		UserWishlistService: userWishlistService,
 		UserCartItemService: userCartItemService,
+		SealabsPayService:   sealabsPayService,
 	})
 
 	categoryRepo := productRepoPackage.NewCategoryRepository(&productRepoPackage.CategoryRConfig{

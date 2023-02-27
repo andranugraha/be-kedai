@@ -56,6 +56,10 @@ func NewRouter(cfg *RouterConfig) *gin.Engine {
 				{
 					carts.POST("", cfg.UserHandler.CreateCartItem)
 				}
+				sealabsPay := userAuthenticated.Group("/sealabs-pay")
+				{
+					sealabsPay.POST("", cfg.UserHandler.RegisterSealabsPay)
+				}
 			}
 		}
 
