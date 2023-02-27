@@ -329,6 +329,95 @@ func TestGetSession(t *testing.T) {
 	}
 }
 
+func TestRenewSession(t *testing.T) {
+	type input struct {
+		userId     int
+		token      string
+		mockReturn *dto.Token
+		err        error
+	}
+	type expected struct {
+		statusCode int
+		response   response.Response
+	}
+
+	tests := []struct {
+		description string
+		input
+		expected
+	}{
+		{
+			description: "should return error with status code 401 when refresh token is expired",
+			input: input{
+				userId:     1,
+				token:      "",
+				mockReturn: nil,
+				err:        errs.ErrExpiredToken,
+			},
+			expected: expected{
+				statusCode: http.StatusUnauthorized,
+				response: response.Response{
+					Code:    code.TOKEN_EXPIRED,
+					Message: errs.ErrExpiredToken.Error(),
+				},
+			},
+		},
+		{
+			description: "should return error with status code 500 when failed to renew session",
+			input: input{
+				userId:     1,
+				token:      "",
+				mockReturn: nil,
+				err:        errors.New("failed to renew token"),
+			},
+			expected: expected{
+				statusCode: http.StatusInternalServerError,
+				response: response.Response{
+					Code:    code.INTERNAL_SERVER_ERROR,
+					Message: errs.ErrInternalServerError.Error(),
+				},
+			},
+		},
+		{
+			description: "should return error with status code 200 when token successfully renewed",
+			input: input{
+				userId:     1,
+				token:      "",
+				mockReturn: &dto.Token{},
+				err:        nil,
+			},
+			expected: expected{
+				statusCode: http.StatusOK,
+				response: response.Response{
+					Code:    code.OK,
+					Message: "success",
+					Data:    &dto.Token{},
+				},
+			},
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.description, func(t *testing.T) {
+			expectedRes, _ := json.Marshal(tc.expected.response)
+			rec := httptest.NewRecorder()
+			c, _ := gin.CreateTestContext(rec)
+			c.Set("userId", tc.input.userId)
+			mockService := new(mocks.UserService)
+			mockService.On("RenewToken", tc.input.userId, tc.input.token).Return(tc.input.mockReturn, tc.input.err)
+			h := handler.New(&handler.HandlerConfig{
+				UserService: mockService,
+			})
+			c.Request = httptest.NewRequest("POST", "/users/tokens/refresh", nil)
+
+			h.RenewSession(c)
+
+			assert.Equal(t, tc.expected.statusCode, rec.Code)
+			assert.Equal(t, string(expectedRes), rec.Body.String())
+		})
+	}
+}
+
 func TestGetUserByID(t *testing.T) {
 	type input struct {
 		userId int
