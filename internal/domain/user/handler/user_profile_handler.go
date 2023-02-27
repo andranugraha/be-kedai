@@ -18,6 +18,11 @@ func (h *Handler) UpdateProfile(c *gin.Context) {
 		return
 	}
 
+	if (request == dto.UpdateProfileRequest{}) {
+		response.Error(c, http.StatusBadRequest, code.BAD_REQUEST, "request body must not empty")
+		return
+	}
+
 	userId := c.GetInt("userId")
 
 	res, err := h.userProfileService.UpdateProfile(userId, &request)

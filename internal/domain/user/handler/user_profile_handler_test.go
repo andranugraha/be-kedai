@@ -58,7 +58,7 @@ func TestUpdateProfile(t *testing.T) {
 			input: input{
 				userId: 1,
 				request: &dto.UpdateProfileRequest{
-					Name: "new name",
+					DoB: "invalid date",
 				},
 				beforeTest: func(ups *mocks.UserProfileService) {},
 			},
@@ -66,7 +66,23 @@ func TestUpdateProfile(t *testing.T) {
 				statusCode: http.StatusBadRequest,
 				response: response.Response{
 					Code:    code.BAD_REQUEST,
-					Message: "PhotoUrl is required",
+					Message: "DoB must be YYYY-MM-DD",
+				},
+			},
+		},
+		{
+			description: "should return error with status code 400 when given empty request body",
+			input: input{
+				userId: 1,
+				request: &dto.UpdateProfileRequest{
+				},
+				beforeTest: func(ups *mocks.UserProfileService) {},
+			},
+			expected: expected{
+				statusCode: http.StatusBadRequest,
+				response: response.Response{
+					Code:    code.BAD_REQUEST,
+					Message: "request body must not empty",
 				},
 			},
 		},
