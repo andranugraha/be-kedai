@@ -14,6 +14,7 @@ func (h *Handler) GetRecommendation(c *gin.Context) {
 	errBinding := c.ShouldBindQuery(&req)
 	if errBinding != nil {
 		response.ErrorValidator(c, http.StatusBadRequest, errBinding)
+		return
 	}
 
 	result, err := h.producteService.GetRecommendation(req.CategoryId)
