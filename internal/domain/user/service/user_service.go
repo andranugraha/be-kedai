@@ -12,6 +12,8 @@ import (
 	"kedai/backend/be-kedai/internal/utils/hash"
 	jwttoken "kedai/backend/be-kedai/internal/utils/jwtToken"
 	"strings"
+
+	"github.com/redis/go-redis/v9"
 )
 
 type UserService interface {
@@ -20,6 +22,7 @@ type UserService interface {
 	SignIn(*dto.UserLogin, string) (*dto.Token, error)
 	SignInWithGoogle(userLogin *dto.UserLoginWithGoogleRequest) (*dto.Token, error)
 	GetSession(userId int, token string) error
+	RenewToken(userId int, refreshToken string) (*dto.Token, error)
 	UpdateEmail(userId int, request *dto.UpdateEmailRequest) (*dto.UpdateEmailResponse, error)
 	UpdateUsername(userId int, requst *dto.UpdateUsernameRequest) (*dto.UpdateUsernameResponse, error)
 }
@@ -130,6 +133,31 @@ func (s *userServiceImpl) SignInWithGoogle(userLogin *dto.UserLoginWithGoogleReq
 
 func (s *userServiceImpl) GetSession(userId int, accessToken string) error {
 	return s.redis.FindToken(userId, accessToken)
+}
+
+func (s *userServiceImpl) RenewToken(userId int, refreshToken string) (*dto.Token, error) {
+	err := s.redis.FindToken(userId, refreshToken)
+	if errors.Is(err, redis.Nil) {
+		return nil, errs.ErrExpiredToken
+	}
+	if err != nil {
+		return nil, err
+	}
+
+	newAccessToken, _ := jwttoken.GenerateAccessToken(&model.User{ID: userId})
+	newRefreshToken, _ := jwttoken.GenerateRefreshToken(&model.User{ID: userId})
+
+	err = s.redis.StoreToken(userId, newAccessToken, newRefreshToken)
+	if err != nil {
+		return nil, err
+	}
+
+	token := dto.Token{
+		AccessToken:  newAccessToken,
+		RefreshToken: newRefreshToken,
+	}
+
+	return &token, nil
 }
 
 func (s *userServiceImpl) UpdateEmail(userId int, request *dto.UpdateEmailRequest) (*dto.UpdateEmailResponse, error) {
