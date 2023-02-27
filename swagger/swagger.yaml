@@ -961,9 +961,7 @@ paths:
                       message:
                         example: "ok"
                       data:
-                        type: array
-                        items:
-                          $ref: '#/components/schemas/Shop'
+                        $ref: '#/components/schemas/Shop'
         '404':
           description: shop not found
           content:
@@ -1062,7 +1060,13 @@ components:
           type: string
           example: "user-shop"
         shopCategories:
-          $ref: '#/components/schemas/ShopCategory'
+          type: array
+          items:
+            $ref: '#/components/schemas/ShopCategory'
+        shopVoucher:
+          type: array
+          items:
+            $ref: '#/components/schemas/ShopVoucher'
     ShopCategory:
       type: object
       properties:
@@ -1074,6 +1078,39 @@ components:
           example: "electronics"
         shopId:
           type: integer
+          example: 1
+    ShopVoucher:
+      type: object
+      properties:
+        name:
+          type: string
+          example: "voucher"
+        code:
+          type: string
+          example: "code"
+        amount:
+          type: number
+          format: float
+          example: 50000
+        type:
+          type: string
+          example: "nominal"
+        isHidden:
+          type: boolean
+          example: false
+        description:
+          type: string
+          example: "desc"
+        minimumSpend:
+          type: number
+          format: float
+          example: 100000
+        expiredAt:
+          type: string
+          format: dateTime
+          example: 2006-01-02T00:00:00Z
+        shopId:
+          type: number
           example: 1
     Token:
       type: object
