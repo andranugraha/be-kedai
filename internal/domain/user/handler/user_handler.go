@@ -115,9 +115,62 @@ func (h *Handler) GetSession(c *gin.Context) {
 	err := h.userService.GetSession(userId, parsedToken)
 	if err != nil {
 		c.AbortWithStatusJSON(http.StatusUnauthorized, response.Response{
-			Code: code.UNAUTHORIZED,
+			Code:    code.UNAUTHORIZED,
 			Message: err.Error(),
 		})
 		return
 	}
+}
+
+func (h *Handler) UpdateUserEmail(c *gin.Context) {
+	var request dto.UpdateEmailRequest
+	err := c.ShouldBindJSON(&request)
+	if err != nil {
+		response.ErrorValidator(c, http.StatusBadRequest, err)
+		return
+	}
+
+	userId := c.GetInt("userId")
+
+	res, err := h.userService.UpdateEmail(userId, &request)
+	if err != nil {
+		if errors.Is(err, errs.ErrEmailUsed) {
+			response.Error(c, http.StatusConflict, code.EMAIL_ALREADY_REGISTERED, err.Error())
+			return
+		}
+
+		response.Error(c, http.StatusInternalServerError, code.INTERNAL_SERVER_ERROR, errs.ErrInternalServerError.Error())
+		return
+	}
+
+	response.Success(c, http.StatusOK, code.UPDATED, "updated", res)
+}
+
+func (h *Handler) UpdateUsername(c *gin.Context) {
+	var request dto.UpdateUsernameRequest
+	err := c.ShouldBindJSON(&request)
+	if err != nil {
+		response.ErrorValidator(c, http.StatusBadRequest, err)
+		return
+	}
+
+	userId := c.GetInt("userId")
+
+	res, err := h.userService.UpdateUsername(userId, &request)
+	if err != nil {
+		if errors.Is(err, errs.ErrUsernameUsed) {
+			response.Error(c, http.StatusConflict, code.USERNAME_ALREADY_REGISTERED, err.Error())
+			return
+		}
+
+		if errors.Is(err, errs.ErrInvalidUsernamePattern) {
+			response.Error(c, http.StatusUnprocessableEntity, code.INVALID_USERNAME_PATTERN, err.Error())
+			return
+		}
+
+		response.Error(c, http.StatusInternalServerError, code.INTERNAL_SERVER_ERROR, errs.ErrInternalServerError.Error())
+		return
+	}
+
+	response.Success(c, http.StatusOK, code.UPDATED, "updated", res)
 }

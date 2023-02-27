@@ -17,6 +17,7 @@ import (
 	productRepoPackage "kedai/backend/be-kedai/internal/domain/product/repository"
 	productServicePackage "kedai/backend/be-kedai/internal/domain/product/service"
 
+	shopHandlerPackage "kedai/backend/be-kedai/internal/domain/shop/handler"
 	shopRepoPackage "kedai/backend/be-kedai/internal/domain/shop/repository"
 	shopServicePackage "kedai/backend/be-kedai/internal/domain/shop/service"
 
@@ -78,12 +79,21 @@ func createRouter() *gin.Engine {
 		ShopRepository: shopRepo,
 	})
 
-	userRepo := userRepoPackage.NewUserRepository(&userRepoPackage.UserRConfig{
-		DB: db,
+	shopHandler := shopHandlerPackage.New(&shopHandlerPackage.HandlerConfig{
+		ShopService: shopService,
 	})
 
 	userCache := userCache.NewUserCache(&userCache.UserCConfig{
 		RDC: redis,
+	})
+	userProfileRepo := userRepoPackage.NewUserProfileRepository(&userRepoPackage.UserProfileRConfig{
+		DB: db,
+	})
+
+	userRepo := userRepoPackage.NewUserRepository(&userRepoPackage.UserRConfig{
+		DB:              db,
+		UserCache:       userCache,
+		UserProfileRepo: userProfileRepo,
 	})
 
 	userService := userServicePackage.NewUserService(&userServicePackage.UserSConfig{
@@ -91,9 +101,6 @@ func createRouter() *gin.Engine {
 		Redis:      userCache,
 	})
 
-	userProfileRepo := userRepoPackage.NewUserProfileRepository(&userRepoPackage.UserProfileRConfig{
-		DB: db,
-	})
 	userProfileService := userServicePackage.NewUserProfileService(&userServicePackage.UserProfileSConfig{
 		Repository: userProfileRepo,
 	})
@@ -119,7 +126,8 @@ func createRouter() *gin.Engine {
 		DB: db,
 	})
 	userAddressRepo := userRepoPackage.NewUserAddressRepository(&userRepoPackage.UserAddressRConfig{
-		DB: db,
+		DB:              db,
+		UserProfileRepo: userProfileRepo,
 	})
 
 	userAddressService := userServicePackage.NewUserAddressService(&userServicePackage.UserAddressSConfig{
@@ -163,6 +171,7 @@ func createRouter() *gin.Engine {
 		UserHandler:     userHandler,
 		LocationHandler: locHandler,
 		ProductHandler:  productHandler,
+		ShopHandler:     shopHandler,
 	})
 }
 

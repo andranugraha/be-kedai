@@ -10,6 +10,7 @@ import (
 type UserAddressRepository interface {
 	AddUserAddress(*model.UserAddress) (*model.UserAddress, error)
 	GetAllUserAddress(userId int) ([]*model.UserAddress, error)
+	DefaultAddressTransaction(tx *gorm.DB, userId int, addressId int) error
 }
 
 type userAddressRepository struct {
@@ -30,7 +31,7 @@ func NewUserAddressRepository(cfg *UserAddressRConfig) UserAddressRepository {
 }
 
 func (r *userAddressRepository) AddUserAddress(newAddress *model.UserAddress) (*model.UserAddress, error) {
-	var totalRows int64
+	var totalRows int64 = 0
 	var maxAddress int64 = 10
 
 	err := r.db.Model(&model.UserAddress{}).Where("user_id = ?", newAddress.UserID).Count(&totalRows).Error
@@ -40,6 +41,10 @@ func (r *userAddressRepository) AddUserAddress(newAddress *model.UserAddress) (*
 
 	if totalRows >= maxAddress {
 		return nil, errs.ErrMaxAddress
+	}
+
+	if totalRows == 0 {
+		newAddress.IsDefault = true
 	}
 
 	tx := r.db.Begin()
@@ -52,7 +57,7 @@ func (r *userAddressRepository) AddUserAddress(newAddress *model.UserAddress) (*
 	}
 
 	if newAddress.IsDefault {
-		err = r.userProfileRepo.UpdateDefaultAddressId(tx, newAddress.UserID, newAddress.ID)
+		err = r.DefaultAddressTransaction(tx, newAddress.UserID, newAddress.ID)
 		if err != nil {
 			tx.Rollback()
 			return nil, err
@@ -76,4 +81,14 @@ func (r *userAddressRepository) GetAllUserAddress(userId int) ([]*model.UserAddr
 	}
 
 	return addresses, nil
+}
+
+func (r *userAddressRepository) DefaultAddressTransaction(tx *gorm.DB, userId int, addressId int) error {
+	err := r.userProfileRepo.UpdateDefaultAddressId(tx, userId, addressId)
+	if err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	return nil
 }

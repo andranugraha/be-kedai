@@ -19,6 +19,9 @@ import (
 )
 
 func TestAddUserAddress(t *testing.T) {
+	var (
+		trueValue = true
+	)
 	type input struct {
 		data        *dto.AddAddressRequest
 		beforeTests func(mockUserAddressService *mocks.UserAddressService)
@@ -41,7 +44,7 @@ func TestAddUserAddress(t *testing.T) {
 					SubdistrictID: 1,
 					Street:        "asd",
 					Name:          "asd",
-					IsDefault:     true,
+					IsDefault:     &trueValue,
 				},
 				beforeTests: func(mockUserAddressService *mocks.UserAddressService) {
 					mockUserAddressService.On("AddUserAddress", &dto.AddAddressRequest{
@@ -66,7 +69,7 @@ func TestAddUserAddress(t *testing.T) {
 					Street:        "asd",
 					Name:          "asd",
 					UserID:        1,
-					IsDefault:     true,
+					IsDefault:     &trueValue,
 				},
 				beforeTests: func(mockUserAddressService *mocks.UserAddressService) {
 					mockUserAddressService.On("AddUserAddress", &dto.AddAddressRequest{
@@ -75,7 +78,7 @@ func TestAddUserAddress(t *testing.T) {
 						Street:        "asd",
 						Name:          "asd",
 						UserID:        1,
-						IsDefault:     true,
+						IsDefault:     &trueValue,
 					}).Return(nil, errs.ErrProvinceNotFound)
 				},
 			},
@@ -96,7 +99,7 @@ func TestAddUserAddress(t *testing.T) {
 					Street:        "asd",
 					Name:          "asd",
 					UserID:        1,
-					IsDefault:     true,
+					IsDefault:     &trueValue,
 				},
 				beforeTests: func(mockUserAddressService *mocks.UserAddressService) {
 					mockUserAddressService.On("AddUserAddress", &dto.AddAddressRequest{
@@ -105,7 +108,7 @@ func TestAddUserAddress(t *testing.T) {
 						Street:        "asd",
 						Name:          "asd",
 						UserID:        1,
-						IsDefault:     true,
+						IsDefault:     &trueValue,
 					}).Return(nil, errs.ErrMaxAddress)
 				},
 			},
@@ -126,7 +129,7 @@ func TestAddUserAddress(t *testing.T) {
 					Street:        "asd",
 					Name:          "asd",
 					UserID:        1,
-					IsDefault:     true,
+					IsDefault:     &trueValue,
 				},
 				beforeTests: func(mockUserAddressService *mocks.UserAddressService) {
 					mockUserAddressService.On("AddUserAddress", &dto.AddAddressRequest{
@@ -135,7 +138,7 @@ func TestAddUserAddress(t *testing.T) {
 						Street:        "asd",
 						Name:          "asd",
 						UserID:        1,
-						IsDefault:     true,
+						IsDefault:     &trueValue,
 					}).Return(nil, errs.ErrInternalServerError)
 				},
 			},
@@ -156,7 +159,7 @@ func TestAddUserAddress(t *testing.T) {
 					Street:        "asd",
 					Name:          "asd",
 					UserID:        1,
-					IsDefault:     true,
+					IsDefault:     &trueValue,
 				},
 				beforeTests: func(mockUserAddressService *mocks.UserAddressService) {
 					mockUserAddressService.On("AddUserAddress", &dto.AddAddressRequest{
@@ -165,7 +168,7 @@ func TestAddUserAddress(t *testing.T) {
 						Street:        "asd",
 						Name:          "asd",
 						UserID:        1,
-						IsDefault:     true,
+						IsDefault:     &trueValue,
 					}).Return(&model.UserAddress{
 						PhoneNumber:   "123456789123",
 						SubdistrictID: 1,

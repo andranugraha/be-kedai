@@ -6,11 +6,11 @@ import (
 )
 
 type UpdateProfileRequest struct {
-	Name        string `json:"name" binding:"required"`
-	PhoneNumber string `json:"phoneNumber" binding:"required,numeric,min=10,max=15"`
-	DoB         string `json:"dob" binding:"required,datetime=2006-01-02"`
-	Gender      string `json:"gender" binding:"required,oneof=male female others"`
-	PhotoUrl    string `json:"photoUrl" binding:"required,url"`
+	Name        string `json:"name"`
+	PhoneNumber string `json:"phoneNumber" binding:"omitempty,numeric,min=10,max=15"`
+	DoB         string `json:"dob" binding:"omitempty,datetime=2006-01-02"`
+	Gender      string `json:"gender" binding:"omitempty,oneof=male female others"`
+	PhotoUrl    string `json:"photoUrl" binding:"omitempty,url"`
 }
 
 type UpdateProfileResponse struct {

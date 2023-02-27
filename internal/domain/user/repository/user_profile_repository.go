@@ -8,6 +8,7 @@ import (
 )
 
 type UserProfileRepository interface {
+	Create(tx *gorm.DB, payload *model.UserProfile) (*model.UserProfile, error)
 	Update(userId int, payload *model.UserProfile) (*model.UserProfile, error)
 	UpdateDefaultAddressId(tx *gorm.DB, userId int, addressId int) error
 	GetByID(userId int) (*model.UserProfile, error)
@@ -55,4 +56,14 @@ func (r *userProfileRepositoryImpl) GetByID(userId int) (*model.UserProfile, err
 	}
 
 	return &userProfile, nil
+}
+
+func (r *userProfileRepositoryImpl) Create(tx *gorm.DB, payload *model.UserProfile) (*model.UserProfile, error) {
+	err := tx.Create(payload).Error
+	if err != nil {
+		tx.Rollback()
+		return nil, err
+	}
+
+	return payload, nil
 }
