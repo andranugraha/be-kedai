@@ -61,5 +61,14 @@ func (r *userCacheImpl) FindToken(userId int, token string) error {
 }
 
 func (r *userCacheImpl) DeleteAllByID(userId int) error {
-	return r.rdc.Unlink(context.Background(), fmt.Sprintf("user_%d:*", userId)).Err()
+	ctx := context.Background()
+
+	iter := r.rdc.Scan(ctx, 0, fmt.Sprintf("user_%d:*", userId), 0).Iterator()
+	for iter.Next(ctx) {
+		if err := r.rdc.Unlink(ctx, iter.Val()).Err(); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }

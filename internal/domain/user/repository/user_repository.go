@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	errs "kedai/backend/be-kedai/internal/common/error"
-	"time"
 
 	"kedai/backend/be-kedai/internal/domain/user/cache"
 	"kedai/backend/be-kedai/internal/domain/user/model"
@@ -45,7 +44,7 @@ func NewUserRepository(cfg *UserRConfig) UserRepository {
 func (r *userRepositoryImpl) GetByID(ID int) (*model.User, error) {
 	var user model.User
 
-	err := r.db.Where("id = ?", ID).Preload("Shop").Preload("Profile").First(&user).Error
+	err := r.db.Where("id = ?", ID).Preload("Profile").First(&user).Error
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, errs.ErrUserDoesNotExist
@@ -83,7 +82,7 @@ func (r *userRepositoryImpl) SignUp(user *model.User) (*model.User, error) {
 	hashedPw, _ := hash.HashAndSalt(user.Password)
 	user.Password = hashedPw
 
-	err := r.db.Unscoped().Where("email = ?", user.Email).First(&model.User{}).Error
+	err := r.db.Where("email = ?", user.Email).First(&model.UsedEmail{}).Error
 	if err == nil {
 		return nil, errs.ErrEmailUsed
 	}
@@ -116,11 +115,18 @@ func (r *userRepositoryImpl) SignIn(user *model.User) (*model.User, error) {
 }
 
 func (r *userRepositoryImpl) UpdateEmail(userId int, email string) (*model.User, error) {
-	user, err := r.GetByEmail(email)
+	_, err := r.GetByEmail(email)
 	if err == nil {
 		return nil, errs.ErrEmailUsed
 	}
+
 	if !errors.Is(err, errs.ErrUserDoesNotExist) {
+		return nil, err
+	}
+
+	var user model.User
+	err = r.db.Where("id = ?", userId).First(&user).Error
+	if err != nil {
 		return nil, err
 	}
 
@@ -130,14 +136,8 @@ func (r *userRepositoryImpl) UpdateEmail(userId int, email string) (*model.User,
 		}
 
 		if err := tx.Create(
-			&model.User{
-				Email:    user.Email,
-				Password: user.Password,
-				Model: gorm.Model{
-					CreatedAt: user.CreatedAt,
-					UpdatedAt: user.UpdatedAt,
-					DeletedAt: gorm.DeletedAt{Time: time.Now(), Valid: true},
-				},
+			&model.UsedEmail{
+				Email: user.Email,
 			}).Error; err != nil {
 			return err
 		}
