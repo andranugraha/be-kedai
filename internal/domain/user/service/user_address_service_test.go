@@ -14,7 +14,7 @@ import (
 
 func TestAddUserAddress(t *testing.T) {
 	type input struct {
-		data        *dto.AddAddressRequest
+		data        *dto.AddressRequest
 		err         error
 		beforeTests func(mockSubdistrictService *mocks.SubdistrictService, mockDistrictService *mocks.DistrictService, mockCityService *mocks.CityService, mockProvinceService *mocks.ProvinceService, mockUserAddressRepo *mocks.UserAddressRepository)
 	}
@@ -31,7 +31,7 @@ func TestAddUserAddress(t *testing.T) {
 		{
 			description: "should return error when GetSubdistrictByID return error",
 			input: input{
-				data: &dto.AddAddressRequest{
+				data: &dto.AddressRequest{
 					SubdistrictID: 1,
 				},
 				err: nil,
@@ -47,7 +47,7 @@ func TestAddUserAddress(t *testing.T) {
 		{
 			description: "should return error when GetDistrictByID return error",
 			input: input{
-				data: &dto.AddAddressRequest{
+				data: &dto.AddressRequest{
 					SubdistrictID: 1,
 				},
 				err: errs.ErrDistrictNotFound,
@@ -67,7 +67,7 @@ func TestAddUserAddress(t *testing.T) {
 		{
 			description: "should return error when GetCityByID return error",
 			input: input{
-				data: &dto.AddAddressRequest{
+				data: &dto.AddressRequest{
 					SubdistrictID: 1,
 				},
 				err: errs.ErrCityNotFound,
@@ -91,7 +91,7 @@ func TestAddUserAddress(t *testing.T) {
 		{
 			description: "should return error when GetProvinceByID return error",
 			input: input{
-				data: &dto.AddAddressRequest{
+				data: &dto.AddressRequest{
 					SubdistrictID: 1,
 				},
 				err: errs.ErrProvinceNotFound,
@@ -119,7 +119,7 @@ func TestAddUserAddress(t *testing.T) {
 		{
 			description: "should return error when AddUserAddress return error",
 			input: input{
-				data: &dto.AddAddressRequest{
+				data: &dto.AddressRequest{
 					SubdistrictID: 1,
 				},
 				err: errs.ErrInternalServerError,
@@ -155,7 +155,7 @@ func TestAddUserAddress(t *testing.T) {
 		{
 			description: "should return address and nil error when success",
 			input: input{
-				data: &dto.AddAddressRequest{
+				data: &dto.AddressRequest{
 					SubdistrictID: 1,
 				},
 				err: nil,

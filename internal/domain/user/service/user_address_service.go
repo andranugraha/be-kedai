@@ -8,8 +8,10 @@ import (
 )
 
 type UserAddressService interface {
-	AddUserAddress(*dto.AddAddressRequest) (*model.UserAddress, error)
+	AddUserAddress(*dto.AddressRequest) (*model.UserAddress, error)
+	UpdateUserAddress(*dto.AddressRequest) (*model.UserAddress, error)
 	GetAllUserAddress(userId int) ([]*model.UserAddress, error)
+	PreCheckAddress(*dto.AddressRequest) (*model.UserAddress, error)
 }
 
 type userAddressService struct {
@@ -41,7 +43,35 @@ func NewUserAddressService(cfg *UserAddressSConfig) UserAddressService {
 	}
 }
 
-func (s *userAddressService) AddUserAddress(newAddress *dto.AddAddressRequest) (*model.UserAddress, error) {
+func (s *userAddressService) AddUserAddress(newAddress *dto.AddressRequest) (*model.UserAddress, error) {
+	address, err := s.PreCheckAddress(newAddress)
+	if err != nil {
+		return nil, err
+	}
+
+	address, err = s.userAddressRepo.AddUserAddress(address)
+	if err != nil {
+		return nil, err
+	}
+
+	return address, nil
+}
+
+func (s *userAddressService) GetAllUserAddress(userId int) ([]*model.UserAddress, error) {
+	profile, err := s.userProfileService.GetProfile(userId)
+	if err != nil {
+		return nil, err
+	}
+
+	addresses, err := s.userAddressRepo.GetAllUserAddress(userId)
+	if err != nil {
+		return nil, err
+	}
+
+	return dto.ToAddressList(addresses, profile.DefaultAddressID), nil
+}
+
+func (s *userAddressService) PreCheckAddress(newAddress *dto.AddressRequest) (*model.UserAddress, error) {
 	var address *model.UserAddress
 
 	subdistrict, err := s.subdistrictService.GetSubdistrictByID(newAddress.SubdistrictID)
@@ -69,24 +99,24 @@ func (s *userAddressService) AddUserAddress(newAddress *dto.AddAddressRequest) (
 	address.CityID = city.ID
 	address.DistrictID = district.ID
 
-	address, err = s.userAddressRepo.AddUserAddress(address)
+	return address, nil
+}
+
+func (s *userAddressService) UpdateUserAddress(newAddress *dto.AddressRequest) (*model.UserAddress, error) {
+	_, err := s.userAddressRepo.GetUserAddressByIdAndUserId(newAddress.ID, newAddress.UserID)
+	if err != nil {
+		return nil, err
+	}
+
+	address, err := s.PreCheckAddress(newAddress)
+	if err != nil {
+		return nil, err
+	}
+
+	address, err = s.userAddressRepo.UpdateUserAddress(address)
 	if err != nil {
 		return nil, err
 	}
 
 	return address, nil
-}
-
-func (s *userAddressService) GetAllUserAddress(userId int) ([]*model.UserAddress, error) {
-	profile, err := s.userProfileService.GetProfile(userId)
-	if err != nil {
-		return nil, err
-	}
-
-	addresses, err := s.userAddressRepo.GetAllUserAddress(userId)
-	if err != nil {
-		return nil, err
-	}
-
-	return dto.ToAddressList(addresses, profile.DefaultAddressID), nil
 }

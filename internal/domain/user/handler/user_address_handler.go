@@ -12,7 +12,7 @@ import (
 )
 
 func (h *Handler) AddUserAddress(c *gin.Context) {
-	var newAddress dto.AddAddressRequest
+	var newAddress dto.AddressRequest
 	errBinding := c.ShouldBindJSON(&newAddress)
 	if errBinding != nil {
 		response.ErrorValidator(c, http.StatusBadRequest, errBinding)

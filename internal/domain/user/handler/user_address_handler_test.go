@@ -23,7 +23,7 @@ func TestAddUserAddress(t *testing.T) {
 		trueValue = true
 	)
 	type input struct {
-		data        *dto.AddAddressRequest
+		data        *dto.AddressRequest
 		beforeTests func(mockUserAddressService *mocks.UserAddressService)
 	}
 	type expected struct {
@@ -39,7 +39,7 @@ func TestAddUserAddress(t *testing.T) {
 		{
 			description: "response status bad request when request is invalid",
 			input: input{
-				data: &dto.AddAddressRequest{
+				data: &dto.AddressRequest{
 					PhoneNumber:   "asd",
 					SubdistrictID: 1,
 					Street:        "asd",
@@ -47,7 +47,7 @@ func TestAddUserAddress(t *testing.T) {
 					IsDefault:     &trueValue,
 				},
 				beforeTests: func(mockUserAddressService *mocks.UserAddressService) {
-					mockUserAddressService.On("AddUserAddress", &dto.AddAddressRequest{
+					mockUserAddressService.On("AddUserAddress", &dto.AddressRequest{
 						PhoneNumber: "asd",
 					}).Return(nil, nil)
 				},
@@ -63,7 +63,7 @@ func TestAddUserAddress(t *testing.T) {
 		{
 			description: "response status Not Found when error is ErrProvinceNotFound or ErrCityNotFound or ErrSubdistrictNotFound or ErrDistrictNotFound",
 			input: input{
-				data: &dto.AddAddressRequest{
+				data: &dto.AddressRequest{
 					PhoneNumber:   "123456789123",
 					SubdistrictID: 1,
 					Street:        "asd",
@@ -72,7 +72,7 @@ func TestAddUserAddress(t *testing.T) {
 					IsDefault:     &trueValue,
 				},
 				beforeTests: func(mockUserAddressService *mocks.UserAddressService) {
-					mockUserAddressService.On("AddUserAddress", &dto.AddAddressRequest{
+					mockUserAddressService.On("AddUserAddress", &dto.AddressRequest{
 						PhoneNumber:   "123456789123",
 						SubdistrictID: 1,
 						Street:        "asd",
@@ -93,7 +93,7 @@ func TestAddUserAddress(t *testing.T) {
 		{
 			description: "response status conflic when error is ErrMaxAddress",
 			input: input{
-				data: &dto.AddAddressRequest{
+				data: &dto.AddressRequest{
 					PhoneNumber:   "123456789123",
 					SubdistrictID: 1,
 					Street:        "asd",
@@ -102,7 +102,7 @@ func TestAddUserAddress(t *testing.T) {
 					IsDefault:     &trueValue,
 				},
 				beforeTests: func(mockUserAddressService *mocks.UserAddressService) {
-					mockUserAddressService.On("AddUserAddress", &dto.AddAddressRequest{
+					mockUserAddressService.On("AddUserAddress", &dto.AddressRequest{
 						PhoneNumber:   "123456789123",
 						SubdistrictID: 1,
 						Street:        "asd",
@@ -123,7 +123,7 @@ func TestAddUserAddress(t *testing.T) {
 		{
 			description: "response status Internal Server Error when error is not ErrProvinceNotFound or ErrCityNotFound or ErrSubdistrictNotFound or ErrDistrictNotFound",
 			input: input{
-				data: &dto.AddAddressRequest{
+				data: &dto.AddressRequest{
 					PhoneNumber:   "123456789123",
 					SubdistrictID: 1,
 					Street:        "asd",
@@ -132,7 +132,7 @@ func TestAddUserAddress(t *testing.T) {
 					IsDefault:     &trueValue,
 				},
 				beforeTests: func(mockUserAddressService *mocks.UserAddressService) {
-					mockUserAddressService.On("AddUserAddress", &dto.AddAddressRequest{
+					mockUserAddressService.On("AddUserAddress", &dto.AddressRequest{
 						PhoneNumber:   "123456789123",
 						SubdistrictID: 1,
 						Street:        "asd",
@@ -153,7 +153,7 @@ func TestAddUserAddress(t *testing.T) {
 		{
 			description: "response status CREATED when request is valid",
 			input: input{
-				data: &dto.AddAddressRequest{
+				data: &dto.AddressRequest{
 					PhoneNumber:   "123456789123",
 					SubdistrictID: 1,
 					Street:        "asd",
@@ -162,7 +162,7 @@ func TestAddUserAddress(t *testing.T) {
 					IsDefault:     &trueValue,
 				},
 				beforeTests: func(mockUserAddressService *mocks.UserAddressService) {
-					mockUserAddressService.On("AddUserAddress", &dto.AddAddressRequest{
+					mockUserAddressService.On("AddUserAddress", &dto.AddressRequest{
 						PhoneNumber:   "123456789123",
 						SubdistrictID: 1,
 						Street:        "asd",
