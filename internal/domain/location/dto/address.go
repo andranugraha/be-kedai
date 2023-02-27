@@ -1,6 +1,8 @@
 package dto
 
-import "kedai/backend/be-kedai/internal/domain/location/model"
+import (
+	"kedai/backend/be-kedai/internal/domain/location/model"
+)
 
 type AddAddressRequest struct {
 	UserID        int
@@ -28,4 +30,28 @@ func (r *AddAddressRequest) ToUserAddress() *model.UserAddress {
 		SubdistrictID: r.SubdistrictID,
 		IsDefault:     *r.IsDefault,
 	}
+}
+
+func ToAddressList(addresses []*model.UserAddress, defaultAddressId *int) []*model.UserAddress {
+	if len(addresses) == 0 || defaultAddressId == nil {
+		return addresses
+	}
+
+	newAddresses := []*model.UserAddress{}
+	defaultAddressIdx := -1
+
+	for i, address := range addresses {
+		if address.ID == *defaultAddressId {
+			address.IsDefault = true
+			defaultAddressIdx = i
+		} else {
+			newAddresses = append(newAddresses, address)
+		}
+	}
+
+	if defaultAddressIdx != -1 {
+		newAddresses = append([]*model.UserAddress{addresses[defaultAddressIdx]}, newAddresses...)
+	}
+
+	return newAddresses
 }

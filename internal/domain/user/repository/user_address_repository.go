@@ -9,6 +9,7 @@ import (
 
 type UserAddressRepository interface {
 	AddUserAddress(*model.UserAddress) (*model.UserAddress, error)
+	GetAllUserAddress(userId int) ([]*model.UserAddress, error)
 	DefaultAddressTransaction(tx *gorm.DB, userId int, addressId int) error
 }
 
@@ -64,6 +65,22 @@ func (r *userAddressRepository) AddUserAddress(newAddress *model.UserAddress) (*
 	}
 
 	return newAddress, nil
+}
+
+func (r *userAddressRepository) GetAllUserAddress(userId int) ([]*model.UserAddress, error) {
+	var addresses []*model.UserAddress
+
+	err := r.db.Where("user_id = ?", userId).
+		Preload("Subdistrict").
+		Preload("District").
+		Preload("City").
+		Preload("Province").
+		Find(&addresses).Error
+	if err != nil {
+		return nil, err
+	}
+
+	return addresses, nil
 }
 
 func (r *userAddressRepository) DefaultAddressTransaction(tx *gorm.DB, userId int, addressId int) error {

@@ -220,3 +220,92 @@ func TestAddUserAddress(t *testing.T) {
 	}
 
 }
+
+func TestGetAllUserAddress(t *testing.T) {
+	type input struct {
+		beforeTests func(mockUserAddressService *mocks.UserAddressService)
+	}
+	type expected struct {
+		data       *response.Response
+		statusCode int
+	}
+
+	cases := []struct {
+		description string
+		input
+		expected
+	}{
+		{
+			description: "response status Internal Server Error when server error",
+			input: input{
+				beforeTests: func(mockUserAddressService *mocks.UserAddressService) {
+					mockUserAddressService.On("GetAllUserAddress", 1).Return(nil, errs.ErrInternalServerError)
+				},
+			},
+			expected: expected{
+				data: &response.Response{
+					Code:    code.INTERNAL_SERVER_ERROR,
+					Message: errs.ErrInternalServerError.Error(),
+				},
+				statusCode: http.StatusInternalServerError,
+			},
+		},
+		{
+			description: "response status OK when request is valid",
+			input: input{
+				beforeTests: func(mockUserAddressService *mocks.UserAddressService) {
+					mockUserAddressService.On("GetAllUserAddress", 1).Return([]*model.UserAddress{
+						{
+							ID:          1,
+							PhoneNumber: "123456789123",
+							Street:      "asd",
+							Name:        "asd",
+							UserID:      1,
+							IsDefault:   false,
+						},
+					}, nil)
+				},
+			},
+			expected: expected{
+				data: &response.Response{
+					Code:    code.OK,
+					Message: "success",
+					Data: []*model.UserAddress{
+						{
+							ID:          1,
+							PhoneNumber: "123456789123",
+							Street:      "asd",
+							Name:        "asd",
+							UserID:      1,
+							IsDefault:   false,
+						},
+					},
+				},
+				statusCode: http.StatusOK,
+			},
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.description, func(t *testing.T) {
+			rec := httptest.NewRecorder()
+			c, _ := gin.CreateTestContext(rec)
+			c.Set("userId", 1)
+
+			c.Request, _ = http.NewRequest(http.MethodGet, "/users/addresses", nil)
+
+			mockUserAddressService := new(mocks.UserAddressService)
+			tc.input.beforeTests(mockUserAddressService)
+
+			handler := handler.New(&handler.HandlerConfig{
+				UserAddressService: mockUserAddressService,
+			})
+			handler.GetAllUserAddress(c)
+
+			expectedJson, _ := json.Marshal(tc.expected.data)
+			assert.Equal(t, tc.expected.statusCode, rec.Code)
+			assert.Equal(t, string(expectedJson), rec.Body.String())
+
+		})
+	}
+}
