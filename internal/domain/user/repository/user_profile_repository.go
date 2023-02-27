@@ -10,6 +10,7 @@ import (
 type UserProfileRepository interface {
 	Create(tx *gorm.DB, payload *model.UserProfile) (*model.UserProfile, error)
 	Update(userId int, payload *model.UserProfile) (*model.UserProfile, error)
+	UpdateDefaultAddressId(tx *gorm.DB, userId int, addressId int) error
 }
 
 type userProfileRepositoryImpl struct {
@@ -33,6 +34,16 @@ func (r *userProfileRepositoryImpl) Update(userId int, payload *model.UserProfil
 	}
 
 	return payload, nil
+}
+
+func (r *userProfileRepositoryImpl) UpdateDefaultAddressId(tx *gorm.DB, userId int, addressId int) error {
+	err := tx.Model(&model.UserProfile{}).Where("user_id = ?", userId).Update("default_address_id", addressId).Error
+	if err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	return nil
 }
 
 func (r *userProfileRepositoryImpl) Create(tx *gorm.DB, payload *model.UserProfile) (*model.UserProfile, error) {
