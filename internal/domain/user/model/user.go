@@ -1,8 +1,6 @@
 package model
 
 import (
-	"kedai/backend/be-kedai/internal/domain/shop/model"
-
 	"gorm.io/gorm"
 )
 
@@ -12,7 +10,6 @@ type User struct {
 	Username string       `json:"username"`
 	Password string       `json:"-"`
 	Profile  *UserProfile `json:"profile,omitempty"`
-	Shop     *model.Shop  `json:"shop"`
 
 	gorm.Model `json:"-"`
 }

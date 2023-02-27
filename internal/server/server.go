@@ -65,17 +65,25 @@ func createRouter() *gin.Engine {
 		ShopService: shopService,
 	})
 
-	userRepo := userRepoPackage.NewUserRepository(&userRepoPackage.UserRConfig{
-		DB: db,
-	})
-
 	userCache := userCache.NewUserCache(&userCache.UserCConfig{
 		RDC: redis,
+	})
+
+	userRepo := userRepoPackage.NewUserRepository(&userRepoPackage.UserRConfig{
+		DB:        db,
+		UserCache: userCache,
 	})
 
 	userService := userServicePackage.NewUserService(&userServicePackage.UserSConfig{
 		Repository: userRepo,
 		Redis:      userCache,
+	})
+
+	userProfileRepo := userRepoPackage.NewUserProfileRepository(&userRepoPackage.UserProfileRConfig{
+		DB: db,
+	})
+	userProfileService := userServicePackage.NewUserProfileService(&userServicePackage.UserProfileSConfig{
+		Repository: userProfileRepo,
 	})
 
 	userWishlistRepo := userRepoPackage.NewUserWishlistRepository(&userRepoPackage.UserWishlistRConfig{
@@ -111,6 +119,7 @@ func createRouter() *gin.Engine {
 		WalletService:       walletService,
 		UserWishlistService: userWishlistService,
 		UserCartItemService: userCartItemService,
+		UserProfileService:  userProfileService,
 	})
 
 	categoryRepo := productRepoPackage.NewCategoryRepository(&productRepoPackage.CategoryRConfig{
