@@ -83,10 +83,10 @@ func (s *userAddressService) GetAllUserAddress(userId int) ([]*model.UserAddress
 		return nil, err
 	}
 
-	adresses, err := s.userAddressRepo.GetAllUserAddress(userId)
+	addresses, err := s.userAddressRepo.GetAllUserAddress(userId)
 	if err != nil {
 		return nil, err
 	}
 
-	return dto.ToAddressList(adresses, *profile.DefaultAddressID), nil
+	return dto.ToAddressList(addresses, profile.DefaultAddressID), nil
 }

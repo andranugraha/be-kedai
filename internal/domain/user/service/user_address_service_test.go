@@ -4,6 +4,7 @@ import (
 	errs "kedai/backend/be-kedai/internal/common/error"
 	"kedai/backend/be-kedai/internal/domain/location/dto"
 	"kedai/backend/be-kedai/internal/domain/location/model"
+	userModel "kedai/backend/be-kedai/internal/domain/user/model"
 	"kedai/backend/be-kedai/internal/domain/user/service"
 	"kedai/backend/be-kedai/mocks"
 	"testing"
@@ -217,6 +218,106 @@ func TestAddUserAddress(t *testing.T) {
 			})
 
 			got, err := userAddressService.AddUserAddress(c.input.data)
+
+			assert.Equal(t, c.expected.data, got)
+			assert.ErrorIs(t, c.expected.err, err)
+		})
+	}
+
+}
+
+func TestGetAllUserAddress(t *testing.T) {
+	type input struct {
+		userId      int
+		err         error
+		beforeTests func(mockUserAddressRepo *mocks.UserAddressRepository, mockUserProfileService *mocks.UserProfileService)
+	}
+	type expected struct {
+		data []*model.UserAddress
+		err  error
+	}
+
+	cases := []struct {
+		description string
+		input
+		expected
+	}{
+		{
+			description: "should return error when GetProfile return error",
+			input: input{
+				userId: 1,
+				err:    errs.ErrInternalServerError,
+				beforeTests: func(mockUserAddressRepo *mocks.UserAddressRepository, mockUserProfileService *mocks.UserProfileService) {
+					mockUserProfileService.On("GetProfile", 1).Return(nil, errs.ErrInternalServerError)
+				},
+			},
+			expected: expected{
+				data: nil,
+				err:  errs.ErrInternalServerError,
+			},
+		},
+		{
+			description: "should return error when GetAllUserAddress return error",
+			input: input{
+				userId: 1,
+				err:    errs.ErrInternalServerError,
+				beforeTests: func(mockUserAddressRepo *mocks.UserAddressRepository, mockUserProfileService *mocks.UserProfileService) {
+					mockUserProfileService.On("GetProfile", 1).Return(&userModel.UserProfile{
+						UserID: 1,
+					}, nil)
+					mockUserAddressRepo.On("GetAllUserAddress", 1).Return(nil, errs.ErrInternalServerError)
+				},
+			},
+			expected: expected{
+				data: nil,
+				err:  errs.ErrInternalServerError,
+			},
+		},
+		{
+			description: "should return address and nil error when success",
+			input: input{
+				userId: 1,
+				err:    nil,
+				beforeTests: func(mockUserAddressRepo *mocks.UserAddressRepository, mockUserProfileService *mocks.UserProfileService) {
+					mockUserProfileService.On("GetProfile", 1).Return(&userModel.UserProfile{
+						UserID: 1,
+					}, nil)
+					mockUserAddressRepo.On("GetAllUserAddress", 1).Return([]*model.UserAddress{
+						{
+							SubdistrictID: 1,
+							DistrictID:    1,
+							CityID:        1,
+							ProvinceID:    1,
+						},
+					}, nil)
+				},
+			},
+			expected: expected{
+				data: []*model.UserAddress{
+					{
+						SubdistrictID: 1,
+						DistrictID:    1,
+						CityID:        1,
+						ProvinceID:    1,
+					},
+				},
+				err: nil,
+			},
+		},
+	}
+
+	for _, c := range cases {
+		t.Run(c.description, func(t *testing.T) {
+			mockUserAddressRepo := mocks.NewUserAddressRepository(t)
+			mockUserProfileService := mocks.NewUserProfileService(t)
+			c.beforeTests(mockUserAddressRepo, mockUserProfileService)
+
+			userAddressService := service.NewUserAddressService(&service.UserAddressSConfig{
+				UserAddressRepo:    mockUserAddressRepo,
+				UserProfileService: mockUserProfileService,
+			})
+
+			got, err := userAddressService.GetAllUserAddress(c.input.userId)
 
 			assert.Equal(t, c.expected.data, got)
 			assert.ErrorIs(t, c.expected.err, err)
