@@ -39,9 +39,11 @@ func NewRouter(cfg *RouterConfig) *gin.Engine {
 			user.POST("/register", cfg.UserHandler.UserRegistration)
 			user.POST("/login", cfg.UserHandler.UserLogin)
 			user.POST("/google-login", cfg.UserHandler.UserLoginWithGoogle)
+			user.POST("/tokens/refresh", middleware.JWTValidateRefreshToken, cfg.UserHandler.RenewSession)
 			userAuthenticated := user.Group("", middleware.JWTAuthorization, cfg.UserHandler.GetSession)
 			{
 				userAuthenticated.GET("", cfg.UserHandler.GetUserByID)
+
 				userAuthenticated.PUT("/emails", cfg.UserHandler.UpdateUserEmail)
 				userAuthenticated.PUT("/usernames", cfg.UserHandler.UpdateUsername)
 				profile := userAuthenticated.Group("/profiles")
@@ -64,6 +66,11 @@ func NewRouter(cfg *RouterConfig) *gin.Engine {
 				{
 					carts.POST("", cfg.UserHandler.CreateCartItem)
 					carts.GET("", cfg.UserHandler.GetAllCartItem)
+				}
+				addresses := userAuthenticated.Group("/addresses")
+				{
+					addresses.GET("", cfg.UserHandler.GetAllUserAddress)
+					addresses.POST("", cfg.UserHandler.AddUserAddress)
 				}
 			}
 		}

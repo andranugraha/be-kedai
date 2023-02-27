@@ -19,5 +19,8 @@ type UserAddress struct {
 	City          *City        `json:"city,omitempty"`
 	ProvinceID    int          `json:"provinceId"`
 	Province      *Province    `json:"province,omitempty"`
-	gorm.Model    `json:"-"`
+
+	IsDefault bool `json:"isDefault" gorm:"<-:false"`
+
+	gorm.Model `json:"-"`
 }
