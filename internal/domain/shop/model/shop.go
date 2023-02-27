@@ -9,13 +9,16 @@ import (
 )
 
 type Shop struct {
-	ID         int                        `json:"id"`
-	Name       string                     `json:"name"`
-	Rating     float64                    `json:"rating"`
-	JoinedDate time.Time                  `json:"joinedDate"`
-	UserID     int                        `json:"userId"`
-	AddressID  int                        `json:"addressId"`
-	Address    *locationModel.UserAddress `json:"address,omitempty"`
+	ID           int                        `json:"id"`
+	Name         string                     `json:"name"`
+	Rating       float64                    `json:"rating"`
+	JoinedDate   time.Time                  `json:"joinedDate"`
+	UserID       int                        `json:"userId"`
+	AddressID    int                        `json:"addressId"`
+	Address      *locationModel.UserAddress `json:"address,omitempty"`
+	Slug         string                     `json:"slug"`
+	ShopCategory []*ShopCategory            `json:"shopCategories,omitempty"`
+	ShopVoucher  []*ShopVoucher             `json:"shopVouchers,omitempty"`
 
 	gorm.Model `json:"-"`
 }

@@ -17,6 +17,7 @@ import (
 	productRepoPackage "kedai/backend/be-kedai/internal/domain/product/repository"
 	productServicePackage "kedai/backend/be-kedai/internal/domain/product/service"
 
+	shopHandlerPackage "kedai/backend/be-kedai/internal/domain/shop/handler"
 	shopRepoPackage "kedai/backend/be-kedai/internal/domain/shop/repository"
 	shopServicePackage "kedai/backend/be-kedai/internal/domain/shop/service"
 
@@ -34,11 +35,29 @@ func createRouter() *gin.Engine {
 		ProductRepository: productRepo,
 	})
 
+	districtRepo := locationRepoPackage.NewDistrictRepository(&locationRepoPackage.DistrictRConfig{
+		DB: db,
+	})
+	districtService := locationServicePackage.NewDistrictService(&locationServicePackage.DistrictSConfig{
+		DistrictRepo: districtRepo,
+	})
+	subdistrictRepo := locationRepoPackage.NewSubdistrictRepository(&locationRepoPackage.SubdistrictRConfig{
+		DB: db,
+	})
+	subdistrictService := locationServicePackage.NewSubdistrictService(&locationServicePackage.SubdistrictSConfig{
+		SubdistrictRepo: subdistrictRepo,
+	})
 	cityRepo := locationRepoPackage.NewCityRepository(&locationRepoPackage.CityRConfig{
 		DB: db,
 	})
 	cityService := locationServicePackage.NewCityService(&locationServicePackage.CitySConfig{
 		CityRepo: cityRepo,
+	})
+	provinceRepo := locationRepoPackage.NewProvinceRepository(&locationRepoPackage.ProvinceRConfig{
+		DB: db,
+	})
+	provinceService := locationServicePackage.NewProvinceService(&locationServicePackage.ProvinceSConfig{
+		ProvinceRepo: provinceRepo,
 	})
 
 	locHandler := locationHandlerPackage.New(&locationHandlerPackage.Config{
@@ -60,17 +79,30 @@ func createRouter() *gin.Engine {
 		ShopRepository: shopRepo,
 	})
 
-	userRepo := userRepoPackage.NewUserRepository(&userRepoPackage.UserRConfig{
-		DB: db,
+	shopHandler := shopHandlerPackage.New(&shopHandlerPackage.HandlerConfig{
+		ShopService: shopService,
 	})
 
 	userCache := userCache.NewUserCache(&userCache.UserCConfig{
 		RDC: redis,
 	})
+	userProfileRepo := userRepoPackage.NewUserProfileRepository(&userRepoPackage.UserProfileRConfig{
+		DB: db,
+	})
+
+	userRepo := userRepoPackage.NewUserRepository(&userRepoPackage.UserRConfig{
+		DB:              db,
+		UserCache:       userCache,
+		UserProfileRepo: userProfileRepo,
+	})
 
 	userService := userServicePackage.NewUserService(&userServicePackage.UserSConfig{
 		Repository: userRepo,
 		Redis:      userCache,
+	})
+
+	userProfileService := userServicePackage.NewUserProfileService(&userServicePackage.UserProfileSConfig{
+		Repository: userProfileRepo,
 	})
 
 	userWishlistRepo := userRepoPackage.NewUserWishlistRepository(&userRepoPackage.UserWishlistRConfig{
@@ -93,6 +125,19 @@ func createRouter() *gin.Engine {
 	userCartItemRepo := userRepoPackage.NewUserCartItemRepository(&userRepoPackage.UserCartItemRConfig{
 		DB: db,
 	})
+	userAddressRepo := userRepoPackage.NewUserAddressRepository(&userRepoPackage.UserAddressRConfig{
+		DB:              db,
+		UserProfileRepo: userProfileRepo,
+	})
+
+	userAddressService := userServicePackage.NewUserAddressService(&userServicePackage.UserAddressSConfig{
+		UserAddressRepo:    userAddressRepo,
+		ProvinceService:    provinceService,
+		DistrictService:    districtService,
+		SubdistrictService: subdistrictService,
+		CityService:        cityService,
+		UserProfileService: userProfileService,
+	})
 
 	userCartItemService := userServicePackage.NewUserCartItemService(&userServicePackage.UserCartItemSConfig{
 		CartItemRepository: userCartItemRepo,
@@ -106,6 +151,8 @@ func createRouter() *gin.Engine {
 		WalletService:       walletService,
 		UserWishlistService: userWishlistService,
 		UserCartItemService: userCartItemService,
+		UserAddressService:  userAddressService,
+		UserProfileService:  userProfileService,
 	})
 
 	categoryRepo := productRepoPackage.NewCategoryRepository(&productRepoPackage.CategoryRConfig{
@@ -125,6 +172,7 @@ func createRouter() *gin.Engine {
 		UserHandler:     userHandler,
 		LocationHandler: locHandler,
 		ProductHandler:  productHandler,
+		ShopHandler:     shopHandler,
 	})
 }
 

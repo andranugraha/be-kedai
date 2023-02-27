@@ -6,6 +6,7 @@ import (
 
 	locationHandler "kedai/backend/be-kedai/internal/domain/location/handler"
 	productHandler "kedai/backend/be-kedai/internal/domain/product/handler"
+	shopHandler "kedai/backend/be-kedai/internal/domain/shop/handler"
 	userHandler "kedai/backend/be-kedai/internal/domain/user/handler"
 
 	"github.com/gin-contrib/cors"
@@ -16,6 +17,7 @@ type RouterConfig struct {
 	UserHandler     *userHandler.Handler
 	LocationHandler *locationHandler.Handler
 	ProductHandler  *productHandler.Handler
+	ShopHandler     *shopHandler.Handler
 }
 
 func NewRouter(cfg *RouterConfig) *gin.Engine {
@@ -37,9 +39,17 @@ func NewRouter(cfg *RouterConfig) *gin.Engine {
 			user.POST("/register", cfg.UserHandler.UserRegistration)
 			user.POST("/login", cfg.UserHandler.UserLogin)
 			user.POST("/google-login", cfg.UserHandler.UserLoginWithGoogle)
+			user.POST("/tokens/refresh", middleware.JWTValidateRefreshToken, cfg.UserHandler.RenewSession)
 			userAuthenticated := user.Group("", middleware.JWTAuthorization, cfg.UserHandler.GetSession)
 			{
 				userAuthenticated.GET("", cfg.UserHandler.GetUserByID)
+
+				userAuthenticated.PUT("/emails", cfg.UserHandler.UpdateUserEmail)
+				userAuthenticated.PUT("/usernames", cfg.UserHandler.UpdateUsername)
+				profile := userAuthenticated.Group("/profiles")
+				{
+					profile.PUT("", cfg.UserHandler.UpdateProfile)
+				}
 				wallet := userAuthenticated.Group("/wallets")
 				{
 					wallet.GET("", cfg.UserHandler.GetWalletByUserID)
@@ -57,6 +67,11 @@ func NewRouter(cfg *RouterConfig) *gin.Engine {
 					carts.POST("", cfg.UserHandler.CreateCartItem)
 					carts.GET("", cfg.UserHandler.GetAllCartItem)
 				}
+				addresses := userAuthenticated.Group("/addresses")
+				{
+					addresses.GET("", cfg.UserHandler.GetAllUserAddress)
+					addresses.POST("", cfg.UserHandler.AddUserAddress)
+				}
 			}
 		}
 
@@ -73,6 +88,11 @@ func NewRouter(cfg *RouterConfig) *gin.Engine {
 			{
 				category.GET("", cfg.ProductHandler.GetCategories)
 			}
+		}
+
+		shop := v1.Group("/shops")
+		{
+			shop.GET("/:slug", cfg.ShopHandler.FindShopBySlug)
 		}
 	}
 

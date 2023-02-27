@@ -121,3 +121,75 @@ func (h *Handler) GetSession(c *gin.Context) {
 		return
 	}
 }
+
+func (h *Handler) RenewSession(c *gin.Context) {
+	userId := c.GetInt("userId")
+	token := c.GetHeader("authorization")
+	parsedToken := strings.Replace(token, "Bearer ", "", -1)
+
+	newToken, err := h.userService.RenewToken(userId, parsedToken)
+	if err != nil {
+		if errors.Is(err, errs.ErrExpiredToken) {
+			response.Error(c, http.StatusUnauthorized, code.TOKEN_EXPIRED, err.Error())
+			return
+		}
+
+		response.Error(c, http.StatusInternalServerError, code.INTERNAL_SERVER_ERROR, errs.ErrInternalServerError.Error())
+		return
+	}
+
+	response.Success(c, http.StatusOK, code.OK, "success", newToken)
+}
+
+func (h *Handler) UpdateUserEmail(c *gin.Context) {
+	var request dto.UpdateEmailRequest
+	err := c.ShouldBindJSON(&request)
+	if err != nil {
+		response.ErrorValidator(c, http.StatusBadRequest, err)
+		return
+	}
+
+	userId := c.GetInt("userId")
+
+	res, err := h.userService.UpdateEmail(userId, &request)
+	if err != nil {
+		if errors.Is(err, errs.ErrEmailUsed) {
+			response.Error(c, http.StatusConflict, code.EMAIL_ALREADY_REGISTERED, err.Error())
+			return
+		}
+
+		response.Error(c, http.StatusInternalServerError, code.INTERNAL_SERVER_ERROR, errs.ErrInternalServerError.Error())
+		return
+	}
+
+	response.Success(c, http.StatusOK, code.UPDATED, "updated", res)
+}
+
+func (h *Handler) UpdateUsername(c *gin.Context) {
+	var request dto.UpdateUsernameRequest
+	err := c.ShouldBindJSON(&request)
+	if err != nil {
+		response.ErrorValidator(c, http.StatusBadRequest, err)
+		return
+	}
+
+	userId := c.GetInt("userId")
+
+	res, err := h.userService.UpdateUsername(userId, &request)
+	if err != nil {
+		if errors.Is(err, errs.ErrUsernameUsed) {
+			response.Error(c, http.StatusConflict, code.USERNAME_ALREADY_REGISTERED, err.Error())
+			return
+		}
+
+		if errors.Is(err, errs.ErrInvalidUsernamePattern) {
+			response.Error(c, http.StatusUnprocessableEntity, code.INVALID_USERNAME_PATTERN, err.Error())
+			return
+		}
+
+		response.Error(c, http.StatusInternalServerError, code.INTERNAL_SERVER_ERROR, errs.ErrInternalServerError.Error())
+		return
+	}
+
+	response.Success(c, http.StatusOK, code.UPDATED, "updated", res)
+}
