@@ -122,6 +122,25 @@ func (h *Handler) GetSession(c *gin.Context) {
 	}
 }
 
+func (h *Handler) RenewSession(c *gin.Context) {
+	userId := c.GetInt("userId")
+	token := c.GetHeader("authorization")
+	parsedToken := strings.Replace(token, "Bearer ", "", -1)
+
+	newToken, err := h.userService.RenewToken(userId, parsedToken)
+	if err != nil {
+		if errors.Is(err, errs.ErrExpiredToken) {
+			response.Error(c, http.StatusUnauthorized, code.TOKEN_EXPIRED, err.Error())
+			return
+		}
+
+		response.Error(c, http.StatusInternalServerError, code.INTERNAL_SERVER_ERROR, errs.ErrInternalServerError.Error())
+		return
+	}
+
+	response.Success(c, http.StatusOK, code.OK, "success", newToken)
+}
+
 func (h *Handler) UpdateUserEmail(c *gin.Context) {
 	var request dto.UpdateEmailRequest
 	err := c.ShouldBindJSON(&request)

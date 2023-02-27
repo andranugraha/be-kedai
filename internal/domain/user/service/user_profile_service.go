@@ -2,11 +2,13 @@ package service
 
 import (
 	"kedai/backend/be-kedai/internal/domain/user/dto"
+	"kedai/backend/be-kedai/internal/domain/user/model"
 	"kedai/backend/be-kedai/internal/domain/user/repository"
 )
 
 type UserProfileService interface {
 	UpdateProfile(userId int, request *dto.UpdateProfileRequest) (*dto.UpdateProfileResponse, error)
+	GetProfile(userId int) (*model.UserProfile, error)
 }
 
 type userProfileServiceImpl struct {
@@ -35,4 +37,8 @@ func (s *userProfileServiceImpl) UpdateProfile(userId int, request *dto.UpdatePr
 	response.FromUserProfile(res)
 
 	return &response, nil
+}
+
+func (s *userProfileServiceImpl) GetProfile(userId int) (*model.UserProfile, error) {
+	return s.repository.GetByID(userId)
 }
