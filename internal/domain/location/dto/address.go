@@ -13,6 +13,12 @@ type AddAddressRequest struct {
 }
 
 func (r *AddAddressRequest) ToUserAddress() *model.UserAddress {
+
+	if r.IsDefault == nil {
+		r.IsDefault = new(bool)
+		*r.IsDefault = false
+	}
+
 	return &model.UserAddress{
 		UserID:        r.UserID,
 		Name:          r.Name,
