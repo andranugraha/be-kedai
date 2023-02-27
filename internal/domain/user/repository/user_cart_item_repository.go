@@ -3,13 +3,16 @@ package repository
 import (
 	"errors"
 	errs "kedai/backend/be-kedai/internal/common/error"
+	"kedai/backend/be-kedai/internal/domain/user/dto"
 	"kedai/backend/be-kedai/internal/domain/user/model"
+	"math"
 
 	"gorm.io/gorm"
 )
 
 type UserCartItemRepository interface {
 	CreateCartItem(cartItem *model.CartItem) (*model.CartItem, error)
+	GetAllCartItem(*dto.GetCartItemsRequest) (cartItems []*model.CartItem, totalRows int64, totalPages int, err error)
 	GetCartItemByUserIdAndSkuId(userId int, skuId int) (*model.CartItem, error)
 	UpdateCartItem(cartItem *model.CartItem) (*model.CartItem, error)
 }
@@ -29,8 +32,19 @@ func NewUserCartItemRepository(cfg *UserCartItemRConfig) UserCartItemRepository 
 }
 
 func (r *userCartItemRepository) CreateCartItem(cartItem *model.CartItem) (*model.CartItem, error) {
+	var totalCartItem int64
+	maxCartItem := 200
+	err := r.db.Model(&model.CartItem{}).Where("user_id = ?", cartItem.UserId).Count(&totalCartItem).Error
 
-	err := r.db.Create(cartItem).Preload("Sku.Product.Shop").Error
+	if err != nil {
+		return nil, err
+	}
+
+	if totalCartItem >= int64(maxCartItem) {
+		return nil, errs.ErrCartItemLimitExceeded
+	}
+
+	err = r.db.Create(cartItem).Preload("Sku.Product.Shop").Error
 	if err != nil {
 		return nil, err
 	}
@@ -64,4 +78,33 @@ func (r *userCartItemRepository) UpdateCartItem(cartItem *model.CartItem) (*mode
 	}
 
 	return cartItem, nil
+}
+
+func (r *userCartItemRepository) GetAllCartItem(req *dto.GetCartItemsRequest) (cartItems []*model.CartItem, totalRows int64, totalPages int, err error) {
+
+	db := r.db.Where("cart_items.user_id = ?", req.UserId).
+		Joins("left join skus s on cart_items.sku_id = s.id").
+		Joins("left join products p on s.product_id = p.id").
+		Joins("left join shops sh on p.shop_id = sh.id").
+		Group("sh.id, cart_items.id").
+		Where("sh.id IN (SELECT DISTINCT sh.id from shops sh ORDER BY sh.id LIMIT ? OFFSET ?)", req.Limit, req.Offset()).
+		Order("cart_items.created_at").
+		Preload("Sku.Product.Shop.Address.City").
+		Preload("Sku.Product.Shop.Address.Province").
+		Preload("Sku.Variants.Group").
+		Preload("Sku.Promotion")
+
+	db.Model(&model.CartItem{}).Count(&totalRows)
+
+	totalPages = 1
+	if req.Limit > 0 {
+		totalPages = int(math.Ceil(float64(totalRows) / float64(req.Limit)))
+	}
+
+	err = db.Find(&cartItems).Error
+	if err != nil {
+		return
+	}
+
+	return
 }

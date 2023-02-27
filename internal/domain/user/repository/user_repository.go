@@ -103,7 +103,7 @@ func (r *userRepositoryImpl) SignIn(user *model.User) (*model.User, error) {
 func (r *userRepositoryImpl) GetByUsername(username string) (*model.User, error) {
 	var user model.User
 
-	err := r.db.Where("username = ?", username).Preload("Profile").First(&user).Error
+	err := r.db.Where("username = ?", username).First(&user).Error
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, errs.ErrUserDoesNotExist

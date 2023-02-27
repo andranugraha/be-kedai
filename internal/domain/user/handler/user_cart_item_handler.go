@@ -39,9 +39,30 @@ func (h *Handler) CreateCartItem(c *gin.Context) {
 			return
 		}
 
+		if errors.Is(err, errs.ErrCartItemLimitExceeded) {
+			response.Error(c, http.StatusConflict, code.CART_ITEM_EXCEED_LIMIT, err.Error())
+			return
+		}
+
 		response.Error(c, http.StatusInternalServerError, code.INTERNAL_SERVER_ERROR, errs.ErrInternalServerError.Error())
 		return
 	}
 
 	response.Success(c, http.StatusCreated, code.CREATED, "create cart item succesful", cartItem)
+}
+
+func (h *Handler) GetAllCartItem(c *gin.Context) {
+	var req dto.GetCartItemsRequest
+	c.ShouldBindQuery(&req)
+	req.Validate()
+	userId := c.GetInt("userId")
+	req.UserId = userId
+
+	cartItems, err := h.userCartItemService.GetAllCartItem(&req)
+	if err != nil {
+		response.Error(c, http.StatusInternalServerError, code.INTERNAL_SERVER_ERROR, errs.ErrInternalServerError.Error())
+		return
+	}
+
+	response.Success(c, http.StatusOK, code.OK, "get all cart item successful", cartItems)
 }
