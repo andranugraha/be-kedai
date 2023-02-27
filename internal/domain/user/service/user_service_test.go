@@ -425,6 +425,22 @@ func TestRenewToken(t *testing.T) {
 				refreshToken: "token",
 				beforeTest: func(uc *mocks.UserCache) {
 					uc.On("FindToken", 1, "token").Return(nil)
+					uc.On("DeleteToken", "user_1:token").Return(errors.New("failed to delete token"))
+				},
+			},
+			expected: expected{
+				token: nil,
+				err:   errors.New("failed to delete token"),
+			},
+		},
+		{
+			description: "should return error when failed to store renewed tokens",
+			input: input{
+				userId:       1,
+				refreshToken: "token",
+				beforeTest: func(uc *mocks.UserCache) {
+					uc.On("FindToken", 1, "token").Return(nil)
+					uc.On("DeleteToken", "user_1:token").Return(nil)
 					uc.On("StoreToken", mock.Anything, mock.Anything, mock.Anything).Return(errors.New("failed to store token"))
 				},
 			},

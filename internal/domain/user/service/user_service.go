@@ -2,6 +2,7 @@ package service
 
 import (
 	"errors"
+	"fmt"
 	errs "kedai/backend/be-kedai/internal/common/error"
 	"kedai/backend/be-kedai/internal/domain/user/cache"
 	"kedai/backend/be-kedai/internal/domain/user/dto"
@@ -140,6 +141,11 @@ func (s *userServiceImpl) RenewToken(userId int, refreshToken string) (*dto.Toke
 	if errors.Is(err, redis.Nil) {
 		return nil, errs.ErrExpiredToken
 	}
+	if err != nil {
+		return nil, err
+	}
+
+	err = s.redis.DeleteToken(fmt.Sprintf("user_%d:%s", userId, refreshToken))
 	if err != nil {
 		return nil, err
 	}
