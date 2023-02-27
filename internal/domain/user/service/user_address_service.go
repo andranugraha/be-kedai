@@ -1,6 +1,7 @@
 package service
 
 import (
+	errs "kedai/backend/be-kedai/internal/common/error"
 	"kedai/backend/be-kedai/internal/domain/location/dto"
 	"kedai/backend/be-kedai/internal/domain/location/model"
 	locationService "kedai/backend/be-kedai/internal/domain/location/service"
@@ -103,12 +104,21 @@ func (s *userAddressService) PreCheckAddress(newAddress *dto.AddressRequest) (*m
 }
 
 func (s *userAddressService) UpdateUserAddress(newAddress *dto.AddressRequest) (*model.UserAddress, error) {
-	_, err := s.userAddressRepo.GetUserAddressByIdAndUserId(newAddress.ID, newAddress.UserID)
+	address, err := s.userAddressRepo.GetUserAddressByIdAndUserId(newAddress.ID, newAddress.UserID)
 	if err != nil {
 		return nil, err
 	}
 
-	address, err := s.PreCheckAddress(newAddress)
+	profile, err := s.userProfileService.GetProfile(newAddress.UserID)
+	if err != nil {
+		return nil, err
+	}
+
+	if profile.DefaultAddressID != nil && *profile.DefaultAddressID == address.ID {
+		return nil, errs.ErrMustHaveAtLeastOneDefaultAddress
+	}
+
+	address, err = s.PreCheckAddress(newAddress)
 	if err != nil {
 		return nil, err
 	}
