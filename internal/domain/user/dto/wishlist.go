@@ -2,6 +2,7 @@ package dto
 
 import (
 	"kedai/backend/be-kedai/internal/common/constant"
+	productDto "kedai/backend/be-kedai/internal/domain/product/dto"
 	"strconv"
 	"strings"
 )
@@ -23,7 +24,7 @@ type GetUserWishlistsRequest struct {
 	Page       int     `form:"page"`
 }
 
-func (req *GetUserWishlistsRequest) Validate(strCityIds string) error {
+func (req *GetUserWishlistsRequest) Validate(strCityIds string) {
 	if req.Limit < 1 {
 		req.Limit = 10
 	}
@@ -57,10 +58,14 @@ func (req *GetUserWishlistsRequest) Validate(strCityIds string) error {
 	if req.Sort != constant.SortByRecommended && req.Sort != constant.SortByPriceLow && req.Sort != constant.SortByPriceHigh && req.Sort != constant.SortByLatest && req.Sort != constant.SortByTopSales {
 		req.Sort = constant.SortByRecommended
 	}
-
-	return nil
 }
 
 func (req *GetUserWishlistsRequest) Offset() int {
 	return (req.Page - 1) * req.Limit
+}
+
+type GetUserWishlistsResponse struct {
+	ID        int                        `json:"id"`
+	ProductID int                        `json:"productId"`
+	Product   productDto.ProductResponse `json:"product"`
 }
