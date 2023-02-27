@@ -100,13 +100,17 @@ func (r *userAddressRepository) UpdateUserAddress(address *model.UserAddress) (*
 	tx := r.db.Begin()
 	defer tx.Commit()
 
-	err := tx.Model(&model.UserAddress{}).Where("id = ?", address.ID).Updates(address).Error
-	if err != nil {
+	res := tx.Model(&model.UserAddress{}).Where("id = ?", address.ID).Updates(address)
+	if err := res.Error; err != nil {
 		return nil, err
 	}
 
+	if res.RowsAffected == 0 {
+		return nil, errs.ErrAddressNotFound
+	}
+
 	if address.IsDefault {
-		err = r.DefaultAddressTransaction(tx, address.UserID, address.ID)
+		err := r.DefaultAddressTransaction(tx, address.UserID, address.ID)
 		if err != nil {
 			tx.Rollback()
 			return nil, err
