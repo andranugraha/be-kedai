@@ -57,6 +57,7 @@ func NewRouter(cfg *RouterConfig) *gin.Engine {
 				carts := userAuthenticated.Group("/carts")
 				{
 					carts.POST("", cfg.UserHandler.CreateCartItem)
+					carts.GET("", cfg.UserHandler.GetAllCartItem)
 				}
 			}
 		}
