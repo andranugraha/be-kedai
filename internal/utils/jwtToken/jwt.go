@@ -63,7 +63,7 @@ func ValidateToken(token string, secretKey string) (*model.Claim, error) {
 	}
 
 	parsedClaim := parsedToken.Claims.(*model.Claim)
-	if parsedClaim.TokenType != "access" {
+	if parsedClaim.TokenType != "access" && parsedClaim.TokenType != "refresh" {
 		return nil, jwt.ErrTokenInvalidClaims
 	}
 
