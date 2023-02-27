@@ -118,6 +118,7 @@ func createRouter() *gin.Engine {
 
 	productHandler := productHandlerPackage.New(&productHandlerPackage.Config{
 		CategoryService: categoryService,
+		ProductService:  productService,
 	})
 
 	return NewRouter(&RouterConfig{
