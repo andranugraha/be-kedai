@@ -7,6 +7,7 @@ import (
 	"kedai/backend/be-kedai/internal/domain/location/dto"
 	"kedai/backend/be-kedai/internal/utils/response"
 	"net/http"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 )
@@ -65,11 +66,13 @@ func (h *Handler) UpdateUserAddress(c *gin.Context) {
 	}
 	userId := c.GetInt("userId")
 	addressId := c.Param("addressId")
+	addressIdInt, _ := strconv.Atoi(addressId)
+	updateAddress.ID = addressIdInt
 	updateAddress.UserID = userId
+	updateAddress.ValidateId()
 
 	address, err := h.userAddressService.UpdateUserAddress(&updateAddress)
 	if err != nil {
-
 		if errors.Is(err, errs.ErrProvinceNotFound) ||
 			errors.Is(err, errs.ErrSubdistrictNotFound) ||
 			errors.Is(err, errs.ErrDistrictNotFound) ||
@@ -79,9 +82,14 @@ func (h *Handler) UpdateUserAddress(c *gin.Context) {
 			return
 		}
 
+		if errors.Is(err, errs.ErrMustHaveAtLeastOneDefaultAddress) {
+			response.Error(c, http.StatusConflict, code.MUST_HAVE_AT_LEAST_ONE_DEFAULT_ADDRESS, err.Error())
+			return
+		}
+
 		response.Error(c, http.StatusInternalServerError, code.INTERNAL_SERVER_ERROR, errs.ErrInternalServerError.Error())
 		return
 	}
 
-	response.Success(c, http.StatusOK, code.OK, "updated", address)
+	response.Success(c, http.StatusOK, code.OK, "success", address)
 }
