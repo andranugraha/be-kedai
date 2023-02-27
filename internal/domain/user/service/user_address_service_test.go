@@ -325,3 +325,364 @@ func TestGetAllUserAddress(t *testing.T) {
 	}
 
 }
+
+func TestUpdateUserAddress(t *testing.T) {
+	var defaultAddressId = 1
+	type input struct {
+		addressId   int
+		data        *dto.AddressRequest
+		err         error
+		beforeTests func(mockUserAddressRepo *mocks.UserAddressRepository, mockSubdistrictService *mocks.SubdistrictService, mockDistrictService *mocks.DistrictService, mockCityService *mocks.CityService, mockProvinceService *mocks.ProvinceService, mockUserProfileService *mocks.UserProfileService)
+	}
+	type expected struct {
+		data *model.UserAddress
+		err  error
+	}
+
+	cases := []struct {
+		description string
+		input
+		expected
+	}{
+		{
+			description: "should return error when GetUserAddressByIdAndUserId return error",
+			input: input{
+				addressId: 1,
+				data: &dto.AddressRequest{
+					SubdistrictID: 1,
+					ID:            1,
+					UserID:        1,
+				},
+				err: errs.ErrInternalServerError,
+				beforeTests: func(mockUserAddressRepo *mocks.UserAddressRepository, mockSubdistrictService *mocks.SubdistrictService, mockDistrictService *mocks.DistrictService, mockCityService *mocks.CityService, mockProvinceService *mocks.ProvinceService, mockUserProfileService *mocks.UserProfileService) {
+					mockUserAddressRepo.On("GetUserAddressByIdAndUserId", 1, 1).Return(nil, errs.ErrInternalServerError)
+				},
+			},
+			expected: expected{
+				data: nil,
+				err:  errs.ErrInternalServerError,
+			},
+		},
+		{
+			description: "should return error when GetProfile return error",
+			input: input{
+				addressId: 1,
+				data: &dto.AddressRequest{
+					SubdistrictID: 1,
+					ID:            1,
+					UserID:        1,
+				},
+				err: errs.ErrInternalServerError,
+				beforeTests: func(mockUserAddressRepo *mocks.UserAddressRepository, mockSubdistrictService *mocks.SubdistrictService, mockDistrictService *mocks.DistrictService, mockCityService *mocks.CityService, mockProvinceService *mocks.ProvinceService, mockUserProfileService *mocks.UserProfileService) {
+					mockUserAddressRepo.On("GetUserAddressByIdAndUserId", 1, 1).Return(&model.UserAddress{
+						ID:            1,
+						UserID:        1,
+						SubdistrictID: 1,
+					}, nil)
+					mockUserProfileService.On("GetProfile", 1).Return(nil, errs.ErrInternalServerError)
+				},
+			},
+			expected: expected{
+				data: nil,
+				err:  errs.ErrInternalServerError,
+			},
+		},
+		{
+			description: "should return error ErrMustHaveAtLeastOneDefaultAddress when profile default address is not nil and profile default address is equal to address id",
+			input: input{
+				addressId: 1,
+				data: &dto.AddressRequest{
+					SubdistrictID: 1,
+					ID:            1,
+					UserID:        1,
+				},
+				err: errs.ErrMustHaveAtLeastOneDefaultAddress,
+				beforeTests: func(mockUserAddressRepo *mocks.UserAddressRepository, mockSubdistrictService *mocks.SubdistrictService, mockDistrictService *mocks.DistrictService, mockCityService *mocks.CityService, mockProvinceService *mocks.ProvinceService, mockUserProfileService *mocks.UserProfileService) {
+					mockUserAddressRepo.On("GetUserAddressByIdAndUserId", 1, 1).Return(&model.UserAddress{
+						ID:            1,
+						UserID:        1,
+						SubdistrictID: 1,
+					}, nil)
+					mockUserProfileService.On("GetProfile", 1).Return(&userModel.UserProfile{
+						DefaultAddressID: &defaultAddressId,
+					}, nil)
+				},
+			},
+			expected: expected{
+				data: nil,
+				err:  errs.ErrMustHaveAtLeastOneDefaultAddress,
+			},
+		},
+		{
+			description: "should return error when GetSubdistrictById return error",
+			input: input{
+				addressId: 1,
+				data: &dto.AddressRequest{
+					SubdistrictID: 1,
+					ID:            1,
+					UserID:        1,
+				},
+				err: errs.ErrInternalServerError,
+				beforeTests: func(mockUserAddressRepo *mocks.UserAddressRepository, mockSubdistrictService *mocks.SubdistrictService, mockDistrictService *mocks.DistrictService, mockCityService *mocks.CityService, mockProvinceService *mocks.ProvinceService, mockUserProfileService *mocks.UserProfileService) {
+					mockUserAddressRepo.On("GetUserAddressByIdAndUserId", 1, 1).Return(&model.UserAddress{
+						ID:            1,
+						UserID:        1,
+						SubdistrictID: 1,
+					}, nil)
+					mockUserProfileService.On("GetProfile", 1).Return(&userModel.UserProfile{
+						DefaultAddressID: nil,
+					}, nil)
+					mockSubdistrictService.On("GetSubdistrictByID", 1).Return(nil, errs.ErrInternalServerError)
+				},
+			},
+			expected: expected{
+				data: nil,
+				err:  errs.ErrInternalServerError,
+			},
+		},
+		{
+			description: "should return error when GetDistrictByID return error",
+			input: input{
+				addressId: 1,
+				data: &dto.AddressRequest{
+					SubdistrictID: 1,
+					ID:            1,
+					UserID:        1,
+				},
+				err: errs.ErrInternalServerError,
+				beforeTests: func(mockUserAddressRepo *mocks.UserAddressRepository, mockSubdistrictService *mocks.SubdistrictService, mockDistrictService *mocks.DistrictService, mockCityService *mocks.CityService, mockProvinceService *mocks.ProvinceService, mockUserProfileService *mocks.UserProfileService) {
+					mockUserAddressRepo.On("GetUserAddressByIdAndUserId", 1, 1).Return(&model.UserAddress{
+						ID:            1,
+						UserID:        1,
+						SubdistrictID: 1,
+					}, nil)
+					mockUserProfileService.On("GetProfile", 1).Return(&userModel.UserProfile{
+						DefaultAddressID: nil,
+					}, nil)
+					mockSubdistrictService.On("GetSubdistrictByID", 1).Return(&model.Subdistrict{
+						ID:         1,
+						DistrictID: 1,
+					}, nil)
+					mockDistrictService.On("GetDistrictByID", 1).Return(nil, errs.ErrInternalServerError)
+				},
+			},
+			expected: expected{
+				data: nil,
+				err:  errs.ErrInternalServerError,
+			},
+		},
+		{
+			description: "should return error when GetCityByID return error",
+			input: input{
+				addressId: 1,
+				data: &dto.AddressRequest{
+					SubdistrictID: 1,
+					ID:            1,
+					UserID:        1,
+				},
+				err: errs.ErrInternalServerError,
+				beforeTests: func(mockUserAddressRepo *mocks.UserAddressRepository, mockSubdistrictService *mocks.SubdistrictService, mockDistrictService *mocks.DistrictService, mockCityService *mocks.CityService, mockProvinceService *mocks.ProvinceService, mockUserProfileService *mocks.UserProfileService) {
+					mockUserAddressRepo.On("GetUserAddressByIdAndUserId", 1, 1).Return(&model.UserAddress{
+						ID:            1,
+						UserID:        1,
+						SubdistrictID: 1,
+					}, nil)
+					mockUserProfileService.On("GetProfile", 1).Return(&userModel.UserProfile{
+						DefaultAddressID: nil,
+					}, nil)
+					mockSubdistrictService.On("GetSubdistrictByID", 1).Return(&model.Subdistrict{
+						ID:         1,
+						DistrictID: 1,
+					}, nil)
+					mockDistrictService.On("GetDistrictByID", 1).Return(&model.District{
+						ID:     1,
+						CityID: 1,
+					}, nil)
+					mockCityService.On("GetCityByID", 1).Return(nil, errs.ErrInternalServerError)
+				},
+			},
+			expected: expected{
+				data: nil,
+				err:  errs.ErrInternalServerError,
+			},
+		},
+		{
+			description: "should return error when GetProvinceByID return error",
+			input: input{
+				addressId: 1,
+				data: &dto.AddressRequest{
+					SubdistrictID: 1,
+					ID:            1,
+					UserID:        1,
+				},
+				err: errs.ErrInternalServerError,
+				beforeTests: func(mockUserAddressRepo *mocks.UserAddressRepository, mockSubdistrictService *mocks.SubdistrictService, mockDistrictService *mocks.DistrictService, mockCityService *mocks.CityService, mockProvinceService *mocks.ProvinceService, mockUserProfileService *mocks.UserProfileService) {
+					mockUserAddressRepo.On("GetUserAddressByIdAndUserId", 1, 1).Return(&model.UserAddress{
+						ID:            1,
+						UserID:        1,
+						SubdistrictID: 1,
+					}, nil)
+					mockUserProfileService.On("GetProfile", 1).Return(&userModel.UserProfile{
+						DefaultAddressID: nil,
+					}, nil)
+					mockSubdistrictService.On("GetSubdistrictByID", 1).Return(&model.Subdistrict{
+						ID:         1,
+						DistrictID: 1,
+					}, nil)
+					mockDistrictService.On("GetDistrictByID", 1).Return(&model.District{
+						ID:     1,
+						CityID: 1,
+					}, nil)
+					mockCityService.On("GetCityByID", 1).Return(&model.City{
+						ID:         1,
+						ProvinceID: 1,
+					}, nil)
+					mockProvinceService.On("GetProvinceByID", 1).Return(nil, errs.ErrInternalServerError)
+				},
+			},
+			expected: expected{
+				data: nil,
+				err:  errs.ErrInternalServerError,
+			},
+		},
+		{
+			description: "should return error when UpdateUserAddress return error",
+			input: input{
+				addressId: 1,
+				data: &dto.AddressRequest{
+					SubdistrictID: 1,
+					ID:            1,
+					UserID:        1,
+				},
+				err: errs.ErrInternalServerError,
+				beforeTests: func(mockUserAddressRepo *mocks.UserAddressRepository, mockSubdistrictService *mocks.SubdistrictService, mockDistrictService *mocks.DistrictService, mockCityService *mocks.CityService, mockProvinceService *mocks.ProvinceService, mockUserProfileService *mocks.UserProfileService) {
+					mockUserAddressRepo.On("GetUserAddressByIdAndUserId", 1, 1).Return(&model.UserAddress{
+						ID:            1,
+						UserID:        1,
+						SubdistrictID: 1,
+					}, nil)
+					mockUserProfileService.On("GetProfile", 1).Return(&userModel.UserProfile{
+						DefaultAddressID: nil,
+					}, nil)
+					mockSubdistrictService.On("GetSubdistrictByID", 1).Return(&model.Subdistrict{
+						ID:         1,
+						DistrictID: 1,
+					}, nil)
+					mockDistrictService.On("GetDistrictByID", 1).Return(&model.District{
+						ID:     1,
+						CityID: 1,
+					}, nil)
+					mockCityService.On("GetCityByID", 1).Return(&model.City{
+						ID:         1,
+						ProvinceID: 1,
+					}, nil)
+					mockProvinceService.On("GetProvinceByID", 1).Return(&model.Province{
+						ID: 1,
+					}, nil)
+					mockUserAddressRepo.On("UpdateUserAddress", &model.UserAddress{
+						ID:            1,
+						UserID:        1,
+						SubdistrictID: 1,
+						ProvinceID:    1,
+						CityID:        1,
+						DistrictID:    1,
+					}).Return(nil, errs.ErrInternalServerError)
+				},
+			},
+			expected: expected{
+				data: nil,
+				err:  errs.ErrInternalServerError,
+			},
+		},
+		{
+			description: "should return updated address when success",
+			input: input{
+				addressId: 1,
+				data: &dto.AddressRequest{
+					SubdistrictID: 1,
+					ID:            1,
+					UserID:        1,
+				},
+				err: nil,
+				beforeTests: func(mockUserAddressRepo *mocks.UserAddressRepository, mockSubdistrictService *mocks.SubdistrictService, mockDistrictService *mocks.DistrictService, mockCityService *mocks.CityService, mockProvinceService *mocks.ProvinceService, mockUserProfileService *mocks.UserProfileService) {
+					mockUserAddressRepo.On("GetUserAddressByIdAndUserId", 1, 1).Return(&model.UserAddress{
+						ID:            1,
+						UserID:        1,
+						SubdistrictID: 1,
+					}, nil)
+					mockUserProfileService.On("GetProfile", 1).Return(&userModel.UserProfile{
+						DefaultAddressID: nil,
+					}, nil)
+					mockSubdistrictService.On("GetSubdistrictByID", 1).Return(&model.Subdistrict{
+						ID:         1,
+						DistrictID: 1,
+					}, nil)
+					mockDistrictService.On("GetDistrictByID", 1).Return(&model.District{
+						ID:     1,
+						CityID: 1,
+					}, nil)
+					mockCityService.On("GetCityByID", 1).Return(&model.City{
+						ID:         1,
+						ProvinceID: 1,
+					}, nil)
+					mockProvinceService.On("GetProvinceByID", 1).Return(&model.Province{
+						ID: 1,
+					}, nil)
+					mockUserAddressRepo.On("UpdateUserAddress", &model.UserAddress{
+						ID:            1,
+						UserID:        1,
+						SubdistrictID: 1,
+						ProvinceID:    1,
+						CityID:        1,
+						DistrictID:    1,
+					}).Return(&model.UserAddress{
+						ID:            1,
+						UserID:        1,
+						SubdistrictID: 1,
+						ProvinceID:    1,
+						CityID:        1,
+						DistrictID:    1,
+					}, nil)
+				},
+			},
+			expected: expected{
+				data: &model.UserAddress{
+					ID:            1,
+					UserID:        1,
+					SubdistrictID: 1,
+					ProvinceID:    1,
+					CityID:        1,
+					DistrictID:    1,
+				},
+				err: nil,
+			},
+		},
+	}
+
+	for _, c := range cases {
+		t.Run(c.description, func(t *testing.T) {
+			mockUserAddressRepo := mocks.NewUserAddressRepository(t)
+			mockSubdistrictService := mocks.NewSubdistrictService(t)
+			mockDistrictService := mocks.NewDistrictService(t)
+			mockCityService := mocks.NewCityService(t)
+			mockProvinceService := mocks.NewProvinceService(t)
+			mockUserProfileService := mocks.NewUserProfileService(t)
+			c.beforeTests(mockUserAddressRepo, mockSubdistrictService, mockDistrictService, mockCityService, mockProvinceService, mockUserProfileService)
+
+			userAddressService := service.NewUserAddressService(&service.UserAddressSConfig{
+				UserAddressRepo:    mockUserAddressRepo,
+				SubdistrictService: mockSubdistrictService,
+				DistrictService:    mockDistrictService,
+				CityService:        mockCityService,
+				ProvinceService:    mockProvinceService,
+				UserProfileService: mockUserProfileService,
+			})
+
+			got, err := userAddressService.UpdateUserAddress(c.input.data)
+
+			assert.Equal(t, c.expected.data, got)
+			assert.ErrorIs(t, c.expected.err, err)
+		})
+	}
+
+}
