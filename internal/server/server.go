@@ -68,10 +68,14 @@ func createRouter() *gin.Engine {
 	userCache := userCache.NewUserCache(&userCache.UserCConfig{
 		RDC: redis,
 	})
+	userProfileRepo := userRepoPackage.NewUserProfileRepository(&userRepoPackage.UserProfileRConfig{
+		DB: db,
+	})
 
 	userRepo := userRepoPackage.NewUserRepository(&userRepoPackage.UserRConfig{
-		DB:        db,
-		UserCache: userCache,
+		DB:              db,
+		UserCache:       userCache,
+		UserProfileRepo: userProfileRepo,
 	})
 
 	userService := userServicePackage.NewUserService(&userServicePackage.UserSConfig{
@@ -79,9 +83,6 @@ func createRouter() *gin.Engine {
 		Redis:      userCache,
 	})
 
-	userProfileRepo := userRepoPackage.NewUserProfileRepository(&userRepoPackage.UserProfileRConfig{
-		DB: db,
-	})
 	userProfileService := userServicePackage.NewUserProfileService(&userServicePackage.UserProfileSConfig{
 		Repository: userProfileRepo,
 	})
