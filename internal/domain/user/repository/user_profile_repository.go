@@ -8,6 +8,7 @@ import (
 )
 
 type UserProfileRepository interface {
+	Create(tx *gorm.DB, payload *model.UserProfile) (*model.UserProfile, error)
 	Update(userId int, payload *model.UserProfile) (*model.UserProfile, error)
 }
 
@@ -28,6 +29,16 @@ func NewUserProfileRepository(cfg *UserProfileRConfig) UserProfileRepository {
 func (r *userProfileRepositoryImpl) Update(userId int, payload *model.UserProfile) (*model.UserProfile, error) {
 	err := r.db.Where("user_id = ?", userId).Clauses(clause.Returning{}).Updates(payload).Error
 	if err != nil {
+		return nil, err
+	}
+
+	return payload, nil
+}
+
+func (r *userProfileRepositoryImpl) Create(tx *gorm.DB, payload *model.UserProfile) (*model.UserProfile, error) {
+	err := tx.Create(payload).Error
+	if err != nil {
+		tx.Rollback()
 		return nil, err
 	}
 
