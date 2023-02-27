@@ -17,6 +17,7 @@ import (
 
 type UserRepository interface {
 	GetByID(ID int) (*model.User, error)
+	GetByEmail(email string) (*model.User, error)
 	GetByUsername(username string) (*model.User, error)
 	SignUp(user *model.User) (*model.User, error)
 	SignIn(user *model.User) (*model.User, error)
@@ -115,17 +116,8 @@ func (r *userRepositoryImpl) SignIn(user *model.User) (*model.User, error) {
 }
 
 func (r *userRepositoryImpl) UpdateEmail(userId int, email string) (*model.User, error) {
-	_, err := r.GetByEmail(email)
-	if err == nil {
-		return nil, errs.ErrEmailUsed
-	}
-
-	if !errors.Is(err, errs.ErrUserDoesNotExist) {
-		return nil, err
-	}
-
 	var user model.User
-	err = r.db.Where("id = ?", userId).First(&user).Error
+	err := r.db.Where("id = ?", userId).First(&user).Error
 	if err != nil {
 		return nil, err
 	}

@@ -1,6 +1,7 @@
 package service
 
 import (
+	"errors"
 	errs "kedai/backend/be-kedai/internal/common/error"
 	"kedai/backend/be-kedai/internal/domain/user/cache"
 	"kedai/backend/be-kedai/internal/domain/user/dto"
@@ -133,6 +134,15 @@ func (s *userServiceImpl) GetSession(userId int, accessToken string) error {
 
 func (s *userServiceImpl) UpdateEmail(userId int, request *dto.UpdateEmailRequest) (*dto.UpdateEmailResponse, error) {
 	email := strings.ToLower(request.Email)
+
+	_, err := s.repository.GetByEmail(email)
+	if err == nil {
+		return nil, errs.ErrEmailUsed
+	}
+
+	if !errors.Is(err, errs.ErrUserDoesNotExist) {
+		return nil, err
+	}
 
 	res, err := s.repository.UpdateEmail(userId, email)
 	if err != nil {

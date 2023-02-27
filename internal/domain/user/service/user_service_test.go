@@ -376,8 +376,7 @@ func TestUpdateEmail(t *testing.T) {
 	type input struct {
 		userId     int
 		request    *dto.UpdateEmailRequest
-		mockReturn *model.User
-		mockErr    error
+		beforeTest func(*mocks.UserRepository)
 	}
 	type expected struct {
 		res *dto.UpdateEmailResponse
@@ -390,14 +389,48 @@ func TestUpdateEmail(t *testing.T) {
 		expected
 	}{
 		{
+			description: "should return error when email is used",
+			input: input{
+				userId: 1,
+				request: &dto.UpdateEmailRequest{
+					Email: "used.email@email.com",
+				},
+				beforeTest: func(ur *mocks.UserRepository) {
+					ur.On("GetByEmail", "used.email@email.com").Return(&model.User{Email: "used.email@email.com"}, nil)
+				},
+			},
+			expected: expected{
+				res: nil,
+				err: errs.ErrEmailUsed,
+			},
+		},
+		{
+			description: "should return error when failed to check if email is used or not",
+			input: input{
+				userId: 1,
+				request: &dto.UpdateEmailRequest{
+					Email: "used.email@email.com",
+				},
+				beforeTest: func(ur *mocks.UserRepository) {
+					ur.On("GetByEmail", "used.email@email.com").Return(nil, errors.New("failed to check email"))
+				},
+			},
+			expected: expected{
+				res: nil,
+				err: errors.New("failed to check email"),
+			},
+		},
+		{
 			description: "should return error when failed to update email",
 			input: input{
 				userId: 1,
 				request: &dto.UpdateEmailRequest{
 					Email: "new.email@email.com",
 				},
-				mockReturn: nil,
-				mockErr:    errors.New("failed to update email"),
+				beforeTest: func(ur *mocks.UserRepository) {
+					ur.On("GetByEmail", "new.email@email.com").Return(nil, errs.ErrUserDoesNotExist)
+					ur.On("UpdateEmail", 1, "new.email@email.com").Return(nil, errors.New("failed to update email"))
+				},
 			},
 			expected: expected{
 				res: nil,
@@ -411,10 +444,10 @@ func TestUpdateEmail(t *testing.T) {
 				request: &dto.UpdateEmailRequest{
 					Email: "new.email@email.com",
 				},
-				mockReturn: &model.User{
-					Email: "new.email@email.com",
+				beforeTest: func(ur *mocks.UserRepository) {
+					ur.On("GetByEmail", "new.email@email.com").Return(nil, errs.ErrUserDoesNotExist)
+					ur.On("UpdateEmail", 1, "new.email@email.com").Return(&model.User{Email: "new.email@email.com"}, nil)
 				},
-				mockErr: nil,
 			},
 			expected: expected{
 				res: &dto.UpdateEmailResponse{
@@ -428,7 +461,7 @@ func TestUpdateEmail(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.description, func(t *testing.T) {
 			userRepo := mocks.NewUserRepository(t)
-			userRepo.On("UpdateEmail", tc.input.userId, tc.input.request.Email).Return(tc.input.mockReturn, tc.input.mockErr)
+			tc.beforeTest(userRepo)
 			userService := service.NewUserService(&service.UserSConfig{
 				Repository: userRepo,
 			})
