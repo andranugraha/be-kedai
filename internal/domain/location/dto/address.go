@@ -20,5 +20,6 @@ func (r *AddAddressRequest) ToUserAddress() *model.UserAddress {
 		Street:        r.Street,
 		Details:       r.Details,
 		SubdistrictID: r.SubdistrictID,
+		IsDefault:     *r.IsDefault,
 	}
 }

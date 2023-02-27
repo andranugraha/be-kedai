@@ -3,12 +3,14 @@ package repository
 import (
 	errs "kedai/backend/be-kedai/internal/common/error"
 	"kedai/backend/be-kedai/internal/domain/location/model"
+	"log"
 
 	"gorm.io/gorm"
 )
 
 type UserAddressRepository interface {
 	AddUserAddress(*model.UserAddress) (*model.UserAddress, error)
+	DefaultAddressTransaction(tx *gorm.DB, userId int, addressId int) error
 }
 
 type userAddressRepository struct {
@@ -55,7 +57,8 @@ func (r *userAddressRepository) AddUserAddress(newAddress *model.UserAddress) (*
 	}
 
 	if newAddress.IsDefault {
-		err = r.userProfileRepo.UpdateDefaultAddressId(tx, newAddress.UserID, newAddress.ID)
+		log.Println("test")
+		err = r.DefaultAddressTransaction(tx, newAddress.UserID, newAddress.ID)
 		if err != nil {
 			tx.Rollback()
 			return nil, err
@@ -63,4 +66,14 @@ func (r *userAddressRepository) AddUserAddress(newAddress *model.UserAddress) (*
 	}
 
 	return newAddress, nil
+}
+
+func (r *userAddressRepository) DefaultAddressTransaction(tx *gorm.DB, userId int, addressId int) error {
+	err := r.userProfileRepo.UpdateDefaultAddressId(tx, userId, addressId)
+	if err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	return nil
 }
