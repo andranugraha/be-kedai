@@ -36,6 +36,7 @@ func JWTAuthorization(c *gin.Context) {
 				Code:    code.TOKEN_EXPIRED,
 				Message: errs.ErrExpiredToken.Error(),
 			})
+			return
 		}
 
 		c.AbortWithStatusJSON(http.StatusUnauthorized, response.Response{
@@ -68,6 +69,7 @@ func JWTValidateRefreshToken(c *gin.Context) {
 				Code:    code.TOKEN_EXPIRED,
 				Message: errs.ErrExpiredToken.Error(),
 			})
+			return
 		}
 
 		c.AbortWithStatusJSON(http.StatusUnauthorized, response.Response{
