@@ -23,6 +23,7 @@ type UserRepository interface {
 	SignIn(user *model.User) (*model.User, error)
 	UpdateEmail(userId int, email string) (*model.User, error)
 	UpdateUsername(id int, username string) (*model.User, error)
+	UpdatePassword(id int, password string) (*model.User, error)
 }
 
 type userRepositoryImpl struct {
@@ -200,4 +201,14 @@ func (r *userRepositoryImpl) GetByUsername(username string) (*model.User, error)
 	}
 
 	return &user, nil
+}
+
+func (r *userRepositoryImpl) UpdatePassword(userId int, password string) (*model.User, error) {
+	hashedPw, _ := hash.HashAndSalt(password)
+	res := r.db.Model(&model.User{}).Where("id = ?", userId).Update("password", hashedPw)
+	if res.Error != nil {
+		return nil, res.Error
+	}
+
+	return &model.User{ID: userId}, nil
 }
