@@ -40,7 +40,7 @@ func (r *userWishlistRepositoryImpl) GetUserWishlists(req dto.GetUserWishlistsRe
 	db := r.db.Preload("Product", func(db *gorm.DB) *gorm.DB {
 		return db.Select(`products.*, min(s.price) as min_price, max(s.price) as max_price, 
 			concat(c.name, ', ', p.name) as address, 
-			max(case when pp.type = 'nominal' then ROUND(cast(pp.amount / s.price * 100 as numeric), 2) else pp.amount end) as promotion_percent, 
+			max(case when pp.type = 'nominal' then ROUND(cast(pp.amount / s.price as numeric), 2) else pp.amount end) as promotion_percent, 
 			(select url from product_medias pm where products.id = pm.product_id limit 1) as image_url,
 			(select id from skus s where products.id = s.product_id limit 1) as default_sku_id`).
 			Joins("join skus s ON s.product_id = products.id").
