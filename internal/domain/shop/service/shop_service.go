@@ -13,18 +13,15 @@ type ShopService interface {
 
 type shopServiceImpl struct {
 	shopRepository     repository.ShopRepository
-	shopVoucherService ShopVoucherService
 }
 
 type ShopSConfig struct {
 	ShopRepository     repository.ShopRepository
-	ShopVoucherService ShopVoucherService
 }
 
 func NewShopService(cfg *ShopSConfig) ShopService {
 	return &shopServiceImpl{
 		shopRepository:     cfg.ShopRepository,
-		shopVoucherService: cfg.ShopVoucherService,
 	}
 }
 
@@ -41,13 +38,6 @@ func (s *shopServiceImpl) FindShopBySlug(slug string) (*model.Shop, error) {
 	if err != nil {
 		return nil, err
 	}
-
-	voucher, err := s.shopVoucherService.GetShopVoucher(shop.ID)
-	if err != nil {
-		return nil, err
-	}
-
-	shop.ShopVoucher = voucher
 
 	return shop, nil
 }
