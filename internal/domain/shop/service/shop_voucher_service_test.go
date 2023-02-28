@@ -10,14 +10,16 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestXxx(t *testing.T) {
+func TestGetShopVoucher(t *testing.T) {
 	var (
-		shopId  = 1
+		slug    = "shop"
 		voucher = []*model.ShopVoucher{}
+		shop    = &model.Shop{}
 	)
 	type input struct {
-		shopId int
-		err    error
+		slug       string
+		err        error
+		beforeTest func(*mocks.ShopService, *mocks.ShopVoucherRepository)
 	}
 	type expected struct {
 		result []*model.ShopVoucher
@@ -32,10 +34,14 @@ func TestXxx(t *testing.T) {
 
 	for _, tc := range []cases{
 		{
-			description: "should return list of shop ticket when success",
+			description: "should return list of shop voucher when success",
 			input: input{
-				shopId: shopId,
-				err:    nil,
+				slug: slug,
+				err:  nil,
+				beforeTest: func(ss *mocks.ShopService, svr *mocks.ShopVoucherRepository) {
+					ss.On("FindShopBySlug", slug).Return(shop, nil)
+					svr.On("GetShopVoucher", shop.ID).Return(voucher, nil)
+				},
 			},
 			expected: expected{
 				result: voucher,
@@ -43,10 +49,28 @@ func TestXxx(t *testing.T) {
 			},
 		},
 		{
+			description: "should return error when shop not found",
+			input: input{
+				slug: slug,
+				err:  nil,
+				beforeTest: func(ss *mocks.ShopService, svr *mocks.ShopVoucherRepository) {
+					ss.On("FindShopBySlug", slug).Return(nil, errs.ErrShopNotFound)
+				},
+			},
+			expected: expected{
+				result: nil,
+				err:    errs.ErrShopNotFound,
+			},
+		},
+		{
 			description: "should return error when internal server error",
 			input: input{
-				shopId: shopId,
-				err:    errs.ErrInternalServerError,
+				slug: slug,
+				err:  errs.ErrInternalServerError,
+				beforeTest: func(ss *mocks.ShopService, svr *mocks.ShopVoucherRepository) {
+					ss.On("FindShopBySlug", slug).Return(shop, nil)
+					svr.On("GetShopVoucher", shop.ID).Return(nil, errs.ErrInternalServerError)
+				},
 			},
 			expected: expected{
 				result: nil,
@@ -56,12 +80,14 @@ func TestXxx(t *testing.T) {
 	} {
 		t.Run(tc.description, func(t *testing.T) {
 			mockRepo := new(mocks.ShopVoucherRepository)
-			mockRepo.On("GetShopVoucher", tc.input.shopId).Return(tc.expected.result, tc.input.err)
+			mockService := new(mocks.ShopService)
+			tc.beforeTest(mockService, mockRepo)
 			service := service.NewShopVoucherService(&service.ShopVoucherSConfig{
 				ShopVoucherRepository: mockRepo,
+				ShopService: mockService,
 			})
 
-			result, err := service.GetShopVoucher(tc.input.shopId)
+			result, err := service.GetShopVoucher(tc.input.slug)
 
 			assert.Equal(t, tc.expected.result, result)
 			assert.Equal(t, tc.expected.err, err)
