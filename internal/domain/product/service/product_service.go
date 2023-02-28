@@ -8,7 +8,7 @@ import (
 type ProductService interface {
 	GetByID(id int) (*model.Product, error)
 	GetByCode(code string) (*model.Product, error)
-	GetRecommendation(categoryId int) ([]*model.Product, error)
+	GetRecommendation(productId int, categoryId int) ([]*model.Product, error)
 }
 
 type productServiceImpl struct {
@@ -33,6 +33,6 @@ func (s *productServiceImpl) GetByCode(code string) (*model.Product, error) {
 	return s.productRepository.GetByCode(code)
 }
 
-func (s *productServiceImpl) GetRecommendation(categoryId int) ([]*model.Product, error) {
-	return s.productRepository.GetRecommendation(categoryId)
+func (s *productServiceImpl) GetRecommendation(productId int, categoryId int) ([]*model.Product, error) {
+	return s.productRepository.GetRecommendation(productId, categoryId)
 }

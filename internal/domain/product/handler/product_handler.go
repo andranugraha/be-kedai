@@ -1,7 +1,9 @@
 package handler
 
 import (
+	"errors"
 	"kedai/backend/be-kedai/internal/common/code"
+	errs "kedai/backend/be-kedai/internal/common/error"
 	"kedai/backend/be-kedai/internal/domain/product/dto"
 	"kedai/backend/be-kedai/internal/utils/response"
 	"net/http"
@@ -17,8 +19,13 @@ func (h *Handler) GetRecommendation(c *gin.Context) {
 		return
 	}
 
-	result, err := h.producteService.GetRecommendation(req.CategoryId)
+	result, err := h.producteService.GetRecommendation(req.ProductId, req.CategoryId)
 	if err != nil {
+		if errors.Is(err, errs.ErrCategoryDoesNotExist) {
+			response.Error(c, http.StatusBadRequest, code.BAD_REQUEST, err.Error())
+			return
+		}
+
 		response.Error(c, http.StatusInternalServerError, code.INTERNAL_SERVER_ERROR, err.Error())
 		return
 	}

@@ -11,7 +11,7 @@ import (
 type ProductRepository interface {
 	GetByID(ID int) (*model.Product, error)
 	GetByCode(Code string) (*model.Product, error)
-	GetRecommendation(categoryId int) ([]*model.Product, error)
+	GetRecommendation(productId int, categoryId int) ([]*model.Product, error)
 }
 
 type productRepositoryImpl struct {
@@ -58,7 +58,7 @@ func (r *productRepositoryImpl) GetByCode(Code string) (*model.Product, error) {
 	return &product, nil
 }
 
-func (r *productRepositoryImpl) GetRecommendation(categoryId int) ([]*model.Product, error) {
+func (r *productRepositoryImpl) GetRecommendation(productId int, categoryId int) ([]*model.Product, error) {
 	var (
 		products []*model.Product
 		limit    = 5
@@ -73,8 +73,11 @@ func (r *productRepositoryImpl) GetRecommendation(categoryId int) ([]*model.Prod
 		Joins("left join product_promotions pp on pp.sku_id = s.id and (select count(id) from shop_promotions sp where pp.promotion_id = sp.id and now() between sp.start_period and sp.end_period) > 0").
 		Group("products.id")
 
-	err := db.Where("products.category_id = ? and products.is_active = ?", categoryId, isActive).Limit(limit).Order("products.sold desc, products.rating desc").Find(&products).Error
+	err := db.Where("products.category_id = ? and products.is_active = ? and products.id != ?", categoryId, isActive, productId).Limit(limit).Order("products.sold desc, products.rating desc").Find(&products).Error
 	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, errs.ErrCategoryDoesNotExist
+		}
 		return nil, err
 	}
 
