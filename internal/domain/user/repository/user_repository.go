@@ -83,10 +83,15 @@ func (r *userRepositoryImpl) SignUp(user *model.User) (*model.User, error) {
 		user.Username = username
 	}
 
+	_, err := r.GetByUsername(user.Username)
+	if err == nil {
+		return nil, errs.ErrUsernameUsed
+	}
+
 	hashedPw, _ := hash.HashAndSalt(user.Password)
 	user.Password = hashedPw
 
-	err := r.db.Where("email = ?", user.Email).First(&model.UsedEmail{}).Error
+	err = r.db.Where("email = ?", user.Email).First(&model.UsedEmail{}).Error
 	if err == nil {
 		return nil, errs.ErrEmailUsed
 	}
@@ -130,8 +135,16 @@ func (r *userRepositoryImpl) SignIn(user *model.User) (*model.User, error) {
 }
 
 func (r *userRepositoryImpl) UpdateEmail(userId int, email string) (*model.User, error) {
+	err := r.db.Where("email = ?", email).First(&model.UsedEmail{}).Error
+	if err == nil {
+		return nil, errs.ErrEmailUsed
+	}
+	if !errors.Is(err, gorm.ErrRecordNotFound) {
+		return nil, err
+	}
+
 	var user model.User
-	err := r.db.Where("id = ?", userId).First(&user).Error
+	err = r.db.Where("id = ?", userId).First(&user).Error
 	if err != nil {
 		return nil, err
 	}

@@ -6,6 +6,7 @@ import (
 )
 
 type ProvinceService interface {
+	GetProvinces() ([]*model.Province, error)
 	GetProvinceByID(int) (*model.Province, error)
 }
 
@@ -21,6 +22,10 @@ func NewProvinceService(cfg *ProvinceSConfig) ProvinceService {
 	return &provinceServiceImpl{
 		provinceRepo: cfg.ProvinceRepo,
 	}
+}
+
+func (p *provinceServiceImpl) GetProvinces() (provinces []*model.Province, err error) {
+	return p.provinceRepo.GetAll()
 }
 
 func (p *provinceServiceImpl) GetProvinceByID(provinceID int) (province *model.Province, err error) {

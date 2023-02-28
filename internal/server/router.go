@@ -38,11 +38,13 @@ func NewRouter(cfg *RouterConfig) *gin.Engine {
 		{
 			user.POST("/register", cfg.UserHandler.UserRegistration)
 			user.POST("/login", cfg.UserHandler.UserLogin)
+			user.POST("/google-register", cfg.UserHandler.UserRegistrationWithGoogle)
 			user.POST("/google-login", cfg.UserHandler.UserLoginWithGoogle)
 			user.POST("/tokens/refresh", middleware.JWTValidateRefreshToken, cfg.UserHandler.RenewSession)
 			userAuthenticated := user.Group("", middleware.JWTAuthorization, cfg.UserHandler.GetSession)
 			{
 				userAuthenticated.GET("", cfg.UserHandler.GetUserByID)
+				userAuthenticated.POST("/logout", cfg.UserHandler.SignOut)
 
 				userAuthenticated.PUT("/emails", cfg.UserHandler.UpdateUserEmail)
 				userAuthenticated.PUT("/usernames", cfg.UserHandler.UpdateUsername)
@@ -85,7 +87,7 @@ func NewRouter(cfg *RouterConfig) *gin.Engine {
 		location := v1.Group("/locations")
 		{
 			location.GET("/cities", cfg.LocationHandler.GetCities)
-
+			location.GET("/provinces", cfg.LocationHandler.GetProvinces)
 		}
 
 		product := v1.Group("/products")

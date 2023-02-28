@@ -22,10 +22,12 @@ type UserService interface {
 	SignUp(*dto.UserRegistrationRequest) (*dto.UserRegistrationResponse, error)
 	SignIn(*dto.UserLogin, string) (*dto.Token, error)
 	SignInWithGoogle(userLogin *dto.UserLoginWithGoogleRequest) (*dto.Token, error)
+	SignUpWithGoogle(userReg *dto.UserRegistrationWithGoogleRequest) (*dto.Token, error)
 	GetSession(userId int, token string) error
 	RenewToken(userId int, refreshToken string) (*dto.Token, error)
 	UpdateEmail(userId int, request *dto.UpdateEmailRequest) (*dto.UpdateEmailResponse, error)
 	UpdateUsername(userId int, requst *dto.UpdateUsernameRequest) (*dto.UpdateUsernameResponse, error)
+	SignOut(*dto.UserLogoutRequest) error
 }
 
 type userServiceImpl struct {
@@ -73,6 +75,49 @@ func (s *userServiceImpl) SignUp(userReg *dto.UserRegistrationRequest) (*dto.Use
 	response.FromUser(result)
 
 	return &response, nil
+}
+
+func (s *userServiceImpl) SignUpWithGoogle(userReg *dto.UserRegistrationWithGoogleRequest) (*dto.Token, error) {
+	isValidUsername := credential.VerifyUsername(userReg.Username)
+	if !isValidUsername {
+		return nil, errs.ErrInvalidUsernamePattern
+	}
+
+	isValidPassword := credential.VerifyPassword(userReg.Password)
+	if !isValidPassword {
+		return nil, errs.ErrInvalidPasswordPattern
+	}
+
+	claim, err := google.ValidateGoogleToken(userReg.Credential)
+	if err != nil {
+		return nil, errs.ErrUnauthorized
+	}
+
+	result, err := s.repository.SignUp(&model.User{
+		Email:    claim.Email,
+		Username: userReg.Username,
+		Password: userReg.Password,
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	accessToken, _ := jwttoken.GenerateAccessToken(result)
+	refreshToken, _ := jwttoken.GenerateRefreshToken(result)
+
+	token := &dto.Token{
+		AccessToken:  accessToken,
+		RefreshToken: refreshToken,
+	}
+
+	err = s.redis.StoreToken(result.ID, accessToken, refreshToken)
+	if err != nil {
+		return nil, err
+	}
+
+	return token, nil
+
 }
 
 func (s *userServiceImpl) SignIn(userLogin *dto.UserLogin, inputPw string) (*dto.Token, error) {
@@ -206,4 +251,13 @@ func (s *userServiceImpl) UpdateUsername(userId int, request *dto.UpdateUsername
 	}
 
 	return &response, nil
+}
+
+func (s *userServiceImpl) SignOut(request *dto.UserLogoutRequest) error {
+	err := s.redis.DeleteRefreshTokenAndAccessToken(request.UserId, request.RefreshToken, request.AccessToken)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

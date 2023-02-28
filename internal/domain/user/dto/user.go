@@ -37,8 +37,20 @@ type UserLoginWithGoogleRequest struct {
 	Credential string `json:"credential" binding:"required"`
 }
 
+type UserRegistrationWithGoogleRequest struct {
+	Credential string `json:"credential" binding:"required"`
+	Username   string `json:"username" binding:"required,min=5,max=30"`
+	Password   string `json:"password" binding:"required,min=8,max=16"`
+}
+
 type UserLoginWithGoogle struct {
 	Email string
+}
+
+type UserLogoutRequest struct {
+	RefreshToken string `binding:"required"`
+	AccessToken  string
+	UserId       int
 }
 
 func (d *UserRegistrationRequest) ToUser() *model.User {
