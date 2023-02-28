@@ -312,6 +312,78 @@ paths:
                   message:
                     type: string
                     example: "error message"
+  /v1/users/google-register:
+    post:
+      tags:
+        - User
+      summary: User register with google
+      description: User register with google to get auth token and refresh token
+      requestBody:
+        $ref: '#/components/requestBodies/GoogleRegisterUserBody'
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Response'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/Token'
+        '400':
+          description: bad request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "BAD_REQUEST"
+                  message:
+                    type: string
+                    example: "Credential is required"
+        '409':
+          description: duplicate entry
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "EMAIL_ALREADY_REGISTERED"
+                  message:
+                    type: string
+                    example: "User already exist"
+        '422':
+          description: invalid password pattern
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "INVALID_PASSWORD_PATTERN"
+                  message:
+                    type: string
+                    example: "invalid password pattern"
+        '500':
+          description: internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "INTERNAL_SERVER_ERROR"
+                  message:
+                    type: string
+                    example: "error message"                
   /v1/users/google-login:
     post:
       tags:
@@ -2377,6 +2449,31 @@ components:
                 type: string
                 format: email
                 example: "googlejwttokenhere"
+    GoogleRegisterUserBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - credential
+              - username
+              - password
+            properties:
+              credential:
+                type: string
+                format: email
+                example: "googlejwttokenhere"     
+              username:
+                type: string
+                minLength: 5
+                maxLength: 30
+                example: "Acong123"
+              password:
+                type: string
+                minLength: 8
+                maxLength: 16
+                example: "Password123"
     UserLogoutBody:
       required: true
       content:
