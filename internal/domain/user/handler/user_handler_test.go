@@ -435,7 +435,7 @@ func TestGetUserByID(t *testing.T) {
 		expected
 	}{
 		{
-			description: "it should return user data with status code 200 if successed getting user data",
+			description: "it should return user data with status code 200 if succeed getting user data",
 			input: input{
 				userId: 1,
 				data: &model.User{
@@ -619,7 +619,7 @@ func TestUserLoginWithGoogle(t *testing.T) {
 		},
 
 		{
-			description: "it should return status code 200 if successed login with google",
+			description: "it should return status code 200 if succeed login with google",
 			input: input{
 				dto: &dto.UserLoginWithGoogleRequest{
 					Credential: validCredential,
@@ -743,7 +743,7 @@ func TestUpdateEmail(t *testing.T) {
 			},
 		},
 		{
-			description: "should return updated user data with status code 200 when update email successed",
+			description: "should return updated user data with status code 200 when update email succeed",
 			input: input{
 				userId: 1,
 				request: &dto.UpdateEmailRequest{
@@ -885,7 +885,7 @@ func TestUpdateUsername(t *testing.T) {
 			},
 		},
 		{
-			description: "should return updated user data with status code 200 when update username successed",
+			description: "should return updated user data with status code 200 when update username succeed",
 			input: input{
 				userId: 1,
 				request: &dto.UpdateUsernameRequest{
@@ -987,7 +987,7 @@ func TestSignOut(t *testing.T) {
 			},
 		},
 		{
-			description: "should return success with status code 200 when logout successed",
+			description: "should return success with status code 200 when logout succeed",
 			input: input{
 				dto: &dto.UserLogoutRequest{
 					RefreshToken: "token",
