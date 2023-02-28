@@ -18,7 +18,7 @@ type ShopVoucherSConfig struct {
 }
 
 func NewShopVoucherService(cfg *ShopVoucherSConfig) ShopVoucherService {
-	return &shopVoucherServiceImpl {
+	return &shopVoucherServiceImpl{
 		shopVoucherRepository: cfg.ShopVoucherRepository,
 	}
 }

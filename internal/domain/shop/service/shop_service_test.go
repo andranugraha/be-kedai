@@ -142,14 +142,14 @@ func TestFindShopBySlug(t *testing.T) {
 			ID: 1,
 		}
 		shopResultAfter = &model.Shop{
-			ID: 1,
+			ID:          1,
 			ShopVoucher: []*model.ShopVoucher{},
 		}
 		voucherResult = []*model.ShopVoucher{}
 	)
 	type input struct {
-		slug string
-		err  error
+		slug       string
+		err        error
 		beforeTest func(*mocks.ShopRepository, *mocks.ShopVoucherService)
 	}
 
@@ -215,7 +215,7 @@ func TestFindShopBySlug(t *testing.T) {
 			mockService := new(mocks.ShopVoucherService)
 			tc.beforeTest(mockRepo, mockService)
 			service := service.NewShopService(&service.ShopSConfig{
-				ShopRepository: mockRepo,
+				ShopRepository:     mockRepo,
 				ShopVoucherService: mockService,
 			})
 

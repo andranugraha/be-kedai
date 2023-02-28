@@ -11,17 +11,17 @@ import (
 )
 
 func TestXxx(t *testing.T) {
-	var(
-		shopId = 1
+	var (
+		shopId  = 1
 		voucher = []*model.ShopVoucher{}
 	)
 	type input struct {
 		shopId int
-		err error
+		err    error
 	}
 	type expected struct {
 		result []*model.ShopVoucher
-		err error
+		err    error
 	}
 
 	type cases struct {
@@ -35,22 +35,22 @@ func TestXxx(t *testing.T) {
 			description: "should return list of shop ticket when success",
 			input: input{
 				shopId: shopId,
-				err: nil,
+				err:    nil,
 			},
 			expected: expected{
 				result: voucher,
-				err: nil,
+				err:    nil,
 			},
 		},
 		{
 			description: "should return error when internal server error",
 			input: input{
 				shopId: shopId,
-				err: errs.ErrInternalServerError,
+				err:    errs.ErrInternalServerError,
 			},
 			expected: expected{
 				result: nil,
-				err: errs.ErrInternalServerError,
+				err:    errs.ErrInternalServerError,
 			},
 		},
 	} {
