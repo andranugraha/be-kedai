@@ -43,6 +43,7 @@ func NewRouter(cfg *RouterConfig) *gin.Engine {
 			userAuthenticated := user.Group("", middleware.JWTAuthorization, cfg.UserHandler.GetSession)
 			{
 				userAuthenticated.GET("", cfg.UserHandler.GetUserByID)
+				userAuthenticated.POST("/logout", cfg.UserHandler.SignOut)
 
 				userAuthenticated.PUT("/emails", cfg.UserHandler.UpdateUserEmail)
 				userAuthenticated.PUT("/usernames", cfg.UserHandler.UpdateUsername)

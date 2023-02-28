@@ -41,6 +41,12 @@ type UserLoginWithGoogle struct {
 	Email string
 }
 
+type UserLogoutRequest struct {
+	RefreshToken string `binding:"required"`
+	AccessToken  string
+	UserId       int
+}
+
 func (d *UserRegistrationRequest) ToUser() *model.User {
 	return &model.User{
 		Email:    d.Email,
