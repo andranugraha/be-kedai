@@ -83,10 +83,15 @@ func (r *userRepositoryImpl) SignUp(user *model.User) (*model.User, error) {
 		user.Username = username
 	}
 
+	_, err := r.GetByUsername(user.Username)
+	if err == nil {
+		return nil, errs.ErrUsernameUsed
+	}
+
 	hashedPw, _ := hash.HashAndSalt(user.Password)
 	user.Password = hashedPw
 
-	err := r.db.Where("email = ?", user.Email).First(&model.UsedEmail{}).Error
+	err = r.db.Where("email = ?", user.Email).First(&model.UsedEmail{}).Error
 	if err == nil {
 		return nil, errs.ErrEmailUsed
 	}
