@@ -14,6 +14,7 @@ type UserAddressRepository interface {
 	GetAllUserAddress(userId int) ([]*model.UserAddress, error)
 	DefaultAddressTransaction(tx *gorm.DB, userId int, addressId int) error
 	UpdateUserAddress(*model.UserAddress) (*model.UserAddress, error)
+	DeleteUserAddress(addressId int, userId int) error
 }
 
 type userAddressRepository struct {
@@ -132,4 +133,18 @@ func (r *userAddressRepository) GetUserAddressByIdAndUserId(addressId int, userI
 	}
 
 	return &address, nil
+}
+
+func (r *userAddressRepository) DeleteUserAddress(addressId int, userId int) error {
+
+	res := r.db.Delete(&model.UserAddress{}, "id = ? AND user_id = ?", addressId, userId)
+	if err := res.Error; err != nil {
+		return err
+	}
+
+	if res.RowsAffected == 0 {
+		return errs.ErrAddressNotFound
+	}
+
+	return nil
 }
