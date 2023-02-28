@@ -1422,6 +1422,70 @@ paths:
                   message:
                     type: string
                     example: "error message"
+  /v1/products/recommendation:
+    get:
+      tags:
+        - Product
+      summary: Get product recommendation
+      description: Get product recommendation for product in the same category
+      parameters:
+        - in: query
+          name: productId
+          required: true
+          schema:
+            type: string
+            example: "1"
+        - in: query
+          name: categoryId
+          required: true
+          schema:
+            type: string
+            example: "1"
+      responses:
+        '200':
+          description: successful opearation
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Response'
+                  - type: object
+                    properties:
+                      code:
+                        example: "OK"
+                      message:
+                        example: "ok"
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Product'
+        '400':
+          description: bad request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "BAD_REQUEST"
+                  message:
+                    type: string
+                    example: "ProductId is required"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "INTERNAL_SERVER_ERROR"
+                  message:
+                    type: string
+                    example: "error message"
+          
   /v1/shops/{slug}:
     get:
       tags:
