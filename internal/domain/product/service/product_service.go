@@ -1,6 +1,7 @@
 package service
 
 import (
+	"kedai/backend/be-kedai/internal/domain/product/dto"
 	"kedai/backend/be-kedai/internal/domain/product/model"
 	"kedai/backend/be-kedai/internal/domain/product/repository"
 )
@@ -8,6 +9,7 @@ import (
 type ProductService interface {
 	GetByID(id int) (*model.Product, error)
 	GetByCode(code string) (*model.Product, error)
+	GetRecommendationByCategory(productId int, categoryId int) ([]*dto.ProductResponse, error)
 }
 
 type productServiceImpl struct {
@@ -30,4 +32,8 @@ func (s *productServiceImpl) GetByID(id int) (*model.Product, error) {
 
 func (s *productServiceImpl) GetByCode(code string) (*model.Product, error) {
 	return s.productRepository.GetByCode(code)
+}
+
+func (s *productServiceImpl) GetRecommendationByCategory(productId int, categoryId int) ([]*dto.ProductResponse, error) {
+	return s.productRepository.GetRecommendationByCategory(productId, categoryId)
 }

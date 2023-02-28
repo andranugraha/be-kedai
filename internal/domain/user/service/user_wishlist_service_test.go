@@ -399,8 +399,7 @@ func TestGetUserWishlists(t *testing.T) {
 			Limit:  10,
 			Page:   1,
 		}
-		wishlist = &model.UserWishlist{
-			UserID:    req.UserId,
+		wishlist = &dto.GetUserWishlistsResponse{
 			ProductID: 1,
 		}
 	)
@@ -416,7 +415,7 @@ func TestGetUserWishlists(t *testing.T) {
 			name:    "should return user wishlists with pagination when get user wishlists success",
 			request: req,
 			wantGetUserWishlistsResponse: &commonDto.PaginationResponse{
-				Data: []*model.UserWishlist{
+				Data: []*dto.GetUserWishlistsResponse{
 					wishlist,
 				},
 				TotalRows:  1,
@@ -425,7 +424,7 @@ func TestGetUserWishlists(t *testing.T) {
 				Page:       1,
 			},
 			want: &commonDto.PaginationResponse{
-				Data: []*model.UserWishlist{
+				Data: []*dto.GetUserWishlistsResponse{
 					wishlist,
 				},
 				TotalRows:  1,
