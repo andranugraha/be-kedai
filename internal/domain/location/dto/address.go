@@ -8,7 +8,7 @@ type AddressRequest struct {
 	ID            int
 	UserID        int
 	Name          string `json:"name" binding:"required,max=30"`
-	PhoneNumber   string `json:"phoneNumber" binding:"required,numeric"`
+	PhoneNumber   string `json:"phoneNumber" binding:"required,numeric,min=10,max=15"`
 	Street        string `json:"street" binding:"required,max=200"`
 	Details       string `json:"details" binding:"max=30"`
 	SubdistrictID int    `json:"subdistrictId" binding:"required,numeric,min=1"`
