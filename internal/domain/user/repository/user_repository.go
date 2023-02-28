@@ -130,8 +130,16 @@ func (r *userRepositoryImpl) SignIn(user *model.User) (*model.User, error) {
 }
 
 func (r *userRepositoryImpl) UpdateEmail(userId int, email string) (*model.User, error) {
+	err := r.db.Where("email = ?", email).First(&model.UsedEmail{}).Error
+	if err == nil {
+		return nil, errs.ErrEmailUsed
+	}
+	if !errors.Is(err, gorm.ErrRecordNotFound) {
+		return nil, err
+	}
+
 	var user model.User
-	err := r.db.Where("id = ?", userId).First(&user).Error
+	err = r.db.Where("id = ?", userId).First(&user).Error
 	if err != nil {
 		return nil, err
 	}
