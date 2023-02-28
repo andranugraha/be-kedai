@@ -929,3 +929,110 @@ func TestUpdateUsername(t *testing.T) {
 		})
 	}
 }
+
+func TestSignOut(t *testing.T) {
+	type input struct {
+		dto         *dto.UserLogoutRequest
+		beforeTests func(mockUserService *mocks.UserService)
+		err         error
+	}
+	type expected struct {
+		statusCode int
+		response   response.Response
+	}
+
+	cases := []struct {
+		description string
+		input
+		expected
+	}{
+		{
+			description: "should return error with status code 400 when given bad request body",
+			input: input{
+				dto: &dto.UserLogoutRequest{
+					RefreshToken: "",
+				},
+				beforeTests: func(mockUserService *mocks.UserService) {},
+				err:         nil,
+			},
+			expected: expected{
+				statusCode: http.StatusBadRequest,
+				response: response.Response{
+					Code:    code.BAD_REQUEST,
+					Message: "RefreshToken is required",
+				},
+			},
+		},
+		{
+			description: "should return error with status code 500 when failed to logout",
+			input: input{
+				dto: &dto.UserLogoutRequest{
+					RefreshToken: "token",
+				},
+				beforeTests: func(mockUserService *mocks.UserService) {
+					mockUserService.On("SignOut", &dto.UserLogoutRequest{
+						RefreshToken: "token",
+						AccessToken:  "token",
+						UserId:       1,
+					}).Return(errs.ErrInternalServerError)
+				},
+				err: errs.ErrInternalServerError,
+			},
+			expected: expected{
+				statusCode: http.StatusInternalServerError,
+				response: response.Response{
+					Code:    code.INTERNAL_SERVER_ERROR,
+					Message: errs.ErrInternalServerError.Error(),
+				},
+			},
+		},
+		{
+			description: "should return success with status code 200 when logout successed",
+			input: input{
+				dto: &dto.UserLogoutRequest{
+					RefreshToken: "token",
+				},
+				beforeTests: func(mockUserService *mocks.UserService) {
+					mockUserService.On("SignOut", &dto.UserLogoutRequest{
+						RefreshToken: "token",
+						AccessToken:  "token",
+						UserId:       1,
+					}).Return(nil)
+				},
+				err: nil,
+			},
+			expected: expected{
+				statusCode: http.StatusOK,
+				response: response.Response{
+					Code:    code.OK,
+					Message: "ok",
+				},
+			},
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.description, func(t *testing.T) {
+			expectedRes, _ := json.Marshal(tc.expected.response)
+			rec := httptest.NewRecorder()
+			c, _ := gin.CreateTestContext(rec)
+
+			c.Set("userId", 1)
+
+			userService := mocks.NewUserService(t)
+			tc.input.beforeTests(userService)
+			cfg := handler.HandlerConfig{
+				UserService: userService,
+			}
+			h := handler.New(&cfg)
+			c.Request, _ = http.NewRequest("POST", "/v1/users/logout", test.MakeRequestBody(tc.input.dto))
+			c.Request.Header.Set("authorization", "Bearer "+"token")
+
+			h.SignOut(c)
+
+			assert.Equal(t, tc.expected.statusCode, rec.Code)
+			assert.Equal(t, string(expectedRes), rec.Body.String())
+		})
+	}
+
+}
