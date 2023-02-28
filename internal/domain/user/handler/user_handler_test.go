@@ -516,6 +516,98 @@ func TestGetUserByID(t *testing.T) {
 	}
 }
 
+func TestUserRegistrationWithGoogle(t *testing.T) {
+	var (
+		validCredential   = "test"
+		invalidCredential = ""
+	)
+	type input struct {
+		dto         *dto.UserRegistrationWithGoogleRequest
+		beforeTests func(mockUserService *mocks.UserService)
+		err         error
+	}
+	type expected struct {
+		statusCode int
+		response   response.Response
+	}
+
+	cases := []struct {
+		description string
+		input
+		expected
+	}{
+		{
+			description: "it should return credential required and bad request status code if credential is empty",
+			input: input{
+				dto: &dto.UserRegistrationWithGoogleRequest{
+					Credential: invalidCredential,
+					Username:   "testasd",
+					Password:   "password123",
+				},
+				err: nil,
+				beforeTests: func(mockUserService *mocks.UserService) {
+				},
+			},
+			expected: expected{
+				statusCode: http.StatusBadRequest,
+				response: response.Response{
+					Code:    code.BAD_REQUEST,
+					Message: "Credential is required",
+				},
+			},
+		},
+		{
+			description: "it should return ErrUserAlreadyExist and conflict status code if user already exist",
+			input: input{
+				dto: &dto.UserRegistrationWithGoogleRequest{
+					Credential: validCredential,
+					Username:   "testasd",
+					Password:   "password123",
+				},
+				err: errs.ErrUserAlreadyExist,
+				beforeTests: func(mockUserService *mocks.UserService) {
+					mockUserService.On("SignUpWithGoogle", &dto.UserRegistrationWithGoogleRequest{
+						Credential: validCredential,
+						Username:   "testasd",
+						Password:   "password123",
+					}).Return(nil, errs.ErrUserAlreadyExist)
+				},
+			},
+			expected: expected{
+				statusCode: http.StatusConflict,
+				response: response.Response{
+					Code:    code.EMAIL_ALREADY_REGISTERED,
+					Message: errs.ErrUserAlreadyExist.Error(),
+				},
+			},
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.description, func(t *testing.T) {
+			expectedRes, _ := json.Marshal(tc.expected.response)
+			rec := httptest.NewRecorder()
+			c, _ := gin.CreateTestContext(rec)
+			userServiceMock := mocks.NewUserService(t)
+			tc.beforeTests(userServiceMock)
+			cfg := handler.HandlerConfig{
+				UserService: userServiceMock,
+			}
+
+			h := handler.New(&cfg)
+			c.Request, _ = http.NewRequest("POST", "/users", nil)
+			c.Request.Header.Set("Content-Type", "application/json")
+			body, _ := json.Marshal(tc.input.dto)
+			c.Request.Body = ioutil.NopCloser(bytes.NewReader(body))
+
+			h.UserRegistrationWithGoogle(c)
+
+			assert.Equal(t, tc.expected.statusCode, rec.Code)
+			assert.Equal(t, string(expectedRes), rec.Body.String())
+		})
+	}
+}
+
 func TestUserLoginWithGoogle(t *testing.T) {
 	var (
 		validCredential   = "test"
