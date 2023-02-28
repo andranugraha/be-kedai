@@ -4,7 +4,8 @@ import (
 	"kedai/backend/be-kedai/internal/domain/location/model"
 )
 
-type AddAddressRequest struct {
+type AddressRequest struct {
+	ID            int
 	UserID        int
 	Name          string `json:"name" binding:"required,max=30"`
 	PhoneNumber   string `json:"phoneNumber" binding:"required,numeric"`
@@ -14,7 +15,13 @@ type AddAddressRequest struct {
 	IsDefault     *bool  `json:"isDefault" binding:"required"`
 }
 
-func (r *AddAddressRequest) ToUserAddress() *model.UserAddress {
+func (r *AddressRequest) ValidateId() {
+	if r.ID <= 0 {
+		r.ID = 0
+	}
+}
+
+func (r *AddressRequest) ToUserAddress() *model.UserAddress {
 
 	if r.IsDefault == nil {
 		r.IsDefault = new(bool)
@@ -22,6 +29,7 @@ func (r *AddAddressRequest) ToUserAddress() *model.UserAddress {
 	}
 
 	return &model.UserAddress{
+		ID:            r.ID,
 		UserID:        r.UserID,
 		Name:          r.Name,
 		PhoneNumber:   r.PhoneNumber,

@@ -437,6 +437,57 @@ paths:
                   message:
                     type: string
                     example: "error message"
+  /v1/users/logout:
+    post:
+      security:
+        - BearerAuth: []
+      tags:
+        - User
+      summary: Logout from current device
+      description: Remove both access token and refresh token from db.
+      requestBody:
+        $ref: '#/components/requestBodies/UserLogoutBody'
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "OK"
+                  message:
+                    type: string
+                    example: "ok"
+                  
+        '400':
+          description: bad request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: BAD_REQUEST
+                  message:
+                    type: string
+                    example: error message
+        '500':
+          description: internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "INTERNAL_SERVER_ERROR"
+                  message:
+                    type: string
+                    example: "error message"
 
   /v1/users/emails:
     put:
@@ -922,7 +973,7 @@ paths:
       summary: Add new address
       description: Add new user address
       requestBody:
-        $ref: '#/components/requestBodies/AddAddressBody'
+        $ref: '#/components/requestBodies/AddressBody'
       responses:
         '201':
           description: successful operation
@@ -1003,7 +1054,106 @@ paths:
                     example: "INTERNAL_SERVER_ERROR"
                   message:
                     type: string
-                    example: "error message"                  
+                    example: "error message"
+  /v1/users/addresses/{addressId}:                  
+    put:
+      security:
+        - BearerAuth: []
+      tags:
+        - User
+      summary: Add new address
+      description: Add new user address
+      parameters:
+        - in: path
+          name: addressId
+          required: true
+          description: Address Id of the address to be updated
+          schema:
+            type: integer
+            example: 1
+      requestBody:
+        $ref: '#/components/requestBodies/AddressBody'
+      responses:
+        '201':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Response'
+                  - type: object
+                    properties:
+                      code:
+                        example: 'OK'
+                      message:
+                        example: 'success'
+                      data:
+                        $ref: '#/components/schemas/UserAddress'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "BAD_REQUEST"
+                  message:
+                    type: string
+                    example: "error message"
+        '401':
+          description: unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "UNAUTHORIZED"
+                  message:
+                    type: string
+                    example: "invalid credential"            
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "ADDRESS_NOT_FOUND"
+                  message:
+                    type: string
+                    example: "error message"         
+        '409':
+          description: Conflict
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "MUST_HAVE_AT_LEAST_ONE_DEFAULT_ADDRESS"
+                  message:
+                    type: string
+                    example: "must have at least one default address"            
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "INTERNAL_SERVER_ERROR"
+                  message:
+                    type: string
+                    example: "error message"                
   /v1/users/wishlists:
     get:
       security:
@@ -1422,6 +1572,70 @@ paths:
                   message:
                     type: string
                     example: "error message"
+  /v1/products/recommendations/categories:
+    get:
+      tags:
+        - Product
+      summary: Get product recommendation
+      description: Get product recommendation for product in the same category
+      parameters:
+        - in: query
+          name: productId
+          required: true
+          schema:
+            type: string
+            example: "1"
+        - in: query
+          name: categoryId
+          required: true
+          schema:
+            type: string
+            example: "1"
+      responses:
+        '200':
+          description: successful opearation
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Response'
+                  - type: object
+                    properties:
+                      code:
+                        example: "OK"
+                      message:
+                        example: "ok"
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Product'
+        '400':
+          description: bad request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "BAD_REQUEST"
+                  message:
+                    type: string
+                    example: "ProductId is required"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "INTERNAL_SERVER_ERROR"
+                  message:
+                    type: string
+                    example: "error message"
+          
   /v1/shops/{slug}:
     get:
       tags:
@@ -1479,6 +1693,40 @@ paths:
                     type: string
                     example: "error message"
   /v1/users/sealabs-pays:
+    get:
+      security:
+        - BearerAuth: []
+      tags:
+        - User
+      summary: Get user's sealabs-pay accounts
+      description: Get list of user's sealabs-pay accounts
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Reponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/SealabsPay'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "INTERNAL_SERVER_ERROR"
+                  message:
+                    type: string
+                    example: "error message"
     post:
       security:
         - BearerAuth: []
@@ -2129,6 +2377,19 @@ components:
                 type: string
                 format: email
                 example: "googlejwttokenhere"
+    UserLogoutBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - refreshToken
+            properties:
+              refreshToken:
+                type: string
+                format: jwt
+                example: "jwttokenhere"            
     UpdateEmailBody:
       required: true
       content:
@@ -2224,7 +2485,7 @@ components:
               skuId:
                 type: integer
                 example: 1
-    AddAddressBody:
+    AddressBody:
       required: true
       content:
         application/json:

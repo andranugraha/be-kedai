@@ -43,6 +43,7 @@ func NewRouter(cfg *RouterConfig) *gin.Engine {
 			userAuthenticated := user.Group("", middleware.JWTAuthorization, cfg.UserHandler.GetSession)
 			{
 				userAuthenticated.GET("", cfg.UserHandler.GetUserByID)
+				userAuthenticated.POST("/logout", cfg.UserHandler.SignOut)
 
 				userAuthenticated.PUT("/emails", cfg.UserHandler.UpdateUserEmail)
 				userAuthenticated.PUT("/usernames", cfg.UserHandler.UpdateUsername)
@@ -71,9 +72,11 @@ func NewRouter(cfg *RouterConfig) *gin.Engine {
 				{
 					addresses.GET("", cfg.UserHandler.GetAllUserAddress)
 					addresses.POST("", cfg.UserHandler.AddUserAddress)
+					addresses.PUT("/:addressId", cfg.UserHandler.UpdateUserAddress)
 				}
 				sealabsPay := userAuthenticated.Group("/sealabs-pays")
 				{
+					sealabsPay.GET("", cfg.UserHandler.GetSealabsPaysByUserID)
 					sealabsPay.POST("", cfg.UserHandler.RegisterSealabsPay)
 				}
 			}
@@ -87,6 +90,7 @@ func NewRouter(cfg *RouterConfig) *gin.Engine {
 
 		product := v1.Group("/products")
 		{
+			product.GET("/recommendations/categories", cfg.ProductHandler.GetRecommendationByCategory)
 			category := product.Group("/categories")
 			{
 				category.GET("", cfg.ProductHandler.GetCategories)
