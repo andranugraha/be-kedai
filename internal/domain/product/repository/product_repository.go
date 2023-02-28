@@ -11,7 +11,7 @@ import (
 type ProductRepository interface {
 	GetByID(ID int) (*model.Product, error)
 	GetByCode(Code string) (*model.Product, error)
-	GetRecommendation(productId int, categoryId int) ([]*model.Product, error)
+	GetRecommendationByCategory(productId int, categoryId int) ([]*model.Product, error)
 }
 
 type productRepositoryImpl struct {
@@ -58,7 +58,7 @@ func (r *productRepositoryImpl) GetByCode(Code string) (*model.Product, error) {
 	return &product, nil
 }
 
-func (r *productRepositoryImpl) GetRecommendation(productId int, categoryId int) ([]*model.Product, error) {
+func (r *productRepositoryImpl) GetRecommendationByCategory(productId int, categoryId int) ([]*model.Product, error) {
 	var (
 		products []*model.Product
 		limit    = 5

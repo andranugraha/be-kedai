@@ -11,7 +11,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func (h *Handler) GetRecommendation(c *gin.Context) {
+func (h *Handler) GetRecommendationByCategory(c *gin.Context) {
 	var req dto.RecommendationByCategoryIdRequest
 	errBinding := c.ShouldBindQuery(&req)
 	if errBinding != nil {
@@ -19,7 +19,7 @@ func (h *Handler) GetRecommendation(c *gin.Context) {
 		return
 	}
 
-	result, err := h.productService.GetRecommendation(req.ProductId, req.CategoryId)
+	result, err := h.productService.GetRecommendationByCategory(req.ProductId, req.CategoryId)
 	if err != nil {
 		if errors.Is(err, errs.ErrCategoryDoesNotExist) {
 			response.Error(c, http.StatusBadRequest, code.BAD_REQUEST, err.Error())

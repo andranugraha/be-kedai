@@ -156,12 +156,12 @@ func TestGetRecommendation(t *testing.T) {
 	} {
 		t.Run(tc.description, func(t *testing.T) {
 			mockProductRepo := mocks.NewProductRepository(t)
-			mockProductRepo.On("GetRecommendation", tc.input.productId, tc.input.categoryid).Return(tc.expected.result, tc.expected.err)
+			mockProductRepo.On("GetRecommendationByCategory", tc.input.productId, tc.input.categoryid).Return(tc.expected.result, tc.expected.err)
 			productService := service.NewProductService(&service.ProductSConfig{
 				ProductRepository: mockProductRepo,
 			})
 
-			result, err := productService.GetRecommendation(tc.input.productId, tc.input.categoryid)
+			result, err := productService.GetRecommendationByCategory(tc.input.productId, tc.input.categoryid)
 
 			assert.Equal(t, tc.expected.result, result)
 			assert.Equal(t, tc.expected.err, err)

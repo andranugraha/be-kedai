@@ -1422,7 +1422,7 @@ paths:
                   message:
                     type: string
                     example: "error message"
-  /v1/products/recommendation:
+  /v1/products/recommendations/categories:
     get:
       tags:
         - Product

@@ -113,7 +113,7 @@ func TestGetRecommendation(t *testing.T) {
 		t.Run(tc.description, func(t *testing.T) {
 			expectedBody, _ := json.Marshal(tc.expected.response)
 			mockService := new(mocks.ProductService)
-			mockService.On("GetRecommendation", tc.input.dto.ProductId, tc.input.dto.CategoryId).Return(tc.input.product, tc.input.err)
+			mockService.On("GetRecommendationByCategory", tc.input.dto.ProductId, tc.input.dto.CategoryId).Return(tc.input.product, tc.input.err)
 			rec := httptest.NewRecorder()
 			c, _ := gin.CreateTestContext(rec)
 			h := handler.New(&handler.Config{
@@ -121,7 +121,7 @@ func TestGetRecommendation(t *testing.T) {
 			})
 			c.Request = httptest.NewRequest("GET", fmt.Sprintf("/products/recommendation?productId=%d&categoryId=%d", tc.dto.ProductId, tc.dto.CategoryId), nil)
 
-			h.GetRecommendation(c)
+			h.GetRecommendationByCategory(c)
 
 			assert.Equal(t, tc.expected.statusCode, rec.Code)
 			assert.Equal(t, string(expectedBody), rec.Body.String())
