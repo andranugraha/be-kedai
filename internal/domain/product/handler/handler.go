@@ -4,7 +4,7 @@ import "kedai/backend/be-kedai/internal/domain/product/service"
 
 type Handler struct {
 	categoryService service.CategoryService
-	producteService service.ProductService
+	productService  service.ProductService
 }
 
 type Config struct {
@@ -15,6 +15,6 @@ type Config struct {
 func New(cfg *Config) *Handler {
 	return &Handler{
 		categoryService: cfg.CategoryService,
-		producteService: cfg.ProductService,
+		productService:  cfg.ProductService,
 	}
 }

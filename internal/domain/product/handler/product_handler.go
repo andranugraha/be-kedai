@@ -19,7 +19,7 @@ func (h *Handler) GetRecommendation(c *gin.Context) {
 		return
 	}
 
-	result, err := h.producteService.GetRecommendation(req.ProductId, req.CategoryId)
+	result, err := h.productService.GetRecommendation(req.ProductId, req.CategoryId)
 	if err != nil {
 		if errors.Is(err, errs.ErrCategoryDoesNotExist) {
 			response.Error(c, http.StatusBadRequest, code.BAD_REQUEST, err.Error())
