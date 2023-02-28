@@ -15,9 +15,9 @@ type UserCartItemRequest struct {
 }
 
 type UpdateCartItemRequest struct {
-	SkuID    int    `json:"skuId" binding:"required"`
-	Quantity int    `json:"quantity" binding:"min=1"`
-	Notes    string `json:"notes" binding:"max=50"`
+	SkuID    int
+	Quantity int    `json:"quantity" binding:"required_without=Notes,gte=1"`
+	Notes    string `json:"notes" binding:"required_without=Quantity,max=50"`
 }
 
 type GetCartItemsRequest struct {
