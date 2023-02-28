@@ -17,6 +17,8 @@ type UserCache interface {
 	FindToken(userId int, token string) error
 	DeleteAllByID(userId int) error
 	DeleteRefreshTokenAndAccessToken(userId int, refreshToken string, accessToken string) error
+	StoreUserPasswordAndVerificationCode(userId int, newPassword string, verificationCode string) error
+	FindUserPasswordAndVerificationCode(userId int) (string, string, error)
 }
 
 type userCacheImpl struct {
