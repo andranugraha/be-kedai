@@ -1479,6 +1479,40 @@ paths:
                     type: string
                     example: "error message"
   /v1/users/sealabs-pay:
+    get:
+      security:
+        - BearerAuth: []
+      tags:
+        - User
+      summary: Get user's sealabs-pay accounts
+      description: Get list of user's sealabs-pay accounts
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Reponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/SealabsPay'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "INTERNAL_SERVER_ERROR"
+                  message:
+                    type: string
+                    example: "error message"
     post:
       security:
         - BearerAuth: []
