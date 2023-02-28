@@ -1,6 +1,8 @@
 package credential
 
 import (
+	"kedai/backend/be-kedai/internal/utils/hash"
+	"strings"
 	"unicode"
 
 	"github.com/forPelevin/gomoji"
@@ -32,4 +34,17 @@ func VerifyPassword(pw string) bool {
 	}
 
 	return false
+}
+
+func VerifyChangePassword(oldPw string, newPw string, username string) bool {
+	if hash.ComparePassword(oldPw, newPw) {
+		return false
+	}
+
+	if strings.Contains(strings.ToLower(newPw), strings.ToLower(username)) {
+		return false
+	}
+
+	return true
+
 }
