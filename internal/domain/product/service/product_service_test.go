@@ -2,6 +2,7 @@ package service_test
 
 import (
 	errorResponse "kedai/backend/be-kedai/internal/common/error"
+	"kedai/backend/be-kedai/internal/domain/product/dto"
 	"kedai/backend/be-kedai/internal/domain/product/model"
 	"kedai/backend/be-kedai/internal/domain/product/service"
 	"kedai/backend/be-kedai/mocks"
@@ -100,6 +101,71 @@ func TestGetByCode(t *testing.T) {
 
 			assert.Equal(t, test.want, got)
 			assert.Equal(t, test.wantErr, err)
+		})
+	}
+}
+
+func TestGetRecommendation(t *testing.T) {
+	var (
+		categoryId = 1
+		productId  = 1
+		product    = []*dto.ProductResponse{}
+	)
+
+	type input struct {
+		categoryid int
+		productId  int
+		err        error
+	}
+
+	type expected struct {
+		result []*dto.ProductResponse
+		err    error
+	}
+
+	type cases struct {
+		description string
+		input
+		expected
+	}
+
+	for _, tc := range []cases{
+		{
+			description: "should return list of recommended products when successful",
+			input: input{
+				categoryid: categoryId,
+				productId:  productId,
+				err:        nil,
+			},
+			expected: expected{
+				result: product,
+				err:    nil,
+			},
+		},
+		{
+			description: "should return error when internal server error",
+			input: input{
+				categoryid: categoryId,
+				productId:  productId,
+				err:        errorResponse.ErrInternalServerError,
+			},
+			expected: expected{
+				result: nil,
+				err:    errorResponse.ErrInternalServerError,
+			},
+		},
+	} {
+		t.Run(tc.description, func(t *testing.T) {
+			mockProductRepo := mocks.NewProductRepository(t)
+			mockProductRepo.On("GetRecommendationByCategory", tc.input.productId, tc.input.categoryid).Return(tc.expected.result, tc.expected.err)
+			productService := service.NewProductService(&service.ProductSConfig{
+				ProductRepository: mockProductRepo,
+			})
+
+			result, err := productService.GetRecommendationByCategory(tc.input.productId, tc.input.categoryid)
+
+			assert.Equal(t, tc.expected.result, result)
+			assert.Equal(t, tc.expected.err, err)
 		})
 	}
 }
