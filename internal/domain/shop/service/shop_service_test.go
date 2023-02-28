@@ -1,7 +1,6 @@
 package service_test
 
 import (
-	"errors"
 	errs "kedai/backend/be-kedai/internal/common/error"
 	"kedai/backend/be-kedai/internal/domain/shop/model"
 	"kedai/backend/be-kedai/internal/domain/shop/service"
@@ -141,16 +140,11 @@ func TestFindShopBySlug(t *testing.T) {
 		shopResult = &model.Shop{
 			ID: 1,
 		}
-		shopResultAfter = &model.Shop{
-			ID:          1,
-			ShopVoucher: []*model.ShopVoucher{},
-		}
-		voucherResult = []*model.ShopVoucher{}
 	)
 	type input struct {
 		slug       string
 		err        error
-		beforeTest func(*mocks.ShopRepository, *mocks.ShopVoucherService)
+		beforeTest func(*mocks.ShopRepository)
 	}
 
 	type expected struct {
@@ -170,13 +164,12 @@ func TestFindShopBySlug(t *testing.T) {
 			input: input{
 				slug: shopSlug,
 				err:  nil,
-				beforeTest: func(sr *mocks.ShopRepository, svs *mocks.ShopVoucherService) {
+				beforeTest: func(sr *mocks.ShopRepository) {
 					sr.On("FindShopBySlug", shopSlug).Return(shopResult, nil)
-					svs.On("GetShopVoucher", shopResult.ID).Return(voucherResult, nil)
 				},
 			},
 			expected: expected{
-				shop: shopResultAfter,
+				shop: shopResult,
 				err:  nil,
 			},
 		},
@@ -185,7 +178,7 @@ func TestFindShopBySlug(t *testing.T) {
 			input: input{
 				slug: shopSlug,
 				err:  errs.ErrShopNotFound,
-				beforeTest: func(sr *mocks.ShopRepository, svs *mocks.ShopVoucherService) {
+				beforeTest: func(sr *mocks.ShopRepository) {
 					sr.On("FindShopBySlug", shopSlug).Return(nil, errs.ErrShopNotFound)
 				},
 			},
@@ -194,29 +187,12 @@ func TestFindShopBySlug(t *testing.T) {
 				err:  errs.ErrShopNotFound,
 			},
 		},
-		{
-			description: "should return error when voucher service error",
-			input: input{
-				slug: shopSlug,
-				err:  nil,
-				beforeTest: func(sr *mocks.ShopRepository, svs *mocks.ShopVoucherService) {
-					sr.On("FindShopBySlug", shopSlug).Return(shopResult, nil)
-					svs.On("GetShopVoucher", shopResult.ID).Return(nil, errors.New("error"))
-				},
-			},
-			expected: expected{
-				shop: nil,
-				err:  errors.New("error"),
-			},
-		},
 	} {
 		t.Run(tc.description, func(t *testing.T) {
 			mockRepo := new(mocks.ShopRepository)
-			mockService := new(mocks.ShopVoucherService)
-			tc.beforeTest(mockRepo, mockService)
+			tc.beforeTest(mockRepo)
 			service := service.NewShopService(&service.ShopSConfig{
-				ShopRepository:     mockRepo,
-				ShopVoucherService: mockService,
+				ShopRepository: mockRepo,
 			})
 
 			result, err := service.FindShopBySlug(tc.input.slug)
