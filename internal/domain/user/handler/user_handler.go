@@ -235,3 +235,25 @@ func (h *Handler) UpdateUsername(c *gin.Context) {
 
 	response.Success(c, http.StatusOK, code.UPDATED, "updated", res)
 }
+
+func (h *Handler) SignOut(c *gin.Context) {
+	var request dto.UserLogoutRequest
+	err := c.ShouldBindJSON(&request)
+	if err != nil {
+		response.ErrorValidator(c, http.StatusBadRequest, err)
+		return
+	}
+
+	token := c.GetHeader("authorization")
+	request.AccessToken = strings.Replace(token, "Bearer ", "", -1)
+	request.UserId = c.GetInt("userId")
+
+	err = h.userService.SignOut(&request)
+	if err != nil {
+		response.Error(c, http.StatusInternalServerError, code.INTERNAL_SERVER_ERROR, errs.ErrInternalServerError.Error())
+		return
+	}
+
+	response.Success(c, http.StatusOK, code.OK, "ok", nil)
+
+}

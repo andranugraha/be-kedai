@@ -14,6 +14,7 @@ type UserCache interface {
 	DeleteToken(key string) error
 	FindToken(userId int, token string) error
 	DeleteAllByID(userId int) error
+	DeleteRefreshTokenAndAccessToken(userId int, refreshToken string, accessToken string) error
 }
 
 type userCacheImpl struct {
@@ -73,6 +74,19 @@ func (r *userCacheImpl) DeleteAllByID(userId int) error {
 		if err := r.rdc.Unlink(ctx, iter.Val()).Err(); err != nil {
 			return err
 		}
+	}
+
+	return nil
+}
+
+func (r *userCacheImpl) DeleteRefreshTokenAndAccessToken(userId int, refreshToken string, accessToken string) error {
+	ctx := context.Background()
+
+	refreshKey := fmt.Sprintf("user_%d:%s", userId, refreshToken)
+	accessKey := fmt.Sprintf("user_%d:%s", userId, accessToken)
+
+	if err := r.rdc.Unlink(ctx, refreshKey, accessKey).Err(); err != nil {
+		return err
 	}
 
 	return nil

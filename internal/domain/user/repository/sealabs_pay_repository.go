@@ -9,6 +9,7 @@ import (
 )
 
 type SealabsPayRepository interface {
+	GetByUserID(userID int) ([]*model.SealabsPay, error)
 	Create(sealabsPay *model.SealabsPay) error
 }
 
@@ -24,6 +25,17 @@ func NewSealabsPayRepository(config *SealabsPayRConfig) SealabsPayRepository {
 	return &sealabsPayRepositoryImpl{
 		db: config.DB,
 	}
+}
+
+func (r *sealabsPayRepositoryImpl) GetByUserID(userID int) ([]*model.SealabsPay, error) {
+	var sealabsPays []*model.SealabsPay
+
+	err := r.db.Where("user_id = ?", userID).Find(&sealabsPays).Error
+	if err != nil {
+		return nil, err
+	}
+
+	return sealabsPays, nil
 }
 
 func (r *sealabsPayRepositoryImpl) Create(sealabsPay *model.SealabsPay) error {
