@@ -49,7 +49,12 @@ func ErrorValidator(c *gin.Context, statusCode int, err error) {
 		case "alphanum":
 			message = fmt.Sprintf("%s must be alphanumeric", validator.Field())
 		case "datetime":
-			message = fmt.Sprintf("%s must be YYYY-MM-DD", validator.Field())
+			switch validator.Param() {
+			case "01/06":
+				message = fmt.Sprintf("%s must be MM/YY", validator.Field())
+			case "2006-01-02":
+				message = fmt.Sprintf("%s must be YYYY-MM-DD", validator.Field())
+			}
 		case "url":
 			message = fmt.Sprintf("%s must be a URL", validator.Field())
 		case "oneof":

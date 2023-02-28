@@ -1,0 +1,5 @@
+package code
+
+const (
+	CARD_NUMBER_REGISTERED = "CARD_NUMBER_REGISTERED"
+)
