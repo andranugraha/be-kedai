@@ -17,5 +17,11 @@ var (
 		Username: GetEnv("REDIS_USER", ""),
 		Password: GetEnv("REDIS_PASS", ""),
 	}
+	Mailer = MailerConfig{
+		Host:     GetEnv("MAILER_HOST", "smtp.gmail.com"),
+		Port:     GetEnv("MAILER_PORT", "587"),
+		Username: GetEnv("MAILER_USER", ""),
+		Password: GetEnv("MAILER_PASS", ""),
+	}
 	Origin = GetArrayENV("ORIGIN", []string{"http://localhost:3000"})
 )
