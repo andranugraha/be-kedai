@@ -37,6 +37,19 @@ paths:
                     properties:
                       data:
                         $ref: '#/components/schemas/Wallet'
+        '401':
+          description: unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "UNAUTHORIZED"
+                  message:
+                    type: string
+                    example: "invalid credential"
         '404':
           description: data not found
           content:
@@ -101,6 +114,19 @@ paths:
                   message:
                     type: string
                     example: "pin must be numeric and have 6 characters"
+        '401':
+          description: unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "UNAUTHORIZED"
+                  message:
+                    type: string
+                    example: "invalid credential"
         '409':
           description: User already has a wallet
           content:
@@ -147,6 +173,19 @@ paths:
                     properties:
                       data:
                         $ref: '#/components/schemas/User'
+        '401':
+          description: unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "UNAUTHORIZED"
+                  message:
+                    type: string
+                    example: "invalid credential"
         '404':
           description: not found
           content:
@@ -478,6 +517,19 @@ paths:
                   message:
                     type: string
                     example: error message
+        '401':
+          description: unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "UNAUTHORIZED"
+                  message:
+                    type: string
+                    example: "invalid credential"
         '409':
           description: conflict
           content:
@@ -544,6 +596,19 @@ paths:
                   message:
                     type: string
                     example: error message
+        '401':
+          description: unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "UNAUTHORIZED"
+                  message:
+                    type: string
+                    example: "invalid credential"
         '409':
           description: conflict
           content:
@@ -630,6 +695,19 @@ paths:
                   message:
                     type: string
                     example: error message
+        '401':
+          description: unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "UNAUTHORIZED"
+                  message:
+                    type: string
+                    example: "invalid credential"
         '500':
           description: internal server error
           content:
@@ -750,6 +828,19 @@ paths:
                                 type: array
                                 items:
                                   $ref: '#/components/schemas/GetCartItemResponse'
+        '401':
+          description: unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "UNAUTHORIZED"
+                  message:
+                    type: string
+                    example: "invalid credential"
         '500':
           description: Internal server error
           content:
@@ -1125,7 +1216,7 @@ paths:
       requestBody:
         $ref: '#/components/requestBodies/AddressBody'
       responses:
-        '201':
+        '200':
           description: successful operation
           content:
             application/json:
@@ -1282,6 +1373,19 @@ paths:
                                 type: array
                                 items:
                                   $ref: '#/components/schemas/UserWishlist'
+        '401':
+          description: unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "UNAUTHORIZED"
+                  message:
+                    type: string
+                    example: "invalid credential"
         '500':
           description: Internal server error
           content:
@@ -1765,6 +1869,19 @@ paths:
                         type: array
                         items:
                           $ref: '#/components/schemas/SealabsPay'
+        '401':
+          description: unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "UNAUTHORIZED"
+                  message:
+                    type: string
+                    example: "invalid credential"
         '500':
           description: Internal server error
           content:
