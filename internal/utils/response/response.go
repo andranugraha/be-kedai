@@ -49,7 +49,7 @@ func ErrorValidator(c *gin.Context, statusCode int, err error) {
 		case "alphanum":
 			message = fmt.Sprintf("%s must be alphanumeric", validator.Field())
 		case "gte":
-			message = fmt.Sprintf("%s must be greater or even than %s", validator.Field(), validator.Param())
+			message = fmt.Sprintf("%s must be greater or equal than %s", validator.Field(), validator.Param())
 		case "datetime":
 			switch validator.Param() {
 			case "01/06":
