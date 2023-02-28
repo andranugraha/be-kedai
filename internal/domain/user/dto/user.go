@@ -53,6 +53,12 @@ type UserLogoutRequest struct {
 	UserId       int
 }
 
+type RequestPasswordChangeRequest struct {
+	UserId          int
+	CurrentPassword string `json:"currentPassword" binding:"required"`
+	NewPassword     string `json:"newPassword" binding:"required,min=8,max=16"`
+}
+
 func (d *UserRegistrationRequest) ToUser() *model.User {
 	return &model.User{
 		Email:    d.Email,
