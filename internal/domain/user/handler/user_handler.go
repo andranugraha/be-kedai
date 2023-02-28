@@ -257,3 +257,38 @@ func (h *Handler) SignOut(c *gin.Context) {
 	response.Success(c, http.StatusOK, code.OK, "ok", nil)
 
 }
+
+func (h *Handler) RequestPasswordChange(c *gin.Context) {
+	var request dto.RequestPasswordChangeRequest
+	err := c.ShouldBindJSON(&request)
+	if err != nil {
+		response.ErrorValidator(c, http.StatusBadRequest, err)
+		return
+	}
+	request.UserId = c.GetInt("userId")
+
+	err = h.userService.RequestPasswordChange(&request)
+	if err != nil {
+		if errors.Is(err, errs.ErrUserDoesNotExist) {
+			response.Error(c, http.StatusNotFound, code.USER_NOT_REGISTERED, err.Error())
+			return
+		}
+		if errors.Is(err, errs.ErrInvalidCredential) {
+			response.Error(c, http.StatusBadRequest, code.WRONG_PASSWORD, err.Error())
+			return
+		}
+		if errors.Is(err, errs.ErrSamePassword) {
+			response.Error(c, http.StatusBadRequest, code.SAME_PASSWORD, err.Error())
+			return
+		}
+		if errors.Is(err, errs.ErrInvalidPasswordPattern) {
+			response.Error(c, http.StatusUnprocessableEntity, code.INVALID_PASSWORD_PATTERN, err.Error())
+			return
+		}
+
+		response.Error(c, http.StatusInternalServerError, code.INTERNAL_SERVER_ERROR, errs.ErrInternalServerError.Error())
+		return
+	}
+
+	response.Success(c, http.StatusOK, code.OK, "ok", nil)
+}
