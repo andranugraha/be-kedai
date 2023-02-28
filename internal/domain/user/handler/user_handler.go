@@ -91,7 +91,7 @@ func (h *Handler) UserRegistrationWithGoogle(c *gin.Context) {
 	user, err := h.userService.SignUpWithGoogle(&newUser)
 	if err != nil {
 		if errors.Is(err, errs.ErrUserAlreadyExist) {
-			response.Error(c, http.StatusConflict, code.EMAIL_ALREADY_REGISTERED, errs.ErrUserAlreadyExist.Error())
+			response.Error(c, http.StatusConflict, code.EMAIL_ALREADY_REGISTERED, err.Error())
 			return
 		}
 		if errors.Is(err, errs.ErrUsernameUsed) {
