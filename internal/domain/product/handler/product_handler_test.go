@@ -20,18 +20,18 @@ import (
 
 func TestGetRecommendation(t *testing.T) {
 	var (
-		req = dto.RecommendationRequest{
+		req = dto.RecommendationByCategoryIdRequest{
 			CategoryId: 2,
 			ProductId:  2,
 		}
-		invalidReq = dto.RecommendationRequest{
+		invalidReq = dto.RecommendationByCategoryIdRequest{
 			CategoryId: 1,
 		}
 		products = []*model.Product{}
 	)
 
 	type input struct {
-		dto     dto.RecommendationRequest
+		dto     dto.RecommendationByCategoryIdRequest
 		product []*model.Product
 		err     error
 	}

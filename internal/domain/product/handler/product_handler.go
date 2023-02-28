@@ -12,7 +12,7 @@ import (
 )
 
 func (h *Handler) GetRecommendation(c *gin.Context) {
-	var req dto.RecommendationRequest
+	var req dto.RecommendationByCategoryIdRequest
 	errBinding := c.ShouldBindQuery(&req)
 	if errBinding != nil {
 		response.ErrorValidator(c, http.StatusBadRequest, errBinding)
