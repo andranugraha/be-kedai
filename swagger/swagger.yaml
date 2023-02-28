@@ -437,6 +437,57 @@ paths:
                   message:
                     type: string
                     example: "error message"
+  /v1/users/logout:
+    post:
+      security:
+        - BearerAuth: []
+      tags:
+        - User
+      summary: Logout from current device
+      description: Remove both access token and refresh token from db.
+      requestBody:
+        $ref: '#/components/requestBodies/UserLogoutBody'
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "OK"
+                  message:
+                    type: string
+                    example: "ok"
+                  
+        '400':
+          description: bad request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: BAD_REQUEST
+                  message:
+                    type: string
+                    example: error message
+        '500':
+          description: internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "INTERNAL_SERVER_ERROR"
+                  message:
+                    type: string
+                    example: "error message"
 
   /v1/users/emails:
     put:
@@ -2289,6 +2340,19 @@ components:
                 type: string
                 format: email
                 example: "googlejwttokenhere"
+    UserLogoutBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - refreshToken
+            properties:
+              refreshToken:
+                type: string
+                format: jwt
+                example: "jwttokenhere"            
     UpdateEmailBody:
       required: true
       content:

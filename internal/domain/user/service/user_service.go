@@ -26,6 +26,7 @@ type UserService interface {
 	RenewToken(userId int, refreshToken string) (*dto.Token, error)
 	UpdateEmail(userId int, request *dto.UpdateEmailRequest) (*dto.UpdateEmailResponse, error)
 	UpdateUsername(userId int, requst *dto.UpdateUsernameRequest) (*dto.UpdateUsernameResponse, error)
+	SignOut(*dto.UserLogoutRequest) error
 }
 
 type userServiceImpl struct {
@@ -206,4 +207,13 @@ func (s *userServiceImpl) UpdateUsername(userId int, request *dto.UpdateUsername
 	}
 
 	return &response, nil
+}
+
+func (s *userServiceImpl) SignOut(request *dto.UserLogoutRequest) error {
+	err := s.redis.DeleteRefreshTokenAndAccessToken(request.UserId, request.RefreshToken, request.AccessToken)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
