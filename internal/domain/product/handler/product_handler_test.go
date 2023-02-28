@@ -21,10 +21,13 @@ import (
 func TestGetRecommendation(t *testing.T) {
 	var (
 		req = dto.RecommendationRequest{
+			CategoryId: 2,
+			ProductId:  2,
+		}
+		invalidReq = dto.RecommendationRequest{
 			CategoryId: 1,
 		}
-		invalidReq = dto.RecommendationRequest{}
-		products   = []*model.Product{}
+		products = []*model.Product{}
 	)
 
 	type input struct {
@@ -72,12 +75,27 @@ func TestGetRecommendation(t *testing.T) {
 				statusCode: http.StatusBadRequest,
 				response: response.Response{
 					Code:    code.BAD_REQUEST,
-					Message: "CategoryId is required",
+					Message: "ProductId is required",
 				},
 			},
 		},
 		{
-			description: "should return erro with code 500 when internal server error",
+			description: "should return error with code 400 when category id not exist",
+			input: input{
+				dto:     req,
+				product: nil,
+				err:     errs.ErrCategoryDoesNotExist,
+			},
+			expected: expected{
+				statusCode: http.StatusBadRequest,
+				response: response.Response{
+					Code:    code.BAD_REQUEST,
+					Message: "category doesn't exist",
+				},
+			},
+		},
+		{
+			description: "should return error with code 500 when internal server error",
 			input: input{
 				dto:     req,
 				product: nil,
@@ -95,19 +113,13 @@ func TestGetRecommendation(t *testing.T) {
 		t.Run(tc.description, func(t *testing.T) {
 			expectedBody, _ := json.Marshal(tc.expected.response)
 			mockService := new(mocks.ProductService)
-			mockService.On("GetRecommendation", tc.dto.CategoryId).Return(tc.input.product, tc.input.err)
+			mockService.On("GetRecommendation", tc.input.dto.ProductId, tc.input.dto.CategoryId).Return(tc.input.product, tc.input.err)
 			rec := httptest.NewRecorder()
 			c, _ := gin.CreateTestContext(rec)
-			c.Params = gin.Params{
-				{
-					Key:   "categoryId",
-					Value: "1",
-				},
-			}
 			h := handler.New(&handler.Config{
 				ProductService: mockService,
 			})
-			c.Request = httptest.NewRequest("GET", fmt.Sprintf("/products/recommendation?categoryId=%d", tc.dto.CategoryId), nil)
+			c.Request = httptest.NewRequest("GET", fmt.Sprintf("/products/recommendation?productId=%d&categoryId=%d", tc.dto.ProductId, tc.dto.CategoryId), nil)
 
 			h.GetRecommendation(c)
 

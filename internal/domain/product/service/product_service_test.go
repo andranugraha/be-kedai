@@ -107,11 +107,13 @@ func TestGetByCode(t *testing.T) {
 func TestGetRecommendation(t *testing.T) {
 	var (
 		categoryId = 1
+		productId  = 1
 		product    = []*model.Product{}
 	)
 
 	type input struct {
 		categoryid int
+		productId  int
 		err        error
 	}
 
@@ -131,6 +133,7 @@ func TestGetRecommendation(t *testing.T) {
 			description: "should return list of recommended products when successful",
 			input: input{
 				categoryid: categoryId,
+				productId:  productId,
 				err:        nil,
 			},
 			expected: expected{
@@ -142,6 +145,7 @@ func TestGetRecommendation(t *testing.T) {
 			description: "should return error when internal server error",
 			input: input{
 				categoryid: categoryId,
+				productId:  productId,
 				err:        errorResponse.ErrInternalServerError,
 			},
 			expected: expected{
@@ -152,12 +156,12 @@ func TestGetRecommendation(t *testing.T) {
 	} {
 		t.Run(tc.description, func(t *testing.T) {
 			mockProductRepo := mocks.NewProductRepository(t)
-			mockProductRepo.On("GetRecommendation", tc.input.categoryid).Return(tc.expected.result, tc.expected.err)
+			mockProductRepo.On("GetRecommendation", tc.input.productId, tc.input.categoryid).Return(tc.expected.result, tc.expected.err)
 			productService := service.NewProductService(&service.ProductSConfig{
 				ProductRepository: mockProductRepo,
 			})
 
-			result, err := productService.GetRecommendation(tc.input.categoryid)
+			result, err := productService.GetRecommendation(tc.input.productId, tc.input.categoryid)
 
 			assert.Equal(t, tc.expected.result, result)
 			assert.Equal(t, tc.expected.err, err)
