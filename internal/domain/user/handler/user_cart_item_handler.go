@@ -94,6 +94,11 @@ func (h *Handler) UpdateCartItem(c *gin.Context) {
 			return
 		}
 
+		if errors.Is(err, errs.ErrCartItemNotFound) {
+			response.Error(c, http.StatusNotFound, code.CART_ITEM_NOT_FOUND, err.Error())
+			return
+		}
+
 		if errors.Is(err, errs.ErrProductQuantityNotEnough) {
 			response.Error(c, http.StatusConflict, code.QUANTITY_NOT_ENOUGH, err.Error())
 			return
