@@ -694,6 +694,43 @@ paths:
                   message:
                     type: string
                     example: error message
+  /v1/locations/provinces:
+    get:
+      tags:
+        - Location
+      summary: Get province list
+      description: Get list of provinces
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Response'
+                  - type: object
+                    properties:
+                      code:
+                        example: 'OK'
+                      message:
+                        example: 'success'
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Province'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "INTERNAL_SERVER_ERROR"
+                  message:
+                    type: string
+                    example: "error message"                  
   /v1/locations/cities:
     get:
       tags:
@@ -758,6 +795,92 @@ paths:
                   message:
                     type: string
                     example: "error message"
+  /v1/locations/districts:
+    get:
+      tags:
+        - Location
+      summary: Get district list
+      description: Get list of districts (can be filtered by city id)
+      parameters:
+        - in: query
+          name: cityId
+          schema:
+            type: integer
+          description: Filter to get districts by city
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Response'
+                  - type: object
+                    properties:
+                      code:
+                        example: 'OK'
+                      message:
+                        example: 'success'
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/District'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "INTERNAL_SERVER_ERROR"
+                  message:
+                    type: string
+                    example: "error message"
+  /v1/locations/subdistricts:
+    get:
+      tags:
+        - Location
+      summary: Get subdistrict list
+      description: Get list of subdistricts (can be filtered by district id)
+      parameters:
+        - in: query
+          name: districtId
+          schema:
+            type: integer
+          description: Filter to get subdistricts by district
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Response'
+                  - type: object
+                    properties:
+                      code:
+                        example: 'OK'
+                      message:
+                        example: 'success'
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/District'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "INTERNAL_SERVER_ERROR"
+                  message:
+                    type: string
+                    example: "error message"                              
   /v1/users/carts:
     get:
       security:
@@ -1791,43 +1914,6 @@ paths:
                   message:
                     type: string
                     example: "sealabs pay already registered"            
-        '500':
-          description: Internal server error
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  code:
-                    type: string
-                    example: "INTERNAL_SERVER_ERROR"
-                  message:
-                    type: string
-                    example: "error message"
-  /v1/locations/provinces:
-    get:
-      tags:
-        - Location
-      summary: Get province list
-      description: Get list of provinces
-      responses:
-        '200':
-          description: Successful operation
-          content:
-            application/json:
-              schema:
-                allOf:
-                  - $ref: '#/components/schemas/Response'
-                  - type: object
-                    properties:
-                      code:
-                        example: 'OK'
-                      message:
-                        example: 'success'
-                      data:
-                        type: array
-                        items:
-                          $ref: '#/components/schemas/Province'
         '500':
           description: Internal server error
           content:
