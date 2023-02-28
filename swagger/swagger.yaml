@@ -867,7 +867,7 @@ paths:
                       data:
                         type: array
                         items:
-                          $ref: '#/components/schemas/District'
+                          $ref: '#/components/schemas/Subdistrict'
         '500':
           description: Internal server error
           content:
