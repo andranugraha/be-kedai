@@ -3,7 +3,6 @@ package service
 import (
 	"kedai/backend/be-kedai/internal/domain/shop/model"
 	"kedai/backend/be-kedai/internal/domain/shop/repository"
-	"log"
 )
 
 type ShopService interface {
@@ -13,18 +12,18 @@ type ShopService interface {
 }
 
 type shopServiceImpl struct {
-	shopRepository repository.ShopRepository
+	shopRepository     repository.ShopRepository
 	shopVoucherService ShopVoucherService
 }
 
 type ShopSConfig struct {
-	ShopRepository repository.ShopRepository
+	ShopRepository     repository.ShopRepository
 	ShopVoucherService ShopVoucherService
 }
 
 func NewShopService(cfg *ShopSConfig) ShopService {
 	return &shopServiceImpl{
-		shopRepository: cfg.ShopRepository,
+		shopRepository:     cfg.ShopRepository,
 		shopVoucherService: cfg.ShopVoucherService,
 	}
 }
@@ -42,13 +41,11 @@ func (s *shopServiceImpl) FindShopBySlug(slug string) (*model.Shop, error) {
 	if err != nil {
 		return nil, err
 	}
-	
+
 	voucher, err := s.shopVoucherService.GetShopVoucher(shop.ID)
 	if err != nil {
 		return nil, err
 	}
-
-	log.Print(voucher)
 
 	shop.ShopVoucher = voucher
 
