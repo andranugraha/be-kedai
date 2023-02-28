@@ -3,6 +3,7 @@ package repository
 import (
 	"errors"
 	errs "kedai/backend/be-kedai/internal/common/error"
+	"kedai/backend/be-kedai/internal/domain/product/dto"
 	model "kedai/backend/be-kedai/internal/domain/product/model"
 
 	"gorm.io/gorm"
@@ -11,7 +12,7 @@ import (
 type ProductRepository interface {
 	GetByID(ID int) (*model.Product, error)
 	GetByCode(Code string) (*model.Product, error)
-	GetRecommendationByCategory(productId int, categoryId int) ([]*model.Product, error)
+	GetRecommendationByCategory(productId int, categoryId int) ([]*dto.ProductResponse, error)
 }
 
 type productRepositoryImpl struct {
@@ -58,9 +59,9 @@ func (r *productRepositoryImpl) GetByCode(Code string) (*model.Product, error) {
 	return &product, nil
 }
 
-func (r *productRepositoryImpl) GetRecommendationByCategory(productId int, categoryId int) ([]*model.Product, error) {
+func (r *productRepositoryImpl) GetRecommendationByCategory(productId int, categoryId int) ([]*dto.ProductResponse, error) {
 	var (
-		products []*model.Product
+		products []*dto.ProductResponse
 		limit    = 5
 		isActive = true
 	)

@@ -2,6 +2,7 @@ package service_test
 
 import (
 	errorResponse "kedai/backend/be-kedai/internal/common/error"
+	"kedai/backend/be-kedai/internal/domain/product/dto"
 	"kedai/backend/be-kedai/internal/domain/product/model"
 	"kedai/backend/be-kedai/internal/domain/product/service"
 	"kedai/backend/be-kedai/mocks"
@@ -108,7 +109,7 @@ func TestGetRecommendation(t *testing.T) {
 	var (
 		categoryId = 1
 		productId  = 1
-		product    = []*model.Product{}
+		product    = []*dto.ProductResponse{}
 	)
 
 	type input struct {
@@ -118,7 +119,7 @@ func TestGetRecommendation(t *testing.T) {
 	}
 
 	type expected struct {
-		result []*model.Product
+		result []*dto.ProductResponse
 		err    error
 	}
 

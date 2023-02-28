@@ -7,7 +7,6 @@ import (
 	errs "kedai/backend/be-kedai/internal/common/error"
 	"kedai/backend/be-kedai/internal/domain/product/dto"
 	"kedai/backend/be-kedai/internal/domain/product/handler"
-	"kedai/backend/be-kedai/internal/domain/product/model"
 	"kedai/backend/be-kedai/internal/utils/response"
 	"kedai/backend/be-kedai/mocks"
 	"net/http"
@@ -27,12 +26,12 @@ func TestGetRecommendation(t *testing.T) {
 		invalidReq = dto.RecommendationByCategoryIdRequest{
 			CategoryId: 1,
 		}
-		products = []*model.Product{}
+		products = []*dto.ProductResponse{}
 	)
 
 	type input struct {
 		dto     dto.RecommendationByCategoryIdRequest
-		product []*model.Product
+		product []*dto.ProductResponse
 		err     error
 	}
 
