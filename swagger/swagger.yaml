@@ -922,7 +922,7 @@ paths:
       summary: Add new address
       description: Add new user address
       requestBody:
-        $ref: '#/components/requestBodies/AddAddressBody'
+        $ref: '#/components/requestBodies/AddressBody'
       responses:
         '201':
           description: successful operation
@@ -1003,7 +1003,106 @@ paths:
                     example: "INTERNAL_SERVER_ERROR"
                   message:
                     type: string
-                    example: "error message"                  
+                    example: "error message"
+  /v1/users/addresses/{addressId}:                  
+    put:
+      security:
+        - BearerAuth: []
+      tags:
+        - User
+      summary: Add new address
+      description: Add new user address
+      parameters:
+        - in: path
+          name: addressId
+          required: true
+          description: Address Id of the address to be updated
+          schema:
+            type: integer
+            example: 1
+      requestBody:
+        $ref: '#/components/requestBodies/AddressBody'
+      responses:
+        '201':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Response'
+                  - type: object
+                    properties:
+                      code:
+                        example: 'OK'
+                      message:
+                        example: 'success'
+                      data:
+                        $ref: '#/components/schemas/UserAddress'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "BAD_REQUEST"
+                  message:
+                    type: string
+                    example: "error message"
+        '401':
+          description: unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "UNAUTHORIZED"
+                  message:
+                    type: string
+                    example: "invalid credential"            
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "ADDRESS_NOT_FOUND"
+                  message:
+                    type: string
+                    example: "error message"         
+        '409':
+          description: Conflict
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "MUST_HAVE_AT_LEAST_ONE_DEFAULT_ADDRESS"
+                  message:
+                    type: string
+                    example: "must have at least one default address"            
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "INTERNAL_SERVER_ERROR"
+                  message:
+                    type: string
+                    example: "error message"                
   /v1/users/wishlists:
     get:
       security:
@@ -2285,7 +2384,7 @@ components:
               skuId:
                 type: integer
                 example: 1
-    AddAddressBody:
+    AddressBody:
       required: true
       content:
         application/json:

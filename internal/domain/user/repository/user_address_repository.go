@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"errors"
 	errs "kedai/backend/be-kedai/internal/common/error"
 	"kedai/backend/be-kedai/internal/domain/location/model"
 
@@ -8,9 +9,11 @@ import (
 )
 
 type UserAddressRepository interface {
+	GetUserAddressByIdAndUserId(addressId int, userId int) (*model.UserAddress, error)
 	AddUserAddress(*model.UserAddress) (*model.UserAddress, error)
 	GetAllUserAddress(userId int) ([]*model.UserAddress, error)
 	DefaultAddressTransaction(tx *gorm.DB, userId int, addressId int) error
+	UpdateUserAddress(*model.UserAddress) (*model.UserAddress, error)
 }
 
 type userAddressRepository struct {
@@ -91,4 +94,42 @@ func (r *userAddressRepository) DefaultAddressTransaction(tx *gorm.DB, userId in
 	}
 
 	return nil
+}
+
+func (r *userAddressRepository) UpdateUserAddress(address *model.UserAddress) (*model.UserAddress, error) {
+	tx := r.db.Begin()
+	defer tx.Commit()
+
+	res := tx.Model(&model.UserAddress{}).Where("id = ?", address.ID).Updates(address)
+	if err := res.Error; err != nil {
+		return nil, err
+	}
+
+	if res.RowsAffected == 0 {
+		return nil, errs.ErrAddressNotFound
+	}
+
+	if address.IsDefault {
+		err := r.DefaultAddressTransaction(tx, address.UserID, address.ID)
+		if err != nil {
+			tx.Rollback()
+			return nil, err
+		}
+	}
+
+	return address, nil
+}
+
+func (r *userAddressRepository) GetUserAddressByIdAndUserId(addressId int, userId int) (*model.UserAddress, error) {
+	var address model.UserAddress
+
+	err := r.db.Where("id = ? AND user_id = ?", addressId, userId).First(&address).Error
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, errs.ErrAddressNotFound
+		}
+		return nil, err
+	}
+
+	return &address, nil
 }
