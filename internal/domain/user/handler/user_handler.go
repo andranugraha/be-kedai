@@ -98,6 +98,10 @@ func (h *Handler) UserRegistrationWithGoogle(c *gin.Context) {
 			response.Error(c, http.StatusConflict, code.USERNAME_ALREADY_REGISTERED, err.Error())
 			return
 		}
+		if errors.Is(err, errs.ErrInvalidUsernamePattern) {
+			response.Error(c, http.StatusUnprocessableEntity, code.INVALID_USERNAME_PATTERN, err.Error())
+			return
+		}
 		if errors.Is(err, errs.ErrInvalidPasswordPattern) {
 			response.Error(c, http.StatusUnprocessableEntity, code.INVALID_PASSWORD_PATTERN, err.Error())
 			return

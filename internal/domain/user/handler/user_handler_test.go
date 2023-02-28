@@ -607,6 +607,31 @@ func TestUserRegistrationWithGoogle(t *testing.T) {
 			},
 		},
 		{
+			description: "it should return error ErrInvalidUsernamePattern and StatusUnprocessableEntity status code if username is invalid",
+			input: input{
+				dto: &dto.UserRegistrationWithGoogleRequest{
+					Credential: validCredential,
+					Username:   "testasd",
+					Password:   "password123",
+				},
+				err: errs.ErrInvalidUsernamePattern,
+				beforeTests: func(mockUserService *mocks.UserService) {
+					mockUserService.On("SignUpWithGoogle", &dto.UserRegistrationWithGoogleRequest{
+						Credential: validCredential,
+						Username:   "testasd",
+						Password:   "password123",
+					}).Return(nil, errs.ErrInvalidUsernamePattern)
+				},
+			},
+			expected: expected{
+				statusCode: http.StatusUnprocessableEntity,
+				response: response.Response{
+					Code:    code.INVALID_USERNAME_PATTERN,
+					Message: errs.ErrInvalidUsernamePattern.Error(),
+				},
+			},
+		},
+		{
 			description: "it should return error ErrInvalidPasswordPattern and StatusUnprocessableEntity status code if password is invalid",
 			input: input{
 				dto: &dto.UserRegistrationWithGoogleRequest{

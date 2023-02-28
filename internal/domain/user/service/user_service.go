@@ -77,6 +77,11 @@ func (s *userServiceImpl) SignUp(userReg *dto.UserRegistrationRequest) (*dto.Use
 }
 
 func (s *userServiceImpl) SignUpWithGoogle(userReg *dto.UserRegistrationWithGoogleRequest) (*dto.Token, error) {
+	isValidUsername := credential.VerifyUsername(userReg.Username)
+	if !isValidUsername {
+		return nil, errs.ErrInvalidUsernamePattern
+	}
+
 	isValidPassword := credential.VerifyPassword(userReg.Password)
 	if !isValidPassword {
 		return nil, errs.ErrInvalidPasswordPattern
