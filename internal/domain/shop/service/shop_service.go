@@ -12,16 +12,16 @@ type ShopService interface {
 }
 
 type shopServiceImpl struct {
-	shopRepository     repository.ShopRepository
+	shopRepository repository.ShopRepository
 }
 
 type ShopSConfig struct {
-	ShopRepository     repository.ShopRepository
+	ShopRepository repository.ShopRepository
 }
 
 func NewShopService(cfg *ShopSConfig) ShopService {
 	return &shopServiceImpl{
-		shopRepository:     cfg.ShopRepository,
+		shopRepository: cfg.ShopRepository,
 	}
 }
 

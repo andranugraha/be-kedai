@@ -11,18 +11,18 @@ type ShopVoucherService interface {
 
 type shopVoucherServiceImpl struct {
 	shopVoucherRepository repository.ShopVoucherRepository
-	shopService ShopService
+	shopService           ShopService
 }
 
 type ShopVoucherSConfig struct {
 	ShopVoucherRepository repository.ShopVoucherRepository
-	ShopService ShopService
+	ShopService           ShopService
 }
 
 func NewShopVoucherService(cfg *ShopVoucherSConfig) ShopVoucherService {
 	return &shopVoucherServiceImpl{
 		shopVoucherRepository: cfg.ShopVoucherRepository,
-		shopService: cfg.ShopService,
+		shopService:           cfg.ShopService,
 	}
 }
 

@@ -84,7 +84,7 @@ func TestGetShopVoucher(t *testing.T) {
 			tc.beforeTest(mockService, mockRepo)
 			service := service.NewShopVoucherService(&service.ShopVoucherSConfig{
 				ShopVoucherRepository: mockRepo,
-				ShopService: mockService,
+				ShopService:           mockService,
 			})
 
 			result, err := service.GetShopVoucher(tc.input.slug)

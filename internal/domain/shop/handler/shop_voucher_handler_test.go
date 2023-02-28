@@ -22,13 +22,13 @@ func TestGetShopVoucher(t *testing.T) {
 		voucher = []*model.ShopVoucher{}
 	)
 	type input struct {
-		slug string
+		slug    string
 		voucher []*model.ShopVoucher
-		err  error
+		err     error
 	}
 	type expected struct {
 		statusCode int
-		response response.Response
+		response   response.Response
 	}
 
 	type cases struct {
@@ -41,30 +41,30 @@ func TestGetShopVoucher(t *testing.T) {
 		{
 			description: "should return list of voucher with code 200 when successful",
 			input: input{
-				slug: slug,
+				slug:    slug,
 				voucher: voucher,
-				err:  nil,
+				err:     nil,
 			},
 			expected: expected{
 				statusCode: http.StatusOK,
 				response: response.Response{
-					Code: code.OK,
+					Code:    code.OK,
 					Message: "ok",
-					Data: voucher,
+					Data:    voucher,
 				},
 			},
 		},
 		{
 			description: "should return error when internal server error",
 			input: input{
-				slug: slug,
+				slug:    slug,
 				voucher: nil,
-				err:  errs.ErrInternalServerError,
+				err:     errs.ErrInternalServerError,
 			},
 			expected: expected{
 				statusCode: http.StatusInternalServerError,
 				response: response.Response{
-					Code: code.INTERNAL_SERVER_ERROR,
+					Code:    code.INTERNAL_SERVER_ERROR,
 					Message: "something went wrong in the server",
 				},
 			},
