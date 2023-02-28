@@ -30,7 +30,7 @@ func NewSealabsPayRepository(config *SealabsPayRConfig) SealabsPayRepository {
 func (r *sealabsPayRepositoryImpl) GetByUserID(userID int) ([]*model.SealabsPay, error) {
 	var sealabsPays []*model.SealabsPay
 
-	err := r.db.Where("user_id = ?", userID).Find(sealabsPays).Error
+	err := r.db.Where("user_id = ?", userID).Find(&sealabsPays).Error
 	if err != nil {
 		return nil, err
 	}
