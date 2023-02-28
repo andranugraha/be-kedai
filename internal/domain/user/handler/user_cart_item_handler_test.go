@@ -393,7 +393,32 @@ func TestUpdateCartItem(t *testing.T) {
 			},
 		},
 		{
-			description: "should return error with status code 409 when product does not exist or inactive",
+			description: "should return error with status code 404 when cart item does not exist",
+			input: input{
+				userID: 1,
+				skuID:  "2",
+				request: &dto.UpdateCartItemRequest{
+					Quantity: 3,
+					Notes:    "test",
+				},
+				beforeTest: func(ucis *mocks.UserCartItemService) {
+					ucis.On("UpdateCartItem", 1, &dto.UpdateCartItemRequest{
+						SkuID:    2,
+						Quantity: 3,
+						Notes:    "test",
+					}).Return(nil, errs.ErrCartItemNotFound)
+				},
+			},
+			expected: expected{
+				statusCode: http.StatusNotFound,
+				response: response.Response{
+					Code:    code.CART_ITEM_NOT_FOUND,
+					Message: errs.ErrCartItemNotFound.Error(),
+				},
+			},
+		},
+		{
+			description: "should return error with status code 409 when product quantity is not enough",
 			input: input{
 				userID: 1,
 				skuID:  "2",
