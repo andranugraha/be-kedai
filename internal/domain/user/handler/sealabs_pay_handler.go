@@ -33,3 +33,15 @@ func (h *Handler) RegisterSealabsPay(c *gin.Context) {
 
 	response.Success(c, http.StatusCreated, code.CREATED, "sealabs pay registered successfully", sealabsPay)
 }
+
+func (h *Handler) GetSealabsPaysByUserID(c *gin.Context) {
+	userID := c.GetInt("userId")
+
+	sealabsPays, err := h.sealabsPayService.GetSealabsPaysByUserID(userID)
+	if err != nil {
+		response.Error(c, http.StatusInternalServerError, code.INTERNAL_SERVER_ERROR, spErr.ErrInternalServerError.Error())
+		return
+	}
+
+	response.Success(c, http.StatusOK, code.OK, "success", sealabsPays)
+}

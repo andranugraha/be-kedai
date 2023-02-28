@@ -74,6 +74,7 @@ func NewRouter(cfg *RouterConfig) *gin.Engine {
 				}
 				sealabsPay := userAuthenticated.Group("/sealabs-pays")
 				{
+					sealabsPay.GET("", cfg.UserHandler.GetSealabsPaysByUserID)
 					sealabsPay.POST("", cfg.UserHandler.RegisterSealabsPay)
 				}
 			}
