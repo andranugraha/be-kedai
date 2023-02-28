@@ -98,7 +98,7 @@ func TestGetSealabsPaysByUserID(t *testing.T) {
 			},
 		},
 		{
-			description: "should return user sealabs pays data when fetching successed",
+			description: "should return user sealabs pays data when fetching succeed",
 			input: input{
 				userId:     1,
 				mockReturn: []*model.SealabsPay{},

@@ -153,7 +153,7 @@ func TestGetSealabsPaysByUserID(t *testing.T) {
 			},
 		},
 		{
-			description: "should return sealabs-pay accounts with status code 200 when fetching data successed",
+			description: "should return sealabs-pay accounts with status code 200 when fetching data succeed",
 			input: input{
 				userID:     1,
 				mockReturn: []*model.SealabsPay{},
