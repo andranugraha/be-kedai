@@ -12,6 +12,8 @@ import (
 	"kedai/backend/be-kedai/internal/utils/google"
 	"kedai/backend/be-kedai/internal/utils/hash"
 	jwttoken "kedai/backend/be-kedai/internal/utils/jwtToken"
+	"kedai/backend/be-kedai/internal/utils/mail"
+	"kedai/backend/be-kedai/internal/utils/random"
 	"strings"
 
 	"github.com/redis/go-redis/v9"
@@ -27,23 +29,31 @@ type UserService interface {
 	RenewToken(userId int, refreshToken string) (*dto.Token, error)
 	UpdateEmail(userId int, request *dto.UpdateEmailRequest) (*dto.UpdateEmailResponse, error)
 	UpdateUsername(userId int, requst *dto.UpdateUsernameRequest) (*dto.UpdateUsernameResponse, error)
+	RequestPasswordChange(request *dto.RequestPasswordChangeRequest) error
+	ValidatePasswordChange(request *dto.RequestPasswordChangeRequest, user *model.User) error
 	SignOut(*dto.UserLogoutRequest) error
 }
 
 type userServiceImpl struct {
-	repository repository.UserRepository
-	redis      cache.UserCache
+	repository  repository.UserRepository
+	redis       cache.UserCache
+	randomUtils random.RandomUtils
+	mailUtils   mail.MailUtils
 }
 
 type UserSConfig struct {
-	Repository repository.UserRepository
-	Redis      cache.UserCache
+	Repository  repository.UserRepository
+	Redis       cache.UserCache
+	RandomUtils random.RandomUtils
+	MailUtils   mail.MailUtils
 }
 
 func NewUserService(cfg *UserSConfig) UserService {
 	return &userServiceImpl{
-		repository: cfg.Repository,
-		redis:      cfg.Redis,
+		repository:  cfg.Repository,
+		redis:       cfg.Redis,
+		mailUtils:   cfg.MailUtils,
+		randomUtils: cfg.RandomUtils,
 	}
 }
 
@@ -257,6 +267,57 @@ func (s *userServiceImpl) SignOut(request *dto.UserLogoutRequest) error {
 	err := s.redis.DeleteRefreshTokenAndAccessToken(request.UserId, request.RefreshToken, request.AccessToken)
 	if err != nil {
 		return err
+	}
+
+	return nil
+}
+
+func (s *userServiceImpl) RequestPasswordChange(request *dto.RequestPasswordChangeRequest) error {
+	user, err := s.repository.GetByID(request.UserId)
+	if err != nil {
+		return err
+	}
+
+	err = s.ValidatePasswordChange(request, user)
+	if err != nil {
+		return err
+	}
+
+	codeLength := 6
+	verifCode := s.randomUtils.GenerateAlphanumericString(codeLength)
+
+	err = s.redis.StoreUserPasswordAndVerificationCode(request.UserId, request.NewPassword, verifCode)
+	if err != nil {
+		return err
+	}
+
+	err = s.mailUtils.SendUpdatePasswordEmail(user.Email, verifCode)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (s *userServiceImpl) ValidatePasswordChange(request *dto.RequestPasswordChangeRequest, user *model.User) error {
+	isValid := hash.ComparePassword(user.Password, request.CurrentPassword)
+	if !isValid {
+		return errs.ErrInvalidCredential
+	}
+
+	isValid = hash.ComparePassword(user.Password, request.NewPassword)
+	if isValid {
+		return errs.ErrSamePassword
+	}
+
+	isValid = credential.VerifyPassword(request.NewPassword)
+	if !isValid {
+		return errs.ErrInvalidPasswordPattern
+	}
+
+	isValid = credential.VerifyChangePassword(request.CurrentPassword, request.NewPassword, user.Username)
+	if !isValid {
+		return errs.ErrInvalidPasswordPattern
 	}
 
 	return nil
