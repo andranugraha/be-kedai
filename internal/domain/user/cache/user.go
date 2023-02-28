@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"kedai/backend/be-kedai/config"
+	"kedai/backend/be-kedai/internal/utils/hash"
 	jwttoken "kedai/backend/be-kedai/internal/utils/jwtToken"
 	"time"
 
@@ -55,8 +56,9 @@ func (r *userCacheImpl) StoreToken(userId int, accessToken string, refreshToken 
 func (r *userCacheImpl) StoreUserPasswordAndVerificationCode(userId int, newPassword string, verificationCode string) error {
 	expireTime := time.Minute * 10
 	key := fmt.Sprintf("user_%d-updatePassword", userId)
+	hashedPw, _ := hash.HashAndSalt(newPassword)
 
-	err := r.rdc.HSet(context.Background(), key, "newPassword", newPassword, "verificationCode", verificationCode).Err()
+	err := r.rdc.HSet(context.Background(), key, "newPassword", hashedPw, "verificationCode", verificationCode).Err()
 	if err != nil {
 		return err
 	}
