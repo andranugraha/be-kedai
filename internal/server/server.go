@@ -63,6 +63,7 @@ func createRouter() *gin.Engine {
 	locHandler := locationHandlerPackage.New(&locationHandlerPackage.Config{
 		CityService:     cityService,
 		ProvinceService: provinceService,
+		DistrictService: districtService,
 	})
 
 	walletRepo := userRepoPackage.NewWalletRepository(&userRepoPackage.WalletRConfig{
