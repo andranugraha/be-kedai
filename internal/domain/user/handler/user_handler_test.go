@@ -581,6 +581,157 @@ func TestUserRegistrationWithGoogle(t *testing.T) {
 				},
 			},
 		},
+		{
+			description: "it should return error ErrUsernameUsed and conflict status code if username already used",
+			input: input{
+				dto: &dto.UserRegistrationWithGoogleRequest{
+					Credential: validCredential,
+					Username:   "testasd",
+					Password:   "password123",
+				},
+				err: errs.ErrUsernameUsed,
+				beforeTests: func(mockUserService *mocks.UserService) {
+					mockUserService.On("SignUpWithGoogle", &dto.UserRegistrationWithGoogleRequest{
+						Credential: validCredential,
+						Username:   "testasd",
+						Password:   "password123",
+					}).Return(nil, errs.ErrUsernameUsed)
+				},
+			},
+			expected: expected{
+				statusCode: http.StatusConflict,
+				response: response.Response{
+					Code:    code.USERNAME_ALREADY_REGISTERED,
+					Message: errs.ErrUsernameUsed.Error(),
+				},
+			},
+		},
+		{
+			description: "it should return error ErrInvalidPasswordPattern and StatusUnprocessableEntity status code if password is invalid",
+			input: input{
+				dto: &dto.UserRegistrationWithGoogleRequest{
+					Credential: validCredential,
+					Username:   "testasd",
+					Password:   "password123",
+				},
+				err: errs.ErrUsernameUsed,
+				beforeTests: func(mockUserService *mocks.UserService) {
+					mockUserService.On("SignUpWithGoogle", &dto.UserRegistrationWithGoogleRequest{
+						Credential: validCredential,
+						Username:   "testasd",
+						Password:   "password123",
+					}).Return(nil, errs.ErrInvalidPasswordPattern)
+				},
+			},
+			expected: expected{
+				statusCode: http.StatusUnprocessableEntity,
+				response: response.Response{
+					Code:    code.INVALID_PASSWORD_PATTERN,
+					Message: errs.ErrInvalidPasswordPattern.Error(),
+				},
+			},
+		},
+		{
+			description: "it should return error ErrContainEmail and StatusUnprocessableEntity status code if password is invalid",
+			input: input{
+				dto: &dto.UserRegistrationWithGoogleRequest{
+					Credential: validCredential,
+					Username:   "testasd",
+					Password:   "password123",
+				},
+				err: errs.ErrUsernameUsed,
+				beforeTests: func(mockUserService *mocks.UserService) {
+					mockUserService.On("SignUpWithGoogle", &dto.UserRegistrationWithGoogleRequest{
+						Credential: validCredential,
+						Username:   "testasd",
+						Password:   "password123",
+					}).Return(nil, errs.ErrContainEmail)
+				},
+			},
+			expected: expected{
+				statusCode: http.StatusUnprocessableEntity,
+				response: response.Response{
+					Code:    code.PASSWORD_CONTAIN_EMAIL,
+					Message: errs.ErrContainEmail.Error(),
+				},
+			},
+		},
+		{
+			description: "it should return error ErrUnauthorized and StatusUnauthorized status code if credential is invalid",
+			input: input{
+				dto: &dto.UserRegistrationWithGoogleRequest{
+					Credential: validCredential,
+					Username:   "testasd",
+					Password:   "password123",
+				},
+				err: errs.ErrUsernameUsed,
+				beforeTests: func(mockUserService *mocks.UserService) {
+					mockUserService.On("SignUpWithGoogle", &dto.UserRegistrationWithGoogleRequest{
+						Credential: validCredential,
+						Username:   "testasd",
+						Password:   "password123",
+					}).Return(nil, errs.ErrUnauthorized)
+				},
+			},
+			expected: expected{
+				statusCode: http.StatusUnauthorized,
+				response: response.Response{
+					Code:    code.UNAUTHORIZED,
+					Message: errs.ErrUnauthorized.Error(),
+				},
+			},
+		},
+		{
+			description: "it should return error ErrInternalServer and StatusInternalServerError status code if error is not handled",
+			input: input{
+				dto: &dto.UserRegistrationWithGoogleRequest{
+					Credential: validCredential,
+					Username:   "testasd",
+					Password:   "password123",
+				},
+				err: errs.ErrUsernameUsed,
+				beforeTests: func(mockUserService *mocks.UserService) {
+					mockUserService.On("SignUpWithGoogle", &dto.UserRegistrationWithGoogleRequest{
+						Credential: validCredential,
+						Username:   "testasd",
+						Password:   "password123",
+					}).Return(nil, errs.ErrInternalServerError)
+				},
+			},
+			expected: expected{
+				statusCode: http.StatusInternalServerError,
+				response: response.Response{
+					Code:    code.INTERNAL_SERVER_ERROR,
+					Message: errs.ErrInternalServerError.Error(),
+				},
+			},
+		},
+		{
+			description: "it should return nil error and StatusOK status code if success",
+			input: input{
+				dto: &dto.UserRegistrationWithGoogleRequest{
+					Credential: validCredential,
+					Username:   "testasd",
+					Password:   "password123",
+				},
+				err: nil,
+				beforeTests: func(mockUserService *mocks.UserService) {
+					mockUserService.On("SignUpWithGoogle", &dto.UserRegistrationWithGoogleRequest{
+						Credential: validCredential,
+						Username:   "testasd",
+						Password:   "password123",
+					}).Return(&dto.Token{}, nil)
+				},
+			},
+			expected: expected{
+				statusCode: http.StatusCreated,
+				response: response.Response{
+					Code:    code.CREATED,
+					Message: "Sign up with google successful",
+					Data:    &dto.Token{},
+				},
+			},
+		},
 	}
 
 	for _, tc := range cases {
