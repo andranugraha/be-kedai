@@ -13,4 +13,5 @@ var (
 	ErrContainEmail           = errors.New("password cannot contain email address")
 	ErrContainUsername        = errors.New("password cannot contain username")
 	ErrUsernameContainEmoji   = errors.New("username cannot contain emoji")
+	ErrSamePassword           = errors.New("new password cannot be the same as the old one")
 )
