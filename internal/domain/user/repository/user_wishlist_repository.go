@@ -12,7 +12,7 @@ import (
 )
 
 type UserWishlistRepository interface {
-	GetUserWishlists(req dto.GetUserWishlistsRequest) ([]*model.UserWishlist, int64, int, error)
+	GetUserWishlists(req dto.GetUserWishlistsRequest) ([]*dto.GetUserWishlistsResponse, int64, int, error)
 	GetUserWishlist(userWishlist *model.UserWishlist) (*model.UserWishlist, error)
 	AddUserWishlist(userWishlist *model.UserWishlist) (*model.UserWishlist, error)
 	RemoveUserWishlist(userWishlist *model.UserWishlist) error
@@ -32,7 +32,7 @@ func NewUserWishlistRepository(cfg *UserWishlistRConfig) UserWishlistRepository 
 	}
 }
 
-func (r *userWishlistRepositoryImpl) GetUserWishlists(req dto.GetUserWishlistsRequest) (userWishlists []*model.UserWishlist, totalRows int64, totalPages int, err error) {
+func (r *userWishlistRepositoryImpl) GetUserWishlists(req dto.GetUserWishlistsRequest) (userWishlists []*dto.GetUserWishlistsResponse, totalRows int64, totalPages int, err error) {
 	var (
 		active = true
 	)
@@ -41,7 +41,8 @@ func (r *userWishlistRepositoryImpl) GetUserWishlists(req dto.GetUserWishlistsRe
 		return db.Select(`products.*, min(s.price) as min_price, max(s.price) as max_price, 
 			concat(c.name, ', ', p.name) as address, 
 			max(case when pp.type = 'nominal' then ROUND(cast(pp.amount / s.price * 100 as numeric), 2) else pp.amount end) as promotion_percent, 
-			(select url from product_medias pm where products.id = pm.product_id limit 1) as image_url`).
+			(select url from product_medias pm where products.id = pm.product_id limit 1) as image_url,
+			(select id from skus s where products.id = s.product_id limit 1) as default_sku_id`).
 			Joins("join skus s ON s.product_id = products.id").
 			Joins("join shops sh ON sh.id = products.shop_id").
 			Joins("join user_addresses ua ON ua.id = sh.address_id").
@@ -103,10 +104,10 @@ func (r *userWishlistRepositoryImpl) GetUserWishlists(req dto.GetUserWishlistsRe
 		db = db.Order("user_wishlists.created_at desc")
 	}
 
-	db.Model(&userWishlists).Count(&totalRows)
+	db.Model(&model.UserWishlist{}).Count(&totalRows)
 	totalPages = int(math.Ceil(float64(totalRows) / float64(req.Limit)))
 
-	err = db.Find(&userWishlists).Error
+	err = db.Model(&model.UserWishlist{}).Find(&userWishlists).Error
 	if err != nil {
 		return
 	}
