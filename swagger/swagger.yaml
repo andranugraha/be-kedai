@@ -769,11 +769,11 @@ paths:
       tags:
         - User
       summary: User add item to cart
-      description: Add item to cart (The first address added is automatically set as default address)
+      description: Add item to user cart
       requestBody:
         $ref: '#/components/requestBodies/AddCartItemBody'
       responses:
-        '200':
+        '201':
           description: successful operation
           content:
             application/json:
@@ -849,6 +849,108 @@ paths:
                   message:
                     type: string
                     example: "user is shop owner"            
+        '500':
+          description: internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "INTERNAL_SERVER_ERROR"
+                  message:
+                    type: string
+                    example: "error message"
+  /v1/users/carts/{skuId}:
+    put:
+      security:
+        - BearerAuth: []
+      tags:
+        - User
+      summary: Edit user cart
+      description: Edit an existing user cart item
+      parameters:
+        - in: path
+          name: skuId
+          required: true
+          description: product sku ID, must be an integer and greater than or equal 1
+          schema:
+            type: integer
+            example: 1
+            min: 1
+      requestBody:
+        $ref: '#/components/requestBodies/UpdateCartItemBody'
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Response'
+                  - type: object
+                    properties:
+                      code:
+                        type: string
+                        example: "UPDATED"
+                      message:
+                        type: string
+                        example: "update successful"
+                      data:
+                        $ref: '#/components/schemas/CartItem'
+        '400':
+          description: bad request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "BAD_REQUEST"
+                  message:
+                    type: string
+                    example: "Quantity is required"
+        '401':
+          description: unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "UNAUTHORIZED"
+                  message:
+                    type: string
+                    example: "invalid credential"
+        '404':
+          description: not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "NOT_FOUND"
+                  message:
+                    type: string
+                    example: "sku not found"
+        '409':
+          description: conflict
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "CONFLICT"
+                  message:
+                    type: string
+                    example: "sku quantity not enough"
         '500':
           description: internal server error
           content:
@@ -2380,10 +2482,28 @@ components:
                 example: 1   
               notes:
                 type: string
+                maxLength: 50
                 example: this is note
               skuId:
                 type: integer
                 example: 1
+    UpdateCartItemBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              quantity:
+                type: integer
+                min: 1
+                example: 10
+                description: quantity is required if `notes` field is empty
+              notes:
+                type: string
+                maxLength: 50
+                example: this is a note
+                description: notes is required if `quantity` field is empty
     AddressBody:
       required: true
       content:
