@@ -55,7 +55,7 @@ func TestGetShopVoucher(t *testing.T) {
 			},
 		},
 		{
-			description: "should return error when internal server error",
+			description: "should return error with code 500 when internal server error",
 			input: input{
 				slug:    slug,
 				voucher: nil,
