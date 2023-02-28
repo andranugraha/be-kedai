@@ -87,7 +87,7 @@ func NewRouter(cfg *RouterConfig) *gin.Engine {
 
 		product := v1.Group("/products")
 		{
-			product.GET("/recommendation", cfg.ProductHandler.GetRecommendation)
+			product.GET("/recommendations", cfg.ProductHandler.GetRecommendation)
 			category := product.Group("/categories")
 			{
 				category.GET("", cfg.ProductHandler.GetCategories)
