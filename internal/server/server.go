@@ -76,21 +76,22 @@ func createRouter() *gin.Engine {
 		DB: db,
 	})
 
+	shopService := shopServicePackage.NewShopService(&shopServicePackage.ShopSConfig{
+		ShopRepository: shopRepo,
+	})
+
 	shopVoucherRepo := shopRepoPackage.NewShopVoucherRepository(&shopRepoPackage.ShopVoucherRConfig{
 		DB: db,
 	})
 
 	shopVoucherService := shopServicePackage.NewShopVoucherService(&shopServicePackage.ShopVoucherSConfig{
 		ShopVoucherRepository: shopVoucherRepo,
-	})
-
-	shopService := shopServicePackage.NewShopService(&shopServicePackage.ShopSConfig{
-		ShopRepository:     shopRepo,
-		ShopVoucherService: shopVoucherService,
+		ShopService: shopService,
 	})
 
 	shopHandler := shopHandlerPackage.New(&shopHandlerPackage.HandlerConfig{
 		ShopService: shopService,
+		ShopVoucherService: shopVoucherService,
 	})
 
 	userCache := userCache.NewUserCache(&userCache.UserCConfig{
