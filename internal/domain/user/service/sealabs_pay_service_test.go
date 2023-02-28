@@ -119,7 +119,7 @@ func TestGetSealabsPaysByUserID(t *testing.T) {
 				SealabsPayRepo: sealabsRepo,
 			})
 
-			actualData, actualErr := sealabsPayService.GetSealabsPaysUserID(tc.input.userId)
+			actualData, actualErr := sealabsPayService.GetSealabsPaysByUserID(tc.input.userId)
 
 			assert.Equal(t, tc.expected.data, actualData)
 			assert.Equal(t, tc.expected.err, actualErr)

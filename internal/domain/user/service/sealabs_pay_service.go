@@ -8,7 +8,7 @@ import (
 )
 
 type SealabsPayService interface {
-	GetSealabsPaysUserID(userID int) ([]*model.SealabsPay, error)
+	GetSealabsPaysByUserID(userID int) ([]*model.SealabsPay, error)
 	RegisterSealabsPay(*dto.CreateSealabsPayRequest) (*model.SealabsPay, error)
 }
 
@@ -26,7 +26,7 @@ func NewSealabsPayService(config *SealabsPaySConfig) SealabsPayService {
 	}
 }
 
-func (s *sealabsPayServiceImpl) GetSealabsPaysUserID(userID int) ([]*model.SealabsPay, error) {
+func (s *sealabsPayServiceImpl) GetSealabsPaysByUserID(userID int) ([]*model.SealabsPay, error) {
 	return s.sealabsPayRepo.GetByUserID(userID)
 }
 
