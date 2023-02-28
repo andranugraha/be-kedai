@@ -1,6 +1,7 @@
 package service_test
 
 import (
+	"errors"
 	spErr "kedai/backend/be-kedai/internal/common/error"
 	"kedai/backend/be-kedai/internal/domain/user/dto"
 	"kedai/backend/be-kedai/internal/domain/user/model"
@@ -64,6 +65,64 @@ func TestRegisterSealabsPay(t *testing.T) {
 
 			assert.Equal(t, test.want, got)
 			assert.ErrorIs(t, test.wantErr, err)
+		})
+	}
+}
+
+func TestGetSealabsPaysByUserID(t *testing.T) {
+	type input struct {
+		userId     int
+		mockReturn []*model.SealabsPay
+		mockErr    error
+	}
+	type expected struct {
+		data []*model.SealabsPay
+		err  error
+	}
+
+	tests := []struct {
+		description string
+		input
+		expected
+	}{
+		{
+			description: "should return error when failed to fetch user's sealabs pays",
+			input: input{
+				userId:     1,
+				mockReturn: nil,
+				mockErr:    errors.New("failed to fetch user sealabs pays"),
+			},
+			expected: expected{
+				data: nil,
+				err:  errors.New("failed to fetch user sealabs pays"),
+			},
+		},
+		{
+			description: "should return user sealabs pays data when fetching successed",
+			input: input{
+				userId:     1,
+				mockReturn: []*model.SealabsPay{},
+				mockErr:    nil,
+			},
+			expected: expected{
+				data: []*model.SealabsPay{},
+				err:  nil,
+			},
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.description, func(t *testing.T) {
+			sealabsRepo := mocks.NewSealabsPayRepository(t)
+			sealabsRepo.On("GetByUserID", tc.input.userId).Return(tc.input.mockReturn, tc.input.mockErr)
+			sealabsPayService := service.NewSealabsPayService(&service.SealabsPaySConfig{
+				SealabsPayRepo: sealabsRepo,
+			})
+
+			actualData, actualErr := sealabsPayService.GetSealabsPaysUserID(tc.input.userId)
+
+			assert.Equal(t, tc.expected.data, actualData)
+			assert.Equal(t, tc.expected.err, actualErr)
 		})
 	}
 }
