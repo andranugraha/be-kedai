@@ -1215,7 +1215,7 @@ paths:
           schema:
             type: integer
             example: 1
-            min: 1
+            minimum: 1
       requestBody:
         $ref: '#/components/requestBodies/UpdateCartItemBody'
       responses:
@@ -2940,7 +2940,7 @@ components:
             properties:
               quantity:
                 type: integer
-                min: 1
+                minimum: 1
                 example: 10
                 description: quantity is required if `notes` field is empty
               notes:
