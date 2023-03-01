@@ -50,6 +50,7 @@ func NewRouter(cfg *RouterConfig) *gin.Engine {
 				userAuthenticated.PUT("/usernames", cfg.UserHandler.UpdateUsername)
 
 				userAuthenticated.POST("/request-password-change", cfg.UserHandler.RequestPasswordChange)
+				userAuthenticated.POST("/complete-password-change", cfg.UserHandler.CompletePasswordChange)
 
 				profile := userAuthenticated.Group("/profiles")
 				{
