@@ -30,6 +30,7 @@ type UserService interface {
 	UpdateEmail(userId int, request *dto.UpdateEmailRequest) (*dto.UpdateEmailResponse, error)
 	UpdateUsername(userId int, requst *dto.UpdateUsernameRequest) (*dto.UpdateUsernameResponse, error)
 	RequestPasswordChange(request *dto.RequestPasswordChangeRequest) error
+	CompletePasswordChange(request *dto.CompletePasswordChangeRequest) error
 	ValidatePasswordChange(request *dto.RequestPasswordChangeRequest, user *model.User) error
 	SignOut(*dto.UserLogoutRequest) error
 }
@@ -304,24 +305,47 @@ func (s *userServiceImpl) RequestPasswordChange(request *dto.RequestPasswordChan
 }
 
 func (s *userServiceImpl) ValidatePasswordChange(request *dto.RequestPasswordChangeRequest, user *model.User) error {
-	isValid := hash.ComparePassword(user.Password, request.CurrentPassword)
-	if !isValid {
+	isValidPassword := hash.ComparePassword(user.Password, request.CurrentPassword)
+	if !isValidPassword {
 		return errs.ErrInvalidCredential
 	}
 
-	isValid = hash.ComparePassword(user.Password, request.NewPassword)
-	if isValid {
+	isInvalidPassword := hash.ComparePassword(user.Password, request.NewPassword)
+	if isInvalidPassword {
 		return errs.ErrSamePassword
 	}
 
-	isValid = credential.VerifyPassword(request.NewPassword)
-	if !isValid {
+	isValidPassword = credential.VerifyPassword(request.NewPassword)
+	if !isValidPassword {
 		return errs.ErrInvalidPasswordPattern
 	}
 
-	isValid = credential.VerifyChangePassword(request.CurrentPassword, request.NewPassword, user.Username)
-	if !isValid {
+	isValidPassword = credential.VerifyChangePassword(request.CurrentPassword, request.NewPassword, user.Username)
+	if !isValidPassword {
 		return errs.ErrInvalidPasswordPattern
+	}
+
+	return nil
+}
+
+func (s *userServiceImpl) CompletePasswordChange(request *dto.CompletePasswordChangeRequest) error {
+	newPassword, verifcationCode, err := s.redis.FindUserPasswordAndVerificationCode(request.UserId)
+	if err != nil {
+		return err
+	}
+
+	if verifcationCode != request.VerificationCode {
+		return errs.ErrIncorrectVerificationCode
+	}
+
+	_, err = s.repository.UpdatePassword(request.UserId, newPassword)
+	if err != nil {
+		return err
+	}
+
+	err = s.redis.DeleteAllByID(request.UserId)
+	if err != nil {
+		return err
 	}
 
 	return nil
