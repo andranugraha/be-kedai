@@ -351,6 +351,78 @@ paths:
                   message:
                     type: string
                     example: "error message"
+  /v1/users/google-register:
+    post:
+      tags:
+        - User
+      summary: User register with google
+      description: User register with google to get auth token and refresh token
+      requestBody:
+        $ref: '#/components/requestBodies/GoogleRegisterUserBody'
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Response'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/Token'
+        '400':
+          description: bad request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "BAD_REQUEST"
+                  message:
+                    type: string
+                    example: "Credential is required"
+        '409':
+          description: duplicate entry
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "EMAIL_ALREADY_REGISTERED"
+                  message:
+                    type: string
+                    example: "User already exist"
+        '422':
+          description: invalid password pattern
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "INVALID_PASSWORD_PATTERN"
+                  message:
+                    type: string
+                    example: "invalid password pattern"
+        '500':
+          description: internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "INTERNAL_SERVER_ERROR"
+                  message:
+                    type: string
+                    example: "error message"                
   /v1/users/google-login:
     post:
       tags:
@@ -1143,7 +1215,7 @@ paths:
           schema:
             type: integer
             example: 1
-            min: 1
+            minimum: 1
       requestBody:
         $ref: '#/components/requestBodies/UpdateCartItemBody'
       responses:
@@ -1405,6 +1477,100 @@ paths:
                         example: 'success'
                       data:
                         $ref: '#/components/schemas/UserAddress'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "BAD_REQUEST"
+                  message:
+                    type: string
+                    example: "error message"
+        '401':
+          description: unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "UNAUTHORIZED"
+                  message:
+                    type: string
+                    example: "invalid credential"            
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "ADDRESS_NOT_FOUND"
+                  message:
+                    type: string
+                    example: "error message"         
+        '409':
+          description: Conflict
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "MUST_HAVE_AT_LEAST_ONE_DEFAULT_ADDRESS"
+                  message:
+                    type: string
+                    example: "must have at least one default address"            
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "INTERNAL_SERVER_ERROR"
+                  message:
+                    type: string
+                    example: "error message"
+    delete:
+      security:
+        - BearerAuth: []
+      tags:
+        - User
+      summary: Delete existing user address
+      description: Delete user address using address id
+      parameters:
+        - in: path
+          name: addressId
+          required: true
+          description: Address Id of the address to be deleted
+          schema:
+            type: integer
+            example: 1
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "OK"
+                  message:
+                    type: string
+                    example: "success"
         '400':
           description: Bad Request
           content:
@@ -2723,6 +2889,33 @@ components:
                 type: string
                 format: email
                 example: "googlejwttokenhere"
+    GoogleRegisterUserBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - credential
+              - username
+              - password
+            properties:
+              credential:
+                type: string
+                format: jwt
+                example: "googlejwttokenhere"     
+              username:
+                type: string
+                minLength: 5
+                maxLength: 30
+                example: "Acong123"
+                description: username must includes at least one letter (case insensitive). May also includes number, underscore, or period
+              password:
+                type: string
+                minLength: 8
+                maxLength: 16
+                example: "Password123"
+                description: Password must include at least one uppercase letter, one lowercase letter, and one numeric. Also password must not include email or username.
     UserLogoutBody:
       required: true
       content:
@@ -2841,7 +3034,7 @@ components:
             properties:
               quantity:
                 type: integer
-                min: 1
+                minimum: 1
                 example: 10
                 description: quantity is required if `notes` field is empty
               notes:
