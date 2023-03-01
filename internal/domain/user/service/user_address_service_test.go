@@ -328,6 +328,7 @@ func TestGetAllUserAddress(t *testing.T) {
 
 func TestUpdateUserAddress(t *testing.T) {
 	var defaultAddressId = 1
+	var falseValue = false
 	type input struct {
 		addressId   int
 		data        *dto.AddressRequest
@@ -395,6 +396,7 @@ func TestUpdateUserAddress(t *testing.T) {
 					SubdistrictID: 1,
 					ID:            1,
 					UserID:        1,
+					IsDefault:     &falseValue,
 				},
 				err: errs.ErrMustHaveAtLeastOneDefaultAddress,
 				beforeTests: func(mockUserAddressRepo *mocks.UserAddressRepository, mockSubdistrictService *mocks.SubdistrictService, mockDistrictService *mocks.DistrictService, mockCityService *mocks.CityService, mockProvinceService *mocks.ProvinceService, mockUserProfileService *mocks.UserProfileService) {
