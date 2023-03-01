@@ -13,6 +13,7 @@ type UserAddressService interface {
 	UpdateUserAddress(*dto.AddressRequest) (*model.UserAddress, error)
 	GetAllUserAddress(userId int) ([]*model.UserAddress, error)
 	PreCheckAddress(*dto.AddressRequest) (*model.UserAddress, error)
+	DeleteUserAddress(addressId int, userId int) error
 }
 
 type userAddressService struct {
@@ -129,4 +130,27 @@ func (s *userAddressService) UpdateUserAddress(newAddress *dto.AddressRequest) (
 	}
 
 	return address, nil
+}
+
+func (s *userAddressService) DeleteUserAddress(addressId int, userId int) error {
+	address, err := s.userAddressRepo.GetUserAddressByIdAndUserId(addressId, userId)
+	if err != nil {
+		return err
+	}
+
+	profile, err := s.userProfileService.GetProfile(userId)
+	if err != nil {
+		return err
+	}
+
+	if profile.DefaultAddressID != nil && *profile.DefaultAddressID == address.ID {
+		return errs.ErrMustHaveAtLeastOneDefaultAddress
+	}
+
+	err = s.userAddressRepo.DeleteUserAddress(addressId, userId)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
