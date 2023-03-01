@@ -1151,6 +1151,25 @@ func TestCompletePasswordReset(t *testing.T) {
 			},
 		},
 		{
+			description: "should return error when DeleteAllByID failed",
+			input: input{
+				request: &dto.CompletePasswordResetRequest{
+					Token:       token,
+					NewPassword: "newPassword123",
+				},
+				beforeTest: func(ur *mocks.UserRepository, uc *mocks.UserCache) {
+					uc.On("FindResetPasswordToken", token).Return(1, nil)
+					ur.On("GetByID", 1).Return(&model.User{Username: "asd", ID: 1}, nil)
+					ur.On("UpdatePassword", 1, "newPassword123").Return(nil, nil)
+					uc.On("DeleteResetPasswordToken", token).Return(nil)
+					uc.On("DeleteAllByID", 1).Return(errs.ErrUserDoesNotExist)
+				},
+			},
+			expected: expected{
+				err: errs.ErrUserDoesNotExist,
+			},
+		},
+		{
 			description: "should return nil when success",
 			input: input{
 				request: &dto.CompletePasswordResetRequest{
@@ -1162,6 +1181,7 @@ func TestCompletePasswordReset(t *testing.T) {
 					ur.On("GetByID", 1).Return(&model.User{Username: "asd", ID: 1}, nil)
 					ur.On("UpdatePassword", 1, "newPassword123").Return(nil, nil)
 					uc.On("DeleteResetPasswordToken", token).Return(nil)
+					uc.On("DeleteAllByID", 1).Return(nil)
 				},
 			},
 			expected: expected{

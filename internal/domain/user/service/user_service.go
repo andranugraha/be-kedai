@@ -401,5 +401,10 @@ func (s *userServiceImpl) CompletePasswordReset(request *dto.CompletePasswordRes
 		return err
 	}
 
+	err = s.redis.DeleteAllByID(userId)
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
