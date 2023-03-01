@@ -906,6 +906,24 @@ func TestCompletePasswordChange(t *testing.T) {
 			},
 		},
 		{
+			description: "should return error when DeleteUserPasswordAndVerificationCode failed",
+			input: input{
+				request: &dto.CompletePasswordChangeRequest{
+					UserId:           1,
+					VerificationCode: verifcationCode,
+				},
+				beforeTest: func(ur *mocks.UserRepository, uc *mocks.UserCache) {
+					uc.On("FindUserPasswordAndVerificationCode", 1).Return(newPassword, verifcationCode, nil)
+					ur.On("UpdatePassword", 1, mock.Anything).Return(nil, nil)
+					uc.On("DeleteAllByID", 1).Return(nil)
+					uc.On("DeleteUserPasswordAndVerificationCode", 1).Return(errs.ErrUserDoesNotExist)
+				},
+			},
+			expected: expected{
+				err: errs.ErrUserDoesNotExist,
+			},
+		},
+		{
 			description: "should return nil when success",
 			input: input{
 				request: &dto.CompletePasswordChangeRequest{
@@ -916,6 +934,7 @@ func TestCompletePasswordChange(t *testing.T) {
 					uc.On("FindUserPasswordAndVerificationCode", 1).Return(newPassword, verifcationCode, nil)
 					ur.On("UpdatePassword", 1, mock.Anything).Return(nil, nil)
 					uc.On("DeleteAllByID", 1).Return(nil)
+					uc.On("DeleteUserPasswordAndVerificationCode", 1).Return(nil)
 				},
 			},
 			expected: expected{

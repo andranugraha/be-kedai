@@ -1489,7 +1489,7 @@ func TestRequestPasswordChange(t *testing.T) {
 				UserService: userService,
 			}
 			h := handler.New(&cfg)
-			c.Request, _ = http.NewRequest("POST", "/v1/users/request-password-change", test.MakeRequestBody(tc.input.request))
+			c.Request, _ = http.NewRequest("POST", "/v1/users/passwords/change-request", test.MakeRequestBody(tc.input.request))
 
 			h.RequestPasswordChange(c)
 
@@ -1535,11 +1535,11 @@ func TestCompletePasswordChange(t *testing.T) {
 			description: "should return error ErrIncorrectVerificationCode and status Bad Request when CompletePasswordChange failed",
 			input: input{
 				request: &dto.CompletePasswordChangeRequest{
-					VerificationCode: "asdasdasd",
+					VerificationCode: "123456",
 				},
 				beforeTests: func(mockUserService *mocks.UserService) {
 					mockUserService.On("CompletePasswordChange", &dto.CompletePasswordChangeRequest{
-						VerificationCode: "asdasdasd",
+						VerificationCode: "123456",
 						UserId:           1,
 					}).Return(errs.ErrIncorrectVerificationCode)
 				},
@@ -1556,11 +1556,11 @@ func TestCompletePasswordChange(t *testing.T) {
 			description: "should return ErrVerficationCodeNotFound and status Bad Request when CompletePasswordChange failed",
 			input: input{
 				request: &dto.CompletePasswordChangeRequest{
-					VerificationCode: "asdasdasd",
+					VerificationCode: "123456",
 				},
 				beforeTests: func(mockUserService *mocks.UserService) {
 					mockUserService.On("CompletePasswordChange", &dto.CompletePasswordChangeRequest{
-						VerificationCode: "asdasdasd",
+						VerificationCode: "123456",
 						UserId:           1,
 					}).Return(errs.ErrVerficationCodeNotFound)
 				},
@@ -1577,11 +1577,11 @@ func TestCompletePasswordChange(t *testing.T) {
 			description: "should return error and status Internal Server Error when CompletePasswordChange failed",
 			input: input{
 				request: &dto.CompletePasswordChangeRequest{
-					VerificationCode: "asdasdasd",
+					VerificationCode: "123456",
 				},
 				beforeTests: func(mockUserService *mocks.UserService) {
 					mockUserService.On("CompletePasswordChange", &dto.CompletePasswordChangeRequest{
-						VerificationCode: "asdasdasd",
+						VerificationCode: "123456",
 						UserId:           1,
 					}).Return(errs.ErrInternalServerError)
 				},
@@ -1598,11 +1598,11 @@ func TestCompletePasswordChange(t *testing.T) {
 			description: "should return ok and status OK when CompletePasswordChange success",
 			input: input{
 				request: &dto.CompletePasswordChangeRequest{
-					VerificationCode: "asdasdasd",
+					VerificationCode: "123456",
 				},
 				beforeTests: func(mockUserService *mocks.UserService) {
 					mockUserService.On("CompletePasswordChange", &dto.CompletePasswordChangeRequest{
-						VerificationCode: "asdasdasd",
+						VerificationCode: "123456",
 						UserId:           1,
 					}).Return(nil)
 				},
@@ -1629,7 +1629,7 @@ func TestCompletePasswordChange(t *testing.T) {
 				UserService: userService,
 			}
 			h := handler.New(&cfg)
-			c.Request, _ = http.NewRequest("POST", "/v1/users/complete-password-change", test.MakeRequestBody(tc.input.request))
+			c.Request, _ = http.NewRequest("POST", "/v1/users/passwords/change-confirmation", test.MakeRequestBody(tc.input.request))
 
 			h.CompletePasswordChange(c)
 
