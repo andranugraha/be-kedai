@@ -41,6 +41,9 @@ func NewRouter(cfg *RouterConfig) *gin.Engine {
 			user.POST("/google-register", cfg.UserHandler.UserRegistrationWithGoogle)
 			user.POST("/google-login", cfg.UserHandler.UserLoginWithGoogle)
 			user.POST("/tokens/refresh", middleware.JWTValidateRefreshToken, cfg.UserHandler.RenewSession)
+
+			user.POST("/passwords/reset-request", cfg.UserHandler.RequestPasswordReset)
+			user.POST("/passwords/reset-confirmation", cfg.UserHandler.CompletePasswordReset)
 			userAuthenticated := user.Group("", middleware.JWTAuthorization, cfg.UserHandler.GetSession)
 			{
 				userAuthenticated.GET("", cfg.UserHandler.GetUserByID)
