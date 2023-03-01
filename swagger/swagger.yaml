@@ -1563,16 +1563,14 @@ paths:
           content:
             application/json:
               schema:
-                allOf:
-                  - $ref: '#/components/schemas/Response'
-                  - type: object
-                    properties:
-                      code:
-                        example: 'OK'
-                      message:
-                        example: 'success'
-                      data:
-                        $ref: '#/components/schemas/UserAddress'
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "OK"
+                  message:
+                    type: string
+                    example: "success"
         '400':
           description: Bad Request
           content:
