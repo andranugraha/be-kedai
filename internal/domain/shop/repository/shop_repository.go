@@ -15,19 +15,16 @@ type ShopRepository interface {
 }
 
 type shopRepositoryImpl struct {
-	db          *gorm.DB
-	voucherRepo ShopVoucherRepository
+	db *gorm.DB
 }
 
 type ShopRConfig struct {
-	DB          *gorm.DB
-	VoucherRepo ShopVoucherRepository
+	DB *gorm.DB
 }
 
 func NewShopRepository(cfg *ShopRConfig) ShopRepository {
 	return &shopRepositoryImpl{
-		db:          cfg.DB,
-		voucherRepo: cfg.VoucherRepo,
+		db: cfg.DB,
 	}
 }
 
@@ -70,13 +67,6 @@ func (r *shopRepositoryImpl) FindShopBySlug(slug string) (*model.Shop, error) {
 			return nil, errs.ErrShopNotFound
 		}
 	}
-
-	voucher, errVoucher := r.voucherRepo.GetShopVoucher(shop.ID)
-	if errVoucher != nil {
-		return nil, errVoucher
-	}
-
-	shop.ShopVoucher = voucher
 
 	return &shop, nil
 }

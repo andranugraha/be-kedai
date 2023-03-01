@@ -2021,6 +2021,51 @@ paths:
                   message:
                     type: string
                     example: "error message"
+  /v1/shops/{slug}/vouchers:
+    get:
+      tags:
+        - Shop
+      summary: Get shop voucher
+      description: Get shop list of available vouchers
+      parameters:
+        - in: path
+          name: slug
+          description: Slug code of chosen shop
+          required: true
+          schema:
+            type: string
+            example: "shop"
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Response'
+                  - type: object
+                    properties:
+                      code:
+                        example: "OK"
+                      message:
+                        example: "ok"
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/ShopVoucher'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "INTERNAL_SERVER_ERROR"
+                  message:
+                    type: string
+                    example: "error message"
   /v1/users/sealabs-pays:
     get:
       security:
@@ -2036,7 +2081,7 @@ paths:
             application/json:
               schema:
                 allOf:
-                  - $ref: '#/components/schemas/Reponse'
+                  - $ref: '#/components/schemas/Response'
                   - type: object
                     properties:
                       data:
@@ -2218,10 +2263,6 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/ShopCategory'
-        shopVouchers:
-          type: array
-          items:
-            $ref: '#/components/schemas/ShopVoucher'
     ShopCategory:
       type: object
       properties:
