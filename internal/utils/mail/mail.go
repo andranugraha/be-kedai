@@ -1,10 +1,11 @@
 package mail
 
 import (
-	"fmt"
+	"context"
 	"kedai/backend/be-kedai/config"
+	"time"
 
-	"gopkg.in/gomail.v2"
+	"github.com/mailgun/mailgun-go/v4"
 )
 
 type MailUtils interface {
@@ -12,27 +13,30 @@ type MailUtils interface {
 }
 
 type mailUtilsImpl struct {
-	dialer *gomail.Dialer
+	mailer *mailgun.MailgunImpl
 }
 
 type MailUtilsConfig struct {
-	Dialer *gomail.Dialer
+	Mailer *mailgun.MailgunImpl
 }
 
 func NewMailUtils(cfg *MailUtilsConfig) MailUtils {
 	return &mailUtilsImpl{
-		dialer: cfg.Dialer,
+		mailer: cfg.Mailer,
 	}
 }
 
 func (u *mailUtilsImpl) SendUpdatePasswordEmail(receiverEmail string, verificationCode string) error {
-	msg := gomail.NewMessage()
-	msg.SetHeader("From", config.GetEnv("MAILER_USERNAME", ""))
-	msg.SetHeader("To", receiverEmail)
-	msg.SetHeader("Subject", "Update Password")
-	msg.SetBody("text/html", fmt.Sprintf("Your verification code is: %s", verificationCode))
+	sender := config.GetEnv("MAILGUN_SENDER", "Support@kedai.com")
+	subject := "Update Password Verification Code"
+	body := "Your verification code is: " + verificationCode
 
-	err := u.dialer.DialAndSend(msg)
+	msg := u.mailer.NewMessage(sender, subject, body, receiverEmail)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
+	defer cancel()
+
+	_, _, err := u.mailer.Send(ctx, msg)
+
 	if err != nil {
 		return err
 	}

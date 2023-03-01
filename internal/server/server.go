@@ -29,9 +29,9 @@ import (
 func createRouter() *gin.Engine {
 	db := connection.GetDB()
 	redis := connection.GetCache()
-	dialer := connection.GetMailer()
+	mailer := connection.GetMailer()
 
-	mailUtils := mail.NewMailUtils(&mail.MailUtilsConfig{Dialer: dialer})
+	mailUtils := mail.NewMailUtils(&mail.MailUtilsConfig{Mailer: mailer})
 	randomUtils := random.NewRandomUtils(&random.RandomUtilsConfig{})
 	productRepo := productRepoPackage.NewProductRepository(&productRepoPackage.ProductRConfig{
 		DB: db,
