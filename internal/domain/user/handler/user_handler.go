@@ -292,3 +292,30 @@ func (h *Handler) RequestPasswordChange(c *gin.Context) {
 
 	response.Success(c, http.StatusOK, code.OK, "ok", nil)
 }
+
+func (h *Handler) CompletePasswordChange(c *gin.Context) {
+	var request dto.CompletePasswordChangeRequest
+	err := c.ShouldBindJSON(&request)
+	if err != nil {
+		response.ErrorValidator(c, http.StatusBadRequest, err)
+		return
+	}
+	request.UserId = c.GetInt("userId")
+
+	err = h.userService.CompletePasswordChange(&request)
+	if err != nil {
+		if errors.Is(err, errs.ErrIncorrectVerificationCode) {
+			response.Error(c, http.StatusBadRequest, code.INCORRECT_VERIFICATION_CODE, err.Error())
+			return
+		}
+		if errors.Is(err, errs.ErrVerficationCodeNotFound) {
+			response.Error(c, http.StatusNotFound, code.NOT_FOUND, err.Error())
+			return
+		}
+
+		response.Error(c, http.StatusInternalServerError, code.INTERNAL_SERVER_ERROR, errs.ErrInternalServerError.Error())
+		return
+	}
+
+	response.Success(c, http.StatusOK, code.OK, "ok", nil)
+}
