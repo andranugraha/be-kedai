@@ -28,8 +28,10 @@ func (r *courierRepositoryImpl) GetByShopID(shopID int) ([]*model.Courier, error
 	var couriers []*model.Courier
 
 	err := r.db.
-		Joins("join courier_services cs ON couriers.id = cs.id").
-		Joins("right join shop_couriers ON cs.id = shop_couriers.id AND shop_couriers.shop_id = ?", shopID).
+		Joins("JOIN courier_services cs ON couriers.id = cs.courier_id").
+		Joins("JOIN shop_couriers ON cs.id = shop_couriers.courier_service_id").
+		Where("shop_couriers.shop_id = ?", shopID).
+		Distinct().
 		Find(&couriers).
 		Error
 
