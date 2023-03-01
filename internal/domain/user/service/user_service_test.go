@@ -647,6 +647,70 @@ func TestUpdateUsername(t *testing.T) {
 	}
 }
 
+func TestSignOut(t *testing.T) {
+	type input struct {
+		data       dto.UserLogoutRequest
+		beforeTest func(*mocks.UserCache)
+	}
+	type expected struct {
+		err error
+	}
+
+	cases := []struct {
+		description string
+		input
+		expected
+	}{
+		{
+			description: "should return error if failed to sign out",
+			input: input{
+				data: dto.UserLogoutRequest{
+					UserId:       1,
+					RefreshToken: "refresh_token",
+					AccessToken:  "access_token",
+				},
+				beforeTest: func(ur *mocks.UserCache) {
+					ur.On("DeleteRefreshTokenAndAccessToken", 1, "refresh_token", "access_token").Return(errors.New("failed to sign out"))
+				},
+			},
+			expected: expected{
+				err: errors.New("failed to sign out"),
+			},
+		},
+		{
+			description: "should return nil if sign out successed",
+			input: input{
+				data: dto.UserLogoutRequest{
+					UserId:       1,
+					RefreshToken: "refresh_token",
+					AccessToken:  "access_token",
+				},
+				beforeTest: func(ur *mocks.UserCache) {
+					ur.On("DeleteRefreshTokenAndAccessToken", 1, "refresh_token", "access_token").Return(nil)
+				},
+			},
+			expected: expected{
+				err: nil,
+			},
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.description, func(t *testing.T) {
+			userCache := mocks.NewUserCache(t)
+			tc.beforeTest(userCache)
+			userService := service.NewUserService(&service.UserSConfig{
+				Redis: userCache,
+			})
+
+			actualErr := userService.SignOut(&tc.input.data)
+
+			assert.Equal(t, tc.expected.err, actualErr)
+		})
+	}
+
+}
+
 func TestRequestPasswordChange(t *testing.T) {
 	hashedPassword, _ := hash.HashAndSalt("Passwrod123")
 	type input struct {
