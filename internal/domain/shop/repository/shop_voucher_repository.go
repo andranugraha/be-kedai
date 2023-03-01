@@ -10,24 +10,24 @@ type ShopVoucherRepository interface {
 	GetShopVoucher(shopId int) ([]*model.ShopVoucher, error)
 }
 
-type shopVoucherImpl struct {
+type shopVoucherRepositoryImpl struct {
 	db *gorm.DB
 }
 
-type ShopVConfig struct {
+type ShopVoucherRConfig struct {
 	DB *gorm.DB
 }
 
-func NewShopVoucherRepository(cfg *ShopVConfig) ShopVoucherRepository {
-	return &shopVoucherImpl{
+func NewShopVoucherRepository(cfg *ShopVoucherRConfig) ShopVoucherRepository {
+	return &shopVoucherRepositoryImpl{
 		db: cfg.DB,
 	}
 }
 
-func (r *shopVoucherImpl) GetShopVoucher(shopId int) ([]*model.ShopVoucher, error) {
+func (r *shopVoucherRepositoryImpl) GetShopVoucher(shopId int) ([]*model.ShopVoucher, error) {
 	var shopVoucher []*model.ShopVoucher
 
-	err := r.db.Where("shop_id = ?", shopId).Find(&shopVoucher).Error
+	err := r.db.Where("shop_id = ?", shopId).Where("now() < expired_at").Find(&shopVoucher).Error
 	if err != nil {
 		return nil, err
 	}

@@ -66,8 +66,10 @@ func createRouter() *gin.Engine {
 	})
 
 	locHandler := locationHandlerPackage.New(&locationHandlerPackage.Config{
-		CityService:     cityService,
-		ProvinceService: provinceService,
+		CityService:        cityService,
+		ProvinceService:    provinceService,
+		DistrictService:    districtService,
+		SubdistrictService: subdistrictService,
 	})
 
 	walletRepo := userRepoPackage.NewWalletRepository(&userRepoPackage.WalletRConfig{
@@ -85,8 +87,18 @@ func createRouter() *gin.Engine {
 		ShopRepository: shopRepo,
 	})
 
+	shopVoucherRepo := shopRepoPackage.NewShopVoucherRepository(&shopRepoPackage.ShopVoucherRConfig{
+		DB: db,
+	})
+
+	shopVoucherService := shopServicePackage.NewShopVoucherService(&shopServicePackage.ShopVoucherSConfig{
+		ShopVoucherRepository: shopVoucherRepo,
+		ShopService:           shopService,
+	})
+
 	shopHandler := shopHandlerPackage.New(&shopHandlerPackage.HandlerConfig{
-		ShopService: shopService,
+		ShopService:        shopService,
+		ShopVoucherService: shopVoucherService,
 	})
 
 	userCache := userCache.NewUserCache(&userCache.UserCConfig{

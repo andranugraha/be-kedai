@@ -71,6 +71,7 @@ func NewRouter(cfg *RouterConfig) *gin.Engine {
 				{
 					carts.POST("", cfg.UserHandler.CreateCartItem)
 					carts.GET("", cfg.UserHandler.GetAllCartItem)
+					carts.PUT("/:skuId", cfg.UserHandler.UpdateCartItem)
 				}
 				addresses := userAuthenticated.Group("/addresses")
 				{
@@ -90,6 +91,8 @@ func NewRouter(cfg *RouterConfig) *gin.Engine {
 		{
 			location.GET("/cities", cfg.LocationHandler.GetCities)
 			location.GET("/provinces", cfg.LocationHandler.GetProvinces)
+			location.GET("/districts", cfg.LocationHandler.GetDistricts)
+			location.GET("/subdistricts", cfg.LocationHandler.GetSubdistricts)
 		}
 
 		product := v1.Group("/products")
@@ -104,6 +107,7 @@ func NewRouter(cfg *RouterConfig) *gin.Engine {
 		shop := v1.Group("/shops")
 		{
 			shop.GET("/:slug", cfg.ShopHandler.FindShopBySlug)
+			shop.GET("/:slug/vouchers", cfg.ShopHandler.GetShopVoucher)
 		}
 	}
 

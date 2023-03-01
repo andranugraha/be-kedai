@@ -41,10 +41,10 @@ func VerifyChangePassword(oldPw string, newPw string, username string) bool {
 		return false
 	}
 
-	if strings.Contains(strings.ToLower(newPw), strings.ToLower(username)) {
-		return false
-	}
+	return !ContainsUsername(newPw, username)
+}
 
-	return true
+func ContainsUsername(pw string, username string) bool {
+	return strings.Contains(strings.ToLower(pw), strings.ToLower(username))
 
 }

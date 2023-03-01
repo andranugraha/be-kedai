@@ -98,6 +98,10 @@ func (s *userServiceImpl) SignUpWithGoogle(userReg *dto.UserRegistrationWithGoog
 		return nil, errs.ErrInvalidPasswordPattern
 	}
 
+	if credential.ContainsUsername(userReg.Password, userReg.Username) {
+		return nil, errs.ErrInvalidPasswordPattern
+	}
+
 	claim, err := google.ValidateGoogleToken(userReg.Credential)
 	if err != nil {
 		return nil, errs.ErrUnauthorized
