@@ -9,3 +9,7 @@ type ProductMedia struct {
 
 	gorm.Model `json:"-"`
 }
+
+func (ProductMedia) TableName() string {
+	return "product_medias"
+}
