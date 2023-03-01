@@ -37,6 +37,19 @@ paths:
                     properties:
                       data:
                         $ref: '#/components/schemas/Wallet'
+        '401':
+          description: unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "UNAUTHORIZED"
+                  message:
+                    type: string
+                    example: "invalid credential"
         '404':
           description: data not found
           content:
@@ -101,6 +114,19 @@ paths:
                   message:
                     type: string
                     example: "pin must be numeric and have 6 characters"
+        '401':
+          description: unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "UNAUTHORIZED"
+                  message:
+                    type: string
+                    example: "invalid credential"
         '409':
           description: User already has a wallet
           content:
@@ -147,6 +173,19 @@ paths:
                     properties:
                       data:
                         $ref: '#/components/schemas/User'
+        '401':
+          description: unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "UNAUTHORIZED"
+                  message:
+                    type: string
+                    example: "invalid credential"
         '404':
           description: not found
           content:
@@ -529,6 +568,19 @@ paths:
                   message:
                     type: string
                     example: error message
+        '401':
+          description: unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "UNAUTHORIZED"
+                  message:
+                    type: string
+                    example: "invalid credential"
         '409':
           description: conflict
           content:
@@ -595,6 +647,19 @@ paths:
                   message:
                     type: string
                     example: error message
+        '401':
+          description: unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "UNAUTHORIZED"
+                  message:
+                    type: string
+                    example: "invalid credential"
         '409':
           description: conflict
           content:
@@ -681,6 +746,19 @@ paths:
                   message:
                     type: string
                     example: error message
+        '401':
+          description: unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "UNAUTHORIZED"
+                  message:
+                    type: string
+                    example: "invalid credential"
         '500':
           description: internal server error
           content:
@@ -694,6 +772,43 @@ paths:
                   message:
                     type: string
                     example: error message
+  /v1/locations/provinces:
+    get:
+      tags:
+        - Location
+      summary: Get province list
+      description: Get list of provinces
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Response'
+                  - type: object
+                    properties:
+                      code:
+                        example: 'OK'
+                      message:
+                        example: 'success'
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Province'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "INTERNAL_SERVER_ERROR"
+                  message:
+                    type: string
+                    example: "error message"                  
   /v1/locations/cities:
     get:
       tags:
@@ -758,6 +873,92 @@ paths:
                   message:
                     type: string
                     example: "error message"
+  /v1/locations/districts:
+    get:
+      tags:
+        - Location
+      summary: Get district list
+      description: Get list of districts (can be filtered by city id)
+      parameters:
+        - in: query
+          name: cityId
+          schema:
+            type: integer
+          description: Filter to get districts by city
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Response'
+                  - type: object
+                    properties:
+                      code:
+                        example: 'OK'
+                      message:
+                        example: 'success'
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/District'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "INTERNAL_SERVER_ERROR"
+                  message:
+                    type: string
+                    example: "error message"
+  /v1/locations/subdistricts:
+    get:
+      tags:
+        - Location
+      summary: Get subdistrict list
+      description: Get list of subdistricts (can be filtered by district id)
+      parameters:
+        - in: query
+          name: districtId
+          schema:
+            type: integer
+          description: Filter to get subdistricts by district
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Response'
+                  - type: object
+                    properties:
+                      code:
+                        example: 'OK'
+                      message:
+                        example: 'success'
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Subdistrict'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "INTERNAL_SERVER_ERROR"
+                  message:
+                    type: string
+                    example: "error message"                              
   /v1/users/carts:
     get:
       security:
@@ -801,6 +1002,19 @@ paths:
                                 type: array
                                 items:
                                   $ref: '#/components/schemas/GetCartItemResponse'
+        '401':
+          description: unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "UNAUTHORIZED"
+                  message:
+                    type: string
+                    example: "invalid credential"
         '500':
           description: Internal server error
           content:
@@ -820,11 +1034,11 @@ paths:
       tags:
         - User
       summary: User add item to cart
-      description: Add item to cart (The first address added is automatically set as default address)
+      description: Add item to user cart
       requestBody:
         $ref: '#/components/requestBodies/AddCartItemBody'
       responses:
-        '200':
+        '201':
           description: successful operation
           content:
             application/json:
@@ -900,6 +1114,108 @@ paths:
                   message:
                     type: string
                     example: "user is shop owner"            
+        '500':
+          description: internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "INTERNAL_SERVER_ERROR"
+                  message:
+                    type: string
+                    example: "error message"
+  /v1/users/carts/{skuId}:
+    put:
+      security:
+        - BearerAuth: []
+      tags:
+        - User
+      summary: Edit user cart
+      description: Edit an existing user cart item
+      parameters:
+        - in: path
+          name: skuId
+          required: true
+          description: product sku ID, must be an integer and greater than or equal 1
+          schema:
+            type: integer
+            example: 1
+            min: 1
+      requestBody:
+        $ref: '#/components/requestBodies/UpdateCartItemBody'
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Response'
+                  - type: object
+                    properties:
+                      code:
+                        type: string
+                        example: "UPDATED"
+                      message:
+                        type: string
+                        example: "update successful"
+                      data:
+                        $ref: '#/components/schemas/CartItem'
+        '400':
+          description: bad request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "BAD_REQUEST"
+                  message:
+                    type: string
+                    example: "Quantity is required"
+        '401':
+          description: unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "UNAUTHORIZED"
+                  message:
+                    type: string
+                    example: "invalid credential"
+        '404':
+          description: not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "NOT_FOUND"
+                  message:
+                    type: string
+                    example: "sku not found"
+        '409':
+          description: conflict
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "CONFLICT"
+                  message:
+                    type: string
+                    example: "sku quantity not enough"
         '500':
           description: internal server error
           content:
@@ -1074,7 +1390,7 @@ paths:
       requestBody:
         $ref: '#/components/requestBodies/AddressBody'
       responses:
-        '201':
+        '200':
           description: successful operation
           content:
             application/json:
@@ -1231,6 +1547,19 @@ paths:
                                 type: array
                                 items:
                                   $ref: '#/components/schemas/UserWishlist'
+        '401':
+          description: unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "UNAUTHORIZED"
+                  message:
+                    type: string
+                    example: "invalid credential"
         '500':
           description: Internal server error
           content:
@@ -1759,6 +2088,19 @@ paths:
                         type: array
                         items:
                           $ref: '#/components/schemas/SealabsPay'
+        '401':
+          description: unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "UNAUTHORIZED"
+                  message:
+                    type: string
+                    example: "invalid credential"
         '500':
           description: Internal server error
           content:
@@ -1836,43 +2178,6 @@ paths:
                   message:
                     type: string
                     example: "sealabs pay already registered"            
-        '500':
-          description: Internal server error
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  code:
-                    type: string
-                    example: "INTERNAL_SERVER_ERROR"
-                  message:
-                    type: string
-                    example: "error message"
-  /v1/locations/provinces:
-    get:
-      tags:
-        - Location
-      summary: Get province list
-      description: Get list of provinces
-      responses:
-        '200':
-          description: Successful operation
-          content:
-            application/json:
-              schema:
-                allOf:
-                  - $ref: '#/components/schemas/Response'
-                  - type: object
-                    properties:
-                      code:
-                        example: 'OK'
-                      message:
-                        example: 'success'
-                      data:
-                        type: array
-                        items:
-                          $ref: '#/components/schemas/Province'
         '500':
           description: Internal server error
           content:
@@ -2522,10 +2827,28 @@ components:
                 example: 1   
               notes:
                 type: string
+                maxLength: 50
                 example: this is note
               skuId:
                 type: integer
                 example: 1
+    UpdateCartItemBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              quantity:
+                type: integer
+                min: 1
+                example: 10
+                description: quantity is required if `notes` field is empty
+              notes:
+                type: string
+                maxLength: 50
+                example: this is a note
+                description: notes is required if `quantity` field is empty
     AddressBody:
       required: true
       content:
