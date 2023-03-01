@@ -11,6 +11,7 @@ type ProductDetail struct {
 	Couriers         []*shopModel.Courier     `json:"couriers" gorm:"->:false"`
 	MinPrice         float64                  `json:"minPrice"`
 	MaxPrice         float64                  `json:"maxPrice"`
+	TotalStock       int                      `json:"totalStock"`
 	PromotionPercent *float64                 `json:"promotionPercent,omitempty"`
 }
 
