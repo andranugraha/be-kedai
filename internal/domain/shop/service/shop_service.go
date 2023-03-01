@@ -34,5 +34,10 @@ func (s *shopServiceImpl) FindShopByUserId(userId int) (*model.Shop, error) {
 }
 
 func (s *shopServiceImpl) FindShopBySlug(slug string) (*model.Shop, error) {
-	return s.shopRepository.FindShopBySlug(slug)
+	shop, err := s.shopRepository.FindShopBySlug(slug)
+	if err != nil {
+		return nil, err
+	}
+
+	return shop, nil
 }

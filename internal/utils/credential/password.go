@@ -1,6 +1,7 @@
 package credential
 
 import (
+	"strings"
 	"unicode"
 
 	"github.com/forPelevin/gomoji"
@@ -32,4 +33,9 @@ func VerifyPassword(pw string) bool {
 	}
 
 	return false
+}
+
+func ContainsUsername(pw string, username string) bool {
+	return strings.Contains(strings.ToLower(pw), strings.ToLower(username))
+
 }
