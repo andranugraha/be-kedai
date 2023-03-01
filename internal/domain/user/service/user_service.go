@@ -278,6 +278,11 @@ func (s *userServiceImpl) RequestPasswordChange(request *dto.RequestPasswordChan
 		return err
 	}
 
+	isValidPassword := hash.ComparePassword(user.Password, request.CurrentPassword)
+	if !isValidPassword {
+		return errs.ErrInvalidCredential
+	}
+
 	err = s.ValidatePasswordChange(request, user)
 	if err != nil {
 		return err
@@ -300,24 +305,18 @@ func (s *userServiceImpl) RequestPasswordChange(request *dto.RequestPasswordChan
 }
 
 func (s *userServiceImpl) ValidatePasswordChange(request *dto.RequestPasswordChangeRequest, user *model.User) error {
-	isValidPassword := hash.ComparePassword(user.Password, request.CurrentPassword)
-	if !isValidPassword {
-		return errs.ErrInvalidCredential
-	}
-
 	isInvalidPassword := hash.ComparePassword(user.Password, request.NewPassword)
 	if isInvalidPassword {
 		return errs.ErrSamePassword
 	}
 
-	isValidPassword = credential.VerifyPassword(request.NewPassword)
+	isValidPassword := credential.VerifyPassword(request.NewPassword)
 	if !isValidPassword {
 		return errs.ErrInvalidPasswordPattern
 	}
 
-	isValidPassword = credential.VerifyChangePassword(request.CurrentPassword, request.NewPassword, user.Username)
-	if !isValidPassword {
-		return errs.ErrInvalidPasswordPattern
+	if credential.ContainsUsername(request.NewPassword, user.Username) {
+		return errs.ErrContainUsername
 	}
 
 	return nil
