@@ -1662,3 +1662,305 @@ func TestCompletePasswordChange(t *testing.T) {
 	}
 
 }
+
+func TestRequestPasswordReset(t *testing.T) {
+	type input struct {
+		request     *dto.RequestPasswordResetRequest
+		beforeTests func(mockUserService *mocks.UserService)
+	}
+	type expected struct {
+		statusCode int
+		response   response.Response
+	}
+	cases := []struct {
+		description string
+		input       input
+		expected    expected
+	}{
+		{
+			description: "should return error bad request when request is nil",
+			input: input{
+				request: &dto.RequestPasswordResetRequest{
+					Email: "",
+				},
+				beforeTests: func(mockUserService *mocks.UserService) {
+				},
+			},
+			expected: expected{
+				statusCode: http.StatusBadRequest,
+				response: response.Response{
+					Code:    code.BAD_REQUEST,
+					Message: "Email is required",
+				},
+			},
+		},
+		{
+			description: "should return error ErrUserDoesNotExist and status Not Found when RequestPasswordReset failed",
+			input: input{
+				request: &dto.RequestPasswordResetRequest{
+					Email: "email@mail.com",
+				},
+				beforeTests: func(mockUserService *mocks.UserService) {
+					mockUserService.On("RequestPasswordReset", &dto.RequestPasswordResetRequest{
+						Email: "email@mail.com",
+					}).Return(errs.ErrUserDoesNotExist)
+				},
+			},
+			expected: expected{
+				statusCode: http.StatusNotFound,
+				response: response.Response{
+					Code:    code.USER_NOT_REGISTERED,
+					Message: errs.ErrUserDoesNotExist.Error(),
+				},
+			},
+		},
+		{
+			description: "should return error and status Internal Server Error when RequestPasswordReset failed",
+			input: input{
+				request: &dto.RequestPasswordResetRequest{
+					Email: "email@mail.com",
+				},
+				beforeTests: func(mockUserService *mocks.UserService) {
+					mockUserService.On("RequestPasswordReset", &dto.RequestPasswordResetRequest{
+						Email: "email@mail.com",
+					}).Return(errs.ErrInternalServerError)
+				},
+			},
+			expected: expected{
+				statusCode: http.StatusInternalServerError,
+				response: response.Response{
+					Code:    code.INTERNAL_SERVER_ERROR,
+					Message: errs.ErrInternalServerError.Error(),
+				},
+			},
+		},
+		{
+			description: "should return ok and status OK when RequestPasswordReset success",
+			input: input{
+				request: &dto.RequestPasswordResetRequest{
+					Email: "email@mail.com",
+				},
+				beforeTests: func(mockUserService *mocks.UserService) {
+					mockUserService.On("RequestPasswordReset", &dto.RequestPasswordResetRequest{
+						Email: "email@mail.com",
+					}).Return(nil)
+				},
+			},
+			expected: expected{
+				statusCode: http.StatusOK,
+				response: response.Response{
+					Code:    code.OK,
+					Message: "ok",
+				},
+			},
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.description, func(t *testing.T) {
+			expectedRes, _ := json.Marshal(tc.expected.response)
+			rec := httptest.NewRecorder()
+			c, _ := gin.CreateTestContext(rec)
+			userService := mocks.NewUserService(t)
+			tc.input.beforeTests(userService)
+			cfg := handler.HandlerConfig{
+				UserService: userService,
+			}
+			h := handler.New(&cfg)
+			c.Request, _ = http.NewRequest("POST", "/v1/users/passwords/reset", test.MakeRequestBody(tc.input.request))
+
+			h.RequestPasswordReset(c)
+
+			assert.Equal(t, tc.expected.statusCode, rec.Code)
+			assert.Equal(t, string(expectedRes), rec.Body.String())
+		})
+	}
+
+}
+
+func TestCompletePasswordReset(t *testing.T) {
+	type input struct {
+		request     *dto.CompletePasswordResetRequest
+		beforeTests func(mockUserService *mocks.UserService)
+	}
+	type expected struct {
+		statusCode int
+		response   response.Response
+	}
+	cases := []struct {
+		description string
+		input       input
+		expected    expected
+	}{
+		{
+			description: "should return error bad request when request is nil",
+			input: input{
+				request: &dto.CompletePasswordResetRequest{
+					Token:       "token",
+					NewPassword: "",
+				},
+				beforeTests: func(mockUserService *mocks.UserService) {
+				},
+			},
+			expected: expected{
+				statusCode: http.StatusBadRequest,
+				response: response.Response{
+					Code:    code.BAD_REQUEST,
+					Message: "NewPassword is required",
+				},
+			},
+		},
+		{
+			description: "should return error ErrResetPasswordTokenNotFound and status Not Found when CompletePasswordReset failed",
+			input: input{
+				request: &dto.CompletePasswordResetRequest{
+					Token:       "0020cf5fdf24ca583b988973fc985abc8910f049191ddfa7ca77dfd5ac705e66",
+					NewPassword: "newPassword123",
+				},
+				beforeTests: func(mockUserService *mocks.UserService) {
+					mockUserService.On("CompletePasswordReset", &dto.CompletePasswordResetRequest{
+						Token:       "0020cf5fdf24ca583b988973fc985abc8910f049191ddfa7ca77dfd5ac705e66",
+						NewPassword: "newPassword123",
+					}).Return(errs.ErrResetPasswordTokenNotFound)
+				},
+			},
+			expected: expected{
+				statusCode: http.StatusNotFound,
+				response: response.Response{
+					Code:    code.NOT_FOUND,
+					Message: errs.ErrResetPasswordTokenNotFound.Error(),
+				},
+			},
+		},
+		{
+			description: "should return error ErrSamePassword and status Bad Request when CompletePasswordReset failed",
+			input: input{
+				request: &dto.CompletePasswordResetRequest{
+					Token:       "0020cf5fdf24ca583b988973fc985abc8910f049191ddfa7ca77dfd5ac705e66",
+					NewPassword: "newPassword123",
+				},
+				beforeTests: func(mockUserService *mocks.UserService) {
+					mockUserService.On("CompletePasswordReset", &dto.CompletePasswordResetRequest{
+						Token:       "0020cf5fdf24ca583b988973fc985abc8910f049191ddfa7ca77dfd5ac705e66",
+						NewPassword: "newPassword123",
+					}).Return(errs.ErrSamePassword)
+				},
+			},
+			expected: expected{
+				statusCode: http.StatusBadRequest,
+				response: response.Response{
+					Code:    code.SAME_PASSWORD,
+					Message: errs.ErrSamePassword.Error(),
+				},
+			},
+		},
+		{
+			description: "should return error ErrInvalidPasswordPattern and status StatusUnprocessableEntitywhen CompletePasswordReset failed",
+			input: input{
+				request: &dto.CompletePasswordResetRequest{
+					Token:       "0020cf5fdf24ca583b988973fc985abc8910f049191ddfa7ca77dfd5ac705e66",
+					NewPassword: "newPassword123",
+				},
+				beforeTests: func(mockUserService *mocks.UserService) {
+					mockUserService.On("CompletePasswordReset", &dto.CompletePasswordResetRequest{
+						Token:       "0020cf5fdf24ca583b988973fc985abc8910f049191ddfa7ca77dfd5ac705e66",
+						NewPassword: "newPassword123",
+					}).Return(errs.ErrInvalidPasswordPattern)
+				},
+			},
+			expected: expected{
+				statusCode: http.StatusUnprocessableEntity,
+				response: response.Response{
+					Code:    code.INVALID_PASSWORD_PATTERN,
+					Message: errs.ErrInvalidPasswordPattern.Error(),
+				},
+			},
+		},
+		{
+			description: "should return error ErrContainUsername and status StatusUnprocessableEntitywhen CompletePasswordReset failed",
+			input: input{
+				request: &dto.CompletePasswordResetRequest{
+					Token:       "0020cf5fdf24ca583b988973fc985abc8910f049191ddfa7ca77dfd5ac705e66",
+					NewPassword: "newPassword123",
+				},
+				beforeTests: func(mockUserService *mocks.UserService) {
+					mockUserService.On("CompletePasswordReset", &dto.CompletePasswordResetRequest{
+						Token:       "0020cf5fdf24ca583b988973fc985abc8910f049191ddfa7ca77dfd5ac705e66",
+						NewPassword: "newPassword123",
+					}).Return(errs.ErrContainUsername)
+				},
+			},
+			expected: expected{
+				statusCode: http.StatusUnprocessableEntity,
+				response: response.Response{
+					Code:    code.PASSWORD_CONTAIN_USERNAME,
+					Message: errs.ErrContainUsername.Error(),
+				},
+			},
+		},
+		{
+			description: "should return error ErrInternalServerError and status Internal Server Error CompletePasswordReset failed",
+			input: input{
+				request: &dto.CompletePasswordResetRequest{
+					Token:       "0020cf5fdf24ca583b988973fc985abc8910f049191ddfa7ca77dfd5ac705e66",
+					NewPassword: "newPassword123",
+				},
+				beforeTests: func(mockUserService *mocks.UserService) {
+					mockUserService.On("CompletePasswordReset", &dto.CompletePasswordResetRequest{
+						Token:       "0020cf5fdf24ca583b988973fc985abc8910f049191ddfa7ca77dfd5ac705e66",
+						NewPassword: "newPassword123",
+					}).Return(errs.ErrInternalServerError)
+				},
+			},
+			expected: expected{
+				statusCode: http.StatusInternalServerError,
+				response: response.Response{
+					Code:    code.INTERNAL_SERVER_ERROR,
+					Message: errs.ErrInternalServerError.Error(),
+				},
+			},
+		},
+		{
+			description: "should return nil and status OK when CompletePasswordReset success",
+			input: input{
+				request: &dto.CompletePasswordResetRequest{
+					Token:       "0020cf5fdf24ca583b988973fc985abc8910f049191ddfa7ca77dfd5ac705e66",
+					NewPassword: "newPassword123",
+				},
+				beforeTests: func(mockUserService *mocks.UserService) {
+					mockUserService.On("CompletePasswordReset", &dto.CompletePasswordResetRequest{
+						Token:       "0020cf5fdf24ca583b988973fc985abc8910f049191ddfa7ca77dfd5ac705e66",
+						NewPassword: "newPassword123",
+					}).Return(nil)
+				},
+			},
+			expected: expected{
+				statusCode: http.StatusOK,
+				response: response.Response{
+					Code:    code.OK,
+					Message: "ok",
+				},
+			},
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.description, func(t *testing.T) {
+			expectedRes, _ := json.Marshal(tc.expected.response)
+			rec := httptest.NewRecorder()
+			c, _ := gin.CreateTestContext(rec)
+			userService := mocks.NewUserService(t)
+			tc.input.beforeTests(userService)
+			cfg := handler.HandlerConfig{
+				UserService: userService,
+			}
+			h := handler.New(&cfg)
+			c.Request, _ = http.NewRequest("POST", "/v1/users/passwords/reset-confirmation", test.MakeRequestBody(tc.input.request))
+
+			h.CompletePasswordReset(c)
+
+			assert.Equal(t, tc.expected.statusCode, rec.Code)
+			assert.Equal(t, string(expectedRes), rec.Body.String())
+		})
+	}
+}
