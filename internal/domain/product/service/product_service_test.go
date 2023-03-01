@@ -1,6 +1,8 @@
 package service_test
 
 import (
+	"errors"
+	commonDto "kedai/backend/be-kedai/internal/common/dto"
 	errorResponse "kedai/backend/be-kedai/internal/common/error"
 	"kedai/backend/be-kedai/internal/domain/product/dto"
 	"kedai/backend/be-kedai/internal/domain/product/model"
@@ -163,6 +165,97 @@ func TestGetRecommendation(t *testing.T) {
 			})
 
 			result, err := productService.GetRecommendationByCategory(tc.input.productId, tc.input.categoryid)
+
+			assert.Equal(t, tc.expected.result, result)
+			assert.Equal(t, tc.expected.err, err)
+		})
+	}
+}
+
+func TestProductSearchFiltering(t *testing.T) {
+	var (
+		validReq = dto.ProductSearchFilterRequest{
+			Keyword: "test",
+		}
+		invalidReq = dto.ProductSearchFilterRequest{
+			Keyword: "  ",
+		}
+		product = []*dto.ProductResponse{}
+		res     = &commonDto.PaginationResponse{
+			Data: product,
+			TotalRows: 1,
+			TotalPages: 1,
+		}
+		emptyRes = &commonDto.PaginationResponse{
+			Data: product,
+		}
+	)
+	type input struct {
+		dto        dto.ProductSearchFilterRequest
+		err        error
+		beforeTest func(*mocks.ProductRepository)
+	}
+	type expected struct {
+		result *commonDto.PaginationResponse
+		err    error
+	}
+
+	type cases struct {
+		description string
+		input
+		expected
+	}
+
+	for _, tc := range []cases{
+		{
+			description: "should return pagination response with product list as data when success",
+			input: input{
+				dto: validReq,
+				err: nil,
+				beforeTest: func(pr *mocks.ProductRepository) {
+					pr.On("ProductSearchFiltering", validReq).Return(product, int64(1), 1, nil)
+				},
+			},
+			expected: expected{
+				result: res,
+				err:    nil,
+			},
+		},
+		{
+			description: "should return error when internal server error",
+			input: input{
+				dto: validReq,
+				err: nil,
+				beforeTest: func(pr *mocks.ProductRepository) {
+					pr.On("ProductSearchFiltering", validReq).Return(nil, int64(0), 0, errors.New("error"))
+				},
+			},
+			expected: expected{
+				result: nil,
+				err:    errors.New("error"),
+			},
+		},
+		{
+			description: "should return pagination response with empty product list as data when keyword is invalid",
+			input: input{
+				dto: invalidReq,
+				err: nil,
+				beforeTest: func(pr *mocks.ProductRepository) {},
+			},
+			expected: expected{
+				result: emptyRes,
+				err:    nil,
+			},
+		},
+	} {
+		t.Run(tc.description, func(t *testing.T) {
+			mockRepo := new(mocks.ProductRepository)
+			tc.beforeTest(mockRepo)
+			service := service.NewProductService(&service.ProductSConfig{
+				ProductRepository: mockRepo,
+			})
+
+			result, err := service.ProductSearchFiltering(tc.dto)
 
 			assert.Equal(t, tc.expected.result, result)
 			assert.Equal(t, tc.expected.err, err)
