@@ -41,7 +41,11 @@ func VerifyChangePassword(oldPw string, newPw string, username string) bool {
 		return false
 	}
 
-	return !ContainsUsername(newPw, username)
+	if ContainsUsername(newPw, username) {
+		return false
+	}
+
+	return true
 }
 
 func ContainsUsername(pw string, username string) bool {
