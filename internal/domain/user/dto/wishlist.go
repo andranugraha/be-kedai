@@ -18,7 +18,7 @@ type GetUserWishlistsRequest struct {
 	MinRating  int     `form:"minRating"`
 	MinPrice   float64 `form:"minPrice"`
 	MaxPrice   float64 `form:"maxPrice"`
-	CityIds    []int   `form:"cityIds"`
+	CityIds    []int
 	Sort       string  `form:"sort"`
 	Limit      int     `form:"limit"`
 	Page       int     `form:"page"`
@@ -48,6 +48,10 @@ func (req *GetUserWishlistsRequest) Validate(strCityIds string) {
 	if strCityIds != "" {
 		cityIds := strings.Split(strCityIds, ",")
 		for _, cityId := range cityIds {
+			if cityId == "" {
+				continue
+			}
+
 			id, _ := strconv.Atoi(cityId)
 			if id > 0 {
 				req.CityIds = append(req.CityIds, id)
