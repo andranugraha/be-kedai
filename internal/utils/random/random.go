@@ -1,12 +1,15 @@
 package random
 
 import (
+	cryptoRand "crypto/rand"
+	"encoding/hex"
 	"math/rand"
 	"time"
 )
 
 type RandomUtils interface {
 	GenerateAlphanumericString(length int) string
+	GenerateSecureUniqueToken() string
 }
 
 type randomUtilsImpl struct{}
@@ -27,4 +30,13 @@ func (u *randomUtilsImpl) GenerateAlphanumericString(length int) string {
 	}
 
 	return string(b)
+}
+
+func (u *randomUtilsImpl) GenerateSecureUniqueToken() string {
+	b := make([]byte, 32)
+	if _, err := cryptoRand.Read(b); err != nil {
+		return ""
+	}
+
+	return hex.EncodeToString(b)
 }
