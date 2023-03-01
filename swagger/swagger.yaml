@@ -714,7 +714,172 @@ paths:
                     example: "INTERNAL_SERVER_ERROR"
                   message:
                     type: string
-                    example: "error message"                     
+                    example: "error message"
+  /v1/users/passwords/reset-request:
+    post:
+      security:
+        - BearerAuth: []
+      tags:
+        - User
+      summary: Compete password change
+      description: This endpoint is the 1st step of a 2 step procedure. It will receive email, then send a reset password link to that email if it is connected to a user.
+      requestBody:
+        $ref: '#/components/requestBodies/RequestPasswordResetBody'
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "OK"
+                  message:
+                    type: string
+                    example: "ok"
+        '400':
+          description: bad request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "BAD_REQUEST"
+                  message:
+                    type: string
+                    example: "Email is required"          
+        '401':
+          description: unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "UNAUTHORIZED"
+                  message:
+                    type: string
+                    example: "invalid credential"
+        '404':
+          description: not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "USER_NOT_REGISTERED"
+                  message:
+                    type: string
+                    example: "user does not exist"
+        '500':
+          description: internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "INTERNAL_SERVER_ERROR"
+                  message:
+                    type: string
+                    example: "error message"       
+  /v1/users/passwords/reset-confirmation:
+    post:
+      security:
+        - BearerAuth: []
+      tags:
+        - User
+      summary: Compete password change
+      description: This endpoint is the 2nd step of a 2 step procedure. It will receive token and new password, then if the token and new password is valid the password will be reset. User will also get logged out from all devices.
+      requestBody:
+        $ref: '#/components/requestBodies/CompletePasswordResetBody'
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "OK"
+                  message:
+                    type: string
+                    example: "ok"
+        '400':
+          description: bad request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "SAME_PASSWORD"
+                  message:
+                    type: string
+                    example: "same_password"          
+        '401':
+          description: unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "UNAUTHORIZED"
+                  message:
+                    type: string
+                    example: "invalid credential"
+        '404':
+          description: not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "NOT_FOUND"
+                  message:
+                    type: string
+                    example: "reset password token not found"
+        '422':
+          description: invalid password pattern
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "INVALID_PASSWORD_PATTERN"
+                  message:
+                    type: string
+                    example: "invalid password pattern"             
+        '500':
+          description: internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "INTERNAL_SERVER_ERROR"
+                  message:
+                    type: string
+                    example: "error message"                  
   /v1/users/logout:
     post:
       security:
@@ -3197,6 +3362,41 @@ components:
                 minLength: 6
                 maxLength: 6
                 description: Verification code is a randomly generated string which consists of 6 alphanumeric characters.
+    RequestPasswordResetBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - email
+            properties:
+              email:
+                type: string
+                format: email
+                example: "user@mail.com"
+    CompletePasswordResetBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - token
+              - newPassword
+            properties:
+              token:
+                type: string
+                example: "0020cf5fdf24ca583b988973fc985abc8910f049191ddfa7ca77dfd5ac705e66"   
+                format: alphanumeric
+                minLength: 64
+                maxLength: 64
+              newPassword:
+                type: string
+                minLength: 8
+                maxLength: 16
+                example: "Password1234"
+                description: Password must include at least one uppercase letter, one lowercase letter, and one numeric. Password cannot contain username as a part of it. Also password must not include email or username.
     AddWishlistBody:
       required: true
       content:
