@@ -1430,6 +1430,29 @@ func TestRequestPasswordChange(t *testing.T) {
 			},
 		},
 		{
+			description: "should return ErrContainUsername and status StatusUnprocessableEntity when RequestPasswordChange failed",
+			input: input{
+				request: &dto.RequestPasswordChangeRequest{
+					CurrentPassword: "asdasdasd",
+					NewPassword:     "asdasdasdsa",
+				},
+				beforeTests: func(mockUserService *mocks.UserService) {
+					mockUserService.On("RequestPasswordChange", &dto.RequestPasswordChangeRequest{
+						CurrentPassword: "asdasdasd",
+						NewPassword:     "asdasdasdsa",
+						UserId:          1,
+					}).Return(errs.ErrContainUsername)
+				},
+			},
+			expected: expected{
+				statusCode: http.StatusUnprocessableEntity,
+				response: response.Response{
+					Code:    code.PASSWORD_CONTAIN_USERNAME,
+					Message: errs.ErrContainUsername.Error(),
+				},
+			},
+		},
+		{
 			description: "should return ErrInternalServerError and status InternalServerError when RequestPasswordChange failed",
 			input: input{
 				request: &dto.RequestPasswordChangeRequest{
