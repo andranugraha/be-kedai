@@ -49,8 +49,11 @@ func NewRouter(cfg *RouterConfig) *gin.Engine {
 				userAuthenticated.PUT("/emails", cfg.UserHandler.UpdateUserEmail)
 				userAuthenticated.PUT("/usernames", cfg.UserHandler.UpdateUsername)
 
-				userAuthenticated.POST("/request-password-change", cfg.UserHandler.RequestPasswordChange)
-				userAuthenticated.POST("/complete-password-change", cfg.UserHandler.CompletePasswordChange)
+				passwords := userAuthenticated.Group("/passwords")
+				{
+					passwords.POST("/change-request", cfg.UserHandler.RequestPasswordChange)
+					passwords.POST("/change-confirmation", cfg.UserHandler.CompletePasswordChange)
+				}
 
 				profile := userAuthenticated.Group("/profiles")
 				{

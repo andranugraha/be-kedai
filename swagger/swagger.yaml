@@ -548,7 +548,7 @@ paths:
                   message:
                     type: string
                     example: "error message"
-  /v1/users/request-password-change:
+  /v1/users/passwords/change-request:
     post:
       security:
         - BearerAuth: []
@@ -638,7 +638,7 @@ paths:
                   message:
                     type: string
                     example: "error message"             
-  /v1/users/complete-password-change:
+  /v1/users/passwords/change-confirmation:
     post:
       security:
         - BearerAuth: []
