@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 	"kedai/backend/be-kedai/config"
-	"kedai/backend/be-kedai/internal/utils/hash"
+	errs "kedai/backend/be-kedai/internal/common/error"
 	jwttoken "kedai/backend/be-kedai/internal/utils/jwtToken"
 	"time"
 
@@ -18,7 +18,7 @@ type UserCache interface {
 	DeleteAllByID(userId int) error
 	DeleteRefreshTokenAndAccessToken(userId int, refreshToken string, accessToken string) error
 	StoreUserPasswordAndVerificationCode(userId int, newPassword string, verificationCode string) error
-	FindUserPasswordAndVerificationCode(userId int) (string, string, error)
+	FindUserPasswordAndVerificationCode(userId int) (newPassword string, verificationCode string, err error)
 }
 
 type userCacheImpl struct {
@@ -58,9 +58,8 @@ func (r *userCacheImpl) StoreToken(userId int, accessToken string, refreshToken 
 func (r *userCacheImpl) StoreUserPasswordAndVerificationCode(userId int, newPassword string, verificationCode string) error {
 	expireTime := time.Minute * 10
 	key := fmt.Sprintf("user_%d-updatePassword", userId)
-	hashedPw, _ := hash.HashAndSalt(newPassword)
 
-	err := r.rdc.HSet(context.Background(), key, "newPassword", hashedPw, "verificationCode", verificationCode).Err()
+	err := r.rdc.HSet(context.Background(), key, "newPassword", newPassword, "verificationCode", verificationCode).Err()
 	if err != nil {
 		return err
 	}
@@ -78,11 +77,17 @@ func (r *userCacheImpl) FindUserPasswordAndVerificationCode(userId int) (string,
 
 	newPassword, err := r.rdc.HGet(context.Background(), key, "newPassword").Result()
 	if err != nil {
+		if err == redis.Nil {
+			err = errs.ErrVerficationCodeNotFound
+		}
 		return "", "", err
 	}
 
 	verificationCode, err := r.rdc.HGet(context.Background(), key, "verificationCode").Result()
 	if err != nil {
+		if err == redis.Nil {
+			err = errs.ErrVerficationCodeNotFound
+		}
 		return "", "", err
 	}
 
