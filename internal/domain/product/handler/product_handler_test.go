@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"kedai/backend/be-kedai/internal/common/code"
+	commonDto "kedai/backend/be-kedai/internal/common/dto"
 	errs "kedai/backend/be-kedai/internal/common/error"
 	"kedai/backend/be-kedai/internal/domain/product/dto"
 	"kedai/backend/be-kedai/internal/domain/product/handler"
@@ -121,6 +122,88 @@ func TestGetRecommendation(t *testing.T) {
 			c.Request = httptest.NewRequest("GET", fmt.Sprintf("/products/recommendation?productId=%d&categoryId=%d", tc.dto.ProductId, tc.dto.CategoryId), nil)
 
 			h.GetRecommendationByCategory(c)
+
+			assert.Equal(t, tc.expected.statusCode, rec.Code)
+			assert.Equal(t, string(expectedBody), rec.Body.String())
+		})
+	}
+}
+
+func TestProductSearchFiltering(t *testing.T) {
+	var (
+		product = []*dto.ProductResponse{}
+		req     = dto.ProductSearchFilterRequest{
+			Limit: 10,
+			Page: 1,
+			Sort: "recommended",
+		}
+		res     = &commonDto.PaginationResponse{
+			Data: product,
+			Limit: 10,
+			Page: 1,
+		}
+	)
+	type input struct {
+		dto     dto.ProductSearchFilterRequest
+		product *commonDto.PaginationResponse
+		err error
+	}
+	type expected struct {
+		statusCode int
+		response   response.Response
+	}
+
+	type cases struct {
+		description string
+		input
+		expected
+	}
+
+	for _, tc := range []cases{
+		{
+			description: "should return filtered product list with code 200 when success",
+			input: input{
+				dto: req,
+				product: res,
+				err: nil,
+			},
+			expected: expected{
+				statusCode: http.StatusOK,
+				response: response.Response{
+					Code: code.OK,
+					Message: "ok",
+					Data: res,
+				},
+			},
+		},
+		{
+			description: "should return error with code 500 when internal server error",
+			input: input{
+				dto: req,
+				product: nil,
+				err: errs.ErrInternalServerError,
+			},
+			expected: expected{
+				statusCode: http.StatusInternalServerError,
+				response: response.Response{
+					Code: code.INTERNAL_SERVER_ERROR,
+					Message: "something went wrong in the server",
+				},
+			},
+		},
+	} {
+		t.Run(tc.description, func(t *testing.T) {
+			expectedBody, _ := json.Marshal(tc.expected.response)
+			mockService := new(mocks.ProductService)
+			mockService.On("ProductSearchFiltering", tc.input.dto).Return(tc.input.product, tc.input.err)
+			rec := httptest.NewRecorder()
+			c, _ := gin.CreateTestContext(rec)
+			h := handler.New(&handler.Config{
+				ProductService: mockService,
+			})
+			c.Request = httptest.NewRequest("GET", "/products",  nil)
+
+			h.ProductSearchFiltering(c)
 
 			assert.Equal(t, tc.expected.statusCode, rec.Code)
 			assert.Equal(t, string(expectedBody), rec.Body.String())
