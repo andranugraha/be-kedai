@@ -19,6 +19,7 @@ type UserCache interface {
 	DeleteRefreshTokenAndAccessToken(userId int, refreshToken string, accessToken string) error
 	StoreUserPasswordAndVerificationCode(userId int, newPassword string, verificationCode string) error
 	FindUserPasswordAndVerificationCode(userId int) (newPassword string, verificationCode string, err error)
+	DeleteUserPasswordAndVerificationCode(userId int) error
 }
 
 type userCacheImpl struct {
@@ -65,6 +66,17 @@ func (r *userCacheImpl) StoreUserPasswordAndVerificationCode(userId int, newPass
 	}
 
 	err = r.rdc.Expire(context.Background(), key, expireTime).Err()
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (r *userCacheImpl) DeleteUserPasswordAndVerificationCode(userId int) error {
+	key := fmt.Sprintf("user_%d-updatePassword", userId)
+
+	err := r.rdc.Del(context.Background(), key).Err()
 	if err != nil {
 		return err
 	}
