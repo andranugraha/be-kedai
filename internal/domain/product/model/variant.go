@@ -8,7 +8,5 @@ type Variant struct {
 	MediaUrl string `json:"mediaUrl"`
 	GroupId  int    `json:"groupId"`
 
-	Group VariantGroup `json:"group" gorm:"foreignKey:GroupId"`
-
 	gorm.Model `json:"-"`
 }
