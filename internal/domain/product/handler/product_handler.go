@@ -2,28 +2,33 @@ package handler
 
 import (
 	"errors"
-	"net/http"
-
 	"kedai/backend/be-kedai/internal/common/code"
 	errs "kedai/backend/be-kedai/internal/common/error"
+	"kedai/backend/be-kedai/internal/domain/product/dto"
 	"kedai/backend/be-kedai/internal/utils/response"
+	"net/http"
 
 	"github.com/gin-gonic/gin"
 )
 
-func (h *Handler) GetProductByCode(c *gin.Context) {
-	productCode := c.Param("code")
-
-	product, err := h.productService.GetByCodeFull(productCode)
-	if err != nil {
-		if errors.Is(err, errs.ErrProductDoesNotExist) {
-			response.Error(c, http.StatusNotFound, code.PRODUCT_NOT_REGISTERED, err.Error())
-			return
-		}
-
-		response.Error(c, http.StatusInternalServerError, code.INTERNAL_SERVER_ERROR, errs.ErrInternalServerError.Error())
+func (h *Handler) GetRecommendationByCategory(c *gin.Context) {
+	var req dto.RecommendationByCategoryIdRequest
+	errBinding := c.ShouldBindQuery(&req)
+	if errBinding != nil {
+		response.ErrorValidator(c, http.StatusBadRequest, errBinding)
 		return
 	}
 
-	response.Success(c, http.StatusOK, code.OK, "success", product)
+	result, err := h.productService.GetRecommendationByCategory(req.ProductId, req.CategoryId)
+	if err != nil {
+		if errors.Is(err, errs.ErrCategoryDoesNotExist) {
+			response.Error(c, http.StatusBadRequest, code.BAD_REQUEST, err.Error())
+			return
+		}
+
+		response.Error(c, http.StatusInternalServerError, code.INTERNAL_SERVER_ERROR, err.Error())
+		return
+	}
+
+	response.Success(c, http.StatusOK, code.OK, "ok", result)
 }

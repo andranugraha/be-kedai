@@ -1,7 +1,8 @@
 package service_test
 
 import (
-	"errors"
+	errorResponse "kedai/backend/be-kedai/internal/common/error"
+	"kedai/backend/be-kedai/internal/domain/product/dto"
 	"kedai/backend/be-kedai/internal/domain/product/model"
 	"kedai/backend/be-kedai/internal/domain/product/service"
 	"kedai/backend/be-kedai/mocks"
@@ -10,66 +11,161 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestGetByCodeFull(t *testing.T) {
-	type input struct {
-		code string
-		data *model.Product
-		err  error
-	}
-	type expected struct {
-		user *model.Product
-		err  error
+func TestGetByID(t *testing.T) {
+	tests := []struct {
+		name      string
+		requestId int
+		want      *model.Product
+		wantErr   error
+	}{
+		{
+			name:      "should return product when get by id success",
+			requestId: 1,
+			want: &model.Product{
+				ID:         1,
+				CategoryID: 1,
+				Name:       "Baju",
+			},
+			wantErr: nil,
+		},
+		{
+			name:      "should return error when product not found",
+			requestId: 1,
+			want:      nil,
+			wantErr:   errorResponse.ErrProductDoesNotExist,
+		},
+		{
+			name:      "should return error when get by id failed",
+			requestId: 1,
+			want:      nil,
+			wantErr:   errorResponse.ErrInternalServerError,
+		},
 	}
 
-	cases := []struct {
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			mockProductRepo := mocks.NewProductRepository(t)
+			mockProductRepo.On("GetByID", test.requestId).Return(test.want, test.wantErr)
+			productService := service.NewProductService(&service.ProductSConfig{
+				ProductRepository: mockProductRepo,
+			})
+
+			got, err := productService.GetByID(test.requestId)
+
+			assert.Equal(t, test.want, got)
+			assert.Equal(t, test.wantErr, err)
+		})
+	}
+}
+
+func TestGetByCode(t *testing.T) {
+	tests := []struct {
+		name        string
+		requestCode string
+		want        *model.Product
+		wantErr     error
+	}{
+		{
+			name:        "should return product when get by code success",
+			requestCode: "1",
+			want: &model.Product{
+				ID:         1,
+				CategoryID: 1,
+				Name:       "Baju",
+			},
+			wantErr: nil,
+		},
+		{
+			name:        "should return error when product not found",
+			requestCode: "1",
+			want:        nil,
+			wantErr:     errorResponse.ErrProductDoesNotExist,
+		},
+		{
+			name:        "should return error when get by code failed",
+			requestCode: "1",
+			want:        nil,
+			wantErr:     errorResponse.ErrInternalServerError,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			mockProductRepo := mocks.NewProductRepository(t)
+			mockProductRepo.On("GetByCode", test.requestCode).Return(test.want, test.wantErr)
+			productService := service.NewProductService(&service.ProductSConfig{
+				ProductRepository: mockProductRepo,
+			})
+
+			got, err := productService.GetByCode(test.requestCode)
+
+			assert.Equal(t, test.want, got)
+			assert.Equal(t, test.wantErr, err)
+		})
+	}
+}
+
+func TestGetRecommendation(t *testing.T) {
+	var (
+		categoryId = 1
+		productId  = 1
+		product    = []*dto.ProductResponse{}
+	)
+
+	type input struct {
+		categoryid int
+		productId  int
+		err        error
+	}
+
+	type expected struct {
+		result []*dto.ProductResponse
+		err    error
+	}
+
+	type cases struct {
 		description string
 		input
 		expected
-	}{
-		{
-			description: "it should return user data if product exists",
-			input: input{
-				code: "PRODUCT_CODE_A",
-				data: &model.Product{
-					ID:   1,
-					Code: "PRODUCT_CODE_A",
-				},
-				err: nil,
-			},
-			expected: expected{
-				user: &model.Product{
-					ID:   1,
-					Code: "PRODUCT_CODE_A",
-				},
-				err: nil,
-			},
-		},
-		{
-			description: "it should return error if failed to get product",
-			input: input{
-				code: "INVALID_CODE",
-				data: nil,
-				err:  errors.New("failed to get product"),
-			},
-			expected: expected{
-				user: nil,
-				err:  errors.New("failed to get product"),
-			},
-		},
 	}
 
-	for _, tc := range cases {
+	for _, tc := range []cases{
+		{
+			description: "should return list of recommended products when successful",
+			input: input{
+				categoryid: categoryId,
+				productId:  productId,
+				err:        nil,
+			},
+			expected: expected{
+				result: product,
+				err:    nil,
+			},
+		},
+		{
+			description: "should return error when internal server error",
+			input: input{
+				categoryid: categoryId,
+				productId:  productId,
+				err:        errorResponse.ErrInternalServerError,
+			},
+			expected: expected{
+				result: nil,
+				err:    errorResponse.ErrInternalServerError,
+			},
+		},
+	} {
 		t.Run(tc.description, func(t *testing.T) {
-			mockRepo := mocks.NewProductRepository(t)
-			mockRepo.On("GetByCodeFull", tc.input.code).Return(tc.input.data, tc.input.err)
-			uc := service.NewProductService(&service.ProductSConfig{
-				Repository: mockRepo,
+			mockProductRepo := mocks.NewProductRepository(t)
+			mockProductRepo.On("GetRecommendationByCategory", tc.input.productId, tc.input.categoryid).Return(tc.expected.result, tc.expected.err)
+			productService := service.NewProductService(&service.ProductSConfig{
+				ProductRepository: mockProductRepo,
 			})
 
-			actualUser, actualErr := uc.GetByCodeFull(tc.input.code)
+			result, err := productService.GetRecommendationByCategory(tc.input.productId, tc.input.categoryid)
 
-			assert.Equal(t, tc.expected.user, actualUser)
-			assert.Equal(t, actualErr, tc.expected.err)
+			assert.Equal(t, tc.expected.result, result)
+			assert.Equal(t, tc.expected.err, err)
 		})
 	}
 }

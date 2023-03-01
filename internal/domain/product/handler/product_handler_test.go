@@ -2,12 +2,11 @@ package handler_test
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"kedai/backend/be-kedai/internal/common/code"
 	errs "kedai/backend/be-kedai/internal/common/error"
+	"kedai/backend/be-kedai/internal/domain/product/dto"
 	"kedai/backend/be-kedai/internal/domain/product/handler"
-	"kedai/backend/be-kedai/internal/domain/product/model"
 	"kedai/backend/be-kedai/internal/utils/response"
 	"kedai/backend/be-kedai/mocks"
 	"net/http"
@@ -18,11 +17,22 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestGetProductByCode(t *testing.T) {
+func TestGetRecommendation(t *testing.T) {
+	var (
+		req = dto.RecommendationByCategoryIdRequest{
+			CategoryId: 2,
+			ProductId:  2,
+		}
+		invalidReq = dto.RecommendationByCategoryIdRequest{
+			CategoryId: 1,
+		}
+		products = []*dto.ProductResponse{}
+	)
+
 	type input struct {
-		productCode string
-		data        *model.Product
-		err         error
+		dto     dto.RecommendationByCategoryIdRequest
+		product []*dto.ProductResponse
+		err     error
 	}
 
 	type expected struct {
@@ -38,77 +48,82 @@ func TestGetProductByCode(t *testing.T) {
 
 	for _, tc := range []cases{
 		{
-			description: "should return product data with status code 200 when fetching product success",
+			description: "should return recommended product list with code 200 when success",
 			input: input{
-				productCode: "CODE_PRODUCT_A",
-				data: &model.Product{
-					ID:   1,
-					Name: "Product A",
-					Code: "CODE_PRODUCT_A",
-				},
-				err: nil,
+				dto:     req,
+				product: products,
+				err:     nil,
 			},
 			expected: expected{
 				statusCode: http.StatusOK,
 				response: response.Response{
 					Code:    code.OK,
-					Message: "success",
-					Data: &model.Product{
-						ID:   1,
-						Name: "Product A",
-						Code: "CODE_PRODUCT_A",
-					},
+					Message: "ok",
+					Data:    products,
 				},
 			},
 		},
 		{
-			description: "should return error with status code 404 if product is not registered",
+			description: "should return error with code 400 when required param not met",
 			input: input{
-				productCode: "CODE_PRODUCT_A",
-				data:        nil,
-				err:         errs.ErrProductDoesNotExist,
+				dto:     invalidReq,
+				product: nil,
+				err:     errs.ErrBadRequest,
 			},
 			expected: expected{
-				statusCode: http.StatusNotFound,
+				statusCode: http.StatusBadRequest,
 				response: response.Response{
-					Code:    code.PRODUCT_NOT_REGISTERED,
-					Message: errs.ErrProductDoesNotExist.Error(),
+					Code:    code.BAD_REQUEST,
+					Message: "ProductId is required",
 				},
 			},
 		},
 		{
-			description: "should return error with status code 500 if something went wrong when trying to get product data",
+			description: "should return error with code 400 when category id not exist",
 			input: input{
-				productCode: "CODE_PRODUCT_A",
-				data:        nil,
-				err:         errors.New("failed to get product data"),
+				dto:     req,
+				product: nil,
+				err:     errs.ErrCategoryDoesNotExist,
+			},
+			expected: expected{
+				statusCode: http.StatusBadRequest,
+				response: response.Response{
+					Code:    code.BAD_REQUEST,
+					Message: "category doesn't exist",
+				},
+			},
+		},
+		{
+			description: "should return error with code 500 when internal server error",
+			input: input{
+				dto:     req,
+				product: nil,
+				err:     errs.ErrInternalServerError,
 			},
 			expected: expected{
 				statusCode: http.StatusInternalServerError,
 				response: response.Response{
 					Code:    code.INTERNAL_SERVER_ERROR,
-					Message: errs.ErrInternalServerError.Error(),
+					Message: "something went wrong in the server",
 				},
 			},
 		},
 	} {
 		t.Run(tc.description, func(t *testing.T) {
-			expectedRes, _ := json.Marshal(tc.expected.response)
+			expectedBody, _ := json.Marshal(tc.expected.response)
+			mockService := new(mocks.ProductService)
+			mockService.On("GetRecommendationByCategory", tc.input.dto.ProductId, tc.input.dto.CategoryId).Return(tc.input.product, tc.input.err)
 			rec := httptest.NewRecorder()
 			c, _ := gin.CreateTestContext(rec)
-			c.AddParam("code", tc.input.productCode)
-			productServiceMock := mocks.NewProductService(t)
-			productServiceMock.On("GetByCodeFull", tc.input.productCode).Return(tc.input.data, tc.input.err)
-			cfg := handler.HandlerConfig{
-				ProductService: productServiceMock,
-			}
-			h := handler.New(&cfg)
-			c.Request, _ = http.NewRequest("GET", fmt.Sprintf("/v1/products/%s", tc.productCode), nil)
+			h := handler.New(&handler.Config{
+				ProductService: mockService,
+			})
+			c.Request = httptest.NewRequest("GET", fmt.Sprintf("/products/recommendation?productId=%d&categoryId=%d", tc.dto.ProductId, tc.dto.CategoryId), nil)
 
-			h.GetProductByCode(c)
+			h.GetRecommendationByCategory(c)
 
 			assert.Equal(t, tc.expected.statusCode, rec.Code)
-			assert.Equal(t, string(expectedRes), rec.Body.String())
+			assert.Equal(t, string(expectedBody), rec.Body.String())
 		})
 	}
 }

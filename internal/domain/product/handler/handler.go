@@ -3,15 +3,18 @@ package handler
 import "kedai/backend/be-kedai/internal/domain/product/service"
 
 type Handler struct {
-	productService service.ProductService
+	categoryService service.CategoryService
+	productService  service.ProductService
 }
 
-type HandlerConfig struct {
-	ProductService service.ProductService
+type Config struct {
+	CategoryService service.CategoryService
+	ProductService  service.ProductService
 }
 
-func New(cfg *HandlerConfig) *Handler {
+func New(cfg *Config) *Handler {
 	return &Handler{
-		productService: cfg.ProductService,
+		categoryService: cfg.CategoryService,
+		productService:  cfg.ProductService,
 	}
 }

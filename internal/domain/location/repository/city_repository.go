@@ -1,6 +1,8 @@
 package repository
 
 import (
+	"errors"
+	errs "kedai/backend/be-kedai/internal/common/error"
 	"kedai/backend/be-kedai/internal/domain/location/dto"
 	"kedai/backend/be-kedai/internal/domain/location/model"
 	"math"
@@ -10,6 +12,7 @@ import (
 
 type CityRepository interface {
 	GetAll(dto.GetCitiesRequest) ([]*model.City, int64, int, error)
+	GetByID(cityID int) (*model.City, error)
 }
 
 type cityRepositoryImpl struct {
@@ -44,8 +47,20 @@ func (c *cityRepositoryImpl) GetAll(req dto.GetCitiesRequest) (cities []*model.C
 		totalPages = int(math.Ceil(float64(totalRows) / float64(req.Limit)))
 	}
 
-	err = db.Limit(int(req.Limit)).Offset(req.Offset()).Find(&cities).Error
+	err = db.Limit(req.Limit).Offset(req.Offset()).Find(&cities).Error
 	if err != nil {
+		return
+	}
+
+	return
+}
+
+func (c *cityRepositoryImpl) GetByID(cityID int) (city *model.City, err error) {
+	err = c.db.First(&city, cityID).Error
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, errs.ErrCityNotFound
+		}
 		return
 	}
 

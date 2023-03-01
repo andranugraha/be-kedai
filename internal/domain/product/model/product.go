@@ -1,27 +1,37 @@
 package model
 
-import "gorm.io/gorm"
+import (
+	shopModel "kedai/backend/be-kedai/internal/domain/shop/model"
+
+	"gorm.io/gorm"
+)
 
 type Product struct {
-	ID           int               `json:"id"`
-	Code         string            `json:"code"`
-	Name         string            `json:"email"`
-	Description  string            `json:"description"`
-	View         int               `json:"view"`
-	IsHazardous  bool              `json:"isHazardous"`
-	Weight       float64           `json:"weight"`
-	Length       float64           `json:"length"`
-	Width        float64           `json:"width"`
-	Height       float64           `json:"height"`
-	PackagedSize float64           `json:"packagedSize"`
-	IsNew        bool              `json:"isNew"`
-	IsActive     bool              `json:"isActive"`
-	Rating       float64           `json:"rating"`
-	ShopID       int               `json:"shopId"`
-	CategoryId   int               `json:"categoryId"`
-	BulkPrice    *ProductBulkPrice `json:"bulkPrice"`
-	VariantGroup []*VariantGroup   `json:"variantGroup"`
-	Media        []*ProductMedia   `json:"media"`
+	ID           int     `json:"id"`
+	Code         string  `json:"code"`
+	Name         string  `json:"name"`
+	Description  string  `json:"description"`
+	View         int     `json:"view"`
+	IsHazardous  bool    `json:"isHazardous"`
+	Weight       float64 `json:"weight"`
+	Length       float64 `json:"length"`
+	Width        float64 `json:"width"`
+	Height       float64 `json:"height"`
+	PackagedSize float64 `json:"packagedSize"`
+	IsNew        bool    `json:"isNew"`
+	IsActive     bool    `json:"isActive"`
+	Rating       float64 `json:"rating"`
+	Sold         int     `json:"sold"`
+
+	MinPrice         float64  `json:"minPrice" gorm:"<-:false"`
+	MaxPrice         float64  `json:"maxPrice" gorm:"<-:false"`
+	Address          string   `json:"address" gorm:"<-:false"`
+	PromotionPercent *float64 `json:"promotionPercent,omitempty" gorm:"<-:false"`
+	ImageURL         string   `json:"imageUrl" gorm:"<-:false"`
+
+	ShopID     int             `json:"shopId"`
+	Shop       *shopModel.Shop `json:"shop,omitempty"`
+	CategoryID int             `json:"categoryId"`
 
 	gorm.Model `json:"-"`
 }

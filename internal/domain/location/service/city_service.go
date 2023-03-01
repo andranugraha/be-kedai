@@ -3,11 +3,13 @@ package service
 import (
 	"kedai/backend/be-kedai/internal/common/dto"
 	locationDto "kedai/backend/be-kedai/internal/domain/location/dto"
+	"kedai/backend/be-kedai/internal/domain/location/model"
 	"kedai/backend/be-kedai/internal/domain/location/repository"
 )
 
 type CityService interface {
 	GetCities(locationDto.GetCitiesRequest) (*dto.PaginationResponse, error)
+	GetCityByID(int) (*model.City, error)
 }
 
 type cityServiceImpl struct {
@@ -39,4 +41,8 @@ func (c *cityServiceImpl) GetCities(req locationDto.GetCitiesRequest) (res *dto.
 	}
 
 	return
+}
+
+func (c *cityServiceImpl) GetCityByID(cityID int) (city *model.City, err error) {
+	return c.cityRepo.GetByID(cityID)
 }

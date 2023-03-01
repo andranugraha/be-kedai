@@ -4,9 +4,11 @@ import "gorm.io/gorm"
 
 type Variant struct {
 	ID       int    `json:"id"`
-	Name     string `json:"name"`
+	Value    string `json:"value"`
 	MediaUrl string `json:"mediaUrl"`
-	GroupID  int    `json:"groupId"`
+	GroupId  int    `json:"groupId"`
+
+	Group VariantGroup `json:"group" gorm:"foreignKey:GroupId"`
 
 	gorm.Model `json:"-"`
 }

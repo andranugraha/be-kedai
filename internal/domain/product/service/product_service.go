@@ -1,28 +1,39 @@
 package service
 
 import (
+	"kedai/backend/be-kedai/internal/domain/product/dto"
 	"kedai/backend/be-kedai/internal/domain/product/model"
 	"kedai/backend/be-kedai/internal/domain/product/repository"
 )
 
 type ProductService interface {
-	GetByCodeFull(code string) (*model.Product, error)
+	GetByID(id int) (*model.Product, error)
+	GetByCode(code string) (*model.Product, error)
+	GetRecommendationByCategory(productId int, categoryId int) ([]*dto.ProductResponse, error)
 }
 
 type productServiceImpl struct {
-	repository repository.ProductRepository
+	productRepository repository.ProductRepository
 }
 
 type ProductSConfig struct {
-	Repository repository.ProductRepository
+	ProductRepository repository.ProductRepository
 }
 
 func NewProductService(cfg *ProductSConfig) ProductService {
 	return &productServiceImpl{
-		repository: cfg.Repository,
+		productRepository: cfg.ProductRepository,
 	}
 }
 
-func (s *productServiceImpl) GetByCodeFull(code string) (*model.Product, error) {
-	return s.repository.GetByCodeFull(code)
+func (s *productServiceImpl) GetByID(id int) (*model.Product, error) {
+	return s.productRepository.GetByID(id)
+}
+
+func (s *productServiceImpl) GetByCode(code string) (*model.Product, error) {
+	return s.productRepository.GetByCode(code)
+}
+
+func (s *productServiceImpl) GetRecommendationByCategory(productId int, categoryId int) ([]*dto.ProductResponse, error) {
+	return s.productRepository.GetRecommendationByCategory(productId, categoryId)
 }
