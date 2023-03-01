@@ -31,6 +31,8 @@ type UserService interface {
 	UpdateUsername(userId int, requst *dto.UpdateUsernameRequest) (*dto.UpdateUsernameResponse, error)
 	RequestPasswordChange(request *dto.RequestPasswordChangeRequest) error
 	CompletePasswordChange(request *dto.CompletePasswordChangeRequest) error
+	RequestPasswordReset(request *dto.RequestPasswordResetRequest) error
+	CompletePasswordReset(request *dto.CompletePasswordResetRequest) error
 	ValidatePasswordChange(request *dto.RequestPasswordChangeRequest, user *model.User) error
 	SignOut(*dto.UserLogoutRequest) error
 }
@@ -278,6 +280,11 @@ func (s *userServiceImpl) RequestPasswordChange(request *dto.RequestPasswordChan
 		return err
 	}
 
+	isValidPassword := hash.ComparePassword(user.Password, request.CurrentPassword)
+	if !isValidPassword {
+		return errs.ErrInvalidCredential
+	}
+
 	err = s.ValidatePasswordChange(request, user)
 	if err != nil {
 		return err
@@ -300,24 +307,18 @@ func (s *userServiceImpl) RequestPasswordChange(request *dto.RequestPasswordChan
 }
 
 func (s *userServiceImpl) ValidatePasswordChange(request *dto.RequestPasswordChangeRequest, user *model.User) error {
-	isValidPassword := hash.ComparePassword(user.Password, request.CurrentPassword)
-	if !isValidPassword {
-		return errs.ErrInvalidCredential
-	}
-
 	isInvalidPassword := hash.ComparePassword(user.Password, request.NewPassword)
 	if isInvalidPassword {
 		return errs.ErrSamePassword
 	}
 
-	isValidPassword = credential.VerifyPassword(request.NewPassword)
+	isValidPassword := credential.VerifyPassword(request.NewPassword)
 	if !isValidPassword {
 		return errs.ErrInvalidPasswordPattern
 	}
 
-	isValidPassword = credential.VerifyChangePassword(request.CurrentPassword, request.NewPassword, user.Username)
-	if !isValidPassword {
-		return errs.ErrInvalidPasswordPattern
+	if credential.ContainsUsername(request.NewPassword, user.Username) {
+		return errs.ErrContainUsername
 	}
 
 	return nil
@@ -344,6 +345,58 @@ func (s *userServiceImpl) CompletePasswordChange(request *dto.CompletePasswordCh
 	}
 
 	err = s.redis.DeleteUserPasswordAndVerificationCode(request.UserId)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (s *userServiceImpl) RequestPasswordReset(request *dto.RequestPasswordResetRequest) error {
+	user, err := s.repository.GetByEmail(request.Email)
+	if err != nil {
+		return err
+	}
+
+	secureToken := s.randomUtils.GenerateSecureUniqueToken()
+	err = s.redis.StoreResetPasswordToken(user.ID, secureToken)
+	if err != nil {
+		return err
+	}
+
+	err = s.mailUtils.SendResetPasswordEmail(user.Email, secureToken)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (s *userServiceImpl) CompletePasswordReset(request *dto.CompletePasswordResetRequest) error {
+	userId, err := s.redis.FindResetPasswordToken(request.Token)
+	if err != nil {
+		return err
+	}
+
+	user, err := s.repository.GetByID(userId)
+	if err != nil {
+		return err
+	}
+
+	err = s.ValidatePasswordChange(&dto.RequestPasswordChangeRequest{
+		UserId:      userId,
+		NewPassword: request.NewPassword,
+	}, user)
+	if err != nil {
+		return err
+	}
+
+	_, err = s.repository.UpdatePassword(userId, request.NewPassword)
+	if err != nil {
+		return err
+	}
+
+	err = s.redis.DeleteResetPasswordToken(request.Token)
 	if err != nil {
 		return err
 	}
