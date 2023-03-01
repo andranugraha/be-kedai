@@ -2767,18 +2767,20 @@ components:
             properties:
               credential:
                 type: string
-                format: email
+                format: jwt
                 example: "googlejwttokenhere"     
               username:
                 type: string
                 minLength: 5
                 maxLength: 30
                 example: "Acong123"
+                description: username must includes at least one letter (case insensitive). May also includes number, underscore, or period
               password:
                 type: string
                 minLength: 8
                 maxLength: 16
                 example: "Password123"
+                description: Password must include at least one uppercase letter, one lowercase letter, and one numeric. Also password must not include email or username.
     UserLogoutBody:
       required: true
       content:
