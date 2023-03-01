@@ -1997,6 +1997,91 @@ paths:
                   message:
                     type: string
                     example: "error message"
+  /v1/products/{code}:
+    get:
+      tags:
+        - Product
+      summary: Get product by code
+      description: Get product detail information using product code
+      parameters:
+        - in: path
+          name: code
+          schema:
+            type: string
+            example: product_code
+      responses:
+        '200':
+          description: operation successful
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Response'
+                  - type: object
+                    properties:
+                      data:
+                        allOf:
+                          - $ref: '#/components/schemas/Product'
+                          
+                          - type: object
+                            properties:
+                              address:
+                          - type: object
+                            properties:
+                              imageUrl:
+                          - type: object
+                            properties:
+                              totalStock:
+                                type: integer
+                                example: 100
+                          - type: object
+                            properties:
+                              vouchers:
+                                type: array
+                                items:
+                                  $ref: '#/components/schemas/ShopVoucher'
+                          - type: object
+                            properties:
+                              couriers:
+                                type: array
+                                items:
+                                  $ref: '#/components/schemas/Courier'
+                          - type: object
+                            properties:
+                              variantGroups:
+                                type: array
+                                items:
+                                  $ref: '#/components/schemas/GroupVariant'
+                          - type: object
+                            properties:
+                              shop:
+                                $ref: '#/components/schemas/Shop'
+        '404':
+          description: product not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "PRODUCT_NOT_EXIST"
+                  message:
+                    type: string
+                    example: "error message"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "INTERNAL_SERVER_ERROR"
+                  message:
+                    type: string
+                    example: "error message"                
   /v1/products/categories:
     get:
       tags:
@@ -2760,6 +2845,18 @@ components:
         productId:
           type: integer
           example: 1
+    Courier:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        code:
+          type: string
+          example: courier_code
+        name:
+          type: string
+          example: courier name
     UserAddress:
       type: object
       properties:
