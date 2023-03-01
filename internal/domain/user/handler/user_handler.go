@@ -6,7 +6,6 @@ import (
 	errs "kedai/backend/be-kedai/internal/common/error"
 	"kedai/backend/be-kedai/internal/domain/user/dto"
 	"kedai/backend/be-kedai/internal/utils/response"
-	"log"
 	"net/http"
 	"strings"
 
@@ -356,7 +355,6 @@ func (h *Handler) CompletePasswordReset(c *gin.Context) {
 	}
 
 	err = h.userService.CompletePasswordReset(&request)
-	log.Println(err)
 	if err != nil {
 		if errors.Is(err, errs.ErrResetPasswordTokenNotFound) {
 			response.Error(c, http.StatusNotFound, code.NOT_FOUND, err.Error())
