@@ -1,7 +1,6 @@
 package credential
 
 import (
-	"kedai/backend/be-kedai/internal/utils/hash"
 	"strings"
 	"unicode"
 
@@ -36,19 +35,6 @@ func VerifyPassword(pw string) bool {
 	return false
 }
 
-func VerifyChangePassword(oldPw string, newPw string, username string) bool {
-	if hash.ComparePassword(oldPw, newPw) {
-		return false
-	}
-
-	if ContainsUsername(newPw, username) {
-		return false
-	}
-
-	return true
-}
-
 func ContainsUsername(pw string, username string) bool {
 	return strings.Contains(strings.ToLower(pw), strings.ToLower(username))
-
 }
