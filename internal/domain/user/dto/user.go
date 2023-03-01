@@ -64,6 +64,15 @@ type CompletePasswordChangeRequest struct {
 	VerificationCode string `json:"verificationCode" binding:"required,alphanum,len=6"`
 }
 
+type RequestPasswordResetRequest struct {
+	Email string `json:"email" binding:"required,email"`
+}
+
+type CompletePasswordResetRequest struct {
+	Token       string `json:"token" binding:"required,alphanum,len=64"`
+	NewPassword string `json:"newPassword" binding:"required,min=8,max=16"`
+}
+
 func (d *UserRegistrationRequest) ToUser() *model.User {
 	return &model.User{
 		Email:    d.Email,
