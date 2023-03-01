@@ -59,6 +59,11 @@ type RequestPasswordChangeRequest struct {
 	NewPassword     string `json:"newPassword" binding:"required,min=8,max=16"`
 }
 
+type CompletePasswordChangeRequest struct {
+	UserId           int
+	VerificationCode string `json:"verificationCode" binding:"required"`
+}
+
 func (d *UserRegistrationRequest) ToUser() *model.User {
 	return &model.User{
 		Email:    d.Email,
