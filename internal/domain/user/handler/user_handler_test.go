@@ -1304,3 +1304,338 @@ func TestSignOut(t *testing.T) {
 	}
 
 }
+
+func TestRequestPasswordChange(t *testing.T) {
+	type input struct {
+		request     *dto.RequestPasswordChangeRequest
+		beforeTests func(mockUserService *mocks.UserService)
+	}
+	type expected struct {
+		statusCode int
+		response   response.Response
+	}
+
+	cases := []struct {
+		description string
+		input
+		expected
+	}{
+		{
+			description: "should return error with status code 400 when given bad request body",
+			input: input{
+				request: &dto.RequestPasswordChangeRequest{
+					CurrentPassword: "",
+					NewPassword:     "asdasdasdsa",
+				},
+				beforeTests: func(mockUserService *mocks.UserService) {},
+			},
+			expected: expected{
+				statusCode: http.StatusBadRequest,
+				response: response.Response{
+					Code:    code.BAD_REQUEST,
+					Message: "CurrentPassword is required",
+				},
+			},
+		},
+		{
+			description: "should return ErrUserDoesNotExist and status not found when RequestPasswordChange failed",
+			input: input{
+				request: &dto.RequestPasswordChangeRequest{
+					CurrentPassword: "asdasdasd",
+					NewPassword:     "asdasdasdsa",
+				},
+				beforeTests: func(mockUserService *mocks.UserService) {
+					mockUserService.On("RequestPasswordChange", &dto.RequestPasswordChangeRequest{
+						CurrentPassword: "asdasdasd",
+						NewPassword:     "asdasdasdsa",
+						UserId:          1,
+					}).Return(errs.ErrUserDoesNotExist)
+				},
+			},
+			expected: expected{
+				statusCode: http.StatusNotFound,
+				response: response.Response{
+					Code:    code.USER_NOT_REGISTERED,
+					Message: errs.ErrUserDoesNotExist.Error(),
+				},
+			},
+		},
+		{
+			description: "should return ErrInvalidCredential and status Bad Request when RequestPasswordChange failed",
+			input: input{
+				request: &dto.RequestPasswordChangeRequest{
+					CurrentPassword: "asdasdasd",
+					NewPassword:     "asdasdasdsa",
+				},
+				beforeTests: func(mockUserService *mocks.UserService) {
+					mockUserService.On("RequestPasswordChange", &dto.RequestPasswordChangeRequest{
+						CurrentPassword: "asdasdasd",
+						NewPassword:     "asdasdasdsa",
+						UserId:          1,
+					}).Return(errs.ErrInvalidCredential)
+				},
+			},
+			expected: expected{
+				statusCode: http.StatusBadRequest,
+				response: response.Response{
+					Code:    code.WRONG_PASSWORD,
+					Message: errs.ErrInvalidCredential.Error(),
+				},
+			},
+		},
+		{
+			description: "should return ErrSamePassword and status Bad Request when RequestPasswordChange failed",
+			input: input{
+				request: &dto.RequestPasswordChangeRequest{
+					CurrentPassword: "asdasdasd",
+					NewPassword:     "asdasdasdsa",
+				},
+				beforeTests: func(mockUserService *mocks.UserService) {
+					mockUserService.On("RequestPasswordChange", &dto.RequestPasswordChangeRequest{
+						CurrentPassword: "asdasdasd",
+						NewPassword:     "asdasdasdsa",
+						UserId:          1,
+					}).Return(errs.ErrSamePassword)
+				},
+			},
+			expected: expected{
+				statusCode: http.StatusBadRequest,
+				response: response.Response{
+					Code:    code.SAME_PASSWORD,
+					Message: errs.ErrSamePassword.Error(),
+				},
+			},
+		},
+		{
+			description: "should return ErrInvalidPasswordPattern and status StatusUnprocessableEntity when RequestPasswordChange failed",
+			input: input{
+				request: &dto.RequestPasswordChangeRequest{
+					CurrentPassword: "asdasdasd",
+					NewPassword:     "asdasdasdsa",
+				},
+				beforeTests: func(mockUserService *mocks.UserService) {
+					mockUserService.On("RequestPasswordChange", &dto.RequestPasswordChangeRequest{
+						CurrentPassword: "asdasdasd",
+						NewPassword:     "asdasdasdsa",
+						UserId:          1,
+					}).Return(errs.ErrInvalidPasswordPattern)
+				},
+			},
+			expected: expected{
+				statusCode: http.StatusUnprocessableEntity,
+				response: response.Response{
+					Code:    code.INVALID_PASSWORD_PATTERN,
+					Message: errs.ErrInvalidPasswordPattern.Error(),
+				},
+			},
+		},
+		{
+			description: "should return ErrInternalServerError and status InternalServerError when RequestPasswordChange failed",
+			input: input{
+				request: &dto.RequestPasswordChangeRequest{
+					CurrentPassword: "asdasdasd",
+					NewPassword:     "asdasdasdsa",
+				},
+				beforeTests: func(mockUserService *mocks.UserService) {
+					mockUserService.On("RequestPasswordChange", &dto.RequestPasswordChangeRequest{
+						CurrentPassword: "asdasdasd",
+						NewPassword:     "asdasdasdsa",
+						UserId:          1,
+					}).Return(errs.ErrInternalServerError)
+				},
+			},
+			expected: expected{
+				statusCode: http.StatusInternalServerError,
+				response: response.Response{
+					Code:    code.INTERNAL_SERVER_ERROR,
+					Message: errs.ErrInternalServerError.Error(),
+				},
+			},
+		},
+		{
+			description: "should return success and status OK when RequestPasswordChange success",
+			input: input{
+				request: &dto.RequestPasswordChangeRequest{
+					CurrentPassword: "asdasdasd",
+					NewPassword:     "asdasdasdsa",
+				},
+				beforeTests: func(mockUserService *mocks.UserService) {
+					mockUserService.On("RequestPasswordChange", &dto.RequestPasswordChangeRequest{
+						CurrentPassword: "asdasdasd",
+						NewPassword:     "asdasdasdsa",
+						UserId:          1,
+					}).Return(nil)
+				},
+			},
+			expected: expected{
+				statusCode: http.StatusOK,
+				response: response.Response{
+					Code:    code.OK,
+					Message: "ok",
+				},
+			},
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.description, func(t *testing.T) {
+			expectedRes, _ := json.Marshal(tc.expected.response)
+			rec := httptest.NewRecorder()
+			c, _ := gin.CreateTestContext(rec)
+			c.Set("userId", 1)
+			userService := mocks.NewUserService(t)
+			tc.input.beforeTests(userService)
+			cfg := handler.HandlerConfig{
+				UserService: userService,
+			}
+			h := handler.New(&cfg)
+			c.Request, _ = http.NewRequest("POST", "/v1/users/request-password-change", test.MakeRequestBody(tc.input.request))
+
+			h.RequestPasswordChange(c)
+
+			assert.Equal(t, tc.expected.statusCode, rec.Code)
+			assert.Equal(t, string(expectedRes), rec.Body.String())
+		})
+	}
+
+}
+
+func TestCompletePasswordChange(t *testing.T) {
+	type input struct {
+		request     *dto.CompletePasswordChangeRequest
+		beforeTests func(mockUserService *mocks.UserService)
+	}
+	type expected struct {
+		statusCode int
+		response   response.Response
+	}
+	cases := []struct {
+		description string
+		input       input
+		expected    expected
+	}{
+		{
+			description: "should return error bad request when request is nil",
+			input: input{
+				request: &dto.CompletePasswordChangeRequest{
+					VerificationCode: "",
+				},
+				beforeTests: func(mockUserService *mocks.UserService) {
+				},
+			},
+			expected: expected{
+				statusCode: http.StatusBadRequest,
+				response: response.Response{
+					Code:    code.BAD_REQUEST,
+					Message: "VerificationCode is required",
+				},
+			},
+		},
+		{
+			description: "should return error ErrIncorrectVerificationCode and status Bad Request when CompletePasswordChange failed",
+			input: input{
+				request: &dto.CompletePasswordChangeRequest{
+					VerificationCode: "asdasdasd",
+				},
+				beforeTests: func(mockUserService *mocks.UserService) {
+					mockUserService.On("CompletePasswordChange", &dto.CompletePasswordChangeRequest{
+						VerificationCode: "asdasdasd",
+						UserId:           1,
+					}).Return(errs.ErrIncorrectVerificationCode)
+				},
+			},
+			expected: expected{
+				statusCode: http.StatusBadRequest,
+				response: response.Response{
+					Code:    code.INCORRECT_VERIFICATION_CODE,
+					Message: errs.ErrIncorrectVerificationCode.Error(),
+				},
+			},
+		},
+		{
+			description: "should return ErrVerficationCodeNotFound and status Bad Request when CompletePasswordChange failed",
+			input: input{
+				request: &dto.CompletePasswordChangeRequest{
+					VerificationCode: "asdasdasd",
+				},
+				beforeTests: func(mockUserService *mocks.UserService) {
+					mockUserService.On("CompletePasswordChange", &dto.CompletePasswordChangeRequest{
+						VerificationCode: "asdasdasd",
+						UserId:           1,
+					}).Return(errs.ErrVerficationCodeNotFound)
+				},
+			},
+			expected: expected{
+				statusCode: http.StatusNotFound,
+				response: response.Response{
+					Code:    code.NOT_FOUND,
+					Message: errs.ErrVerficationCodeNotFound.Error(),
+				},
+			},
+		},
+		{
+			description: "should return error and status Internal Server Error when CompletePasswordChange failed",
+			input: input{
+				request: &dto.CompletePasswordChangeRequest{
+					VerificationCode: "asdasdasd",
+				},
+				beforeTests: func(mockUserService *mocks.UserService) {
+					mockUserService.On("CompletePasswordChange", &dto.CompletePasswordChangeRequest{
+						VerificationCode: "asdasdasd",
+						UserId:           1,
+					}).Return(errs.ErrInternalServerError)
+				},
+			},
+			expected: expected{
+				statusCode: http.StatusInternalServerError,
+				response: response.Response{
+					Code:    code.INTERNAL_SERVER_ERROR,
+					Message: errs.ErrInternalServerError.Error(),
+				},
+			},
+		},
+		{
+			description: "should return ok and status OK when CompletePasswordChange success",
+			input: input{
+				request: &dto.CompletePasswordChangeRequest{
+					VerificationCode: "asdasdasd",
+				},
+				beforeTests: func(mockUserService *mocks.UserService) {
+					mockUserService.On("CompletePasswordChange", &dto.CompletePasswordChangeRequest{
+						VerificationCode: "asdasdasd",
+						UserId:           1,
+					}).Return(nil)
+				},
+			},
+			expected: expected{
+				statusCode: http.StatusOK,
+				response: response.Response{
+					Code:    code.OK,
+					Message: "ok",
+				},
+			},
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.description, func(t *testing.T) {
+			expectedRes, _ := json.Marshal(tc.expected.response)
+			rec := httptest.NewRecorder()
+			c, _ := gin.CreateTestContext(rec)
+			c.Set("userId", 1)
+			userService := mocks.NewUserService(t)
+			tc.input.beforeTests(userService)
+			cfg := handler.HandlerConfig{
+				UserService: userService,
+			}
+			h := handler.New(&cfg)
+			c.Request, _ = http.NewRequest("POST", "/v1/users/complete-password-change", test.MakeRequestBody(tc.input.request))
+
+			h.CompletePasswordChange(c)
+
+			assert.Equal(t, tc.expected.statusCode, rec.Code)
+			assert.Equal(t, string(expectedRes), rec.Body.String())
+		})
+	}
+
+}
