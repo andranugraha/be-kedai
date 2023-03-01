@@ -93,3 +93,27 @@ func (h *Handler) UpdateUserAddress(c *gin.Context) {
 
 	response.Success(c, http.StatusOK, code.OK, "success", address)
 }
+
+func (h *Handler) DeleteUserAddress(c *gin.Context) {
+	userId := c.GetInt("userId")
+	addressId := c.Param("addressId")
+	addressIdInt, _ := strconv.Atoi(addressId)
+
+	err := h.userAddressService.DeleteUserAddress(addressIdInt, userId)
+	if err != nil {
+		if errors.Is(err, errs.ErrAddressNotFound) {
+			response.Error(c, http.StatusNotFound, code.NOT_FOUND, err.Error())
+			return
+		}
+
+		if errors.Is(err, errs.ErrMustHaveAtLeastOneDefaultAddress) {
+			response.Error(c, http.StatusConflict, code.MUST_HAVE_AT_LEAST_ONE_DEFAULT_ADDRESS, err.Error())
+			return
+		}
+
+		response.Error(c, http.StatusInternalServerError, code.INTERNAL_SERVER_ERROR, errs.ErrInternalServerError.Error())
+		return
+	}
+
+	response.Success(c, http.StatusOK, code.OK, "success", nil)
+}

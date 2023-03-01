@@ -79,6 +79,7 @@ func NewRouter(cfg *RouterConfig) *gin.Engine {
 					addresses.GET("", cfg.UserHandler.GetAllUserAddress)
 					addresses.POST("", cfg.UserHandler.AddUserAddress)
 					addresses.PUT("/:addressId", cfg.UserHandler.UpdateUserAddress)
+					addresses.DELETE("/:addressId", cfg.UserHandler.DeleteUserAddress)
 				}
 				sealabsPay := userAuthenticated.Group("/sealabs-pays")
 				{

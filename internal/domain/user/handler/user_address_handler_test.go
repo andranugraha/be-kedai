@@ -551,3 +551,113 @@ func TestUpdateUserAddress(t *testing.T) {
 		})
 	}
 }
+
+func TestDeleteUserAddress(t *testing.T) {
+	type input struct {
+		beforeTests func(mockUserAddressService *mocks.UserAddressService)
+	}
+
+	type expected struct {
+		data       *response.Response
+		statusCode int
+	}
+
+	type testCase struct {
+		description string
+		input       input
+		expected    expected
+	}
+
+	cases := []testCase{
+		{
+			description: "response status not found when error ErrAddressNotFound when delete address",
+			input: input{
+				beforeTests: func(mockUserAddressService *mocks.UserAddressService) {
+					mockUserAddressService.On("DeleteUserAddress", 1, 1).Return(errs.ErrAddressNotFound)
+				},
+			},
+			expected: expected{
+				data: &response.Response{
+					Code:    code.NOT_FOUND,
+					Message: errs.ErrAddressNotFound.Error(),
+				},
+				statusCode: http.StatusNotFound,
+			},
+		},
+		{
+			description: "response status conflict when error ErrMustHaveAtLeastOneDefaultAddress when delete address",
+			input: input{
+				beforeTests: func(mockUserAddressService *mocks.UserAddressService) {
+					mockUserAddressService.On("DeleteUserAddress", 1, 1).Return(errs.ErrMustHaveAtLeastOneDefaultAddress)
+				},
+			},
+			expected: expected{
+				data: &response.Response{
+					Code:    code.MUST_HAVE_AT_LEAST_ONE_DEFAULT_ADDRESS,
+					Message: errs.ErrMustHaveAtLeastOneDefaultAddress.Error(),
+				},
+				statusCode: http.StatusConflict,
+			},
+		},
+		{
+			description: "response status Internal Server Error when DeleteUserAddress return other error",
+			input: input{
+				beforeTests: func(mockUserAddressService *mocks.UserAddressService) {
+					mockUserAddressService.On("DeleteUserAddress", 1, 1).Return(errs.ErrInternalServerError)
+				},
+			},
+			expected: expected{
+				data: &response.Response{
+					Code:    code.INTERNAL_SERVER_ERROR,
+					Message: errs.ErrInternalServerError.Error(),
+				},
+				statusCode: http.StatusInternalServerError,
+			},
+		},
+		// response status OK when delete address success
+		{
+			description: "response status OK when delete address success",
+			input: input{
+				beforeTests: func(mockUserAddressService *mocks.UserAddressService) {
+					mockUserAddressService.On("DeleteUserAddress", 1, 1).Return(nil)
+				},
+			},
+			expected: expected{
+				data: &response.Response{
+					Code:    code.OK,
+					Message: "success",
+				},
+				statusCode: http.StatusOK,
+			},
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.description, func(t *testing.T) {
+			rec := httptest.NewRecorder()
+			c, _ := gin.CreateTestContext(rec)
+			c.Set("userId", 1)
+			c.Params = gin.Params{
+				{
+					Key:   "addressId",
+					Value: "1",
+				},
+			}
+
+			c.Request, _ = http.NewRequest(http.MethodDelete, "/users/addresses", nil)
+
+			mockUserAddressService := new(mocks.UserAddressService)
+			tc.input.beforeTests(mockUserAddressService)
+
+			handler := handler.New(&handler.HandlerConfig{
+				UserAddressService: mockUserAddressService,
+			})
+			handler.DeleteUserAddress(c)
+
+			expectedJson, _ := json.Marshal(tc.expected.data)
+			assert.Equal(t, tc.expected.statusCode, rec.Code)
+			assert.Equal(t, string(expectedJson), rec.Body.String())
+
+		})
+	}
+}

@@ -269,12 +269,7 @@ func (s *userServiceImpl) UpdateUsername(userId int, request *dto.UpdateUsername
 }
 
 func (s *userServiceImpl) SignOut(request *dto.UserLogoutRequest) error {
-	err := s.redis.DeleteRefreshTokenAndAccessToken(request.UserId, request.RefreshToken, request.AccessToken)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return s.redis.DeleteRefreshTokenAndAccessToken(request.UserId, request.RefreshToken, request.AccessToken)
 }
 
 func (s *userServiceImpl) RequestPasswordChange(request *dto.RequestPasswordChangeRequest) error {
