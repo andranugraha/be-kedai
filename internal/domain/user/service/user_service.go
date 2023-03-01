@@ -343,5 +343,10 @@ func (s *userServiceImpl) CompletePasswordChange(request *dto.CompletePasswordCh
 		return err
 	}
 
+	err = s.redis.DeleteUserPasswordAndVerificationCode(request.UserId)
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
