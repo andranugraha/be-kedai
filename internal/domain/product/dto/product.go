@@ -1,8 +1,22 @@
 package dto
 
 import (
+	"kedai/backend/be-kedai/internal/domain/product/model"
 	shopModel "kedai/backend/be-kedai/internal/domain/shop/model"
 )
+
+type ProductDetail struct {
+	model.Product
+	Vouchers         []*shopModel.ShopVoucher `json:"vouchers,omitempty" gorm:"->:false"`
+	Couriers         []*shopModel.Courier     `json:"couriers" gorm:"->:false"`
+	MinPrice         float64                  `json:"minPrice"`
+	MaxPrice         float64                  `json:"maxPrice"`
+	PromotionPercent *float64                 `json:"promotionPercent,omitempty"`
+}
+
+func (ProductDetail) TableName() string {
+	return "products"
+}
 
 type ProductResponse struct {
 	ID           int     `json:"id"`
