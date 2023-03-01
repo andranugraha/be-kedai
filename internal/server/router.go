@@ -88,6 +88,8 @@ func NewRouter(cfg *RouterConfig) *gin.Engine {
 		{
 			location.GET("/cities", cfg.LocationHandler.GetCities)
 			location.GET("/provinces", cfg.LocationHandler.GetProvinces)
+			location.GET("/districts", cfg.LocationHandler.GetDistricts)
+			location.GET("/subdistricts", cfg.LocationHandler.GetSubdistricts)
 		}
 
 		product := v1.Group("/products")
