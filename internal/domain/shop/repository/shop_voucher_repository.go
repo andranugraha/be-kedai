@@ -26,8 +26,8 @@ func NewShopVoucherRepository(cfg *ShopVoucherRConfig) ShopVoucherRepository {
 
 func (r *shopVoucherRepositoryImpl) GetShopVoucher(shopId int) ([]*model.ShopVoucher, error) {
 	var shopVoucher []*model.ShopVoucher
-
-	err := r.db.Where("shop_id = ?", shopId).Where("now() < expired_at").Find(&shopVoucher).Error
+	publicVoucher := true
+	err := r.db.Where("shop_id = ?", shopId).Where("is_hidden != ?", publicVoucher).Where("now() < expired_at").Find(&shopVoucher).Error
 	if err != nil {
 		return nil, err
 	}
