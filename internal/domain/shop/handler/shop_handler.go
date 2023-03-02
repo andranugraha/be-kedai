@@ -31,6 +31,7 @@ func (h *Handler) FindShopBySlug(c *gin.Context) {
 func (h *Handler) FindShopByKeyword(c *gin.Context) {
 	var req *dto.FindShopRequest
 	_ = c.ShouldBindQuery(&req)
+	req.Validate()
 
 	result, err := h.shopService.FindShopByKeyword(req)
 	if err != nil {
