@@ -207,40 +207,40 @@ func TestFindShopBySlug(t *testing.T) {
 }
 
 func TestFindShopByKeyword(t *testing.T) {
-	var(
-		shopList = []*model.Shop{}
-		rows = int64(1)
-		pages = 1
-		limit = 10
+	var (
+		shopList   = []*model.Shop{}
+		rows       = int64(1)
+		pages      = 1
+		limit      = 10
 		pagination = &commonDto.PaginationResponse{
-			Data: shopList,
-			TotalRows: rows,
+			Data:       shopList,
+			TotalRows:  rows,
 			TotalPages: pages,
-			Page: pages,
-			Limit: limit,
+			Page:       pages,
+			Limit:      limit,
 		}
 		emptyPagination = &commonDto.PaginationResponse{
-			Page: pages,
+			Page:  pages,
 			Limit: limit,
 		}
 		req = &dto.FindShopRequest{
-			Limit: limit,
-			Page: pages,
+			Limit:   limit,
+			Page:    pages,
 			Keyword: "test",
 		}
 		invalidReq = &dto.FindShopRequest{
 			Limit: limit,
-			Page: pages,
+			Page:  pages,
 		}
 	)
 	type input struct {
-		dto *dto.FindShopRequest
-		err error
+		dto        *dto.FindShopRequest
+		err        error
 		beforeTest func(*mocks.ShopRepository)
 	}
 	type expected struct {
 		result *commonDto.PaginationResponse
-		err error
+		err    error
 	}
 	type cases struct {
 		description string
@@ -260,19 +260,19 @@ func TestFindShopByKeyword(t *testing.T) {
 			},
 			expected: expected{
 				result: pagination,
-				err: nil,
+				err:    nil,
 			},
 		},
 		{
 			description: "should return empty shop list when keyword is empty",
 			input: input{
-				dto: invalidReq,
-				err: nil,
+				dto:        invalidReq,
+				err:        nil,
 				beforeTest: func(sr *mocks.ShopRepository) {},
 			},
 			expected: expected{
 				result: emptyPagination,
-				err: nil,
+				err:    nil,
 			},
 		},
 		{
@@ -286,7 +286,7 @@ func TestFindShopByKeyword(t *testing.T) {
 			},
 			expected: expected{
 				result: nil,
-				err: errors.New("error"),
+				err:    errors.New("error"),
 			},
 		},
 	} {

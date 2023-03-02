@@ -75,8 +75,8 @@ func (r *shopRepositoryImpl) FindShopBySlug(slug string) (*model.Shop, error) {
 }
 
 func (r *shopRepositoryImpl) FindShopByKeyword(req *dto.FindShopRequest) ([]*model.Shop, int64, int, error) {
-	var(
-		shopList []*model.Shop
+	var (
+		shopList  []*model.Shop
 		totalRows int64
 		totalPage int
 	)
@@ -89,5 +89,5 @@ func (r *shopRepositoryImpl) FindShopByKeyword(req *dto.FindShopRequest) ([]*mod
 		return nil, 0, 0, err
 	}
 
-	return shopList, totalRows, totalPage, nil	
+	return shopList, totalRows, totalPage, nil
 }

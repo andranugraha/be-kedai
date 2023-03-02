@@ -113,25 +113,25 @@ func TestFindShopBySlug(t *testing.T) {
 }
 
 func TestFindShopByKeyword(t *testing.T) {
-	var(
-		shopList = []*model.Shop{}
+	var (
+		shopList   = []*model.Shop{}
 		pagination = &commonDto.PaginationResponse{
-			Data: shopList,
+			Data:  shopList,
 			Limit: 10,
-			Page: 1,
+			Page:  1,
 		}
 		req = &dto.FindShopRequest{
 			Keyword: "test",
 		}
 	)
 	type input struct {
-		dto *dto.FindShopRequest
+		dto    *dto.FindShopRequest
 		result *commonDto.PaginationResponse
-		err error
+		err    error
 	}
 	type expected struct {
 		statusCode int
-		response response.Response
+		response   response.Response
 	}
 
 	type cases struct {
@@ -144,30 +144,30 @@ func TestFindShopByKeyword(t *testing.T) {
 		{
 			description: "should return shop list with code 200 when success",
 			input: input{
-				dto: req,
+				dto:    req,
 				result: pagination,
-				err: nil,
+				err:    nil,
 			},
 			expected: expected{
 				statusCode: http.StatusOK,
 				response: response.Response{
-					Code: code.OK,
+					Code:    code.OK,
 					Message: "ok",
-					Data: pagination,
+					Data:    pagination,
 				},
 			},
 		},
 		{
 			description: "should return error with code 500 when internal server error",
 			input: input{
-				dto: req,
+				dto:    req,
 				result: nil,
-				err: errs.ErrInternalServerError,
+				err:    errs.ErrInternalServerError,
 			},
 			expected: expected{
 				statusCode: http.StatusInternalServerError,
 				response: response.Response{
-					Code: code.INTERNAL_SERVER_ERROR,
+					Code:    code.INTERNAL_SERVER_ERROR,
 					Message: errs.ErrInternalServerError.Error(),
 				},
 			},
