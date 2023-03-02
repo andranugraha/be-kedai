@@ -3,7 +3,9 @@ package repository
 import (
 	"errors"
 	errs "kedai/backend/be-kedai/internal/common/error"
+	"kedai/backend/be-kedai/internal/domain/shop/dto"
 	"kedai/backend/be-kedai/internal/domain/shop/model"
+	"math"
 
 	"gorm.io/gorm"
 )
@@ -12,7 +14,7 @@ type ShopRepository interface {
 	FindShopById(id int) (*model.Shop, error)
 	FindShopByUserId(userId int) (*model.Shop, error)
 	FindShopBySlug(slug string) (*model.Shop, error)
-	FindShopByKeyword(keyword string) ([]*model.Shop, error)
+	FindShopByKeyword(req *dto.FindShopRequest) ([]*model.Shop, int64, int, error)
 	FindMostRatedShopByKeyword(keyword string) (*model.Shop, error)
 }
 
@@ -73,15 +75,22 @@ func (r *shopRepositoryImpl) FindShopBySlug(slug string) (*model.Shop, error) {
 	return &shop, nil
 }
 
-func (r *shopRepositoryImpl) FindShopByKeyword(keyword string) ([]*model.Shop, error) {
-	var shopList []*model.Shop
+func (r *shopRepositoryImpl) FindShopByKeyword(req *dto.FindShopRequest) ([]*model.Shop, int64, int, error) {
+	var(
+		shopList []*model.Shop
+		totalRows int64
+		totalPage int
+	)
 
-	err := r.db.Where("name ILIKE ?", "%"+keyword+"%").Order("rating desc").Find(&shopList).Error
+	r.db.Where("name ILIKE ?", "%"+req.Keyword+"%").Count(&totalRows)
+	totalPage = int(math.Ceil(float64(totalRows) / float64(req.Limit)))
+
+	err := r.db.Where("name ILIKE ?", "%"+req.Keyword+"%").Order("rating desc").Limit(req.Limit).Offset(req.Offset()).Find(&shopList).Error
 	if err != nil {
-		return nil, err
+		return nil, 0, 0, err
 	}
 
-	return shopList, nil	
+	return shopList, totalRows, totalPage, nil	
 }
 
 func (r *shopRepositoryImpl) FindMostRatedShopByKeyword(keyword string) (*model.Shop, error) {
