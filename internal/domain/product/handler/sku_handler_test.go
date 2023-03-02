@@ -123,7 +123,7 @@ func TestGetSKUByVariantIDs(t *testing.T) {
 			rec := httptest.NewRecorder()
 			c, _ := gin.CreateTestContext(rec)
 			h := handler.New(&handler.Config{
-				SkuSerivce: skuService,
+				SkuService: skuService,
 			})
 			c.Request = httptest.NewRequest("GET", fmt.Sprintf("/products/skus?variantId=%s", tc.input.request), nil)
 

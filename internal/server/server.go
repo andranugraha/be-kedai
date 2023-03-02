@@ -204,7 +204,7 @@ func createRouter() *gin.Engine {
 	productHandler := productHandlerPackage.New(&productHandlerPackage.Config{
 		CategoryService: categoryService,
 		ProductService:  productService,
-		SkuSerivce:      skuService,
+		SkuService:      skuService,
 	})
 
 	return NewRouter(&RouterConfig{
