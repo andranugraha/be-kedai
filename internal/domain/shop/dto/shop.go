@@ -15,3 +15,8 @@ func (req *FindShopRequest) Validate() {
 		req.Limit = 10
 	}
 }
+
+func (req *FindShopRequest) Offset() int {
+	return (req.Page - 1) * req.Limit
+}
+
