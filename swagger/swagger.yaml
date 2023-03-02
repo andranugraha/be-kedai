@@ -2473,6 +2473,115 @@ paths:
                   message:
                     type: string
                     example: "error message"                
+  /v1/products:
+    get:
+      tags:
+        - Product
+      summary: Get product by keyword and filter
+      description: Get all products from keyword with pagination, filter by category, minimun rating, price range, cities, and sort by recommended, latest, top sales, price low and price high
+      parameters:
+        - in: query
+          name: keyword
+          schema:
+            type: string
+            example: "rtx"
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            default: 10
+          description: Set to 10 by default
+        - in: query
+          name: page
+          schema:
+            type: integer
+            default: 1
+        - in: query
+          name: categoryId
+          schema:
+            type: integer
+          description: Filter by categoryId
+        - in: query
+          name: minRating
+          schema:
+            type: integer
+          description: Filter by minimum product rating to be shown (1-5)
+        - in: query
+          name: minPrice
+          schema:
+            type: number
+            format: float
+          description: Filter by minimum product price to be shown
+        - in: query
+          name: maxPrice
+          schema:
+            type: number
+            format: float
+          description: Filter by maximum product price to be shown
+        - in: query
+          name: cityIds
+          schema:
+            type: string
+            example: 350,351
+          description: Filter by product shop city id. For multiple ids, separate with comma (,)
+        - in: query
+          name: sort
+          schema:
+            type: string
+            default: recommended
+          description: Sort by "recommended", "latest", "top_sales", "price_low", "price_high"
+      responses:
+        '200':
+          description: Successfull operation
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Response'
+                  - type: object
+                    properties:
+                      code:
+                        example: 'OK'
+                      message:
+                        example: "ok"
+                      data:
+                        allOf:
+                        - $ref: '#/components/schemas/PaginationResponse'
+                        - type: object
+                          properties:
+                            totalRows:
+                              example: 1
+                            totalPages:
+                              example: 1
+                            limit:
+                              example: 10
+                            data:
+                              type: array
+                              items:
+                                allOf:
+                                  - $ref: '#/components/schemas/Product'
+                                  - type: object
+                                    properties:
+                                      address:
+                                        type: string
+                                        example: Pekanbaru, Riau
+                                  - type: object
+                                    properties:
+                                      imageUrl:
+                                        type: string
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "INTERNAL_SERVER_ERROR"
+                  message:
+                    type: string
+                    example: "error message"
   /v1/products/categories:
     get:
       tags:
@@ -2547,7 +2656,7 @@ paths:
     get:
       tags:
         - Product
-      summary: Get product recommendation
+      summary: Get product recommendation by categories
       description: Get product recommendation for product in the same category
       parameters:
         - in: query
@@ -3148,6 +3257,11 @@ components:
               properties:
                 imageUrl:
                   type: string
+            - type: object
+              properties:
+                defaultSkuId:
+                  type: integer
+                  example: 1
     CartItem:
       type: object
       properties:

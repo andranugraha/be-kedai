@@ -107,7 +107,7 @@ func (r *userWishlistRepositoryImpl) GetUserWishlists(req dto.GetUserWishlistsRe
 	db.Model(&model.UserWishlist{}).Count(&totalRows)
 	totalPages = int(math.Ceil(float64(totalRows) / float64(req.Limit)))
 
-	err = db.Model(&model.UserWishlist{}).Find(&userWishlists).Error
+	err = db.Model(&model.UserWishlist{}).Limit(req.Limit).Offset(req.Offset()).Find(&userWishlists).Error
 	if err != nil {
 		return
 	}
