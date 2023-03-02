@@ -37,5 +37,4 @@ func VerifyPassword(pw string) bool {
 
 func ContainsUsername(pw string, username string) bool {
 	return strings.Contains(strings.ToLower(pw), strings.ToLower(username))
-
 }
