@@ -1240,7 +1240,61 @@ paths:
                               data:
                                 type: array
                                 items:
-                                  $ref: '#/components/schemas/GetCartItemResponse'
+                                  allOf:
+                                    - type: object
+                                      properties:
+                                        shop:
+                                          $ref: '#/components/schemas/Shop'
+                                    - type: object
+                                      properties:
+                                        cartItems:
+                                          type: array
+                                          items:
+                                            type: object
+                                            properties:
+                                              id:
+                                                type: integer
+                                                example: 1
+                                              skuId:
+                                                type: integer
+                                                example: 5
+                                              name:
+                                                type: string
+                                                example: Shoes
+                                              quantity:
+                                                type: integer
+                                                example: 29
+                                              stock:
+                                                type: integer
+                                                example: 2012
+                                              notes:
+                                                type: string
+                                                example: "notest test"
+                                              originalPrice:
+                                                type: number
+                                                format: float
+                                                example: 30000000
+                                              promotionType:
+                                                type: string
+                                                example: percent
+                                              promotionAmount:
+                                                type: number
+                                                format: float
+                                                example: 0.1
+                                              discountedPrice:
+                                                type: integer
+                                                format: float
+                                                example: 27000000
+                                              variants:
+                                                type: array
+                                                items:
+                                                  allOf:
+                                                    - $ref: '#/components/schemas/Variant'
+                                                    - type: object
+                                                      properties:
+                                                        group:
+                                                          $ref: '#/components/schemas/GroupVariant'
+
         '401':
           description: unauthorized
           content:
@@ -2164,6 +2218,96 @@ paths:
                   message:
                     type: string
                     example: "error message"
+  /v1/products/{code}:
+    get:
+      tags:
+        - Product
+      summary: Get product by code
+      description: Get product detail information using product code. If a product doesn't have any variant, `sku` field will appear while `variantGroup` field will not appear, vice versa
+      parameters:
+        - in: path
+          name: code
+          required: true
+          schema:
+            type: string
+            example: product_code
+      responses:
+        '200':
+          description: operation successful
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Response'
+                  - type: object
+                    properties:
+                      data:
+                        allOf:
+                          - $ref: '#/components/schemas/Product'
+                          - type: object
+                            properties:
+                              totalStock:
+                                type: integer
+                                example: 100
+                          - type: object
+                            properties:
+                              vouchers:
+                                type: array
+                                items:
+                                  $ref: '#/components/schemas/ShopVoucher'
+                          - type: object
+                            properties:
+                              couriers:
+                                type: array
+                                items:
+                                  $ref: '#/components/schemas/Courier'
+                          - type: object
+                            properties:
+                              variantGroups:
+                                type: array
+                                items:
+                                  allOf:
+                                    - $ref: '#/components/schemas/GroupVariant'
+                                    - type: object
+                                      properties:
+                                        variants:
+                                          type: array
+                                          items:
+                                            $ref: '#/components/schemas/Variant'
+                          - type: object
+                            properties:
+                              shop:
+                                $ref: '#/components/schemas/Shop'
+                          - type: object
+                            properties:
+                              sku:
+                                $ref: '#/components/schemas/SKU'
+        '404':
+          description: product not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "PRODUCT_NOT_EXIST"
+                  message:
+                    type: string
+                    example: "error message"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "INTERNAL_SERVER_ERROR"
+                  message:
+                    type: string
+                    example: "error message"                
   /v1/products/categories:
     get:
       tags:
@@ -2807,15 +2951,10 @@ components:
         maxPrice:
           type: number
           format: float
-        address:
-          type: string
-          example: Pekanbaru, Riau
         promotionPercent:
           type: number
           format: float
           example: 0.16
-        imageUrl:
-          type: string
         shopId:
           type: integer
         categoryId:
@@ -2833,7 +2972,17 @@ components:
           type: integer
           example: 1
         product:
-          $ref: '#/components/schemas/Product'
+          allOf:
+            - $ref: '#/components/schemas/Product'
+            - type: object
+              properties:
+                address:
+                  type: string
+                  example: Pekanbaru, Riau
+            - type: object
+              properties:
+                imageUrl:
+                  type: string
     CartItem:
       type: object
       properties:
@@ -2849,55 +2998,6 @@ components:
         skuId:
           type: integer
           example: 1
-    GetCartItemResponse:
-      type: object
-      properties:
-        shop:
-          $ref: '#/components/schemas/Shop'
-        cartItems:
-          type: array
-          items:
-            $ref: '#/components/schemas/CartItemResponse'
-    CartItemResponse:
-      type: object
-      properties:
-        id:
-          type: integer
-          example: 1
-        skuId:
-          type: integer
-          example: 5
-        name:
-          type: string
-          example: Shoes
-        quantity:
-          type: integer
-          example: 29
-        stock:
-          type: integer
-          example: 2012
-        notes:
-          type: string
-          example: "notest test"
-        originalPrice:
-          type: integer
-          format: float
-          example: 30000000
-        promotionType:
-          type: string
-          example: percent
-        promotionAmount:
-          type: integer
-          format: float
-          example: 0.1
-        discountedPrice:
-          type: integer
-          format: float
-          example: 27000000
-        variants:
-          type: array
-          items:
-            $ref: '#/components/schemas/Variant'
     Variant:
       type: object
       properties:
@@ -2913,8 +3013,6 @@ components:
         groupId:
           type: integer
           example: 1
-        group:
-          $ref: '#/components/schemas/GroupVariant'
     GroupVariant:
       type: object
       properties:
@@ -2927,6 +3025,37 @@ components:
         productId:
           type: integer
           example: 1
+    SKU:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        sku:
+          type: string
+          example: product_sku
+        price:
+          type: number
+          format: float
+          example: 20000
+        stock:
+          type: integer
+          example: 100
+        productId:
+          type: integer
+          example: 2
+    Courier:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        code:
+          type: string
+          example: courier_code
+        name:
+          type: string
+          example: courier name
     UserAddress:
       type: object
       properties:
