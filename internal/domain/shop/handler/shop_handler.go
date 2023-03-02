@@ -40,3 +40,20 @@ func (h *Handler) FindShopByKeyword(c *gin.Context) {
 
 	response.Success(c, http.StatusOK, code.OK, "ok", result)
 }
+
+func (h *Handler) FindMostRatedShopByKeyword(c *gin.Context) {
+	keyword := c.Param("keyword")
+
+	result, err := h.shopService.FindMostRatedShopByKeyword(keyword)
+	if err != nil {
+		if errors.Is(err, errs.ErrShopNotFound) {
+			response.Error(c, http.StatusNotFound, code.NOT_FOUND, err.Error())
+			return
+		}
+
+		response.Error(c, http.StatusInternalServerError, code.INTERNAL_SERVER_ERROR, err.Error())
+		return
+	}
+
+	response.Success(c, http.StatusOK, code.OK, "ok", result)
+}
