@@ -1073,7 +1073,61 @@ paths:
                               data:
                                 type: array
                                 items:
-                                  $ref: '#/components/schemas/GetCartItemResponse'
+                                  allOf:
+                                    - type: object
+                                      properties:
+                                        shop:
+                                          $ref: '#/components/schemas/Shop'
+                                    - type: object
+                                      properties:
+                                        cartItems:
+                                          type: array
+                                          items:
+                                            type: object
+                                            properties:
+                                              id:
+                                                type: integer
+                                                example: 1
+                                              skuId:
+                                                type: integer
+                                                example: 5
+                                              name:
+                                                type: string
+                                                example: Shoes
+                                              quantity:
+                                                type: integer
+                                                example: 29
+                                              stock:
+                                                type: integer
+                                                example: 2012
+                                              notes:
+                                                type: string
+                                                example: "notest test"
+                                              originalPrice:
+                                                type: number
+                                                format: float
+                                                example: 30000000
+                                              promotionType:
+                                                type: string
+                                                example: percent
+                                              promotionAmount:
+                                                type: number
+                                                format: float
+                                                example: 0.1
+                                              discountedPrice:
+                                                type: integer
+                                                format: float
+                                                example: 27000000
+                                              variants:
+                                                type: array
+                                                items:
+                                                  allOf:
+                                                    - $ref: '#/components/schemas/Variant'
+                                                    - type: object
+                                                      properties:
+                                                        group:
+                                                          $ref: '#/components/schemas/GroupVariant'
+
         '401':
           description: unauthorized
           content:
@@ -2045,7 +2099,14 @@ paths:
                               variantGroups:
                                 type: array
                                 items:
-                                  $ref: '#/components/schemas/GroupVariant'
+                                  allOf:
+                                    - $ref: '#/components/schemas/GroupVariant'
+                                    - type: object
+                                      properties:
+                                        variants:
+                                          type: array
+                                          items:
+                                            $ref: '#/components/schemas/Variant'
                           - type: object
                             properties:
                               shop:
@@ -2770,55 +2831,6 @@ components:
         skuId:
           type: integer
           example: 1
-    GetCartItemResponse:
-      type: object
-      properties:
-        shop:
-          $ref: '#/components/schemas/Shop'
-        cartItems:
-          type: array
-          items:
-            $ref: '#/components/schemas/CartItemResponse'
-    CartItemResponse:
-      type: object
-      properties:
-        id:
-          type: integer
-          example: 1
-        skuId:
-          type: integer
-          example: 5
-        name:
-          type: string
-          example: Shoes
-        quantity:
-          type: integer
-          example: 29
-        stock:
-          type: integer
-          example: 2012
-        notes:
-          type: string
-          example: "notest test"
-        originalPrice:
-          type: number
-          format: float
-          example: 30000000
-        promotionType:
-          type: string
-          example: percent
-        promotionAmount:
-          type: number
-          format: float
-          example: 0.1
-        discountedPrice:
-          type: integer
-          format: float
-          example: 27000000
-        variants:
-          type: array
-          items:
-            $ref: '#/components/schemas/Variant'
     Variant:
       type: object
       properties:
@@ -2834,8 +2846,6 @@ components:
         groupId:
           type: integer
           example: 1
-        group:
-          $ref: '#/components/schemas/GroupVariant'
     GroupVariant:
       type: object
       properties:
