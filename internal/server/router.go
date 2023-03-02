@@ -111,6 +111,10 @@ func NewRouter(cfg *RouterConfig) *gin.Engine {
 			{
 				category.GET("", cfg.ProductHandler.GetCategories)
 			}
+			sku := product.Group("/skus")
+			{
+				sku.GET("", cfg.ProductHandler.GetSKUByVariantIDs)
+			}
 		}
 
 		shop := v1.Group("/shops")
