@@ -16,6 +16,7 @@ tags:
   - name: User
   - name: Product
   - name: Shop
+  - name: Marketplace
 paths:
   /v1/users/wallets:
     get:
@@ -2357,6 +2358,43 @@ paths:
                   message:
                     type: string
                     example: "error message"
+  /v1/marketplaces/vouchers:
+    get:
+      tags:
+        - Marketplace
+      summary: Get marketplace vouchers
+      description: Get list of available marketplace vouchers
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Response'
+                  - type: object
+                    properties:
+                      code:
+                        example: "OK"
+                      message:
+                        example: "ok"
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/MarketplaceVoucher'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "INTERNAL_SERVER_ERROR"
+                  message:
+                    type: string
+                    example: "error message"                  
 components:
   schemas:
     User:
@@ -2474,6 +2512,39 @@ components:
         shopId:
           type: number
           example: 1
+    MarketplaceVoucher:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 2
+        code:
+          type: string
+          example: "code"
+        name:
+          type: string
+          example: "voucher"
+        amount:
+          type: number
+          format: float
+          example: 50000
+        type:
+          type: string
+          example: "nominal"
+        isHidden:
+          type: boolean
+          example: false
+        description:
+          type: string
+          example: "desc"
+        minimumSpend:
+          type: number
+          format: float
+          example: 100000
+        expiredAt:
+          type: string
+          format: dateTime
+          example: "2006-01-02T00:00:00Z"
     Token:
       type: object
       properties:
