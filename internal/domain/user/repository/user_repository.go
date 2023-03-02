@@ -205,9 +205,21 @@ func (r *userRepositoryImpl) GetByUsername(username string) (*model.User, error)
 
 func (r *userRepositoryImpl) UpdatePassword(userId int, password string) (*model.User, error) {
 	hashedPw, _ := hash.HashAndSalt(password)
-	res := r.db.Model(&model.User{}).Where("id = ?", userId).Update("password", hashedPw)
-	if res.Error != nil {
-		return nil, res.Error
+
+	err := r.db.Transaction(func(tx *gorm.DB) error {
+		if err := tx.Model(&model.User{}).Where("id = ?", userId).Update("password", hashedPw).Error; err != nil {
+			return err
+		}
+
+		if err := r.userCache.DeleteAllByID(userId); err != nil {
+			return err
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		return nil, err
 	}
 
 	return &model.User{ID: userId}, nil
