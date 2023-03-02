@@ -2450,7 +2450,17 @@ paths:
                           - type: object
                             properties:
                               shop:
-                                $ref: '#/components/schemas/Shop'
+                                allOf:
+                                  - $ref: '#/components/schemas/Shop'
+                                  - type: object
+                                    properties:
+                                      address:
+                                        allOf:
+                                          - $ref: '#/components/schemas/UserAddress'
+                                          - type: object
+                                            properties:
+                                              subdistrict:
+                                                $ref: '#/components/schemas/Subdistrict'
                           - type: object
                             properties:
                               sku:
