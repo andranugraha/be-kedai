@@ -49,3 +49,17 @@ func (h *Handler) GetProductByCode(c *gin.Context) {
 
 	response.Success(c, http.StatusOK, code.OK, "ok", result)
 }
+
+func (h *Handler) ProductSearchFiltering(c *gin.Context) {
+	var req dto.ProductSearchFilterRequest
+	_ = c.ShouldBindQuery(&req)
+	req.Validate(c.Query("cityIds"))
+
+	product, err := h.productService.ProductSearchFiltering(req)
+	if err != nil {
+		response.Error(c, http.StatusInternalServerError, code.INTERNAL_SERVER_ERROR, err.Error())
+		return
+	}
+
+	response.Success(c, http.StatusOK, code.OK, "ok", product)
+}

@@ -1,8 +1,11 @@
 package dto
 
 import (
+	"kedai/backend/be-kedai/internal/common/constant"
 	"kedai/backend/be-kedai/internal/domain/product/model"
 	shopModel "kedai/backend/be-kedai/internal/domain/shop/model"
+	"strconv"
+	"strings"
 )
 
 type ProductDetail struct {
@@ -55,4 +58,64 @@ func (ProductResponse) TableName() string {
 type RecommendationByCategoryIdRequest struct {
 	CategoryId int `form:"categoryId" binding:"required,gte=1"`
 	ProductId  int `form:"productId" binding:"required,gte=1"`
+}
+
+type ProductSearchFilterRequest struct {
+	Keyword    string  `form:"keyword"`
+	CategoryId int     `form:"categoryId"`
+	MinRating  int     `form:"minRating"`
+	MinPrice   float64 `form:"minPrice"`
+	MaxPrice   float64 `form:"maxPrice"`
+	CityIds    []int
+	Sort       string `form:"sort"`
+	Limit      int    `form:"limit"`
+	Page       int    `form:"page"`
+}
+
+func (p *ProductSearchFilterRequest) Validate(strCityIds string) {
+	if p.Limit < 1 {
+		p.Limit = 10
+	}
+
+	if p.Page < 1 {
+		p.Page = 1
+	}
+
+	if p.MinRating < 0 {
+		p.MinRating = 0
+	}
+
+	if p.MinRating > 5 {
+		p.MinRating = 5
+	}
+
+	if p.MinPrice < 0 {
+		p.MinPrice = 0
+	}
+
+	if p.MaxPrice < 0 {
+		p.MaxPrice = 0
+	}
+
+	if strCityIds != "" {
+		cityIds := strings.Split(strCityIds, ",")
+		for _, cityId := range cityIds {
+			if cityId == "" {
+				continue
+			}
+
+			id, _ := strconv.Atoi(cityId)
+			if id > 0 {
+				p.CityIds = append(p.CityIds, id)
+			}
+		}
+	}
+
+	if p.Sort != constant.SortByRecommended && p.Sort != constant.SortByPriceLow && p.Sort != constant.SortByPriceHigh && p.Sort != constant.SortByLatest && p.Sort != constant.SortByTopSales {
+		p.Sort = constant.SortByRecommended
+	}
+}
+
+func (p *ProductSearchFilterRequest) Offset() int {
+	return (p.Page - 1) * p.Limit
 }
