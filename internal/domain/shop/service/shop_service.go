@@ -2,6 +2,7 @@ package service
 
 import (
 	commonDto "kedai/backend/be-kedai/internal/common/dto"
+	errs "kedai/backend/be-kedai/internal/common/error"
 	"kedai/backend/be-kedai/internal/domain/shop/dto"
 	"kedai/backend/be-kedai/internal/domain/shop/model"
 	"kedai/backend/be-kedai/internal/domain/shop/repository"
@@ -74,5 +75,10 @@ func (s *shopServiceImpl) FindShopByKeyword(req *dto.FindShopRequest) (*commonDt
 }
 
 func (s *shopServiceImpl) FindMostRatedShopByKeyword(keyword string) (*model.Shop, error) {
+	validateKeyword := strings.Trim(keyword, " ")
+	if validateKeyword == "" {
+		return nil, errs.ErrShopNotFound
+	}
+
 	return s.shopRepository.FindMostRatedShopByKeyword(keyword)
 }
