@@ -2558,7 +2558,17 @@ paths:
                             data:
                               type: array
                               items:
-                                $ref: '#/components/schemas/Product'
+                                allOf:
+                                  - $ref: '#/components/schemas/Product'
+                                  - type: object
+                                    properties:
+                                      address:
+                                        type: string
+                                        example: Pekanbaru, Riau
+                                  - type: object
+                                    properties:
+                                      imageUrl:
+                                        type: string
         '500':
           description: Internal server error
           content:
@@ -3247,6 +3257,11 @@ components:
               properties:
                 imageUrl:
                   type: string
+            - type: object
+              properties:
+                defaultSkuId:
+                  type: integer
+                  example: 1
     CartItem:
       type: object
       properties:
