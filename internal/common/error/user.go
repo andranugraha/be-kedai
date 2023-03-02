@@ -15,6 +15,6 @@ var (
 	ErrUsernameContainEmoji       = errors.New("username cannot contain emoji")
 	ErrSamePassword               = errors.New("new password cannot be the same as the old one")
 	ErrIncorrectVerificationCode  = errors.New("incorrect verification code")
-	ErrVerficationCodeNotFound    = errors.New("verification code not found")
+	ErrVerificationCodeNotFound   = errors.New("verification code not found")
 	ErrResetPasswordTokenNotFound = errors.New("reset password token not found")
 )

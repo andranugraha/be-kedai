@@ -339,11 +339,6 @@ func (s *userServiceImpl) CompletePasswordChange(request *dto.CompletePasswordCh
 		return err
 	}
 
-	err = s.redis.DeleteAllByID(request.UserId)
-	if err != nil {
-		return err
-	}
-
 	err = s.redis.DeleteUserPasswordAndVerificationCode(request.UserId)
 	if err != nil {
 		return err
@@ -397,11 +392,6 @@ func (s *userServiceImpl) CompletePasswordReset(request *dto.CompletePasswordRes
 	}
 
 	err = s.redis.DeleteResetPasswordToken(request.Token)
-	if err != nil {
-		return err
-	}
-
-	err = s.redis.DeleteAllByID(userId)
 	if err != nil {
 		return err
 	}

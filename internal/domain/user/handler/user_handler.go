@@ -312,7 +312,7 @@ func (h *Handler) CompletePasswordChange(c *gin.Context) {
 			response.Error(c, http.StatusBadRequest, code.INCORRECT_VERIFICATION_CODE, err.Error())
 			return
 		}
-		if errors.Is(err, errs.ErrVerficationCodeNotFound) {
+		if errors.Is(err, errs.ErrVerificationCodeNotFound) {
 			response.Error(c, http.StatusNotFound, code.NOT_FOUND, err.Error())
 			return
 		}

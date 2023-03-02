@@ -93,7 +93,7 @@ func (r *userCacheImpl) FindUserPasswordAndVerificationCode(userId int) (string,
 	newPassword, err := r.rdc.HGet(context.Background(), key, "newPassword").Result()
 	if err != nil {
 		if err == redis.Nil {
-			err = errs.ErrVerficationCodeNotFound
+			err = errs.ErrVerificationCodeNotFound
 		}
 		return "", "", err
 	}
@@ -101,7 +101,7 @@ func (r *userCacheImpl) FindUserPasswordAndVerificationCode(userId int) (string,
 	verificationCode, err := r.rdc.HGet(context.Background(), key, "verificationCode").Result()
 	if err != nil {
 		if err == redis.Nil {
-			err = errs.ErrVerficationCodeNotFound
+			err = errs.ErrVerificationCodeNotFound
 		}
 		return "", "", err
 	}
