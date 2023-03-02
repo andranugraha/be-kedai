@@ -182,8 +182,8 @@ func TestProductSearchFiltering(t *testing.T) {
 		}
 		product = []*dto.ProductResponse{}
 		res     = &commonDto.PaginationResponse{
-			Data: product,
-			TotalRows: 1,
+			Data:       product,
+			TotalRows:  1,
 			TotalPages: 1,
 		}
 		emptyRes = &commonDto.PaginationResponse{
@@ -238,8 +238,8 @@ func TestProductSearchFiltering(t *testing.T) {
 		{
 			description: "should return pagination response with empty product list as data when keyword is invalid",
 			input: input{
-				dto: invalidReq,
-				err: nil,
+				dto:        invalidReq,
+				err:        nil,
 				beforeTest: func(pr *mocks.ProductRepository) {},
 			},
 			expected: expected{

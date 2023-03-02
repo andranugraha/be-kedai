@@ -45,14 +45,14 @@ func (s *productServiceImpl) ProductSearchFiltering(req dto.ProductSearchFilterR
 	validateKeyword := strings.Trim(req.Keyword, " ")
 	if validateKeyword == "" {
 		return &commonDto.PaginationResponse{
-			Data: []*dto.ProductResponse{},
-			Limit: req.Limit,
-			Page: req.Page,
-			TotalRows: 0,
+			Data:       []*dto.ProductResponse{},
+			Limit:      req.Limit,
+			Page:       req.Page,
+			TotalRows:  0,
 			TotalPages: 0,
 		}, nil
 	}
-	
+
 	res, rows, pages, err := s.productRepository.ProductSearchFiltering(req)
 	if err != nil {
 		return nil, err

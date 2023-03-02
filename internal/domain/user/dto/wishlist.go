@@ -19,9 +19,9 @@ type GetUserWishlistsRequest struct {
 	MinPrice   float64 `form:"minPrice"`
 	MaxPrice   float64 `form:"maxPrice"`
 	CityIds    []int
-	Sort       string  `form:"sort"`
-	Limit      int     `form:"limit"`
-	Page       int     `form:"page"`
+	Sort       string `form:"sort"`
+	Limit      int    `form:"limit"`
+	Page       int    `form:"page"`
 }
 
 func (req *GetUserWishlistsRequest) Validate(strCityIds string) {

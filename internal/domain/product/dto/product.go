@@ -52,9 +52,9 @@ type ProductSearchFilterRequest struct {
 	MinPrice   float64 `form:"minPrice"`
 	MaxPrice   float64 `form:"maxPrice"`
 	CityIds    []int
-	Sort       string  `form:"sort"`
-	Limit      int     `form:"limit"`
-	Page       int     `form:"page"`
+	Sort       string `form:"sort"`
+	Limit      int    `form:"limit"`
+	Page       int    `form:"page"`
 }
 
 func (p *ProductSearchFilterRequest) Validate(strCityIds string) {
@@ -84,7 +84,7 @@ func (p *ProductSearchFilterRequest) Validate(strCityIds string) {
 			if cityId == "" {
 				continue
 			}
-			
+
 			id, _ := strconv.Atoi(cityId)
 			if id > 0 {
 				p.CityIds = append(p.CityIds, id)

@@ -134,19 +134,19 @@ func TestProductSearchFiltering(t *testing.T) {
 		product = []*dto.ProductResponse{}
 		req     = dto.ProductSearchFilterRequest{
 			Limit: 10,
-			Page: 1,
-			Sort: "recommended",
+			Page:  1,
+			Sort:  "recommended",
 		}
-		res     = &commonDto.PaginationResponse{
-			Data: product,
+		res = &commonDto.PaginationResponse{
+			Data:  product,
 			Limit: 10,
-			Page: 1,
+			Page:  1,
 		}
 	)
 	type input struct {
 		dto     dto.ProductSearchFilterRequest
 		product *commonDto.PaginationResponse
-		err error
+		err     error
 	}
 	type expected struct {
 		statusCode int
@@ -163,30 +163,30 @@ func TestProductSearchFiltering(t *testing.T) {
 		{
 			description: "should return filtered product list with code 200 when success",
 			input: input{
-				dto: req,
+				dto:     req,
 				product: res,
-				err: nil,
+				err:     nil,
 			},
 			expected: expected{
 				statusCode: http.StatusOK,
 				response: response.Response{
-					Code: code.OK,
+					Code:    code.OK,
 					Message: "ok",
-					Data: res,
+					Data:    res,
 				},
 			},
 		},
 		{
 			description: "should return error with code 500 when internal server error",
 			input: input{
-				dto: req,
+				dto:     req,
 				product: nil,
-				err: errs.ErrInternalServerError,
+				err:     errs.ErrInternalServerError,
 			},
 			expected: expected{
 				statusCode: http.StatusInternalServerError,
 				response: response.Response{
-					Code: code.INTERNAL_SERVER_ERROR,
+					Code:    code.INTERNAL_SERVER_ERROR,
 					Message: "something went wrong in the server",
 				},
 			},
@@ -201,7 +201,7 @@ func TestProductSearchFiltering(t *testing.T) {
 			h := handler.New(&handler.Config{
 				ProductService: mockService,
 			})
-			c.Request = httptest.NewRequest("GET", "/products",  nil)
+			c.Request = httptest.NewRequest("GET", "/products", nil)
 
 			h.ProductSearchFiltering(c)
 
