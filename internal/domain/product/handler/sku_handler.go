@@ -21,7 +21,7 @@ func (h *Handler) GetSKUByVariantIDs(c *gin.Context) {
 
 	sku, err := h.skuSerivce.GetSKUByVariantIDs(&request)
 	if err != nil {
-		if errors.Is(err, errs.ErrIncompleteVariantIDArguments) || errors.Is(err, errs.ErrInvalidVariantID) {
+		if errors.Is(err, errs.ErrInvalidVariantID) {
 			response.Error(c, http.StatusUnprocessableEntity, code.INVALID_VARIANT, err.Error())
 			return
 		}
