@@ -12,6 +12,7 @@ type ShopRepository interface {
 	FindShopById(id int) (*model.Shop, error)
 	FindShopByUserId(userId int) (*model.Shop, error)
 	FindShopBySlug(slug string) (*model.Shop, error)
+	FindShopByKeyword(keyword string) ([]*model.Shop, error)
 }
 
 type shopRepositoryImpl struct {
@@ -69,4 +70,15 @@ func (r *shopRepositoryImpl) FindShopBySlug(slug string) (*model.Shop, error) {
 	}
 
 	return &shop, nil
+}
+
+func (r *shopRepositoryImpl) FindShopByKeyword(keyword string) ([]*model.Shop, error) {
+	var shopList []*model.Shop
+
+	err := r.db.Where("name ILIKE ?", "%"+keyword+"%").Order("rating desc").Find(&shopList).Error
+	if err != nil {
+		return nil, err
+	}
+
+	return shopList, nil	
 }
