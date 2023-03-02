@@ -33,13 +33,6 @@ func createRouter() *gin.Engine {
 	mailUtils := mail.NewMailUtils(&mail.MailUtilsConfig{Mailer: mailer})
 	randomUtils := random.NewRandomUtils(&random.RandomUtilsConfig{})
 
-	productRepo := productRepoPackage.NewProductRepository(&productRepoPackage.ProductRConfig{
-		DB: db,
-	})
-	productService := productServicePackage.NewProductService(&productServicePackage.ProductSConfig{
-		ProductRepository: productRepo,
-	})
-
 	districtRepo := locationRepoPackage.NewDistrictRepository(&locationRepoPackage.DistrictRConfig{
 		DB: db,
 	})
