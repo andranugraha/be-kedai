@@ -2,7 +2,6 @@ package service
 
 import (
 	commonDto "kedai/backend/be-kedai/internal/common/dto"
-	errs "kedai/backend/be-kedai/internal/common/error"
 	"kedai/backend/be-kedai/internal/domain/shop/dto"
 	"kedai/backend/be-kedai/internal/domain/shop/model"
 	"kedai/backend/be-kedai/internal/domain/shop/repository"
@@ -14,7 +13,6 @@ type ShopService interface {
 	FindShopByUserId(userId int) (*model.Shop, error)
 	FindShopBySlug(slug string) (*model.Shop, error)
 	FindShopByKeyword(req *dto.FindShopRequest) (*commonDto.PaginationResponse, error)
-	FindMostRatedShopByKeyword(keyword string) (*model.Shop, error)
 }
 
 type shopServiceImpl struct {
@@ -72,13 +70,4 @@ func (s *shopServiceImpl) FindShopByKeyword(req *dto.FindShopRequest) (*commonDt
 		Limit:      req.Limit,
 		Page:       req.Page,
 	}, nil
-}
-
-func (s *shopServiceImpl) FindMostRatedShopByKeyword(keyword string) (*model.Shop, error) {
-	validateKeyword := strings.Trim(keyword, " ")
-	if validateKeyword == "" {
-		return nil, errs.ErrShopNotFound
-	}
-
-	return s.shopRepository.FindMostRatedShopByKeyword(keyword)
 }
