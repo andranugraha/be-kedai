@@ -744,6 +744,38 @@ func TestRequestPasswordChange(t *testing.T) {
 			},
 		},
 		{
+			description: "should return error when current password given is not valid",
+			input: input{
+				request: &dto.RequestPasswordChangeRequest{
+					UserId:          1,
+					CurrentPassword: "Password123",
+					NewPassword:     "Passwrod1234",
+				},
+				beforeTest: func(ur *mocks.UserRepository, mu *mocks.MailUtils, ru *mocks.RandomUtils, uc *mocks.UserCache) {
+					ur.On("GetByID", 1).Return(&model.User{ID: 1, Password: hashedPassword, Username: "test"}, nil)
+				},
+			},
+			expected: expected{
+				err: errs.ErrInvalidCredential,
+			},
+		},
+		{
+			description: "should return error when new password is not valid",
+			input: input{
+				request: &dto.RequestPasswordChangeRequest{
+					UserId:          1,
+					CurrentPassword: "Passwrod123",
+					NewPassword:     "Passwrod123",
+				},
+				beforeTest: func(ur *mocks.UserRepository, mu *mocks.MailUtils, ru *mocks.RandomUtils, uc *mocks.UserCache) {
+					ur.On("GetByID", 1).Return(&model.User{ID: 1, Password: hashedPassword, Username: "test"}, nil)
+				},
+			},
+			expected: expected{
+				err: errs.ErrSamePassword,
+			},
+		},
+		{
 			description: "should return error when StoreUserPasswordAndVerificationCode failed",
 			input: input{
 				request: &dto.RequestPasswordChangeRequest{
@@ -1050,7 +1082,8 @@ func TestRequestPasswordReset(t *testing.T) {
 
 func TestCompletePasswordReset(t *testing.T) {
 	var (
-		token = "token"
+		token             = "token"
+		hashedPassword, _ = hash.HashAndSalt("forgottenPas5word")
 	)
 
 	type input struct {
@@ -1095,6 +1128,22 @@ func TestCompletePasswordReset(t *testing.T) {
 			},
 			expected: expected{
 				err: errs.ErrUserDoesNotExist,
+			},
+		},
+		{
+			description: "should return error when new password is invalid",
+			input: input{
+				request: &dto.CompletePasswordResetRequest{
+					Token:       token,
+					NewPassword: "asdASDa5d",
+				},
+				beforeTest: func(ur *mocks.UserRepository, uc *mocks.UserCache) {
+					uc.On("FindResetPasswordToken", token).Return(1, nil)
+					ur.On("GetByID", 1).Return(&model.User{Username: "asd", ID: 1, Password: hashedPassword}, nil)
+				},
+			},
+			expected: expected{
+				err: errs.ErrContainUsername,
 			},
 		},
 		{
