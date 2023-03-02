@@ -2,6 +2,7 @@ package handler_test
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"kedai/backend/be-kedai/internal/common/code"
 	errs "kedai/backend/be-kedai/internal/common/error"
@@ -124,6 +125,91 @@ func TestGetRecommendation(t *testing.T) {
 
 			assert.Equal(t, tc.expected.statusCode, rec.Code)
 			assert.Equal(t, string(expectedBody), rec.Body.String())
+		})
+	}
+}
+
+func TestGetProductByCode(t *testing.T) {
+	type input struct {
+		productCode string
+		mockReturn  *dto.ProductDetail
+		mockErr     error
+	}
+	type expected struct {
+		statusCode int
+		response   response.Response
+	}
+
+	tests := []struct {
+		description string
+		input
+		expected
+	}{
+		{
+			description: "should return with status code 404 if product not found",
+			input: input{
+				productCode: "product_code",
+				mockReturn:  nil,
+				mockErr:     errs.ErrProductDoesNotExist,
+			},
+			expected: expected{
+				statusCode: http.StatusNotFound,
+				response: response.Response{
+					Code:    code.PRODUCT_NOT_EXISTS,
+					Message: errs.ErrProductDoesNotExist.Error(),
+				},
+			},
+		},
+		{
+			description: "should return with status code 500 if product not found",
+			input: input{
+				productCode: "product_code",
+				mockReturn:  nil,
+				mockErr:     errors.New("failed to get product"),
+			},
+			expected: expected{
+				statusCode: http.StatusInternalServerError,
+				response: response.Response{
+					Code:    code.INTERNAL_SERVER_ERROR,
+					Message: errs.ErrInternalServerError.Error(),
+				},
+			},
+		},
+		{
+			description: "should return with status code 200 if product found",
+			input: input{
+				productCode: "product_code",
+				mockReturn:  &dto.ProductDetail{},
+				mockErr:     nil,
+			},
+			expected: expected{
+				statusCode: http.StatusOK,
+				response: response.Response{
+					Code:    code.OK,
+					Message: "ok",
+					Data:    &dto.ProductDetail{},
+				},
+			},
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.description, func(t *testing.T) {
+			expectedRes, _ := json.Marshal(tc.expected.response)
+			productServiceMock := mocks.NewProductService(t)
+			productServiceMock.On("GetByCode", tc.input.productCode).Return(tc.input.mockReturn, tc.input.mockErr)
+			rec := httptest.NewRecorder()
+			c, _ := gin.CreateTestContext(rec)
+			c.AddParam("code", tc.input.productCode)
+			h := handler.New(&handler.Config{
+				ProductService: productServiceMock,
+			})
+			c.Request = httptest.NewRequest("GET", fmt.Sprintf("/v1/products/%s", tc.input.productCode), nil)
+
+			h.GetProductByCode(c)
+
+			assert.Equal(t, tc.expected.statusCode, rec.Code)
+			assert.Equal(t, string(expectedRes), rec.Body.String())
 		})
 	}
 }
