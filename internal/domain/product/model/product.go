@@ -23,12 +23,6 @@ type Product struct {
 	Rating       float64 `json:"rating"`
 	Sold         int     `json:"sold"`
 
-	// MinPrice         float64  `json:"minPrice" gorm:"<-:false"`
-	// MaxPrice         float64  `json:"maxPrice" gorm:"<-:false"`
-	// Address          string   `json:"address" gorm:"<-:false"`
-	// PromotionPercent *float64 `json:"promotionPercent,omitempty" gorm:"<-:false"`
-	// ImageURL         string   `json:"imageUrl" gorm:"<-:false"`
-
 	ShopID       int               `json:"shopId"`
 	Shop         *shopModel.Shop   `json:"shop,omitempty"`
 	CategoryID   int               `json:"categoryId"`
