@@ -1,8 +1,8 @@
 package dto
 
 import (
-	"kedai/backend/be-kedai/internal/domain/product/model"
 	"kedai/backend/be-kedai/internal/common/constant"
+	"kedai/backend/be-kedai/internal/domain/product/model"
 	shopModel "kedai/backend/be-kedai/internal/domain/shop/model"
 	"strconv"
 	"strings"
