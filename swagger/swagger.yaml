@@ -2491,7 +2491,7 @@ paths:
         - in: query
           name: variantId
           required: true
-          description: list of product variant IDs to combine, separated by comma. Each variant ID must be an integer greater than or equal 1. There should be at least 2 variant IDs. If there are 3 or more, only the first two will be used
+          description: list of product variant IDs to combine, separated by comma. Each variant ID must be an integer greater than or equal 1. There should be at least 1 variant ID. If there are more than 2, only the first two will be used
           schema:
             type: string
             example: 1,3
