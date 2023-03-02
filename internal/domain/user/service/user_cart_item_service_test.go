@@ -572,7 +572,7 @@ func TestGetAllCartItem(t *testing.T) {
 			expected: expected{
 				data: &commonDto.PaginationResponse{
 					Limit: 0,
-					Data:  dto.GetCartItemsResponses{}.GetCartItemsResponses,
+					Data:  []dto.GetCartItemsResponse{},
 				},
 				err: nil,
 			},
