@@ -20,6 +20,9 @@ type UserCache interface {
 	StoreUserPasswordAndVerificationCode(userId int, newPassword string, verificationCode string) error
 	FindUserPasswordAndVerificationCode(userId int) (newPassword string, verificationCode string, err error)
 	DeleteUserPasswordAndVerificationCode(userId int) error
+	StoreResetPasswordToken(userId int, keyToken string) error
+	FindResetPasswordToken(keyToken string) (userId int, err error)
+	DeleteResetPasswordToken(keyToken string) error
 }
 
 type userCacheImpl struct {
@@ -141,6 +144,42 @@ func (r *userCacheImpl) DeleteRefreshTokenAndAccessToken(userId int, refreshToke
 	accessKey := fmt.Sprintf("user_%d:%s", userId, accessToken)
 
 	if err := r.rdc.Unlink(ctx, refreshKey, accessKey).Err(); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (r *userCacheImpl) StoreResetPasswordToken(userId int, token string) error {
+	expireTime := time.Minute * 10
+	key := fmt.Sprintf("resetPasswordToken:%s", token)
+
+	err := r.rdc.SetNX(context.Background(), key, userId, expireTime).Err()
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (r *userCacheImpl) FindResetPasswordToken(token string) (int, error) {
+	key := fmt.Sprintf("resetPasswordToken:%s", token)
+
+	userId, err := r.rdc.Get(context.Background(), key).Int()
+	if err != nil {
+		if err == redis.Nil {
+			err = errs.ErrResetPasswordTokenNotFound
+		}
+		return 0, err
+	}
+
+	return userId, nil
+}
+
+func (r *userCacheImpl) DeleteResetPasswordToken(token string) error {
+	key := fmt.Sprintf("resetPasswordToken:%s", token)
+	err := r.rdc.Del(context.Background(), key).Err()
+	if err != nil {
 		return err
 	}
 
