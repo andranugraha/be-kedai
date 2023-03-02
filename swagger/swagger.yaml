@@ -2715,7 +2715,66 @@ paths:
                   message:
                     type: string
                     example: "error message"
-          
+  /v1/shops:
+    get:
+      tags:
+        - Shop
+      summary: Find shop by keyword
+      description: Find shop that match with the given keyword with pagination
+      parameters:
+        - in: query
+          name: keyword
+          schema:
+            type: string
+            example: "rtx"
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            default: 10
+          description: Set to 10 by default
+        - in: query
+          name: page
+          schema:
+            type: integer
+            default: 1
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Response'
+                  - type: object
+                    properties:
+                      code:
+                        example: 'OK'
+                      message:
+                        example: 'success'
+                      data:
+                        allOf:
+                          - $ref: '#/components/schemas/PaginationResponse'
+                          - type: object
+                            properties:
+                              data:
+                                type: array
+                                items:
+                                  $ref: '#/components/schemas/Shop'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "INTERNAL_SERVER_ERROR"
+                  message:
+                    type: string
+                    example: "error message"
+                  
   /v1/shops/{slug}:
     get:
       tags:
