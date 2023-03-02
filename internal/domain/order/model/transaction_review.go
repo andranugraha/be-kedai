@@ -1,12 +1,16 @@
 package model
 
-import "gorm.io/gorm"
+import (
+	"time"
+
+	"gorm.io/gorm"
+)
 
 type TransactionReview struct {
-	ID          int     `json:"id"`
-	Description *string `json:"description"`
-	Rating      int     `json:"rating"`
-	ReviewDate  string  `json:"reviewDate"`
+	ID          int       `json:"id"`
+	Description *string   `json:"description"`
+	Rating      int       `json:"rating"`
+	ReviewDate  time.Time `json:"reviewDate"`
 
 	TransactionId int `json:"transactionId"`
 
