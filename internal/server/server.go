@@ -21,12 +21,23 @@ import (
 	shopRepoPackage "kedai/backend/be-kedai/internal/domain/shop/repository"
 	shopServicePackage "kedai/backend/be-kedai/internal/domain/shop/service"
 
+	marketplaceHandlerPackage "kedai/backend/be-kedai/internal/domain/marketplace/handler"
+	marketplaceRepoPackage "kedai/backend/be-kedai/internal/domain/marketplace/repository"
+	marketplaceServicePackage "kedai/backend/be-kedai/internal/domain/marketplace/service"
+
 	"github.com/gin-gonic/gin"
 )
 
 func createRouter() *gin.Engine {
 	db := connection.GetDB()
 	redis := connection.GetCache()
+
+	marketplaceVoucherRepo := marketplaceRepoPackage.NewMarketplaceVoucherRepository(&marketplaceRepoPackage.MarketplaceVoucherRConfig{
+		DB: db,
+	})
+	marketplaceVoucherService := marketplaceServicePackage.NewMarketplaceVoucherService(&marketplaceServicePackage.MarketplaceVoucherSConfig{
+		MarketplaceVoucherRepository: marketplaceVoucherRepo,
+	})
 
 	productRepo := productRepoPackage.NewProductRepository(&productRepoPackage.ProductRConfig{
 		DB: db,
@@ -176,6 +187,9 @@ func createRouter() *gin.Engine {
 		UserAddressService:  userAddressService,
 		UserProfileService:  userProfileService,
 	})
+	marketplaceHandler := marketplaceHandlerPackage.New(&marketplaceHandlerPackage.HandlerConfig{
+		MarketplaceVoucherService: marketplaceVoucherService,
+	})
 
 	categoryRepo := productRepoPackage.NewCategoryRepository(&productRepoPackage.CategoryRConfig{
 		DB: db,
@@ -191,10 +205,11 @@ func createRouter() *gin.Engine {
 	})
 
 	return NewRouter(&RouterConfig{
-		UserHandler:     userHandler,
-		LocationHandler: locHandler,
-		ProductHandler:  productHandler,
-		ShopHandler:     shopHandler,
+		UserHandler:        userHandler,
+		LocationHandler:    locHandler,
+		ProductHandler:     productHandler,
+		ShopHandler:        shopHandler,
+		MarketplaceHandler: marketplaceHandler,
 	})
 }
 
