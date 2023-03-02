@@ -2002,10 +2002,11 @@ paths:
       tags:
         - Product
       summary: Get product by code
-      description: Get product detail information using product code
+      description: Get product detail information using product code. If a product doesn't have any variant, `sku` field will appear while `variantGroup` field will not appear, vice versa
       parameters:
         - in: path
           name: code
+          required: true
           schema:
             type: string
             example: product_code
@@ -2022,13 +2023,6 @@ paths:
                       data:
                         allOf:
                           - $ref: '#/components/schemas/Product'
-                          
-                          - type: object
-                            properties:
-                              address:
-                          - type: object
-                            properties:
-                              imageUrl:
                           - type: object
                             properties:
                               totalStock:
@@ -2056,6 +2050,10 @@ paths:
                             properties:
                               shop:
                                 $ref: '#/components/schemas/Shop'
+                          - type: object
+                            properties:
+                              sku:
+                                $ref: '#/components/schemas/SKU'
         '404':
           description: product not found
           content:
@@ -2725,15 +2723,10 @@ components:
         maxPrice:
           type: number
           format: float
-        address:
-          type: string
-          example: Pekanbaru, Riau
         promotionPercent:
           type: number
           format: float
           example: 0.16
-        imageUrl:
-          type: string
         shopId:
           type: integer
         categoryId:
@@ -2751,7 +2744,17 @@ components:
           type: integer
           example: 1
         product:
-          $ref: '#/components/schemas/Product'
+          allOf:
+            - $ref: '#/components/schemas/Product'
+            - type: object
+              properties:
+                address:
+                  type: string
+                  example: Pekanbaru, Riau
+            - type: object
+              properties:
+                imageUrl:
+                  type: string
     CartItem:
       type: object
       properties:
@@ -2845,6 +2848,25 @@ components:
         productId:
           type: integer
           example: 1
+    SKU:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        sku:
+          type: string
+          example: product_sku
+        price:
+          type: number
+          format: float
+          example: 20000
+        stock:
+          type: integer
+          example: 100
+        productId:
+          type: integer
+          example: 2
     Courier:
       type: object
       properties:
