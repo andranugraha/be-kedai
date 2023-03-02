@@ -1562,14 +1562,14 @@ func TestCompletePasswordChange(t *testing.T) {
 					mockUserService.On("CompletePasswordChange", &dto.CompletePasswordChangeRequest{
 						VerificationCode: "123456",
 						UserId:           1,
-					}).Return(errs.ErrVerficationCodeNotFound)
+					}).Return(errs.ErrVerificationCodeNotFound)
 				},
 			},
 			expected: expected{
 				statusCode: http.StatusNotFound,
 				response: response.Response{
 					Code:    code.NOT_FOUND,
-					Message: errs.ErrVerficationCodeNotFound.Error(),
+					Message: errs.ErrVerificationCodeNotFound.Error(),
 				},
 			},
 		},
