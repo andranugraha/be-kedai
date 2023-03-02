@@ -46,8 +46,8 @@ func (r *skuRepositoryImpl) GetByVariantIDs(variantIDs []int) (*model.Sku, error
 	var sku model.Sku
 
 	err := r.db.
-		Joins("product_variants pv1 ON skus.id = pv1.sku_id").
-		Joins("product_variants pv2 ON pv1.sku_id = pv2.sku_id AND pv1.id != pv2.id").
+		Joins("JOIN product_variants pv1 ON skus.id = pv1.sku_id").
+		Joins("JOIN product_variants pv2 ON pv1.sku_id = pv2.sku_id AND pv1.id != pv2.id").
 		Where("pv1.variant_id = ? AND pv2.variant_id = ?", variantIDs[0], variantIDs[1]).
 		First(&sku).Error
 
