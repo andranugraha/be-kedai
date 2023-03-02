@@ -2,6 +2,7 @@ package repository
 
 import (
 	"kedai/backend/be-kedai/internal/domain/shop/model"
+	"time"
 
 	"gorm.io/gorm"
 )
@@ -27,7 +28,8 @@ func NewShopVoucherRepository(cfg *ShopVoucherRConfig) ShopVoucherRepository {
 func (r *shopVoucherRepositoryImpl) GetShopVoucher(shopId int) ([]*model.ShopVoucher, error) {
 	var shopVoucher []*model.ShopVoucher
 	publicVoucher := true
-	err := r.db.Where("shop_id = ?", shopId).Where("is_hidden != ?", publicVoucher).Where("now() < expired_at").Find(&shopVoucher).Error
+	now := time.Now()
+	err := r.db.Where("shop_id = ?", shopId).Where("is_hidden != ?", publicVoucher).Where("? < expired_at", now).Find(&shopVoucher).Error
 	if err != nil {
 		return nil, err
 	}
