@@ -20,6 +20,10 @@ import (
 	shopHandlerPackage "kedai/backend/be-kedai/internal/domain/shop/handler"
 	shopRepoPackage "kedai/backend/be-kedai/internal/domain/shop/repository"
 	shopServicePackage "kedai/backend/be-kedai/internal/domain/shop/service"
+
+	orderHandlerPackage "kedai/backend/be-kedai/internal/domain/order/handler"
+	orderRepoPackage "kedai/backend/be-kedai/internal/domain/order/repository"
+	orderServicePackage "kedai/backend/be-kedai/internal/domain/order/service"
 	mail "kedai/backend/be-kedai/internal/utils/mail"
 	random "kedai/backend/be-kedai/internal/utils/random"
 
@@ -175,6 +179,14 @@ func createRouter() *gin.Engine {
 		ShopService:        shopService,
 	})
 
+	transactionReviewRepo := orderRepoPackage.NewTransactionReviewRepository(&orderRepoPackage.TransactionReviewRConfig{
+		DB: db,
+	})
+
+	transactionReviewService := orderServicePackage.NewTransactionReviewService(&orderServicePackage.TransactionReviewSConfig{
+		TransactionReviewRepo: transactionReviewRepo,
+	})
+
 	sealabsPayRepo := userRepoPackage.NewSealabsPayRepository(&userRepoPackage.SealabsPayRConfig{
 		DB: db,
 	})
@@ -206,11 +218,16 @@ func createRouter() *gin.Engine {
 		ProductService:  productService,
 	})
 
+	orderHanlder := orderHandlerPackage.New(&orderHandlerPackage.Config{
+		TransactionReviewService: transactionReviewService,
+	})
+
 	return NewRouter(&RouterConfig{
 		UserHandler:     userHandler,
 		LocationHandler: locHandler,
 		ProductHandler:  productHandler,
 		ShopHandler:     shopHandler,
+		OrderHandler:    orderHanlder,
 	})
 }
 

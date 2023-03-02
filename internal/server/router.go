@@ -5,6 +5,7 @@ import (
 	"kedai/backend/be-kedai/internal/server/middleware"
 
 	locationHandler "kedai/backend/be-kedai/internal/domain/location/handler"
+	orderHandler "kedai/backend/be-kedai/internal/domain/order/handler"
 	productHandler "kedai/backend/be-kedai/internal/domain/product/handler"
 	shopHandler "kedai/backend/be-kedai/internal/domain/shop/handler"
 	userHandler "kedai/backend/be-kedai/internal/domain/user/handler"
@@ -18,6 +19,7 @@ type RouterConfig struct {
 	LocationHandler *locationHandler.Handler
 	ProductHandler  *productHandler.Handler
 	ShopHandler     *shopHandler.Handler
+	OrderHandler    *orderHandler.Handler
 }
 
 func NewRouter(cfg *RouterConfig) *gin.Engine {
