@@ -6,7 +6,7 @@ type VariantGroup struct {
 	ID        int        `json:"id"`
 	Name      string     `json:"name"`
 	ProductID int        `json:"productId"`
-	Variant   []*Variant `json:"variants" gorm:"foreignKey:GroupId"`
+	Variant   []*Variant `json:"variants,omitempty" gorm:"foreignKey:GroupId"`
 
 	gorm.Model `json:"-"`
 }
