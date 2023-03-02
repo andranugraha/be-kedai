@@ -7,7 +7,7 @@ import (
 )
 
 type GetSKURequest struct {
-	VariantID string `form:"variantId"`
+	VariantID string `form:"variantId" binding:"required"`
 }
 
 func (d *GetSKURequest) ToIntList() ([]int, error) {
