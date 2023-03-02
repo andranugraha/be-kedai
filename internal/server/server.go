@@ -20,6 +20,8 @@ import (
 	shopHandlerPackage "kedai/backend/be-kedai/internal/domain/shop/handler"
 	shopRepoPackage "kedai/backend/be-kedai/internal/domain/shop/repository"
 	shopServicePackage "kedai/backend/be-kedai/internal/domain/shop/service"
+	mail "kedai/backend/be-kedai/internal/utils/mail"
+	random "kedai/backend/be-kedai/internal/utils/random"
 
 	"github.com/gin-gonic/gin"
 )
@@ -27,7 +29,10 @@ import (
 func createRouter() *gin.Engine {
 	db := connection.GetDB()
 	redis := connection.GetCache()
+	mailer := connection.GetMailer()
 
+	mailUtils := mail.NewMailUtils(&mail.MailUtilsConfig{Mailer: mailer})
+	randomUtils := random.NewRandomUtils(&random.RandomUtilsConfig{})
 	productRepo := productRepoPackage.NewProductRepository(&productRepoPackage.ProductRConfig{
 		DB: db,
 	})
@@ -110,8 +115,10 @@ func createRouter() *gin.Engine {
 	})
 
 	userService := userServicePackage.NewUserService(&userServicePackage.UserSConfig{
-		Repository: userRepo,
-		Redis:      userCache,
+		Repository:  userRepo,
+		Redis:       userCache,
+		MailUtils:   mailUtils,
+		RandomUtils: randomUtils,
 	})
 
 	userProfileService := userServicePackage.NewUserProfileService(&userServicePackage.UserProfileSConfig{

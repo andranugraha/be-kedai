@@ -548,6 +548,173 @@ paths:
                   message:
                     type: string
                     example: "error message"
+  /v1/users/passwords/change-request:
+    post:
+      security:
+        - BearerAuth: []
+      tags:
+        - User
+      summary: Request password change
+      description: This endpoint is the 1st step of a 2 step procedure. It will receive user's current password and new passowrd, then send a verification code to user's registered email if success.
+      requestBody:
+        $ref: '#/components/requestBodies/RequestPasswordChangeBody'
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "OK"
+                  message:
+                    type: string
+                    example: "ok"
+        '400':
+          description: bad request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "WRONG_PASSWORD"
+                  message:
+                    type: string
+                    example: "wrong password"          
+        '401':
+          description: unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "UNAUTHORIZED"
+                  message:
+                    type: string
+                    example: "invalid credential"
+        '404':
+          description: not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "NOT_FOUND"
+                  message:
+                    type: string
+                    example: "user not registered"
+        '422':
+          description: invalid password pattern
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "INVALID_PASSWORD_PATTERN"
+                  message:
+                    type: string
+                    example: "invalid password pattern"            
+                  
+        '500':
+          description: internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "INTERNAL_SERVER_ERROR"
+                  message:
+                    type: string
+                    example: "error message"             
+  /v1/users/passwords/change-confirmation:
+    post:
+      security:
+        - BearerAuth: []
+      tags:
+        - User
+      summary: Compete password change
+      description: This endpoint is the 2nd step of a 2 step procedure. It will receive verification code which has been sent to the user's email, then update the password, finally logging out the user from all devices.
+      requestBody:
+        $ref: '#/components/requestBodies/CompletePasswordChangeBody'
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "OK"
+                  message:
+                    type: string
+                    example: "ok"
+        '400':
+          description: bad request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "INCORRECT_VERIFICATION_CODE"
+                  message:
+                    type: string
+                    example: "incorrect verification code"          
+        '401':
+          description: unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "UNAUTHORIZED"
+                  message:
+                    type: string
+                    example: "invalid credential"
+        '404':
+          description: not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "NOT_FOUND"
+                  message:
+                    type: string
+                    example: "verification code not found"
+                  
+        '500':
+          description: internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "INTERNAL_SERVER_ERROR"
+                  message:
+                    type: string
+                    example: "error message"                     
   /v1/users/logout:
     post:
       security:
@@ -2993,6 +3160,43 @@ components:
                 type: string
                 format: url
                 example: http://photo.url/example.png
+    RequestPasswordChangeBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - currentPassword
+              - newPassword
+            properties:
+              currentPassword:
+                type: string
+                example: "Password123"   
+                minLength: 8
+                maxLength: 16
+              newPassword:
+                type: string
+                minLength: 8
+                maxLength: 16
+                example: "Password1234"
+                description: Password must include at least one uppercase letter, one lowercase letter, and one numeric. Password cannot contain username as a part of it. Also password must not include email or username.
+    CompletePasswordChangeBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - verificationCode
+            properties:
+              verificationCode:
+                type: string
+                example: "k3DFs1"   
+                format: Alphanumeric
+                minLength: 6
+                maxLength: 6
+                description: Verification code is a randomly generated string which consists of 6 alphanumeric characters.
     AddWishlistBody:
       required: true
       content:

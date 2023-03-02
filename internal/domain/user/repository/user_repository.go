@@ -23,6 +23,7 @@ type UserRepository interface {
 	SignIn(user *model.User) (*model.User, error)
 	UpdateEmail(userId int, email string) (*model.User, error)
 	UpdateUsername(id int, username string) (*model.User, error)
+	UpdatePassword(id int, password string) (*model.User, error)
 }
 
 type userRepositoryImpl struct {
@@ -200,4 +201,26 @@ func (r *userRepositoryImpl) GetByUsername(username string) (*model.User, error)
 	}
 
 	return &user, nil
+}
+
+func (r *userRepositoryImpl) UpdatePassword(userId int, password string) (*model.User, error) {
+	hashedPw, _ := hash.HashAndSalt(password)
+
+	err := r.db.Transaction(func(tx *gorm.DB) error {
+		if err := tx.Model(&model.User{}).Where("id = ?", userId).Update("password", hashedPw).Error; err != nil {
+			return err
+		}
+
+		if err := r.userCache.DeleteAllByID(userId); err != nil {
+			return err
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &model.User{ID: userId}, nil
 }
