@@ -81,7 +81,7 @@ func (p *ProductSearchFilterRequest) Validate(strCityIds string) {
 		p.Page = 1
 	}
 
-	if p.MinPrice < 0 {
+	if p.MinRating < 0 {
 		p.MinRating = 0
 	}
 
