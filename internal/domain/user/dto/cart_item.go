@@ -121,6 +121,11 @@ func (d *GetCartItemsResponses) ToGetCartItemsResponses(cartItems []*model.CartI
 	cartItemResponses := []CartItemResponse{}
 	var shop shopModel.Shop
 
+	if len(cartItems) == 0 {
+		d.GetCartItemsResponses = []GetCartItemsResponse{}
+		return
+	}
+
 	for i, cartItem := range cartItems {
 		if i == 0 {
 			shopId = cartItems[0].Sku.Product.ShopID
