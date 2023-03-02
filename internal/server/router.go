@@ -43,6 +43,9 @@ func NewRouter(cfg *RouterConfig) *gin.Engine {
 			user.POST("/google-register", cfg.UserHandler.UserRegistrationWithGoogle)
 			user.POST("/google-login", cfg.UserHandler.UserLoginWithGoogle)
 			user.POST("/tokens/refresh", middleware.JWTValidateRefreshToken, cfg.UserHandler.RenewSession)
+
+			user.POST("/passwords/reset-request", cfg.UserHandler.RequestPasswordReset)
+			user.POST("/passwords/reset-confirmation", cfg.UserHandler.CompletePasswordReset)
 			userAuthenticated := user.Group("", middleware.JWTAuthorization, cfg.UserHandler.GetSession)
 			{
 				userAuthenticated.GET("", cfg.UserHandler.GetUserByID)
@@ -50,6 +53,13 @@ func NewRouter(cfg *RouterConfig) *gin.Engine {
 
 				userAuthenticated.PUT("/emails", cfg.UserHandler.UpdateUserEmail)
 				userAuthenticated.PUT("/usernames", cfg.UserHandler.UpdateUsername)
+
+				passwords := userAuthenticated.Group("/passwords")
+				{
+					passwords.POST("/change-request", cfg.UserHandler.RequestPasswordChange)
+					passwords.POST("/change-confirmation", cfg.UserHandler.CompletePasswordChange)
+				}
+
 				profile := userAuthenticated.Group("/profiles")
 				{
 					profile.PUT("", cfg.UserHandler.UpdateProfile)
@@ -97,6 +107,7 @@ func NewRouter(cfg *RouterConfig) *gin.Engine {
 
 		product := v1.Group("/products")
 		{
+			product.GET("/:code", cfg.ProductHandler.GetProductByCode)
 			product.GET("/recommendations/categories", cfg.ProductHandler.GetRecommendationByCategory)
 			category := product.Group("/categories")
 			{

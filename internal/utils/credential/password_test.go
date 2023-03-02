@@ -48,3 +48,41 @@ func TestVerifyPassword(t *testing.T) {
 		})
 	}
 }
+
+func TestContainsUsername(t *testing.T) {
+	type input struct {
+		pw       string
+		username string
+	}
+	cases := []struct {
+		description string
+		input       input
+		expected    bool
+	}{
+		{
+			description: "should return false because there are no username",
+			input: input{
+				pw:       "John12312",
+				username: "notasd",
+			},
+			expected: false,
+		},
+		{
+			description: "should return true because there are username",
+			input: input{
+				pw:       "John12312",
+				username: "John",
+			},
+			expected: true,
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.description, func(t *testing.T) {
+			res := credential.ContainsUsername(tc.input.pw, tc.input.username)
+
+			assert.Equal(t, tc.expected, res)
+		})
+	}
+
+}

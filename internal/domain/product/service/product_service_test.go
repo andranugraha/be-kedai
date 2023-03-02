@@ -1,10 +1,12 @@
 package service_test
 
 import (
+	"errors"
 	errorResponse "kedai/backend/be-kedai/internal/common/error"
 	"kedai/backend/be-kedai/internal/domain/product/dto"
 	"kedai/backend/be-kedai/internal/domain/product/model"
 	"kedai/backend/be-kedai/internal/domain/product/service"
+	shopModel "kedai/backend/be-kedai/internal/domain/shop/model"
 	"kedai/backend/be-kedai/mocks"
 	"testing"
 
@@ -59,48 +61,109 @@ func TestGetByID(t *testing.T) {
 }
 
 func TestGetByCode(t *testing.T) {
+	type input struct {
+		productCode string
+		beforeTest  func(*mocks.ProductRepository, *mocks.ShopVoucherService, *mocks.CourierService)
+	}
+	type expected struct {
+		data *dto.ProductDetail
+		err  error
+	}
+
 	tests := []struct {
-		name        string
-		requestCode string
-		want        *model.Product
-		wantErr     error
+		description string
+		input
+		expected
 	}{
 		{
-			name:        "should return product when get by code success",
-			requestCode: "1",
-			want: &model.Product{
-				ID:         1,
-				CategoryID: 1,
-				Name:       "Baju",
+			description: "should return error when failed to get product",
+			input: input{
+				productCode: "product_code",
+				beforeTest: func(pr *mocks.ProductRepository, svs *mocks.ShopVoucherService, cs *mocks.CourierService) {
+					pr.On("GetByCode", "product_code").Return(nil, errors.New("failed to get product"))
+				},
 			},
-			wantErr: nil,
+			expected: expected{
+				data: nil,
+				err:  errors.New("failed to get product"),
+			},
 		},
 		{
-			name:        "should return error when product not found",
-			requestCode: "1",
-			want:        nil,
-			wantErr:     errorResponse.ErrProductDoesNotExist,
+			description: "should still return product when failed to fetch shop voucher or couriers",
+			input: input{
+				productCode: "product_code",
+				beforeTest: func(pr *mocks.ProductRepository, svs *mocks.ShopVoucherService, cs *mocks.CourierService) {
+					pr.On("GetByCode", "product_code").Return(
+						&dto.ProductDetail{
+							Product: model.Product{
+								Code:   "product_code",
+								ShopID: 1,
+								Shop:   &shopModel.Shop{ID: 1, Slug: "test"},
+							},
+						}, nil)
+					svs.On("GetShopVoucher", "test").Return(nil, errors.New("failed to fetch vouchers"))
+					cs.On("GetCouriersByShopID", 1).Return(nil, errors.New("failed to fetch couriers"))
+				},
+			},
+			expected: expected{
+				data: &dto.ProductDetail{
+					Product: model.Product{
+						Code:   "product_code",
+						ShopID: 1,
+						Shop:   &shopModel.Shop{ID: 1, Slug: "test"},
+					},
+				},
+				err: nil,
+			},
 		},
 		{
-			name:        "should return error when get by code failed",
-			requestCode: "1",
-			want:        nil,
-			wantErr:     errorResponse.ErrInternalServerError,
+			description: "should return product with vouchers and couriers when succeed on fetching shop voucher or couriers",
+			input: input{
+				productCode: "product_code",
+				beforeTest: func(pr *mocks.ProductRepository, svs *mocks.ShopVoucherService, cs *mocks.CourierService) {
+					pr.On("GetByCode", "product_code").Return(
+						&dto.ProductDetail{
+							Product: model.Product{
+								Code:   "product_code",
+								ShopID: 1,
+								Shop:   &shopModel.Shop{ID: 1, Slug: "test"},
+							},
+						}, nil)
+					svs.On("GetShopVoucher", "test").Return([]*shopModel.ShopVoucher{}, nil)
+					cs.On("GetCouriersByShopID", 1).Return([]*shopModel.Courier{}, nil)
+				},
+			},
+			expected: expected{
+				data: &dto.ProductDetail{
+					Product: model.Product{
+						Code:   "product_code",
+						ShopID: 1,
+						Shop:   &shopModel.Shop{ID: 1, Slug: "test"},
+					},
+					Vouchers: []*shopModel.ShopVoucher{},
+					Couriers: []*shopModel.Courier{},
+				},
+				err: nil,
+			},
 		},
 	}
 
 	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
+		t.Run(test.description, func(t *testing.T) {
 			mockProductRepo := mocks.NewProductRepository(t)
-			mockProductRepo.On("GetByCode", test.requestCode).Return(test.want, test.wantErr)
+			mockShopVoucherService := mocks.NewShopVoucherService(t)
+			mockCourierService := mocks.NewCourierService(t)
+			test.beforeTest(mockProductRepo, mockShopVoucherService, mockCourierService)
 			productService := service.NewProductService(&service.ProductSConfig{
-				ProductRepository: mockProductRepo,
+				ProductRepository:  mockProductRepo,
+				ShopVoucherService: mockShopVoucherService,
+				CourierService:     mockCourierService,
 			})
 
-			got, err := productService.GetByCode(test.requestCode)
+			got, err := productService.GetByCode(test.input.productCode)
 
-			assert.Equal(t, test.want, got)
-			assert.Equal(t, test.wantErr, err)
+			assert.Equal(t, test.expected.data, got)
+			assert.Equal(t, test.expected.err, err)
 		})
 	}
 }

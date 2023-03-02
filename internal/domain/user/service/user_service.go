@@ -12,6 +12,8 @@ import (
 	"kedai/backend/be-kedai/internal/utils/google"
 	"kedai/backend/be-kedai/internal/utils/hash"
 	jwttoken "kedai/backend/be-kedai/internal/utils/jwtToken"
+	"kedai/backend/be-kedai/internal/utils/mail"
+	"kedai/backend/be-kedai/internal/utils/random"
 	"strings"
 
 	"github.com/redis/go-redis/v9"
@@ -27,23 +29,34 @@ type UserService interface {
 	RenewToken(userId int, refreshToken string) (*dto.Token, error)
 	UpdateEmail(userId int, request *dto.UpdateEmailRequest) (*dto.UpdateEmailResponse, error)
 	UpdateUsername(userId int, requst *dto.UpdateUsernameRequest) (*dto.UpdateUsernameResponse, error)
+	RequestPasswordChange(request *dto.RequestPasswordChangeRequest) error
+	CompletePasswordChange(request *dto.CompletePasswordChangeRequest) error
+	RequestPasswordReset(request *dto.RequestPasswordResetRequest) error
+	CompletePasswordReset(request *dto.CompletePasswordResetRequest) error
+	ValidatePasswordChange(request *dto.RequestPasswordChangeRequest, user *model.User) error
 	SignOut(*dto.UserLogoutRequest) error
 }
 
 type userServiceImpl struct {
-	repository repository.UserRepository
-	redis      cache.UserCache
+	repository  repository.UserRepository
+	redis       cache.UserCache
+	randomUtils random.RandomUtils
+	mailUtils   mail.MailUtils
 }
 
 type UserSConfig struct {
-	Repository repository.UserRepository
-	Redis      cache.UserCache
+	Repository  repository.UserRepository
+	Redis       cache.UserCache
+	RandomUtils random.RandomUtils
+	MailUtils   mail.MailUtils
 }
 
 func NewUserService(cfg *UserSConfig) UserService {
 	return &userServiceImpl{
-		repository: cfg.Repository,
-		redis:      cfg.Redis,
+		repository:  cfg.Repository,
+		redis:       cfg.Redis,
+		mailUtils:   cfg.MailUtils,
+		randomUtils: cfg.RandomUtils,
 	}
 }
 
@@ -259,4 +272,129 @@ func (s *userServiceImpl) UpdateUsername(userId int, request *dto.UpdateUsername
 
 func (s *userServiceImpl) SignOut(request *dto.UserLogoutRequest) error {
 	return s.redis.DeleteRefreshTokenAndAccessToken(request.UserId, request.RefreshToken, request.AccessToken)
+}
+
+func (s *userServiceImpl) RequestPasswordChange(request *dto.RequestPasswordChangeRequest) error {
+	user, err := s.repository.GetByID(request.UserId)
+	if err != nil {
+		return err
+	}
+
+	isValidPassword := hash.ComparePassword(user.Password, request.CurrentPassword)
+	if !isValidPassword {
+		return errs.ErrInvalidCredential
+	}
+
+	err = s.ValidatePasswordChange(request, user)
+	if err != nil {
+		return err
+	}
+
+	codeLength := 6
+	verifCode := s.randomUtils.GenerateAlphanumericString(codeLength)
+
+	err = s.redis.StoreUserPasswordAndVerificationCode(request.UserId, request.NewPassword, verifCode)
+	if err != nil {
+		return err
+	}
+
+	err = s.mailUtils.SendUpdatePasswordEmail(user.Email, verifCode)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (s *userServiceImpl) ValidatePasswordChange(request *dto.RequestPasswordChangeRequest, user *model.User) error {
+	isInvalidPassword := hash.ComparePassword(user.Password, request.NewPassword)
+	if isInvalidPassword {
+		return errs.ErrSamePassword
+	}
+
+	isValidPassword := credential.VerifyPassword(request.NewPassword)
+	if !isValidPassword {
+		return errs.ErrInvalidPasswordPattern
+	}
+
+	if credential.ContainsUsername(request.NewPassword, user.Username) {
+		return errs.ErrContainUsername
+	}
+
+	return nil
+}
+
+func (s *userServiceImpl) CompletePasswordChange(request *dto.CompletePasswordChangeRequest) error {
+	newPassword, verifcationCode, err := s.redis.FindUserPasswordAndVerificationCode(request.UserId)
+	if err != nil {
+		return err
+	}
+
+	if verifcationCode != request.VerificationCode {
+		return errs.ErrIncorrectVerificationCode
+	}
+
+	_, err = s.repository.UpdatePassword(request.UserId, newPassword)
+	if err != nil {
+		return err
+	}
+
+	err = s.redis.DeleteUserPasswordAndVerificationCode(request.UserId)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (s *userServiceImpl) RequestPasswordReset(request *dto.RequestPasswordResetRequest) error {
+	user, err := s.repository.GetByEmail(request.Email)
+	if err != nil {
+		return err
+	}
+
+	secureToken := s.randomUtils.GenerateSecureUniqueToken()
+	err = s.redis.StoreResetPasswordToken(user.ID, secureToken)
+	if err != nil {
+		return err
+	}
+
+	err = s.mailUtils.SendResetPasswordEmail(user.Email, secureToken)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (s *userServiceImpl) CompletePasswordReset(request *dto.CompletePasswordResetRequest) error {
+	userId, err := s.redis.FindResetPasswordToken(request.Token)
+	if err != nil {
+		return err
+	}
+
+	user, err := s.repository.GetByID(userId)
+	if err != nil {
+		return err
+	}
+
+	err = s.ValidatePasswordChange(&dto.RequestPasswordChangeRequest{
+		UserId:      userId,
+		NewPassword: request.NewPassword,
+	}, user)
+	if err != nil {
+		return err
+	}
+
+	_, err = s.repository.UpdatePassword(userId, request.NewPassword)
+	if err != nil {
+		return err
+	}
+
+	err = s.redis.DeleteResetPasswordToken(request.Token)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

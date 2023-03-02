@@ -20,6 +20,8 @@ import (
 	shopHandlerPackage "kedai/backend/be-kedai/internal/domain/shop/handler"
 	shopRepoPackage "kedai/backend/be-kedai/internal/domain/shop/repository"
 	shopServicePackage "kedai/backend/be-kedai/internal/domain/shop/service"
+	mail "kedai/backend/be-kedai/internal/utils/mail"
+	random "kedai/backend/be-kedai/internal/utils/random"
 
 	marketplaceHandlerPackage "kedai/backend/be-kedai/internal/domain/marketplace/handler"
 	marketplaceRepoPackage "kedai/backend/be-kedai/internal/domain/marketplace/repository"
@@ -39,12 +41,9 @@ func createRouter() *gin.Engine {
 		MarketplaceVoucherRepository: marketplaceVoucherRepo,
 	})
 
-	productRepo := productRepoPackage.NewProductRepository(&productRepoPackage.ProductRConfig{
-		DB: db,
-	})
-	productService := productServicePackage.NewProductService(&productServicePackage.ProductSConfig{
-		ProductRepository: productRepo,
-	})
+	mailer := connection.GetMailer()
+	mailUtils := mail.NewMailUtils(&mail.MailUtilsConfig{Mailer: mailer})
+	randomUtils := random.NewRandomUtils(&random.RandomUtilsConfig{})
 
 	districtRepo := locationRepoPackage.NewDistrictRepository(&locationRepoPackage.DistrictRConfig{
 		DB: db,
@@ -85,6 +84,13 @@ func createRouter() *gin.Engine {
 		WalletRepo: walletRepo,
 	})
 
+	courierRepo := shopRepoPackage.NewCourierRepository(&shopRepoPackage.CourierRConfig{
+		DB: db,
+	})
+	courierService := shopServicePackage.NewCourierService(&shopServicePackage.CourierSConfig{
+		CourierRepository: courierRepo,
+	})
+
 	shopRepo := shopRepoPackage.NewShopRepository(&shopRepoPackage.ShopRConfig{
 		DB: db,
 	})
@@ -100,6 +106,15 @@ func createRouter() *gin.Engine {
 	shopVoucherService := shopServicePackage.NewShopVoucherService(&shopServicePackage.ShopVoucherSConfig{
 		ShopVoucherRepository: shopVoucherRepo,
 		ShopService:           shopService,
+	})
+
+	productRepo := productRepoPackage.NewProductRepository(&productRepoPackage.ProductRConfig{
+		DB: db,
+	})
+	productService := productServicePackage.NewProductService(&productServicePackage.ProductSConfig{
+		ProductRepository:  productRepo,
+		ShopVoucherService: shopVoucherService,
+		CourierService:     courierService,
 	})
 
 	shopHandler := shopHandlerPackage.New(&shopHandlerPackage.HandlerConfig{
@@ -121,8 +136,10 @@ func createRouter() *gin.Engine {
 	})
 
 	userService := userServicePackage.NewUserService(&userServicePackage.UserSConfig{
-		Repository: userRepo,
-		Redis:      userCache,
+		Repository:  userRepo,
+		Redis:       userCache,
+		MailUtils:   mailUtils,
+		RandomUtils: randomUtils,
 	})
 
 	userProfileService := userServicePackage.NewUserProfileService(&userServicePackage.UserProfileSConfig{
