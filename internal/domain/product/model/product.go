@@ -33,8 +33,9 @@ type Product struct {
 	Shop         *shopModel.Shop   `json:"shop,omitempty"`
 	CategoryID   int               `json:"categoryId"`
 	Bulk         *ProductBulkPrice `json:"bulk,omitempty"`
-	VariantGroup []*VariantGroup   `json:"variantGroups"`
+	VariantGroup []*VariantGroup   `json:"variantGroups,omitempty"`
 	Media        []*ProductMedia   `json:"media"`
+	SKU          *Sku              `json:"sku,omitempty"`
 
 	gorm.Model `json:"-"`
 }
