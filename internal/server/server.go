@@ -178,6 +178,21 @@ func createRouter() *gin.Engine {
 		ProductService:     productService,
 		ShopService:        shopService,
 	})
+	transactionRepo := orderRepoPackage.NewTransactionRepository(&orderRepoPackage.TransactionRConfig{
+		DB: db,
+	})
+
+	transactionService := orderServicePackage.NewTransactionService(&orderServicePackage.TransactionSConfig{
+		TransactionRepo: transactionRepo,
+	})
+
+	invoicePerShopRepo := orderRepoPackage.NewInvoicePerShopRepository(&orderRepoPackage.InvoicePerShopRConfig{
+		DB: db,
+	})
+
+	invoicePerShopService := orderServicePackage.NewInvoicePerShopService(&orderServicePackage.InvoicePerShopSConfig{
+		InvoicePerShopRepo: invoicePerShopRepo,
+	})
 
 	transactionReviewRepo := orderRepoPackage.NewTransactionReviewRepository(&orderRepoPackage.TransactionReviewRConfig{
 		DB: db,
@@ -185,6 +200,8 @@ func createRouter() *gin.Engine {
 
 	transactionReviewService := orderServicePackage.NewTransactionReviewService(&orderServicePackage.TransactionReviewSConfig{
 		TransactionReviewRepo: transactionReviewRepo,
+		TransactionService:    transactionService,
+		InvoicePerShopService: invoicePerShopService,
 	})
 
 	sealabsPayRepo := userRepoPackage.NewSealabsPayRepository(&userRepoPackage.SealabsPayRConfig{

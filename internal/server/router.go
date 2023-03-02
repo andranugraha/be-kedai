@@ -120,6 +120,20 @@ func NewRouter(cfg *RouterConfig) *gin.Engine {
 			shop.GET("/:slug", cfg.ShopHandler.FindShopBySlug)
 			shop.GET("/:slug/vouchers", cfg.ShopHandler.GetShopVoucher)
 		}
+
+		order := v1.Group("/orders")
+		{
+			authenticated := order.Group("", middleware.JWTAuthorization, cfg.UserHandler.GetSession)
+			{
+				transaction := authenticated.Group("/transactions")
+				{
+					review := transaction.Group("/reviews")
+					{
+						review.POST("", cfg.OrderHandler.AddTransactionReview)
+					}
+				}
+			}
+		}
 	}
 
 	return r
