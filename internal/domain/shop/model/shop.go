@@ -12,6 +12,8 @@ type Shop struct {
 	ID           int                        `json:"id"`
 	Name         string                     `json:"name"`
 	Rating       float64                    `json:"rating"`
+	Description  *string                    `json:"description"`
+	PhotoUrl     *string                    `json:"photoUrl"`
 	JoinedDate   time.Time                  `json:"joinedDate"`
 	UserID       int                        `json:"userId"`
 	AddressID    int                        `json:"addressId"`

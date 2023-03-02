@@ -2416,10 +2416,18 @@ paths:
                                 example: 100
                           - type: object
                             properties:
+                              bulk:
+                                $ref: '#/components/schemas/ProductBulkPrice'
+                          - type: object
+                            properties:
                               vouchers:
                                 type: array
                                 items:
                                   $ref: '#/components/schemas/ShopVoucher'
+                          - type: object
+                            properties:
+                              media:
+                                $ref: '#/components/schemas/ProductMedia'
                           - type: object
                             properties:
                               couriers:
@@ -2473,6 +2481,84 @@ paths:
                   message:
                     type: string
                     example: "error message"                
+  /v1/products/skus:
+    get:
+      tags:
+        - Product
+      summary: Get product SKU
+      description: Get product SKU by using combination of product variant IDs
+      parameters:
+        - in: query
+          name: variantId
+          required: true
+          description: list of product variant IDs to combine, separated by comma. Each variant ID must be an integer greater than or equal 1. There should be at least 1 variant ID. If there are more than 2, only the first two will be used
+          schema:
+            type: string
+            example: 1,3
+      responses:
+        '200':
+          description: operation successful
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Response'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/SKU'
+        '400':
+          description: bad request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "BAD_REQUEST"
+                  message:
+                    type: string
+                    example: "error message"
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "NOT_FOUND"
+                  message:
+                    type: string
+                    example: "error message"
+        '422':
+          description: Invalid variant
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "INVALID_VARIANT"
+                  message:
+                    type: string
+                    example: "error message"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "INTERNAL_SERVER_ERROR"
+                  message:
+                    type: string
+                    example: "error message"
   /v1/products:
     get:
       tags:
@@ -3000,6 +3086,13 @@ components:
           type: integer
           format: float
           example: 4.9
+        description:
+          type: string
+          example: shop description
+        photoUrl:
+          type: string
+          format: url
+          example: http://shop.photo/image.png
         joinedDate:
           type: string
           format: datetime
@@ -3233,6 +3326,38 @@ components:
           type: integer
         categoryId:
           type: integer
+    ProductMedia:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        url:
+          type: string
+          format: url
+          example: http://example/image.png
+        productId:
+          type: integer
+          example: 1
+    ProductBulkPrice:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        minQuantity:
+          type: integer
+          example: 10
+        maxQuantity:
+          type: integer
+          example: 100
+        price:
+          type: number
+          format: float
+          example: 300000
+        productId:
+          type: integer
+          example: 1
     UserWishlist:
       type: object
       properties:
@@ -3310,9 +3435,6 @@ components:
         id:
           type: integer
           example: 1
-        sku:
-          type: string
-          example: product_sku
         price:
           type: number
           format: float
