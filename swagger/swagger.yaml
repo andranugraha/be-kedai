@@ -2801,14 +2801,14 @@ components:
           type: string
           example: "notest test"
         originalPrice:
-          type: integer
+          type: number
           format: float
           example: 30000000
         promotionType:
           type: string
           example: percent
         promotionAmount:
-          type: integer
+          type: number
           format: float
           example: 0.1
         discountedPrice:
