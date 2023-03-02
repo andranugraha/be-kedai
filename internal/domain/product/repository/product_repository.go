@@ -11,7 +11,7 @@ import (
 
 type ProductRepository interface {
 	GetByID(ID int) (*model.Product, error)
-	GetByCode(Code string) (*model.Product, error)
+	GetByCode(code string) (*dto.ProductDetail, error)
 	GetRecommendationByCategory(productId int, categoryId int) ([]*dto.ProductResponse, error)
 }
 
@@ -44,16 +44,27 @@ func (r *productRepositoryImpl) GetByID(ID int) (*model.Product, error) {
 	return &product, err
 }
 
-func (r *productRepositoryImpl) GetByCode(Code string) (*model.Product, error) {
-	var product model.Product
+func (r *productRepositoryImpl) GetByCode(code string) (*dto.ProductDetail, error) {
+	var product dto.ProductDetail
 
-	err := r.db.Where("code = ?", Code).First(&product).Error
+	query := r.db.Select(`products.*, min(s.price) as min_price, max(s.price) as max_price, sum(s.stock) as total_stock,
+	max(case when pp.type = 'nominal' then pp.amount / s.price else pp.amount end) as promotion_percent
+	`).
+		Joins("join skus s on s.product_id = products.id").
+		Joins("left join product_promotions pp on pp.sku_id = s.id and (select count(id) from shop_promotions sp where pp.promotion_id = sp.id and now() between sp.start_period and sp.end_period) > 0").
+		Group("products.id")
+
+	err := query.Where("code = ?", code).Preload("SKU").Preload("VariantGroup.Variant").Preload("Media").Preload("Bulk").Preload("Shop").First(&product).Error
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, errs.ErrProductDoesNotExist
 		}
 
 		return nil, err
+	}
+
+	if len(product.VariantGroup) > 0 {
+		product.SKU = nil
 	}
 
 	return &product, nil

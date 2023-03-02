@@ -30,15 +30,8 @@ func createRouter() *gin.Engine {
 	db := connection.GetDB()
 	redis := connection.GetCache()
 	mailer := connection.GetMailer()
-
 	mailUtils := mail.NewMailUtils(&mail.MailUtilsConfig{Mailer: mailer})
 	randomUtils := random.NewRandomUtils(&random.RandomUtilsConfig{})
-	productRepo := productRepoPackage.NewProductRepository(&productRepoPackage.ProductRConfig{
-		DB: db,
-	})
-	productService := productServicePackage.NewProductService(&productServicePackage.ProductSConfig{
-		ProductRepository: productRepo,
-	})
 
 	districtRepo := locationRepoPackage.NewDistrictRepository(&locationRepoPackage.DistrictRConfig{
 		DB: db,
@@ -79,6 +72,13 @@ func createRouter() *gin.Engine {
 		WalletRepo: walletRepo,
 	})
 
+	courierRepo := shopRepoPackage.NewCourierRepository(&shopRepoPackage.CourierRConfig{
+		DB: db,
+	})
+	courierService := shopServicePackage.NewCourierService(&shopServicePackage.CourierSConfig{
+		CourierRepository: courierRepo,
+	})
+
 	shopRepo := shopRepoPackage.NewShopRepository(&shopRepoPackage.ShopRConfig{
 		DB: db,
 	})
@@ -94,6 +94,15 @@ func createRouter() *gin.Engine {
 	shopVoucherService := shopServicePackage.NewShopVoucherService(&shopServicePackage.ShopVoucherSConfig{
 		ShopVoucherRepository: shopVoucherRepo,
 		ShopService:           shopService,
+	})
+
+	productRepo := productRepoPackage.NewProductRepository(&productRepoPackage.ProductRConfig{
+		DB: db,
+	})
+	productService := productServicePackage.NewProductService(&productServicePackage.ProductSConfig{
+		ProductRepository:  productRepo,
+		ShopVoucherService: shopVoucherService,
+		CourierService:     courierService,
 	})
 
 	shopHandler := shopHandlerPackage.New(&shopHandlerPackage.HandlerConfig{
