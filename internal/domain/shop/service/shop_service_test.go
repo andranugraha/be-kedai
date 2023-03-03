@@ -220,21 +220,22 @@ func TestFindShopByKeyword(t *testing.T) {
 			Limit:      limit,
 		}
 		emptyPagination = &commonDto.PaginationResponse{
+			Data: []*model.Shop{},
 			Page:  pages,
 			Limit: limit,
 		}
-		req = &dto.FindShopRequest{
+		req = dto.FindShopRequest{
 			Limit:   limit,
 			Page:    pages,
 			Keyword: "test",
 		}
-		invalidReq = &dto.FindShopRequest{
+		invalidReq = dto.FindShopRequest{
 			Limit: limit,
 			Page:  pages,
 		}
 	)
 	type input struct {
-		dto        *dto.FindShopRequest
+		dto        dto.FindShopRequest
 		err        error
 		beforeTest func(*mocks.ShopRepository)
 	}

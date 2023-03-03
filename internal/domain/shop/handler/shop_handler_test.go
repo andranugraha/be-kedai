@@ -120,12 +120,14 @@ func TestFindShopByKeyword(t *testing.T) {
 			Limit: 10,
 			Page:  1,
 		}
-		req = &dto.FindShopRequest{
+		req = dto.FindShopRequest{
 			Keyword: "test",
+			Page: 1,
+			Limit: 10,
 		}
 	)
 	type input struct {
-		dto    *dto.FindShopRequest
+		dto    dto.FindShopRequest
 		result *commonDto.PaginationResponse
 		err    error
 	}
