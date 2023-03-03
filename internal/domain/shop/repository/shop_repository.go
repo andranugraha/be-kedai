@@ -81,7 +81,7 @@ func (r *shopRepositoryImpl) FindShopByKeyword(req *dto.FindShopRequest) ([]*mod
 		totalPage int
 	)
 
-	r.db.Where("name ILIKE ?", "%"+req.Keyword+"%").Count(&totalRows)
+	r.db.Model(&model.Shop{}).Where("name ILIKE ?", "%"+req.Keyword+"%").Count(&totalRows)
 	totalPage = int(math.Ceil(float64(totalRows) / float64(req.Limit)))
 
 	err := r.db.Where("name ILIKE ?", "%"+req.Keyword+"%").Order("rating desc").Limit(req.Limit).Offset(req.Offset()).Find(&shopList).Error
