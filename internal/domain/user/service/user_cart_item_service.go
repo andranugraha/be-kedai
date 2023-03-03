@@ -15,7 +15,7 @@ import (
 type UserCartItemService interface {
 	PreCheckCartItem(*dto.UserCartItemRequest) (*model.CartItem, *productModel.Sku, error)
 	CreateCartItem(*dto.UserCartItemRequest) (*model.CartItem, error)
-	UpdateCartItem(userID int, request *dto.UpdateCartItemRequest) (*model.CartItem, error)
+	UpdateCartItem(userID int, request *dto.UpdateCartItemRequest) (*dto.UpdateCartItemResponse, error)
 	GetAllCartItem(*dto.GetCartItemsRequest) (*commonDto.PaginationResponse, error)
 }
 
@@ -75,7 +75,7 @@ func (s *userCartItemServiceImpl) CreateCartItem(cartItemReq *dto.UserCartItemRe
 	return nil, err
 }
 
-func (s *userCartItemServiceImpl) UpdateCartItem(userID int, request *dto.UpdateCartItemRequest) (*model.CartItem, error) {
+func (s *userCartItemServiceImpl) UpdateCartItem(userID int, request *dto.UpdateCartItemRequest) (*dto.UpdateCartItemResponse, error) {
 	sku, err := s.validateProductSKU(request.SkuID)
 	if err != nil {
 		return nil, err
@@ -94,7 +94,15 @@ func (s *userCartItemServiceImpl) UpdateCartItem(userID int, request *dto.Update
 	payload.ID = cartItem.ID
 	payload.UserId = userID
 
-	return s.cartItemRepository.UpdateCartItem(payload)
+	res, err := s.cartItemRepository.UpdateCartItem(payload)
+	if err != nil {
+		return nil, err
+	}
+
+	var response dto.UpdateCartItemResponse
+	response.FromCartItem(res)
+
+	return &response, nil
 }
 
 func (s *userCartItemServiceImpl) PreCheckCartItem(cartItemReq *dto.UserCartItemRequest) (*model.CartItem, *productModel.Sku, error) {

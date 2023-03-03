@@ -20,6 +20,12 @@ type UpdateCartItemRequest struct {
 	Notes    string `json:"notes" binding:"required_without=Quantity,max=50"`
 }
 
+type UpdateCartItemResponse struct {
+	SkuID    int
+	Quantity int    `json:"quantity"`
+	Notes    string `json:"notes"`
+}
+
 type GetCartItemsRequest struct {
 	UserId int
 	Limit  int `form:"limit"`
@@ -85,6 +91,12 @@ func (d *UpdateCartItemRequest) ToUserCartItem() *model.CartItem {
 		Quantity: d.Quantity,
 		Notes:    d.Notes,
 	}
+}
+
+func (d *UpdateCartItemResponse) FromCartItem(ci *model.CartItem) {
+	d.SkuID = ci.SkuId
+	d.Quantity = ci.Quantity
+	d.Notes = ci.Notes
 }
 
 func (d *CartItemResponse) ToCartItemResponse(cartItem model.CartItem) {
