@@ -33,7 +33,7 @@ func (h *Handler) FindShopByKeyword(c *gin.Context) {
 	_ = c.ShouldBindQuery(&req)
 	req.Validate()
 
-	result, err := h.shopService.FindShopByKeyword(&req)
+	result, err := h.shopService.FindShopByKeyword(req)
 	if err != nil {
 		response.Error(c, http.StatusInternalServerError, code.INTERNAL_SERVER_ERROR, err.Error())
 		return

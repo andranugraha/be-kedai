@@ -14,7 +14,7 @@ type ShopRepository interface {
 	FindShopById(id int) (*model.Shop, error)
 	FindShopByUserId(userId int) (*model.Shop, error)
 	FindShopBySlug(slug string) (*model.Shop, error)
-	FindShopByKeyword(req *dto.FindShopRequest) ([]*model.Shop, int64, int, error)
+	FindShopByKeyword(req dto.FindShopRequest) ([]*model.Shop, int64, int, error)
 }
 
 type shopRepositoryImpl struct {
@@ -74,7 +74,7 @@ func (r *shopRepositoryImpl) FindShopBySlug(slug string) (*model.Shop, error) {
 	return &shop, nil
 }
 
-func (r *shopRepositoryImpl) FindShopByKeyword(req *dto.FindShopRequest) ([]*model.Shop, int64, int, error) {
+func (r *shopRepositoryImpl) FindShopByKeyword(req dto.FindShopRequest) ([]*model.Shop, int64, int, error) {
 	var (
 		shopList  []*model.Shop
 		totalRows int64

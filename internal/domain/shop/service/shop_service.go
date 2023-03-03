@@ -12,7 +12,7 @@ type ShopService interface {
 	FindShopById(id int) (*model.Shop, error)
 	FindShopByUserId(userId int) (*model.Shop, error)
 	FindShopBySlug(slug string) (*model.Shop, error)
-	FindShopByKeyword(req *dto.FindShopRequest) (*commonDto.PaginationResponse, error)
+	FindShopByKeyword(req dto.FindShopRequest) (*commonDto.PaginationResponse, error)
 }
 
 type shopServiceImpl struct {
@@ -46,7 +46,7 @@ func (s *shopServiceImpl) FindShopBySlug(slug string) (*model.Shop, error) {
 	return shop, nil
 }
 
-func (s *shopServiceImpl) FindShopByKeyword(req *dto.FindShopRequest) (*commonDto.PaginationResponse, error) {
+func (s *shopServiceImpl) FindShopByKeyword(req dto.FindShopRequest) (*commonDto.PaginationResponse, error) {
 	validateKeyword := strings.Trim(req.Keyword, " ")
 	if validateKeyword == "" {
 		return &commonDto.PaginationResponse{
