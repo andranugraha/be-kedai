@@ -122,8 +122,8 @@ func TestFindShopByKeyword(t *testing.T) {
 		}
 		req = dto.FindShopRequest{
 			Keyword: "test",
-			Page: 1,
-			Limit: 10,
+			Page:    1,
+			Limit:   10,
 		}
 	)
 	type input struct {

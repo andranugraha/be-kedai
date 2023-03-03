@@ -220,7 +220,7 @@ func TestFindShopByKeyword(t *testing.T) {
 			Limit:      limit,
 		}
 		emptyPagination = &commonDto.PaginationResponse{
-			Data: []*model.Shop{},
+			Data:  []*model.Shop{},
 			Page:  pages,
 			Limit: limit,
 		}
