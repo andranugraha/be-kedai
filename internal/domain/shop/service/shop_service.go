@@ -50,7 +50,7 @@ func (s *shopServiceImpl) FindShopByKeyword(req *dto.FindShopRequest) (*commonDt
 	validateKeyword := strings.Trim(req.Keyword, " ")
 	if validateKeyword == "" {
 		return &commonDto.PaginationResponse{
-			Data:       nil,
+			Data:       []*model.Shop{},
 			TotalRows:  0,
 			TotalPages: 0,
 			Limit:      req.Limit,
