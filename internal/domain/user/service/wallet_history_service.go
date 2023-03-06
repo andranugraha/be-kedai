@@ -1,36 +1,48 @@
 package service
 
 import (
-	"kedai/backend/be-kedai/internal/domain/user/model"
+	commonDto "kedai/backend/be-kedai/internal/common/dto"
+	"kedai/backend/be-kedai/internal/domain/user/dto"
 	"kedai/backend/be-kedai/internal/domain/user/repository"
 )
 
 type WalletHistoryService interface {
-	GetWalletHistoryById(userId int) ([]*model.WalletHistory, error)	
+	GetWalletHistoryById(req dto.WalletHistoryRequest, userId int) (*commonDto.PaginationResponse, error)
 }
 
 type walletHistoryImpl struct {
 	walletHistoryRepository repository.WalletHistoryRepository
-	walletService	WalletService
+	walletService           WalletService
 }
 
 type WalletHistorySConfig struct {
 	WalletHistoryRepository repository.WalletHistoryRepository
-	WalletService WalletService
+	WalletService           WalletService
 }
 
 func NewWalletHistoryService(cfg *WalletHistorySConfig) WalletHistoryService {
 	return &walletHistoryImpl{
 		walletHistoryRepository: cfg.WalletHistoryRepository,
-		walletService: cfg.WalletService,
+		walletService:           cfg.WalletService,
 	}
 }
 
-func (s *walletHistoryImpl) GetWalletHistoryById(userId int) ([]*model.WalletHistory, error) {
+func (s *walletHistoryImpl) GetWalletHistoryById(req dto.WalletHistoryRequest, userId int) (*commonDto.PaginationResponse, error) {
 	wallet, err := s.walletService.GetWalletByUserID(userId)
 	if err != nil {
 		return nil, err
 	}
 
-	return s.walletHistoryRepository.GetWalletHistoryById(wallet.ID)
+	result, rows, pages, err := s.walletHistoryRepository.GetWalletHistoryById(req, wallet.ID)
+	if err != nil {
+		return nil, err
+	}
+
+	return &commonDto.PaginationResponse{
+		Data:       result,
+		Page:       req.Page,
+		Limit:      req.Limit,
+		TotalRows:  rows,
+		TotalPages: pages,
+	}, nil
 }
