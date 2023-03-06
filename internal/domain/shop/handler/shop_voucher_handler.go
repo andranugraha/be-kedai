@@ -19,3 +19,16 @@ func (h *Handler) GetShopVoucher(c *gin.Context) {
 
 	response.Success(c, http.StatusOK, code.OK, "ok", voucher)
 }
+
+func (h *Handler) GetValidShopVoucher(c *gin.Context) {
+	shopSlug := c.Param("slug")
+	userId := c.GetInt("userId")
+
+	voucher, err := h.shopVoucherService.GetValidShopVoucherByUserIDAndSlug(userId, shopSlug)
+	if err != nil {
+		response.Error(c, http.StatusInternalServerError, code.INTERNAL_SERVER_ERROR, err.Error())
+		return
+	}
+
+	response.Success(c, http.StatusOK, code.OK, "ok", voucher)
+}
