@@ -238,7 +238,7 @@ func TestProductSearchFiltering(t *testing.T) {
 	var (
 		validReq = dto.ProductSearchFilterRequest{
 			Keyword: "test",
-			Shop: "shop",
+			Shop:    "shop",
 		}
 		invalidReq = dto.ProductSearchFilterRequest{
 			Keyword: "  ",
@@ -337,7 +337,7 @@ func TestProductSearchFiltering(t *testing.T) {
 			tc.beforeTest(mockProductRepo, mockShopService)
 			service := service.NewProductService(&service.ProductSConfig{
 				ProductRepository: mockProductRepo,
-				ShopService: mockShopService,
+				ShopService:       mockShopService,
 			})
 
 			result, err := service.ProductSearchFiltering(tc.dto)
