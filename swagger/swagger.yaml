@@ -2856,7 +2856,23 @@ paths:
                               data:
                                 type: array
                                 items:
-                                  $ref: '#/components/schemas/Shop'
+                                  type: object
+                                  properties:
+                                    slug:
+                                      type: string
+                                      example: "slug"
+                                    name:
+                                      type: string
+                                      example: "shop"
+                                    productCount:
+                                      type: number
+                                      example: 2
+                                    rating:
+                                      type: number
+                                      format: float
+                                      example: 2.5
+                                    photoUrl:
+                                      type: string
         '500':
           description: Internal server error
           content:
