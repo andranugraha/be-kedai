@@ -120,7 +120,7 @@ func (r *productRepositoryImpl) GetByShopID(shopID int, request *dto.ShopProduct
 	}
 
 	query = query.Where("is_active = ?", active)
-	query = query.Group("products.id, s.price")
+	query = query.Group("products.id")
 
 	var priceSort string
 	if request.PriceSort == constant.SortByPriceHigh {
@@ -129,7 +129,7 @@ func (r *productRepositoryImpl) GetByShopID(shopID int, request *dto.ShopProduct
 		priceSort = "asc"
 	}
 
-	query = query.Where("s.id = (select id from skus where product_id = products.id order by price asc limit 1)").Order(fmt.Sprintf("s.price %s", priceSort))
+	query.Order(fmt.Sprintf("min(s.price) %s", priceSort))
 
 	switch request.Sort {
 	case constant.SortByRecommended:
