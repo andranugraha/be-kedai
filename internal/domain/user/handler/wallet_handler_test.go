@@ -2,6 +2,8 @@ package handler_test
 
 import (
 	"encoding/json"
+	"errors"
+	"fmt"
 	"kedai/backend/be-kedai/internal/common/code"
 	errRes "kedai/backend/be-kedai/internal/common/error"
 	"kedai/backend/be-kedai/internal/domain/user/dto"
@@ -220,19 +222,24 @@ func TestGetWalletByUserID(t *testing.T) {
 
 func TestTopUp(t *testing.T) {
 	var (
-		userId       = 1
+		userId = 1
 		validRequest = dto.TopUpRequest{
-			Amount: 0,
+			Amount: 50000,
+			TxnId: "50400",
+		}
+		invalidRequest = dto.TopUpRequest{
+			Amount: 5000,
 		}
 		res = &model.WalletHistory{
 			Amount: 50000,
 		}
 	)
 	type input struct {
-		userId     int
-		data       dto.TopUpRequest
-		response   *model.WalletHistory
-		err        error
+		userId int
+		data    dto.TopUpRequest
+		response *model.WalletHistory
+		query string
+		err    error
 		beforeTest func(mockWalletService *mocks.WalletService)
 	}
 
@@ -252,10 +259,11 @@ func TestTopUp(t *testing.T) {
 			description: "should return code 200 with top-up wallet history when success",
 			input: input{
 				userId: 1,
-				data:   validRequest,
+				data: validRequest,
 				response: &model.WalletHistory{
 					Amount: 50000,
 				},
+				query: "txn_id=50400&amount=50000",
 				err: nil,
 				beforeTest: func(mockWalletService *mocks.WalletService) {
 					mockWalletService.On("TopUp", userId, validRequest).Return(res, nil)
@@ -266,7 +274,47 @@ func TestTopUp(t *testing.T) {
 				response: response.Response{
 					Code:    code.OK,
 					Message: "success",
-					Data:    res,
+					Data: res,
+				},
+			},
+		},
+		{
+			description: "should return code 200 with top-up wallet history when success",
+			input: input{
+				userId: 1,
+				data: validRequest,
+				response: &model.WalletHistory{
+					Amount: 50000,
+				},
+				query: "txn_id=50400&amount=50000",
+				err: errRes.ErrWalletDoesNotExist,
+				beforeTest: func(mockWalletService *mocks.WalletService) {
+					mockWalletService.On("TopUp", userId, validRequest).Return(nil, errRes.ErrWalletDoesNotExist)
+				},
+			},
+			expected: expected{
+				statusCode: http.StatusNotFound,
+				response: response.Response{
+					Code:    code.WALLET_DOES_NOT_EXIST,
+					Message: errRes.ErrWalletDoesNotExist.Error(),
+					Data: nil,
+				},
+			},
+		},
+		{
+			description: "should return code 400 when input condition doesn't met",
+			input: input{
+				userId: 1,
+				data: invalidRequest,
+				response: nil,
+				err: errors.New("error"),
+				beforeTest: func(mockWalletService *mocks.WalletService) {},
+			},
+			expected: expected{
+				statusCode: 400,
+				response: response.Response{
+					Code:    code.BAD_REQUEST,
+					Message: "TxnId is required",
 				},
 			},
 		},
@@ -274,11 +322,10 @@ func TestTopUp(t *testing.T) {
 			description: "should return code 500 when internal server error",
 			input: input{
 				userId: 1,
-				data: dto.TopUpRequest{
-					Amount: 50000,
-				},
+				data: validRequest,
 				response: nil,
-				err:      errRes.ErrInternalServerError,
+				query: "txn_id=50400&amount=50000",
+				err: errRes.ErrInternalServerError,
 				beforeTest: func(mockWalletService *mocks.WalletService) {
 					mockWalletService.On("TopUp", userId, validRequest).Return(nil, errRes.ErrInternalServerError)
 				},
@@ -302,7 +349,7 @@ func TestTopUp(t *testing.T) {
 			handler := handler.New(&handler.HandlerConfig{
 				WalletService: walletService,
 			})
-			c.Request, _ = http.NewRequest("POST", "/users/wallets/top-up", testutil.MakeRequestBody(tc.data))
+			c.Request, _ = http.NewRequest("POST", fmt.Sprintf("/users/wallets/top-up?%s", tc.query), nil)
 
 			handler.TopUp(c)
 
