@@ -1,13 +1,15 @@
 package service
 
 import (
+	"kedai/backend/be-kedai/internal/common/constant"
 	commonErr "kedai/backend/be-kedai/internal/common/error"
 	"kedai/backend/be-kedai/internal/domain/order/dto"
+	"kedai/backend/be-kedai/internal/domain/order/model"
 	"kedai/backend/be-kedai/internal/domain/order/repository"
 )
 
 type TransactionReviewService interface {
-	Create(req dto.TransactionReviewRequest) error
+	Create(req dto.TransactionReviewRequest) (*model.TransactionReview, error)
 }
 
 type transactionReviewServiceImpl struct {
@@ -30,30 +32,30 @@ func NewTransactionReviewService(config *TransactionReviewSConfig) TransactionRe
 	}
 }
 
-func (s *transactionReviewServiceImpl) Create(req dto.TransactionReviewRequest) error {
+func (s *transactionReviewServiceImpl) Create(req dto.TransactionReviewRequest) (*model.TransactionReview, error) {
 	transaction, err := s.transactionService.GetByID(req.TransactionId)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	if transaction.UserID != req.UserId {
-		return commonErr.ErrTransactionNotFound
+		return nil, commonErr.ErrTransactionNotFound
 	}
 
 	invoicePerShop, err := s.invoicePerShopService.GetByID(transaction.InvoiceID)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	if invoicePerShop.Status != "completed" {
-		return commonErr.ErrInvoiceNotCompleted
+	if invoicePerShop.Status != constant.TransactionStatusCompleted {
+		return nil, commonErr.ErrInvoiceNotCompleted
 	}
 
 	transactionReview := req.ToModel()
-	err = s.transactionReviewRepo.Create(transactionReview)
+	review, err := s.transactionReviewRepo.Create(transactionReview)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	return nil
+	return review, nil
 }
