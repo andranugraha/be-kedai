@@ -97,6 +97,7 @@ func (r *userCartItemRepository) GetAllCartItem(req *dto.GetCartItemsRequest) (c
 		Order("cart_items.created_at").
 		Preload("Sku.Product.Shop.Address.City").
 		Preload("Sku.Product.Shop.Address.Province").
+		Preload("Sku.Product.Shop.Address.Subdistrict").
 		Preload("Sku.Variants.Group").
 		Preload("Sku.Promotion")
 
