@@ -154,9 +154,9 @@ func (r *productRepositoryImpl) ProductSearchFiltering(req dto.ProductSearchFilt
 	case constant.SortByTopSales:
 		db = db.Order("products.sold desc")
 	case constant.SortByPriceLow:
-		db = db.Where("s.id = (select id from skus where product_id = products.id order by price asc limit 1)").Order("s.price asc")
+		db = db.Where("s.id = (select id from skus where product_id = products.id order by price asc limit 1)").Group("s.id").Order("s.price asc")
 	case constant.SortByPriceHigh:
-		db = db.Where("s.id = (select id from skus where product_id = products.id order by price asc limit 1)").Order("s.price desc")
+		db = db.Where("s.id = (select id from skus where product_id = products.id order by price asc limit 1)").Group("s.id").Order("s.price desc")
 	default:
 		db = db.Order("products.created_at desc")
 	}
