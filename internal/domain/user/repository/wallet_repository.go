@@ -2,7 +2,6 @@ package repository
 
 import (
 	"errors"
-	"fmt"
 	errRes "kedai/backend/be-kedai/internal/common/error"
 	"kedai/backend/be-kedai/internal/domain/user/model"
 	"time"
@@ -17,18 +16,18 @@ type WalletRepository interface {
 }
 
 type walletRepositoryImpl struct {
-	db *gorm.DB
+	db                *gorm.DB
 	walletHistoryRepo WalletHistoryRepository
 }
 
 type WalletRConfig struct {
-	DB *gorm.DB
+	DB            *gorm.DB
 	WalletHistory WalletHistoryRepository
 }
 
 func NewWalletRepository(cfg *WalletRConfig) WalletRepository {
 	return &walletRepositoryImpl{
-		db: cfg.DB,
+		db:                cfg.DB,
 		walletHistoryRepo: cfg.WalletHistory,
 	}
 }
@@ -61,7 +60,6 @@ func (r *walletRepositoryImpl) GetByUserID(userID int) (*model.Wallet, error) {
 }
 
 func (r *walletRepositoryImpl) TopUp(history *model.WalletHistory, wallet *model.Wallet) (*model.WalletHistory, error) {
-	history.Reference = fmt.Sprintf("%d", time.Now().UnixMilli())
 	history.Date = time.Now()
 
 	r.db.Transaction(func(tx *gorm.DB) error {
