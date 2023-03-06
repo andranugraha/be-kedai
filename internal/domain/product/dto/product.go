@@ -146,3 +146,7 @@ func (p *ShopProductFilterRequest) Validate() {
 		p.PriceSort = constant.SortByPriceLow
 	}
 }
+
+func (p *ShopProductFilterRequest) Offset() int {
+	return (p.Page - 1) * p.Limit
+}
