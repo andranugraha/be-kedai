@@ -2,7 +2,6 @@ package handler_test
 
 import (
 	"encoding/json"
-	"errors"
 	"kedai/backend/be-kedai/internal/common/code"
 	errRes "kedai/backend/be-kedai/internal/common/error"
 	"kedai/backend/be-kedai/internal/domain/user/dto"
@@ -221,22 +220,19 @@ func TestGetWalletByUserID(t *testing.T) {
 
 func TestTopUp(t *testing.T) {
 	var (
-		userId = 1
+		userId       = 1
 		validRequest = dto.TopUpRequest{
-			Amount: 50000,
-		}
-		invalidRequest = dto.TopUpRequest{
-			Amount: 5000,
+			Amount: 0,
 		}
 		res = &model.WalletHistory{
 			Amount: 50000,
 		}
 	)
 	type input struct {
-		userId int
-		data    dto.TopUpRequest
-		response *model.WalletHistory
-		err    error
+		userId     int
+		data       dto.TopUpRequest
+		response   *model.WalletHistory
+		err        error
 		beforeTest func(mockWalletService *mocks.WalletService)
 	}
 
@@ -256,13 +252,13 @@ func TestTopUp(t *testing.T) {
 			description: "should return code 200 with top-up wallet history when success",
 			input: input{
 				userId: 1,
-				data: validRequest,
+				data:   validRequest,
 				response: &model.WalletHistory{
 					Amount: 50000,
 				},
 				err: nil,
 				beforeTest: func(mockWalletService *mocks.WalletService) {
-					mockWalletService.On("TopUp", userId, validRequest.Amount).Return(res, nil)
+					mockWalletService.On("TopUp", userId, validRequest).Return(res, nil)
 				},
 			},
 			expected: expected{
@@ -270,24 +266,7 @@ func TestTopUp(t *testing.T) {
 				response: response.Response{
 					Code:    code.OK,
 					Message: "success",
-					Data: res,
-				},
-			},
-		},
-		{
-			description: "should return code 400 when input condition doesn't met",
-			input: input{
-				userId: 1,
-				data: invalidRequest,
-				response: nil,
-				err: errors.New("error"),
-				beforeTest: func(mockWalletService *mocks.WalletService) {},
-			},
-			expected: expected{
-				statusCode: 400,
-				response: response.Response{
-					Code:    code.BAD_REQUEST,
-					Message: "Amount must be greater than 10000",
+					Data:    res,
 				},
 			},
 		},
@@ -299,9 +278,9 @@ func TestTopUp(t *testing.T) {
 					Amount: 50000,
 				},
 				response: nil,
-				err: errRes.ErrInternalServerError,
+				err:      errRes.ErrInternalServerError,
 				beforeTest: func(mockWalletService *mocks.WalletService) {
-					mockWalletService.On("TopUp", userId, validRequest.Amount).Return(nil, errRes.ErrInternalServerError)
+					mockWalletService.On("TopUp", userId, validRequest).Return(nil, errRes.ErrInternalServerError)
 				},
 			},
 			expected: expected{

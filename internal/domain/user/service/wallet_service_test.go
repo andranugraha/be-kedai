@@ -3,6 +3,7 @@ package service_test
 import (
 	"errors"
 	errRes "kedai/backend/be-kedai/internal/common/error"
+	"kedai/backend/be-kedai/internal/domain/user/dto"
 	"kedai/backend/be-kedai/internal/domain/user/model"
 	"kedai/backend/be-kedai/internal/domain/user/service"
 	"kedai/backend/be-kedai/mocks"
@@ -123,11 +124,16 @@ func TestTopUp(t *testing.T) {
 		history = &model.WalletHistory{
 			ID:     0,
 			Type:   "Top-up",
+			Reference: "15602",
 			Amount: 50000,
 			WalletId: 1,
 		}
 		wallet = &model.Wallet{
 			ID: 1,
+		}
+		req = dto.TopUpRequest{
+			Amount: 50000,
+			TxnId: "15602",
 		}
 	)
 	type input struct {
@@ -208,7 +214,7 @@ func TestTopUp(t *testing.T) {
 				WalletRepo: mockWalletRepo,
 			})
 
-			result, err := service.TopUp(tc.input.userId, tc.history.Amount)
+			result, err := service.TopUp(tc.input.userId, req)
 
 			assert.Equal(t, tc.expected.err, err)
 			assert.Equal(t, tc.expected.data, result)
