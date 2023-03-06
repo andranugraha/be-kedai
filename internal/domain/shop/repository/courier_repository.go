@@ -11,6 +11,7 @@ import (
 type CourierRepository interface {
 	GetByShopID(shopID int) ([]*model.Courier, error)
 	GetByServiceIDAndShopID(courierID, shopID int) (*model.Courier, error)
+	GetByProductID(productID int) ([]*model.Courier, error)
 }
 
 type courierRepositoryImpl struct {
@@ -63,4 +64,22 @@ func (r *courierRepositoryImpl) GetByServiceIDAndShopID(courierServiceID, shopID
 	}
 
 	return &courier, nil
+}
+
+func (r *courierRepositoryImpl) GetByProductID(productID int) ([]*model.Courier, error) {
+	var couriers []*model.Courier
+
+	err := r.db.
+		Joins("JOIN courier_services cs ON couriers.id = cs.courier_id").
+		Joins("JOIN product_couriers ON cs.id = product_couriers.courier_service_id").
+		Where("product_couriers.product_id = ?", productID).
+		Distinct().
+		Find(&couriers).
+		Error
+
+	if err != nil {
+		return nil, err
+	}
+
+	return couriers, nil
 }
