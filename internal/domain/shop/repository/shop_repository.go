@@ -14,7 +14,7 @@ type ShopRepository interface {
 	FindShopById(id int) (*model.Shop, error)
 	FindShopByUserId(userId int) (*model.Shop, error)
 	FindShopBySlug(slug string) (*model.Shop, error)
-	FindShopByKeyword(req dto.FindShopRequest) ([]*model.Shop, int64, int, error)
+	FindShopByKeyword(req dto.FindShopRequest) ([]*dto.FindShopResponse, int64, int, error)
 }
 
 type shopRepositoryImpl struct {
@@ -74,17 +74,21 @@ func (r *shopRepositoryImpl) FindShopBySlug(slug string) (*model.Shop, error) {
 	return &shop, nil
 }
 
-func (r *shopRepositoryImpl) FindShopByKeyword(req dto.FindShopRequest) ([]*model.Shop, int64, int, error) {
+func (r *shopRepositoryImpl) FindShopByKeyword(req dto.FindShopRequest) ([]*dto.FindShopResponse, int64, int, error) {
 	var (
-		shopList  []*model.Shop
+		shopList  []*dto.FindShopResponse
 		totalRows int64
 		totalPage int
 	)
 
-	r.db.Model(&model.Shop{}).Where("name ILIKE ?", "%"+req.Keyword+"%").Count(&totalRows)
+	db := r.db.Select(`shops.*, count(p.id) as product_count`).
+	Joins("left join products p on shops.id = p.shop_id").
+	Group("shops.id").Where("shops.name ILIKE ?", "%"+req.Keyword+"%")
+
+	db.Model(&model.Shop{}).Count(&totalRows)
 	totalPage = int(math.Ceil(float64(totalRows) / float64(req.Limit)))
 
-	err := r.db.Where("name ILIKE ?", "%"+req.Keyword+"%").Order("rating desc").Limit(req.Limit).Offset(req.Offset()).Find(&shopList).Error
+	err := db.Order("rating desc").Limit(req.Limit).Offset(req.Offset()).Find(&shopList).Error
 	if err != nil {
 		return nil, 0, 0, err
 	}
