@@ -7,24 +7,36 @@ import (
 )
 
 type WalletHistoryRepository interface {
-	Create(*gorm.DB, *model.WalletHistory) (error)
+	Create(*gorm.DB, *model.WalletHistory) error
+	GetWalletHistoryById(id int) ([]*model.WalletHistory, error)
 }
 
-type walletHistoryImpl struct {
+type walletHistoryRepoImpl struct {
 	db *gorm.DB
 }
 
-type WalletHConfig struct {
+type WalletHistoryRConfig struct {
 	DB *gorm.DB
 }
 
-func NewWalletHistoryRepository(cfg *WalletHConfig) WalletHistoryRepository {
-	return &walletHistoryImpl{
+func NewWalletHistoryRepository(cfg *WalletHistoryRConfig) WalletHistoryRepository {
+	return &walletHistoryRepoImpl{
 		db: cfg.DB,
 	}
 }
 
-func (r *walletHistoryImpl) Create(tx *gorm.DB ,history *model.WalletHistory) (error) {
+func (r *walletHistoryRepoImpl) Create(tx *gorm.DB, history *model.WalletHistory) error {
 	err := tx.Create(&history).Error
 	return err
+}
+
+func (r *walletHistoryRepoImpl) GetWalletHistoryById(id int) ([]*model.WalletHistory, error) {
+	var histories []*model.WalletHistory
+
+	err := r.db.Where("wallet_id = ?", id).Order("created_at desc").Find(&histories).Error
+	if err != nil {
+		return nil, err
+	}
+
+	return histories, nil
 }
