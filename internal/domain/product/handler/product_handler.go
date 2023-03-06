@@ -57,6 +57,10 @@ func (h *Handler) ProductSearchFiltering(c *gin.Context) {
 
 	product, err := h.productService.ProductSearchFiltering(req)
 	if err != nil {
+		if errors.Is(err, errs.ErrShopNotFound) {
+			response.Error(c, http.StatusNotFound, code.NOT_FOUND, err.Error())
+			return
+		}
 		response.Error(c, http.StatusInternalServerError, code.INTERNAL_SERVER_ERROR, err.Error())
 		return
 	}
