@@ -66,10 +66,7 @@ func (h *Handler) ProductSearchFiltering(c *gin.Context) {
 
 func (h *Handler) GetProductsByShopSlug(c *gin.Context) {
 	var request dto.ShopProductFilterRequest
-	err := c.ShouldBindQuery(&request)
-	if err != nil {
-		response.ErrorValidator(c, http.StatusBadRequest, err)
-	}
+	c.ShouldBindQuery(&request)
 
 	request.Validate()
 
@@ -78,11 +75,11 @@ func (h *Handler) GetProductsByShopSlug(c *gin.Context) {
 	res, err := h.productService.GetProductsByShopSlug(slug, &request)
 	if err != nil {
 		if errors.Is(err, errs.ErrShopNotFound) {
-			response.Error(c, http.StatusNotFound, code.NOT_FOUND, err.Error())
+			response.Error(c, http.StatusNotFound, code.SHOP_NOT_REGISTERED, err.Error())
 			return
 		}
 
-		response.Error(c, http.StatusInternalServerError, code.INTERNAL_SERVER_ERROR, err.Error())
+		response.Error(c, http.StatusInternalServerError, code.INTERNAL_SERVER_ERROR, errs.ErrInternalServerError.Error())
 		return
 	}
 
