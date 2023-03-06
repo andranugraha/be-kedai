@@ -14,7 +14,7 @@ type ProductDetail struct {
 	Couriers         []*shopModel.Courier     `json:"couriers,omitempty" gorm:"->:false"`
 	MinPrice         float64                  `json:"minPrice"`
 	MaxPrice         float64                  `json:"maxPrice"`
-	ImageURL         string                   `json:"imageUrl"`
+	ImageURL         string                   `json:"imageUrl,omitempty"`
 	TotalStock       int                      `json:"totalStock"`
 	PromotionPercent *float64                 `json:"promotionPercent,omitempty"`
 }
@@ -124,6 +124,7 @@ func (p *ProductSearchFilterRequest) Offset() int {
 
 type ShopProductFilterRequest struct {
 	ShopProductCategoryID int    `form:"shopProductCategoryID"`
+	ExceptionID           int    `form:"exceptionID"`
 	PriceSort             string `form:"priceSort"`
 	Sort                  string `form:"sort"`
 	Limit                 int    `form:"limit"`
@@ -146,4 +147,8 @@ func (p *ShopProductFilterRequest) Validate() {
 	if p.PriceSort != constant.SortByPriceLow && p.PriceSort != constant.SortByPriceHigh {
 		p.PriceSort = constant.SortByPriceLow
 	}
+}
+
+func (p *ShopProductFilterRequest) Offset() int {
+	return (p.Page - 1) * p.Limit
 }
