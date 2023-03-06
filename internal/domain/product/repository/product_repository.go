@@ -15,7 +15,7 @@ type ProductRepository interface {
 	GetByID(ID int) (*model.Product, error)
 	GetByCode(code string) (*dto.ProductDetail, error)
 	GetRecommendationByCategory(productId int, categoryId int) ([]*dto.ProductResponse, error)
-	ProductSearchFiltering(req dto.ProductSearchFilterRequest) ([]*dto.ProductResponse, int64, int, error)
+	ProductSearchFiltering(req dto.ProductSearchFilterRequest, shopId int) ([]*dto.ProductResponse, int64, int, error)
 }
 
 type productRepositoryImpl struct {
@@ -98,7 +98,7 @@ func (r *productRepositoryImpl) GetRecommendationByCategory(productId int, categ
 	return products, nil
 }
 
-func (r *productRepositoryImpl) ProductSearchFiltering(req dto.ProductSearchFilterRequest) ([]*dto.ProductResponse, int64, int, error) {
+func (r *productRepositoryImpl) ProductSearchFiltering(req dto.ProductSearchFilterRequest, shopId int) ([]*dto.ProductResponse, int64, int, error) {
 	var (
 		productList []*dto.ProductResponse
 		totalRows   int64
@@ -140,6 +140,10 @@ func (r *productRepositoryImpl) ProductSearchFiltering(req dto.ProductSearchFilt
 		if req.MaxPrice > 0 {
 			db = db.Where("s.id = (select id from skus where product_id = products.id and skus.price <= ? limit 1)", req.MaxPrice)
 		}
+	}
+
+	if shopId != 0 {
+		db = db.Where("products.shop_id = ?", shopId)
 	}
 
 	switch req.Sort {
