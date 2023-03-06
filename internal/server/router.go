@@ -120,10 +120,18 @@ func NewRouter(cfg *RouterConfig) *gin.Engine {
 		{
 			shop.GET("/:slug", cfg.ShopHandler.FindShopBySlug)
 			shop.GET("/:slug/vouchers", cfg.ShopHandler.GetShopVoucher)
+			authenticated := shop.Group("", middleware.JWTAuthorization, cfg.UserHandler.GetSession)
+			{
+				authenticated.GET("/:slug/vouchers/valid", cfg.ShopHandler.GetValidShopVoucher)
+			}
 		}
 		marketplace := v1.Group("/marketplaces")
 		{
 			marketplace.GET("/vouchers", cfg.MarketplaceHandler.GetMarketplaceVoucher)
+			authenticated := marketplace.Group("", middleware.JWTAuthorization, cfg.UserHandler.GetSession)
+			{
+				authenticated.GET("/vouchers/valid", cfg.MarketplaceHandler.GetValidMarketplaceVoucher)
+			}
 		}
 	}
 
