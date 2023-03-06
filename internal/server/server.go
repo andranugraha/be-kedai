@@ -7,6 +7,7 @@ import (
 	locationHandlerPackage "kedai/backend/be-kedai/internal/domain/location/handler"
 	locationRepoPackage "kedai/backend/be-kedai/internal/domain/location/repository"
 	locationServicePackage "kedai/backend/be-kedai/internal/domain/location/service"
+	"kedai/backend/be-kedai/internal/utils/google"
 
 	userCache "kedai/backend/be-kedai/internal/domain/user/cache"
 	userHandlerPackage "kedai/backend/be-kedai/internal/domain/user/handler"
@@ -32,6 +33,14 @@ func createRouter() *gin.Engine {
 	mailer := connection.GetMailer()
 	mailUtils := mail.NewMailUtils(&mail.MailUtilsConfig{Mailer: mailer})
 	randomUtils := random.NewRandomUtils(&random.RandomUtilsConfig{})
+	maps := google.NewGoogleMaps()
+
+	productRepo := productRepoPackage.NewProductRepository(&productRepoPackage.ProductRConfig{
+		DB: db,
+	})
+	productService := productServicePackage.NewProductService(&productServicePackage.ProductSConfig{
+		ProductRepository: productRepo,
+	})
 
 	districtRepo := locationRepoPackage.NewDistrictRepository(&locationRepoPackage.DistrictRConfig{
 		DB: db,
@@ -57,12 +66,21 @@ func createRouter() *gin.Engine {
 	provinceService := locationServicePackage.NewProvinceService(&locationServicePackage.ProvinceSConfig{
 		ProvinceRepo: provinceRepo,
 	})
+	addressRepo := locationRepoPackage.NewAddressRepository(&locationRepoPackage.AddressRConfig{
+		DB:         db,
+		GoogleMaps: maps,
+	})
+	addressService := locationServicePackage.NewAddressService(&locationServicePackage.AddressSConfig{
+		AddressRepo:        addressRepo,
+		SubdistrictService: subdistrictService,
+	})
 
 	locHandler := locationHandlerPackage.New(&locationHandlerPackage.Config{
 		CityService:        cityService,
 		ProvinceService:    provinceService,
 		DistrictService:    districtService,
 		SubdistrictService: subdistrictService,
+		AddressService:     addressService,
 	})
 
 	walletRepo := userRepoPackage.NewWalletRepository(&userRepoPackage.WalletRConfig{

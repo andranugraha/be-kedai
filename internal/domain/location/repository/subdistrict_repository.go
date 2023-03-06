@@ -2,6 +2,7 @@ package repository
 
 import (
 	"errors"
+	"fmt"
 	errs "kedai/backend/be-kedai/internal/common/error"
 	"kedai/backend/be-kedai/internal/domain/location/dto"
 	"kedai/backend/be-kedai/internal/domain/location/model"
@@ -12,6 +13,7 @@ import (
 type SubdistrictRepository interface {
 	GetByID(subdistrictID int) (*model.Subdistrict, error)
 	GetAll(req dto.GetSubdistrictsRequest) (subdistricts []*model.Subdistrict, err error)
+	GetDetailByName(subdistrictName string) (*model.Subdistrict, error)
 }
 
 type subdistrictRepositoryImpl struct {
@@ -49,6 +51,17 @@ func (c *subdistrictRepositoryImpl) GetAll(req dto.GetSubdistrictsRequest) (subd
 
 	err = db.Find(&subdistricts).Error
 	if err != nil {
+		return
+	}
+}
+
+func (c *subdistrictRepositoryImpl) GetDetailByName(subdistrictName string) (subdistrict *model.Subdistrict, err error) {
+	err = c.db.Where("lower(name) ilike ?", fmt.Sprintf("%%%s%%", subdistrictName)).Preload("District.City.Province").First(&subdistrict).Error
+	if err != nil {
+
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, errs.ErrSubdistrictNotFound
+		}
 		return
 	}
 
