@@ -55,6 +55,21 @@ func TestGetShopVoucher(t *testing.T) {
 			},
 		},
 		{
+			description: "should return error with code 404 when shop not found",
+			input: input{
+				slug:    slug,
+				voucher: nil,
+				err:     errs.ErrShopNotFound,
+			},
+			expected: expected{
+				statusCode: http.StatusNotFound,
+				response: response.Response{
+					Code:    code.SHOP_NOT_REGISTERED,
+					Message: errs.ErrShopNotFound.Error(),
+				},
+			},
+		},
+		{
 			description: "should return error with code 500 when internal server error",
 			input: input{
 				slug:    slug,
@@ -65,7 +80,7 @@ func TestGetShopVoucher(t *testing.T) {
 				statusCode: http.StatusInternalServerError,
 				response: response.Response{
 					Code:    code.INTERNAL_SERVER_ERROR,
-					Message: "something went wrong in the server",
+					Message: errs.ErrInternalServerError.Error(),
 				},
 			},
 		},
@@ -134,6 +149,21 @@ func TestGetValidShopVoucher(t *testing.T) {
 			},
 		},
 		{
+			description: "should return error with code 404 when shop not found",
+			input: input{
+				slug:    slug,
+				voucher: nil,
+				err:     errs.ErrShopNotFound,
+			},
+			expected: expected{
+				statusCode: http.StatusNotFound,
+				response: response.Response{
+					Code:    code.SHOP_NOT_REGISTERED,
+					Message: errs.ErrShopNotFound.Error(),
+				},
+			},
+		},
+		{
 			description: "should return error with code 500 when internal server error",
 			input: input{
 				slug:    slug,
@@ -144,7 +174,7 @@ func TestGetValidShopVoucher(t *testing.T) {
 				statusCode: http.StatusInternalServerError,
 				response: response.Response{
 					Code:    code.INTERNAL_SERVER_ERROR,
-					Message: "something went wrong in the server",
+					Message: errs.ErrInternalServerError.Error(),
 				},
 			},
 		},
