@@ -3,7 +3,9 @@ package handler_test
 import (
 	"encoding/json"
 	"kedai/backend/be-kedai/internal/common/code"
+	commonDto "kedai/backend/be-kedai/internal/common/dto"
 	errs "kedai/backend/be-kedai/internal/common/error"
+	"kedai/backend/be-kedai/internal/domain/user/dto"
 	"kedai/backend/be-kedai/internal/domain/user/handler"
 	"kedai/backend/be-kedai/internal/domain/user/model"
 	"kedai/backend/be-kedai/internal/utils/response"
@@ -19,10 +21,18 @@ import (
 func TestGetWalletHistory(t *testing.T) {
 	var (
 		userId        = 1
+		request       = dto.WalletHistoryRequest{
+			Page: 1,
+			Limit: 10,
+		}
 		walletHistory = []*model.WalletHistory{}
+		pagination    = &commonDto.PaginationResponse{
+			Data: walletHistory,
+		}
 	)
 	type input struct {
-		result []*model.WalletHistory
+		result *commonDto.PaginationResponse
+		req    dto.WalletHistoryRequest
 		userId int
 		err    error
 	}
@@ -40,8 +50,9 @@ func TestGetWalletHistory(t *testing.T) {
 		{
 			description: "should return list of wallet transaction histories with code 200 when success",
 			input: input{
-				result: walletHistory,
+				result: pagination,
 				userId: userId,
+				req:    request,
 				err:    nil,
 			},
 			expected: expected{
@@ -49,7 +60,7 @@ func TestGetWalletHistory(t *testing.T) {
 				response: response.Response{
 					Code:    code.OK,
 					Message: "ok",
-					Data:    walletHistory,
+					Data:    pagination,
 				},
 			},
 		},
@@ -57,6 +68,7 @@ func TestGetWalletHistory(t *testing.T) {
 			description: "should return error with code 404 when wallet does not exist",
 			input: input{
 				result: nil,
+				req:    request,
 				userId: userId,
 				err:    errs.ErrWalletDoesNotExist,
 			},
@@ -72,6 +84,7 @@ func TestGetWalletHistory(t *testing.T) {
 			description: "should return error with code 500 when internal server error",
 			input: input{
 				result: nil,
+				req:    request,
 				userId: userId,
 				err:    errs.ErrInternalServerError,
 			},
@@ -90,7 +103,7 @@ func TestGetWalletHistory(t *testing.T) {
 			c, _ := gin.CreateTestContext(rec)
 			c.Set("userId", tc.input.userId)
 			mockWalletHistoryService := new(mocks.WalletHistoryService)
-			mockWalletHistoryService.On("GetWalletHistoryById", tc.input.userId).Return(tc.input.result, tc.input.err)
+			mockWalletHistoryService.On("GetWalletHistoryById", tc.input.req, tc.input.userId).Return(tc.input.result, tc.input.err)
 			handler := handler.New(&handler.HandlerConfig{
 				WalletHistoryService: mockWalletHistoryService,
 			})

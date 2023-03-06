@@ -2,6 +2,8 @@ package service_test
 
 import (
 	errs "kedai/backend/be-kedai/internal/common/error"
+	commonDto "kedai/backend/be-kedai/internal/common/dto"
+	"kedai/backend/be-kedai/internal/domain/user/dto"
 	"kedai/backend/be-kedai/internal/domain/user/model"
 	"kedai/backend/be-kedai/internal/domain/user/service"
 	"kedai/backend/be-kedai/mocks"
@@ -14,18 +16,23 @@ func TestGetWalletHistoryById(t *testing.T) {
 	var (
 		userId   = 1
 		walletId = 1
+		request  = dto.WalletHistoryRequest{}
 		wallet   = &model.Wallet{
 			ID: 1,
 		}
-		history  = []*model.WalletHistory{}
+		history = []*model.WalletHistory{}
+		pagination = &commonDto.PaginationResponse{
+			Data: history,
+		}
 	)
 	type input struct {
 		userId     int
+		req        dto.WalletHistoryRequest
 		err        error
 		beforeTest func(*mocks.WalletHistoryRepository, *mocks.WalletService)
 	}
 	type expected struct {
-		result []*model.WalletHistory
+		result *commonDto.PaginationResponse
 		err    error
 	}
 
@@ -40,14 +47,15 @@ func TestGetWalletHistoryById(t *testing.T) {
 			description: "should return list of wallet transaction histories when success",
 			input: input{
 				userId: userId,
+				req: request,
 				err:    nil,
 				beforeTest: func(whr *mocks.WalletHistoryRepository, ws *mocks.WalletService) {
 					ws.On("GetWalletByUserID", userId).Return(wallet, nil)
-					whr.On("GetWalletHistoryById", walletId).Return(history, nil)
+					whr.On("GetWalletHistoryById", request, walletId).Return(history, int64(0), 0, nil)
 				},
 			},
 			expected: expected{
-				result: history,
+				result: pagination,
 				err:    nil,
 			},
 		},
@@ -55,6 +63,7 @@ func TestGetWalletHistoryById(t *testing.T) {
 			description: "should return error when wallet no found",
 			input: input{
 				userId: userId,
+				req: request,
 				err:    errs.ErrWalletDoesNotExist,
 				beforeTest: func(whr *mocks.WalletHistoryRepository, ws *mocks.WalletService) {
 					ws.On("GetWalletByUserID", userId).Return(nil, errs.ErrWalletDoesNotExist)
@@ -72,10 +81,10 @@ func TestGetWalletHistoryById(t *testing.T) {
 			tc.beforeTest(mockWalletHistoryRepo, mockWalletService)
 			service := service.NewWalletHistoryService(&service.WalletHistorySConfig{
 				WalletHistoryRepository: mockWalletHistoryRepo,
-				WalletService: mockWalletService,
+				WalletService:           mockWalletService,
 			})
 
-			result, err := service.GetWalletHistoryById(tc.input.userId)
+			result, err := service.GetWalletHistoryById(tc.input.req, tc.input.userId)
 
 			assert.Equal(t, tc.expected.err, err)
 			assert.Equal(t, tc.expected.result, result)
