@@ -22,7 +22,7 @@ func (h *Handler) AddTransactionReview(c *gin.Context) {
 
 	req.UserId = c.GetInt("userId")
 
-	err := h.transactionReviewService.Create(req)
+	review, err := h.transactionReviewService.Create(req)
 	if err != nil {
 		if errors.Is(err, commonErr.ErrTransactionReviewAlreadyExist) {
 			response.Error(c, http.StatusConflict, code.TRANSACTION_REVIEW_ALREADY_EXIST, err.Error())
@@ -41,5 +41,5 @@ func (h *Handler) AddTransactionReview(c *gin.Context) {
 		return
 	}
 
-	response.Success(c, http.StatusCreated, code.CREATED, "created", nil)
+	response.Success(c, http.StatusCreated, code.CREATED, "created", review)
 }
