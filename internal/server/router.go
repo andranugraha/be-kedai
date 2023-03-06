@@ -121,6 +121,7 @@ func NewRouter(cfg *RouterConfig) *gin.Engine {
 		shop := v1.Group("/shops")
 		{
 			shop.GET("/:slug", cfg.ShopHandler.FindShopBySlug)
+			shop.GET("/:slug/products", cfg.ProductHandler.GetProductsByShopSlug)
 			shop.GET("/:slug/vouchers", cfg.ShopHandler.GetShopVoucher)
 		}
 	}

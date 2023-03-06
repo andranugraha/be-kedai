@@ -109,6 +109,7 @@ func createRouter() *gin.Engine {
 	productService := productServicePackage.NewProductService(&productServicePackage.ProductSConfig{
 		ProductRepository:  productRepo,
 		ShopVoucherService: shopVoucherService,
+		ShopService:        shopService,
 		CourierService:     courierService,
 	})
 
