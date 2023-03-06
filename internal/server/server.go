@@ -20,6 +20,10 @@ import (
 	shopHandlerPackage "kedai/backend/be-kedai/internal/domain/shop/handler"
 	shopRepoPackage "kedai/backend/be-kedai/internal/domain/shop/repository"
 	shopServicePackage "kedai/backend/be-kedai/internal/domain/shop/service"
+
+	orderHandlerPackage "kedai/backend/be-kedai/internal/domain/order/handler"
+	orderRepoPackage "kedai/backend/be-kedai/internal/domain/order/repository"
+	orderServicePackage "kedai/backend/be-kedai/internal/domain/order/service"
 	mail "kedai/backend/be-kedai/internal/utils/mail"
 	random "kedai/backend/be-kedai/internal/utils/random"
 
@@ -194,6 +198,31 @@ func createRouter() *gin.Engine {
 		ProductService:     productService,
 		ShopService:        shopService,
 	})
+	transactionRepo := orderRepoPackage.NewTransactionRepository(&orderRepoPackage.TransactionRConfig{
+		DB: db,
+	})
+
+	transactionService := orderServicePackage.NewTransactionService(&orderServicePackage.TransactionSConfig{
+		TransactionRepo: transactionRepo,
+	})
+
+	invoicePerShopRepo := orderRepoPackage.NewInvoicePerShopRepository(&orderRepoPackage.InvoicePerShopRConfig{
+		DB: db,
+	})
+
+	invoicePerShopService := orderServicePackage.NewInvoicePerShopService(&orderServicePackage.InvoicePerShopSConfig{
+		InvoicePerShopRepo: invoicePerShopRepo,
+	})
+
+	transactionReviewRepo := orderRepoPackage.NewTransactionReviewRepository(&orderRepoPackage.TransactionReviewRConfig{
+		DB: db,
+	})
+
+	transactionReviewService := orderServicePackage.NewTransactionReviewService(&orderServicePackage.TransactionReviewSConfig{
+		TransactionReviewRepo: transactionReviewRepo,
+		TransactionService:    transactionService,
+		InvoicePerShopService: invoicePerShopService,
+	})
 
 	sealabsPayRepo := userRepoPackage.NewSealabsPayRepository(&userRepoPackage.SealabsPayRConfig{
 		DB: db,
@@ -230,12 +259,17 @@ func createRouter() *gin.Engine {
 		SkuService:      skuService,
 	})
 
+	orderHandler := orderHandlerPackage.New(&orderHandlerPackage.Config{
+		TransactionReviewService: transactionReviewService,
+	})
+
 	return NewRouter(&RouterConfig{
 		UserHandler:        userHandler,
 		LocationHandler:    locHandler,
 		ProductHandler:     productHandler,
 		ShopHandler:        shopHandler,
 		MarketplaceHandler: marketplaceHandler,
+		OrderHandler:       orderHandler,
 	})
 }
 
