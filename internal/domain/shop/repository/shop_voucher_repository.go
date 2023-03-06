@@ -56,11 +56,15 @@ func (r *shopVoucherRepositoryImpl) GetValidByUserIDAndShopID(userID int, shopID
 		invalidVoucherID = append(invalidVoucherID, voucher.MarketplaceVoucherId)
 	}
 
+	db := r.db
+	if len(invalidVoucherID) > 0 {
+		db = db.Not("id IN (?)", invalidVoucherID)
+	}
+
 	publicVoucher := true
-	err = r.db.Where("shop_id = ?", shopID).
+	err = db.Where("shop_id = ?", shopID).
 		Where("is_hidden != ?", publicVoucher).
 		Where("? < expired_at", time.Now()).
-		Not("id IN (?)", invalidVoucherID).
 		Find(&shopVouchers).Error
 	if err != nil {
 		return nil, err

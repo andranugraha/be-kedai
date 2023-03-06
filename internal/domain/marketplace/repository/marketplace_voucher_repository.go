@@ -75,6 +75,10 @@ func (r *marketplaceVoucherRepositoryImpl) GetValidByUserID(req *dto.GetMarketpl
 		db = db.Where("payment_method_id = ?", req.PaymentMethodId)
 	}
 
+	if len(invalidVoucherID) > 0 {
+		db = db.Not("id IN (?)", invalidVoucherID)
+	}
+
 	publicVoucher := true
 	err = db.Where("expired_at > ?", time.Now()).
 		Where("is_hidden != ?", publicVoucher).
