@@ -2,6 +2,7 @@ package repository
 
 import (
 	"kedai/backend/be-kedai/internal/domain/shop/model"
+	"time"
 
 	"gorm.io/gorm"
 )
@@ -11,7 +12,7 @@ type ShopVoucherRepository interface {
 	GetValidById(id int) (*model.ShopVoucher, error)
 }
 
-type shopVoucherImpl struct {
+type shopVoucherRepositoryImpl struct {
 	db *gorm.DB
 }
 
@@ -20,15 +21,16 @@ type ShopVoucherRConfig struct {
 }
 
 func NewShopVoucherRepository(cfg *ShopVoucherRConfig) ShopVoucherRepository {
-	return &shopVoucherImpl{
+	return &shopVoucherRepositoryImpl{
 		db: cfg.DB,
 	}
 }
 
-func (r *shopVoucherImpl) GetShopVoucher(shopId int) ([]*model.ShopVoucher, error) {
+func (r *shopVoucherRepositoryImpl) GetShopVoucher(shopId int) ([]*model.ShopVoucher, error) {
 	var shopVoucher []*model.ShopVoucher
-
-	err := r.db.Where("shop_id = ?", shopId).Find(&shopVoucher).Error
+	publicVoucher := true
+	now := time.Now()
+	err := r.db.Where("shop_id = ?", shopId).Where("is_hidden != ?", publicVoucher).Where("? < expired_at", now).Find(&shopVoucher).Error
 	if err != nil {
 		return nil, err
 	}
@@ -36,7 +38,7 @@ func (r *shopVoucherImpl) GetShopVoucher(shopId int) ([]*model.ShopVoucher, erro
 	return shopVoucher, nil
 }
 
-func (r *shopVoucherImpl) GetValidById(id int) (*model.ShopVoucher, error) {
+func (r *shopVoucherRepositoryImpl) GetValidById(id int) (*model.ShopVoucher, error) {
 	var shopVoucher model.ShopVoucher
 
 	err := r.db.Where("expired_at > now()").First(&shopVoucher, id).Error

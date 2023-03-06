@@ -328,6 +328,7 @@ func TestGetAllUserAddress(t *testing.T) {
 
 func TestUpdateUserAddress(t *testing.T) {
 	var defaultAddressId = 1
+	var falseValue = false
 	type input struct {
 		addressId   int
 		data        *dto.AddressRequest
@@ -395,6 +396,7 @@ func TestUpdateUserAddress(t *testing.T) {
 					SubdistrictID: 1,
 					ID:            1,
 					UserID:        1,
+					IsDefault:     &falseValue,
 				},
 				err: errs.ErrMustHaveAtLeastOneDefaultAddress,
 				beforeTests: func(mockUserAddressRepo *mocks.UserAddressRepository, mockSubdistrictService *mocks.SubdistrictService, mockDistrictService *mocks.DistrictService, mockCityService *mocks.CityService, mockProvinceService *mocks.ProvinceService, mockUserProfileService *mocks.UserProfileService) {
@@ -685,4 +687,139 @@ func TestUpdateUserAddress(t *testing.T) {
 		})
 	}
 
+}
+
+func TestDeleteUserAddress(t *testing.T) {
+	var defaultAddressId = 1
+	type input struct {
+		addressId   int
+		userId      int
+		err         error
+		beforeTests func(mockUserAddressRepo *mocks.UserAddressRepository, mockUserProfileService *mocks.UserProfileService)
+	}
+	type expected struct {
+		err error
+	}
+
+	cases := []struct {
+		description string
+		input
+		expected
+	}{
+		{
+			description: "should return error when GetUserAddressByIdAndUserId return error",
+			input: input{
+				addressId: 1,
+				userId:    1,
+				err:       errs.ErrInternalServerError,
+				beforeTests: func(mockUserAddressRepo *mocks.UserAddressRepository, mockUserProfileService *mocks.UserProfileService) {
+					mockUserAddressRepo.On("GetUserAddressByIdAndUserId", 1, 1).Return(nil, errs.ErrInternalServerError)
+				},
+			},
+			expected: expected{
+				err: errs.ErrInternalServerError,
+			},
+		},
+		{
+			description: "should return error when GetProfile return error",
+			input: input{
+				addressId: 1,
+				userId:    1,
+				err:       errs.ErrInternalServerError,
+				beforeTests: func(mockUserAddressRepo *mocks.UserAddressRepository, mockUserProfileService *mocks.UserProfileService) {
+					mockUserAddressRepo.On("GetUserAddressByIdAndUserId", 1, 1).Return(&model.UserAddress{
+						ID:            1,
+						UserID:        1,
+						SubdistrictID: 1,
+					}, nil)
+					mockUserProfileService.On("GetProfile", 1).Return(nil, errs.ErrInternalServerError)
+				},
+			},
+			expected: expected{
+				err: errs.ErrInternalServerError,
+			},
+		},
+		{
+			description: "should return error when profile default address is equal to address id",
+			input: input{
+				addressId: 1,
+				userId:    1,
+				err:       errs.ErrMustHaveAtLeastOneDefaultAddress,
+				beforeTests: func(mockUserAddressRepo *mocks.UserAddressRepository, mockUserProfileService *mocks.UserProfileService) {
+					mockUserAddressRepo.On("GetUserAddressByIdAndUserId", 1, 1).Return(&model.UserAddress{
+						ID:            1,
+						UserID:        1,
+						SubdistrictID: 1,
+					}, nil)
+					mockUserProfileService.On("GetProfile", 1).Return(&userModel.UserProfile{
+						DefaultAddressID: &defaultAddressId,
+					}, nil)
+				},
+			},
+			expected: expected{
+				err: errs.ErrMustHaveAtLeastOneDefaultAddress,
+			},
+		},
+		{
+			description: "should return error when DeleteUserAddress return error",
+			input: input{
+				addressId: 1,
+				userId:    1,
+				err:       errs.ErrInternalServerError,
+				beforeTests: func(mockUserAddressRepo *mocks.UserAddressRepository, mockUserProfileService *mocks.UserProfileService) {
+					mockUserAddressRepo.On("GetUserAddressByIdAndUserId", 1, 1).Return(&model.UserAddress{
+						ID:            1,
+						UserID:        1,
+						SubdistrictID: 1,
+					}, nil)
+					mockUserProfileService.On("GetProfile", 1).Return(&userModel.UserProfile{
+						DefaultAddressID: nil,
+					}, nil)
+					mockUserAddressRepo.On("DeleteUserAddress", 1, 1).Return(errs.ErrInternalServerError)
+				},
+			},
+			expected: expected{
+				err: errs.ErrInternalServerError,
+			},
+		},
+		{
+			description: "should return nil when success delete user address",
+			input: input{
+				addressId: 1,
+				userId:    1,
+				err:       nil,
+				beforeTests: func(mockUserAddressRepo *mocks.UserAddressRepository, mockUserProfileService *mocks.UserProfileService) {
+					mockUserAddressRepo.On("GetUserAddressByIdAndUserId", 1, 1).Return(&model.UserAddress{
+						ID:            1,
+						UserID:        1,
+						SubdistrictID: 1,
+					}, nil)
+					mockUserProfileService.On("GetProfile", 1).Return(&userModel.UserProfile{
+						DefaultAddressID: nil,
+					}, nil)
+					mockUserAddressRepo.On("DeleteUserAddress", 1, 1).Return(nil)
+				},
+			},
+			expected: expected{
+				err: nil,
+			},
+		},
+	}
+
+	for _, c := range cases {
+		t.Run(c.description, func(t *testing.T) {
+			mockUserAddressRepo := mocks.NewUserAddressRepository(t)
+			mockUserProfileService := mocks.NewUserProfileService(t)
+			c.beforeTests(mockUserAddressRepo, mockUserProfileService)
+
+			userAddressService := service.NewUserAddressService(&service.UserAddressSConfig{
+				UserAddressRepo:    mockUserAddressRepo,
+				UserProfileService: mockUserProfileService,
+			})
+
+			err := userAddressService.DeleteUserAddress(c.input.addressId, c.input.userId)
+
+			assert.ErrorIs(t, c.expected.err, err)
+		})
+	}
 }

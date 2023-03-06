@@ -12,11 +12,11 @@ type ShopVoucher struct {
 	Code         string    `json:"code"`
 	Amount       float64   `json:"amount"`
 	Type         string    `json:"type"`
-	IsHidden     bool      `json:"is_hidden"`
+	IsHidden     bool      `json:"isHidden"`
 	Description  string    `json:"description"`
-	MinimumSpend float64   `json:"minimum_spend"`
-	ExpiredAt    time.Time `json:"expired_at"`
-	ShopId       int       `json:"shop_id"`
+	MinimumSpend float64   `json:"minimumSpend"`
+	ExpiredAt    time.Time `json:"expiredAt"`
+	ShopId       int       `json:"shopId"`
 
 	gorm.Model `json:"-"`
 }

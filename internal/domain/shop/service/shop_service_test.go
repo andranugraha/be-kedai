@@ -142,8 +142,9 @@ func TestFindShopBySlug(t *testing.T) {
 		}
 	)
 	type input struct {
-		slug string
-		err  error
+		slug       string
+		err        error
+		beforeTest func(*mocks.ShopRepository)
 	}
 
 	type expected struct {
@@ -163,6 +164,9 @@ func TestFindShopBySlug(t *testing.T) {
 			input: input{
 				slug: shopSlug,
 				err:  nil,
+				beforeTest: func(sr *mocks.ShopRepository) {
+					sr.On("FindShopBySlug", shopSlug).Return(shopResult, nil)
+				},
 			},
 			expected: expected{
 				shop: shopResult,
@@ -174,6 +178,9 @@ func TestFindShopBySlug(t *testing.T) {
 			input: input{
 				slug: shopSlug,
 				err:  errs.ErrShopNotFound,
+				beforeTest: func(sr *mocks.ShopRepository) {
+					sr.On("FindShopBySlug", shopSlug).Return(nil, errs.ErrShopNotFound)
+				},
 			},
 			expected: expected{
 				shop: nil,
@@ -183,7 +190,7 @@ func TestFindShopBySlug(t *testing.T) {
 	} {
 		t.Run(tc.description, func(t *testing.T) {
 			mockRepo := new(mocks.ShopRepository)
-			mockRepo.On("FindShopBySlug", tc.input.slug).Return(tc.expected.shop, tc.expected.err)
+			tc.beforeTest(mockRepo)
 			service := service.NewShopService(&service.ShopSConfig{
 				ShopRepository: mockRepo,
 			})

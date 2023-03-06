@@ -8,6 +8,7 @@ import (
 	"math"
 
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 type UserCartItemRepository interface {
@@ -69,7 +70,7 @@ func (r *userCartItemRepository) GetCartItemByUserIdAndSkuId(userId int, skuId i
 }
 
 func (r *userCartItemRepository) UpdateCartItem(cartItem *model.CartItem) (*model.CartItem, error) {
-	res := r.db.Model(&cartItem).Updates(cartItem)
+	res := r.db.Where("id = ?", cartItem.ID).Where("user_id = ?", cartItem.UserId).Clauses(clause.Returning{}).Updates(cartItem)
 	if err := res.Error; err != nil {
 		return nil, err
 	}

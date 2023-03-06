@@ -1,6 +1,7 @@
 package service_test
 
 import (
+	"errors"
 	commonDto "kedai/backend/be-kedai/internal/common/dto"
 	errs "kedai/backend/be-kedai/internal/common/error"
 	productModel "kedai/backend/be-kedai/internal/domain/product/model"
@@ -571,7 +572,7 @@ func TestGetAllCartItem(t *testing.T) {
 			expected: expected{
 				data: &commonDto.PaginationResponse{
 					Limit: 0,
-					Data:  dto.GetCartItemsResponses{}.GetCartItemsResponses,
+					Data:  []dto.GetCartItemsResponse{},
 				},
 				err: nil,
 			},
@@ -595,4 +596,151 @@ func TestGetAllCartItem(t *testing.T) {
 		})
 	}
 
+}
+
+func TestUpdateCartItem(t *testing.T) {
+	type input struct {
+		userID     int
+		request    *dto.UpdateCartItemRequest
+		beforeTest func(*mocks.UserCartItemRepository, *mocks.SkuService, *mocks.ProductService)
+	}
+	type expected struct {
+		data *dto.UpdateCartItemResponse
+		err  error
+	}
+
+	tests := []struct {
+		description string
+		input
+		expected
+	}{
+		{
+			description: "should return error when failed to get product sku",
+			input: input{
+				userID:  1,
+				request: &dto.UpdateCartItemRequest{SkuID: 1},
+				beforeTest: func(ucir *mocks.UserCartItemRepository, ss *mocks.SkuService, ps *mocks.ProductService) {
+					ss.On("GetByID", 1).Return(nil, errors.New("failed to get sku"))
+				},
+			},
+			expected: expected{
+				data: nil,
+				err:  errors.New("failed to get sku"),
+			},
+		},
+		{
+			description: "should return error when failed to get product",
+			input: input{
+				userID:  1,
+				request: &dto.UpdateCartItemRequest{SkuID: 1},
+				beforeTest: func(ucir *mocks.UserCartItemRepository, ss *mocks.SkuService, ps *mocks.ProductService) {
+					ss.On("GetByID", 1).Return(&productModel.Sku{ID: 1, ProductId: 1}, nil)
+					ps.On("GetByID", 1).Return(nil, errors.New("failed to get product"))
+				},
+			},
+			expected: expected{
+				data: nil,
+				err:  errors.New("failed to get product"),
+			},
+		},
+		{
+			description: "should return error when product is inactive",
+			input: input{
+				userID:  1,
+				request: &dto.UpdateCartItemRequest{SkuID: 1},
+				beforeTest: func(ucir *mocks.UserCartItemRepository, ss *mocks.SkuService, ps *mocks.ProductService) {
+					ss.On("GetByID", 1).Return(&productModel.Sku{ID: 1, ProductId: 1}, nil)
+					ps.On("GetByID", 1).Return(&productModel.Product{ID: 1, IsActive: false}, nil)
+				},
+			},
+			expected: expected{
+				data: nil,
+				err:  errs.ErrProductDoesNotExist,
+			},
+		},
+		{
+			description: "should return error when failed to get cart item",
+			input: input{
+				userID:  1,
+				request: &dto.UpdateCartItemRequest{SkuID: 1},
+				beforeTest: func(ucir *mocks.UserCartItemRepository, ss *mocks.SkuService, ps *mocks.ProductService) {
+					ss.On("GetByID", 1).Return(&productModel.Sku{ID: 1, ProductId: 1}, nil)
+					ps.On("GetByID", 1).Return(&productModel.Product{ID: 1, IsActive: true}, nil)
+					ucir.On("GetCartItemByUserIdAndSkuId", 1, 1).Return(nil, errors.New("failed to get cart item"))
+				},
+			},
+			expected: expected{
+				data: nil,
+				err:  errors.New("failed to get cart item"),
+			},
+		},
+		{
+			description: "should return error when product stock is not enough",
+			input: input{
+				userID:  1,
+				request: &dto.UpdateCartItemRequest{SkuID: 1, Quantity: 3},
+				beforeTest: func(ucir *mocks.UserCartItemRepository, ss *mocks.SkuService, ps *mocks.ProductService) {
+					ss.On("GetByID", 1).Return(&productModel.Sku{ID: 1, ProductId: 1, Stock: 2}, nil)
+					ps.On("GetByID", 1).Return(&productModel.Product{ID: 1, IsActive: true}, nil)
+				},
+			},
+			expected: expected{
+				data: nil,
+				err:  errs.ErrProductQuantityNotEnough,
+			},
+		},
+		{
+			description: "should return error when failed to update cart item",
+			input: input{
+				userID:  1,
+				request: &dto.UpdateCartItemRequest{SkuID: 1, Quantity: 3},
+				beforeTest: func(ucir *mocks.UserCartItemRepository, ss *mocks.SkuService, ps *mocks.ProductService) {
+					ss.On("GetByID", 1).Return(&productModel.Sku{ID: 1, ProductId: 1, Stock: 10}, nil)
+					ps.On("GetByID", 1).Return(&productModel.Product{ID: 1, IsActive: true}, nil)
+					ucir.On("GetCartItemByUserIdAndSkuId", 1, 1).Return(&model.CartItem{ID: 4, Quantity: 1}, nil)
+					ucir.On("UpdateCartItem", &model.CartItem{ID: 4, UserId: 1, SkuId: 1, Quantity: 3}).Return(nil, errors.New("failed to update cart"))
+				},
+			},
+			expected: expected{
+				data: nil,
+				err:  errors.New("failed to update cart"),
+			},
+		},
+		{
+			description: "should return updated data when update cart item succeed",
+			input: input{
+				userID:  1,
+				request: &dto.UpdateCartItemRequest{SkuID: 1, Quantity: 3},
+				beforeTest: func(ucir *mocks.UserCartItemRepository, ss *mocks.SkuService, ps *mocks.ProductService) {
+					ss.On("GetByID", 1).Return(&productModel.Sku{ID: 1, ProductId: 1, Stock: 10}, nil)
+					ps.On("GetByID", 1).Return(&productModel.Product{ID: 1, IsActive: true}, nil)
+					ucir.On("GetCartItemByUserIdAndSkuId", 1, 1).Return(&model.CartItem{ID: 4, Quantity: 1}, nil)
+					ucir.On("UpdateCartItem", &model.CartItem{ID: 4, UserId: 1, SkuId: 1, Quantity: 3}).Return(&model.CartItem{ID: 4, UserId: 1, SkuId: 1, Quantity: 3}, nil)
+				},
+			},
+			expected: expected{
+				data: &dto.UpdateCartItemResponse{SkuID: 1, Quantity: 3},
+				err:  nil,
+			},
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.description, func(t *testing.T) {
+			cartItemRepo := mocks.NewUserCartItemRepository(t)
+			skuService := mocks.NewSkuService(t)
+			productService := mocks.NewProductService(t)
+			tc.beforeTest(cartItemRepo, skuService, productService)
+			cartItemService := service.NewUserCartItemService(&service.UserCartItemSConfig{
+				CartItemRepository: cartItemRepo,
+				SkuService:         skuService,
+				ProductService:     productService,
+			})
+
+			updatedCart, updatedErr := cartItemService.UpdateCartItem(tc.input.userID, tc.input.request)
+
+			assert.Equal(t, tc.expected.data, updatedCart)
+			assert.Equal(t, tc.expected.err, updatedErr)
+		})
+	}
 }

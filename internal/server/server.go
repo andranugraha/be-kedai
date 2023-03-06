@@ -25,19 +25,18 @@ import (
 	orderRepoPackage "kedai/backend/be-kedai/internal/domain/order/repository"
 	orderServicePackage "kedai/backend/be-kedai/internal/domain/order/service"
 
+	mail "kedai/backend/be-kedai/internal/utils/mail"
+	random "kedai/backend/be-kedai/internal/utils/random"
+
 	"github.com/gin-gonic/gin"
 )
 
 func createRouter() *gin.Engine {
 	db := connection.GetDB()
 	redis := connection.GetCache()
-
-	productRepo := productRepoPackage.NewProductRepository(&productRepoPackage.ProductRConfig{
-		DB: db,
-	})
-	productService := productServicePackage.NewProductService(&productServicePackage.ProductSConfig{
-		ProductRepository: productRepo,
-	})
+	mailer := connection.GetMailer()
+	mailUtils := mail.NewMailUtils(&mail.MailUtilsConfig{Mailer: mailer})
+	randomUtils := random.NewRandomUtils(&random.RandomUtilsConfig{})
 
 	districtRepo := locationRepoPackage.NewDistrictRepository(&locationRepoPackage.DistrictRConfig{
 		DB: db,
@@ -65,8 +64,10 @@ func createRouter() *gin.Engine {
 	})
 
 	locHandler := locationHandlerPackage.New(&locationHandlerPackage.Config{
-		CityService:     cityService,
-		ProvinceService: provinceService,
+		CityService:        cityService,
+		ProvinceService:    provinceService,
+		DistrictService:    districtService,
+		SubdistrictService: subdistrictService,
 	})
 
 	walletRepo := userRepoPackage.NewWalletRepository(&userRepoPackage.WalletRConfig{
@@ -76,12 +77,11 @@ func createRouter() *gin.Engine {
 		WalletRepo: walletRepo,
 	})
 
-	shopVoucherRepo := shopRepoPackage.NewShopVoucherRepository(&shopRepoPackage.ShopVoucherRConfig{
+	courierRepo := shopRepoPackage.NewCourierRepository(&shopRepoPackage.CourierRConfig{
 		DB: db,
 	})
-
-	shopVoucherService := shopServicePackage.NewShopVoucherService(&shopServicePackage.ShopVoucherSConfig{
-		ShopVoucherRepository: shopVoucherRepo,
+	courierService := shopServicePackage.NewCourierService(&shopServicePackage.CourierSConfig{
+		CourierRepository: courierRepo,
 	})
 
 	shopRepo := shopRepoPackage.NewShopRepository(&shopRepoPackage.ShopRConfig{
@@ -92,8 +92,34 @@ func createRouter() *gin.Engine {
 		ShopRepository: shopRepo,
 	})
 
+	shopVoucherRepo := shopRepoPackage.NewShopVoucherRepository(&shopRepoPackage.ShopVoucherRConfig{
+		DB: db,
+	})
+
+	shopVoucherService := shopServicePackage.NewShopVoucherService(&shopServicePackage.ShopVoucherSConfig{
+		ShopVoucherRepository: shopVoucherRepo,
+		ShopService:           shopService,
+	})
+
+	skuRepo := productRepoPackage.NewSkuRepository(&productRepoPackage.SkuRConfig{
+		DB: db,
+	})
+	skuService := productServicePackage.NewSkuService(&productServicePackage.SkuSConfig{
+		SkuRepository: skuRepo,
+	})
+
+	productRepo := productRepoPackage.NewProductRepository(&productRepoPackage.ProductRConfig{
+		DB: db,
+	})
+	productService := productServicePackage.NewProductService(&productServicePackage.ProductSConfig{
+		ProductRepository:  productRepo,
+		ShopVoucherService: shopVoucherService,
+		CourierService:     courierService,
+	})
+
 	shopHandler := shopHandlerPackage.New(&shopHandlerPackage.HandlerConfig{
-		ShopService: shopService,
+		ShopService:        shopService,
+		ShopVoucherService: shopVoucherService,
 	})
 
 	userCache := userCache.NewUserCache(&userCache.UserCConfig{
@@ -110,8 +136,10 @@ func createRouter() *gin.Engine {
 	})
 
 	userService := userServicePackage.NewUserService(&userServicePackage.UserSConfig{
-		Repository: userRepo,
-		Redis:      userCache,
+		Repository:  userRepo,
+		Redis:       userCache,
+		MailUtils:   mailUtils,
+		RandomUtils: randomUtils,
 	})
 
 	userProfileService := userServicePackage.NewUserProfileService(&userServicePackage.UserProfileSConfig{
@@ -126,13 +154,6 @@ func createRouter() *gin.Engine {
 		UserWishlistRepository: userWishlistRepo,
 		UserService:            userService,
 		ProductService:         productService,
-	})
-	skuRepo := productRepoPackage.NewSkuRepository(&productRepoPackage.SkuRConfig{
-		DB: db,
-	})
-
-	skuService := productServicePackage.NewSkuService(&productServicePackage.SkuSConfig{
-		SkuRepository: skuRepo,
 	})
 
 	userCartItemRepo := userRepoPackage.NewUserCartItemRepository(&userRepoPackage.UserCartItemRConfig{
@@ -188,6 +209,7 @@ func createRouter() *gin.Engine {
 	productHandler := productHandlerPackage.New(&productHandlerPackage.Config{
 		CategoryService: categoryService,
 		ProductService:  productService,
+		SkuService:      skuService,
 	})
 
 	invoiceRepo := orderRepoPackage.NewInvoiceRepository(&orderRepoPackage.InvoiceRConfig{

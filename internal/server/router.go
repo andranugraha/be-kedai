@@ -40,8 +40,12 @@ func NewRouter(cfg *RouterConfig) *gin.Engine {
 		{
 			user.POST("/register", cfg.UserHandler.UserRegistration)
 			user.POST("/login", cfg.UserHandler.UserLogin)
+			user.POST("/google-register", cfg.UserHandler.UserRegistrationWithGoogle)
 			user.POST("/google-login", cfg.UserHandler.UserLoginWithGoogle)
 			user.POST("/tokens/refresh", middleware.JWTValidateRefreshToken, cfg.UserHandler.RenewSession)
+
+			user.POST("/passwords/reset-request", cfg.UserHandler.RequestPasswordReset)
+			user.POST("/passwords/reset-confirmation", cfg.UserHandler.CompletePasswordReset)
 			userAuthenticated := user.Group("", middleware.JWTAuthorization, cfg.UserHandler.GetSession)
 			{
 				userAuthenticated.GET("", cfg.UserHandler.GetUserByID)
@@ -49,6 +53,13 @@ func NewRouter(cfg *RouterConfig) *gin.Engine {
 
 				userAuthenticated.PUT("/emails", cfg.UserHandler.UpdateUserEmail)
 				userAuthenticated.PUT("/usernames", cfg.UserHandler.UpdateUsername)
+
+				passwords := userAuthenticated.Group("/passwords")
+				{
+					passwords.POST("/change-request", cfg.UserHandler.RequestPasswordChange)
+					passwords.POST("/change-confirmation", cfg.UserHandler.CompletePasswordChange)
+				}
+
 				profile := userAuthenticated.Group("/profiles")
 				{
 					profile.PUT("", cfg.UserHandler.UpdateProfile)
@@ -69,12 +80,14 @@ func NewRouter(cfg *RouterConfig) *gin.Engine {
 				{
 					carts.POST("", cfg.UserHandler.CreateCartItem)
 					carts.GET("", cfg.UserHandler.GetAllCartItem)
+					carts.PUT("/:skuId", cfg.UserHandler.UpdateCartItem)
 				}
 				addresses := userAuthenticated.Group("/addresses")
 				{
 					addresses.GET("", cfg.UserHandler.GetAllUserAddress)
 					addresses.POST("", cfg.UserHandler.AddUserAddress)
 					addresses.PUT("/:addressId", cfg.UserHandler.UpdateUserAddress)
+					addresses.DELETE("/:addressId", cfg.UserHandler.DeleteUserAddress)
 				}
 				sealabsPay := userAuthenticated.Group("/sealabs-pays")
 				{
@@ -88,20 +101,29 @@ func NewRouter(cfg *RouterConfig) *gin.Engine {
 		{
 			location.GET("/cities", cfg.LocationHandler.GetCities)
 			location.GET("/provinces", cfg.LocationHandler.GetProvinces)
+			location.GET("/districts", cfg.LocationHandler.GetDistricts)
+			location.GET("/subdistricts", cfg.LocationHandler.GetSubdistricts)
 		}
 
 		product := v1.Group("/products")
 		{
+			product.GET("", cfg.ProductHandler.ProductSearchFiltering)
+			product.GET("/:code", cfg.ProductHandler.GetProductByCode)
 			product.GET("/recommendations/categories", cfg.ProductHandler.GetRecommendationByCategory)
 			category := product.Group("/categories")
 			{
 				category.GET("", cfg.ProductHandler.GetCategories)
+			}
+			sku := product.Group("/skus")
+			{
+				sku.GET("", cfg.ProductHandler.GetSKUByVariantIDs)
 			}
 		}
 
 		shop := v1.Group("/shops")
 		{
 			shop.GET("/:slug", cfg.ShopHandler.FindShopBySlug)
+			shop.GET("/:slug/vouchers", cfg.ShopHandler.GetShopVoucher)
 		}
 
 		order := v1.Group("/orders")

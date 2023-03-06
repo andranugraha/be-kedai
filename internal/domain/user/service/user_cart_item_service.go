@@ -15,6 +15,7 @@ import (
 type UserCartItemService interface {
 	PreCheckCartItem(*dto.UserCartItemRequest) (*model.CartItem, *productModel.Sku, error)
 	CreateCartItem(*dto.UserCartItemRequest) (*model.CartItem, error)
+	UpdateCartItem(userID int, request *dto.UpdateCartItemRequest) (*dto.UpdateCartItemResponse, error)
 	GetAllCartItem(*dto.GetCartItemsRequest) (*commonDto.PaginationResponse, error)
 	GetCartItemByIdAndUserId(int, int) (*model.CartItem, error)
 }
@@ -75,23 +76,40 @@ func (s *userCartItemServiceImpl) CreateCartItem(cartItemReq *dto.UserCartItemRe
 	return nil, err
 }
 
+func (s *userCartItemServiceImpl) UpdateCartItem(userID int, request *dto.UpdateCartItemRequest) (*dto.UpdateCartItemResponse, error) {
+	sku, err := s.validateProductSKU(request.SkuID)
+	if err != nil {
+		return nil, err
+	}
+
+	if sku.Stock < request.Quantity {
+		return nil, errs.ErrProductQuantityNotEnough
+	}
+
+	cartItem, err := s.cartItemRepository.GetCartItemByUserIdAndSkuId(userID, request.SkuID)
+	if err != nil {
+		return nil, err
+	}
+
+	payload := request.ToUserCartItem()
+	payload.ID = cartItem.ID
+	payload.UserId = userID
+
+	res, err := s.cartItemRepository.UpdateCartItem(payload)
+	if err != nil {
+		return nil, err
+	}
+
+	var response dto.UpdateCartItemResponse
+	response.FromCartItem(res)
+
+	return &response, nil
+}
+
 func (s *userCartItemServiceImpl) PreCheckCartItem(cartItemReq *dto.UserCartItemRequest) (*model.CartItem, *productModel.Sku, error) {
-
-	// Check sku (product) exist
-	sku, err := s.skuService.GetByID(cartItemReq.SkuId)
+	sku, err := s.validateProductSKU(cartItemReq.SkuId)
 	if err != nil {
 		return nil, nil, err
-	}
-
-	// Check product exist
-	product, err := s.productService.GetByID(sku.ProductId)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	// check product active
-	if !product.IsActive {
-		return nil, nil, errs.ErrProductDoesNotExist
 	}
 
 	// check user not owner of shop
@@ -151,4 +169,22 @@ func (s *userCartItemServiceImpl) GetAllCartItem(cartItemReq *dto.GetCartItemsRe
 
 func (s *userCartItemServiceImpl) GetCartItemByIdAndUserId(id, userId int) (*model.CartItem, error) {
 	return s.cartItemRepository.GetCartItemByIdAndUserId(id, userId)
+}
+
+func (s *userCartItemServiceImpl) validateProductSKU(skuID int) (*productModel.Sku, error) {
+	sku, err := s.skuService.GetByID(skuID)
+	if err != nil {
+		return nil, err
+	}
+
+	product, err := s.productService.GetByID(sku.ProductId)
+	if err != nil {
+		return nil, err
+	}
+
+	if !product.IsActive {
+		return nil, errs.ErrProductDoesNotExist
+	}
+
+	return sku, nil
 }

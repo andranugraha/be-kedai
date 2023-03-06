@@ -7,6 +7,7 @@ import (
 	"kedai/backend/be-kedai/internal/domain/user/dto"
 	"kedai/backend/be-kedai/internal/utils/response"
 	"net/http"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 )
@@ -65,4 +66,47 @@ func (h *Handler) GetAllCartItem(c *gin.Context) {
 	}
 
 	response.Success(c, http.StatusOK, code.OK, "get all cart item successful", cartItems)
+}
+
+func (h *Handler) UpdateCartItem(c *gin.Context) {
+	skuIDParam := c.Param("skuId")
+	skuID, err := strconv.Atoi(skuIDParam)
+	if err != nil || skuID < 1 {
+		response.Error(c, http.StatusBadRequest, code.BAD_REQUEST, "sku ID must be a number and greater than or equal 1")
+		return
+	}
+
+	var req dto.UpdateCartItemRequest
+	err = c.ShouldBindJSON(&req)
+	if err != nil {
+		response.ErrorValidator(c, http.StatusBadRequest, err)
+		return
+	}
+
+	req.SkuID = skuID
+
+	userId := c.GetInt("userId")
+
+	updatedCart, err := h.userCartItemService.UpdateCartItem(userId, &req)
+	if err != nil {
+		if errors.Is(err, errs.ErrProductDoesNotExist) {
+			response.Error(c, http.StatusNotFound, code.PRODUCT_NOT_EXISTS, err.Error())
+			return
+		}
+
+		if errors.Is(err, errs.ErrCartItemNotFound) {
+			response.Error(c, http.StatusNotFound, code.CART_ITEM_NOT_FOUND, err.Error())
+			return
+		}
+
+		if errors.Is(err, errs.ErrProductQuantityNotEnough) {
+			response.Error(c, http.StatusConflict, code.QUANTITY_NOT_ENOUGH, err.Error())
+			return
+		}
+
+		response.Error(c, http.StatusInternalServerError, code.INTERNAL_SERVER_ERROR, errs.ErrInternalServerError.Error())
+		return
+	}
+
+	response.Success(c, http.StatusOK, code.UPDATED, "update cart item succesful", updatedCart)
 }
