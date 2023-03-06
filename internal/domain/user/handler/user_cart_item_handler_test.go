@@ -482,7 +482,7 @@ func TestUpdateCartItem(t *testing.T) {
 						SkuID:    2,
 						Quantity: 3,
 						Notes:    "test",
-					}).Return(&model.CartItem{ID: 2, SkuId: 2, Quantity: 3, Notes: "test"}, nil)
+					}).Return(&dto.UpdateCartItemResponse{SkuID: 2, Quantity: 3, Notes: "test"}, nil)
 				},
 			},
 			expected: expected{
@@ -490,7 +490,7 @@ func TestUpdateCartItem(t *testing.T) {
 				response: response.Response{
 					Code:    code.UPDATED,
 					Message: "update cart item succesful",
-					Data:    &model.CartItem{ID: 2, SkuId: 2, Quantity: 3, Notes: "test"},
+					Data:    &dto.UpdateCartItemResponse{SkuID: 2, Quantity: 3, Notes: "test"},
 				},
 			},
 		},

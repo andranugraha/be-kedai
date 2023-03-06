@@ -115,6 +115,13 @@ func createRouter() *gin.Engine {
 		ShopService:           shopService,
 	})
 
+	skuRepo := productRepoPackage.NewSkuRepository(&productRepoPackage.SkuRConfig{
+		DB: db,
+	})
+	skuService := productServicePackage.NewSkuService(&productServicePackage.SkuSConfig{
+		SkuRepository: skuRepo,
+	})
+
 	productRepo := productRepoPackage.NewProductRepository(&productRepoPackage.ProductRConfig{
 		DB: db,
 	})
@@ -161,13 +168,6 @@ func createRouter() *gin.Engine {
 		UserWishlistRepository: userWishlistRepo,
 		UserService:            userService,
 		ProductService:         productService,
-	})
-	skuRepo := productRepoPackage.NewSkuRepository(&productRepoPackage.SkuRConfig{
-		DB: db,
-	})
-
-	skuService := productServicePackage.NewSkuService(&productServicePackage.SkuSConfig{
-		SkuRepository: skuRepo,
 	})
 
 	userCartItemRepo := userRepoPackage.NewUserCartItemRepository(&userRepoPackage.UserCartItemRConfig{
@@ -226,6 +226,7 @@ func createRouter() *gin.Engine {
 	productHandler := productHandlerPackage.New(&productHandlerPackage.Config{
 		CategoryService: categoryService,
 		ProductService:  productService,
+		SkuService:      skuService,
 	})
 
 	return NewRouter(&RouterConfig{
