@@ -23,12 +23,30 @@ import (
 	mail "kedai/backend/be-kedai/internal/utils/mail"
 	random "kedai/backend/be-kedai/internal/utils/random"
 
+	marketplaceHandlerPackage "kedai/backend/be-kedai/internal/domain/marketplace/handler"
+	marketplaceRepoPackage "kedai/backend/be-kedai/internal/domain/marketplace/repository"
+	marketplaceServicePackage "kedai/backend/be-kedai/internal/domain/marketplace/service"
+
 	"github.com/gin-gonic/gin"
 )
 
 func createRouter() *gin.Engine {
 	db := connection.GetDB()
 	redis := connection.GetCache()
+
+	userVoucherRepo := userRepoPackage.NewUserVoucherRepository(&userRepoPackage.UserVoucherRConfig{
+		DB: db,
+	})
+
+	marketplaceVoucherRepo := marketplaceRepoPackage.NewMarketplaceVoucherRepository(&marketplaceRepoPackage.MarketplaceVoucherRConfig{
+		DB:                    db,
+		UserVoucherRepository: userVoucherRepo,
+	})
+
+	marketplaceVoucherService := marketplaceServicePackage.NewMarketplaceVoucherService(&marketplaceServicePackage.MarketplaceVoucherSConfig{
+		MarketplaceVoucherRepository: marketplaceVoucherRepo,
+	})
+
 	mailer := connection.GetMailer()
 	mailUtils := mail.NewMailUtils(&mail.MailUtilsConfig{Mailer: mailer})
 	randomUtils := random.NewRandomUtils(&random.RandomUtilsConfig{})
@@ -88,7 +106,8 @@ func createRouter() *gin.Engine {
 	})
 
 	shopVoucherRepo := shopRepoPackage.NewShopVoucherRepository(&shopRepoPackage.ShopVoucherRConfig{
-		DB: db,
+		DB:                    db,
+		UserVoucherRepository: userVoucherRepo,
 	})
 
 	shopVoucherService := shopServicePackage.NewShopVoucherService(&shopServicePackage.ShopVoucherSConfig{
@@ -192,6 +211,9 @@ func createRouter() *gin.Engine {
 		UserAddressService:  userAddressService,
 		UserProfileService:  userProfileService,
 	})
+	marketplaceHandler := marketplaceHandlerPackage.New(&marketplaceHandlerPackage.HandlerConfig{
+		MarketplaceVoucherService: marketplaceVoucherService,
+	})
 
 	categoryRepo := productRepoPackage.NewCategoryRepository(&productRepoPackage.CategoryRConfig{
 		DB: db,
@@ -208,10 +230,11 @@ func createRouter() *gin.Engine {
 	})
 
 	return NewRouter(&RouterConfig{
-		UserHandler:     userHandler,
-		LocationHandler: locHandler,
-		ProductHandler:  productHandler,
-		ShopHandler:     shopHandler,
+		UserHandler:        userHandler,
+		LocationHandler:    locHandler,
+		ProductHandler:     productHandler,
+		ShopHandler:        shopHandler,
+		MarketplaceHandler: marketplaceHandler,
 	})
 }
 

@@ -5,6 +5,7 @@ import (
 	"kedai/backend/be-kedai/internal/server/middleware"
 
 	locationHandler "kedai/backend/be-kedai/internal/domain/location/handler"
+	marketplaceHandler "kedai/backend/be-kedai/internal/domain/marketplace/handler"
 	productHandler "kedai/backend/be-kedai/internal/domain/product/handler"
 	shopHandler "kedai/backend/be-kedai/internal/domain/shop/handler"
 	userHandler "kedai/backend/be-kedai/internal/domain/user/handler"
@@ -14,10 +15,11 @@ import (
 )
 
 type RouterConfig struct {
-	UserHandler     *userHandler.Handler
-	LocationHandler *locationHandler.Handler
-	ProductHandler  *productHandler.Handler
-	ShopHandler     *shopHandler.Handler
+	UserHandler        *userHandler.Handler
+	LocationHandler    *locationHandler.Handler
+	ProductHandler     *productHandler.Handler
+	ShopHandler        *shopHandler.Handler
+	MarketplaceHandler *marketplaceHandler.Handler
 }
 
 func NewRouter(cfg *RouterConfig) *gin.Engine {
@@ -122,6 +124,18 @@ func NewRouter(cfg *RouterConfig) *gin.Engine {
 		{
 			shop.GET("/:slug", cfg.ShopHandler.FindShopBySlug)
 			shop.GET("/:slug/vouchers", cfg.ShopHandler.GetShopVoucher)
+			authenticated := shop.Group("", middleware.JWTAuthorization, cfg.UserHandler.GetSession)
+			{
+				authenticated.GET("/:slug/vouchers/valid", cfg.ShopHandler.GetValidShopVoucher)
+			}
+		}
+		marketplace := v1.Group("/marketplaces")
+		{
+			marketplace.GET("/vouchers", cfg.MarketplaceHandler.GetMarketplaceVoucher)
+			authenticated := marketplace.Group("", middleware.JWTAuthorization, cfg.UserHandler.GetSession)
+			{
+				authenticated.GET("/vouchers/valid", cfg.MarketplaceHandler.GetValidMarketplaceVoucher)
+			}
 		}
 	}
 
