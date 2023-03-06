@@ -2582,6 +2582,11 @@ paths:
             type: string
             example: "rtx"
         - in: query
+          name: shop
+          schema:
+            type: string
+            example: "shop"
+        - in: query
           name: limit
           schema:
             type: integer
@@ -2665,6 +2670,19 @@ paths:
                                     properties:
                                       imageUrl:
                                         type: string
+        '404':
+          description: shop not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "SHOP_NOT_FOUND"
+                  message:
+                    type: string
+                    example: "error message"
         '500':
           description: Internal server error
           content:
