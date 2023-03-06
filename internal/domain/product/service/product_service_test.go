@@ -97,18 +97,20 @@ func TestGetByCode(t *testing.T) {
 					pr.On("GetByCode", "product_code").Return(
 						&dto.ProductDetail{
 							Product: model.Product{
+								ID:     1,
 								Code:   "product_code",
 								ShopID: 1,
 								Shop:   &shopModel.Shop{ID: 1, Slug: "test"},
 							},
 						}, nil)
 					svs.On("GetShopVoucher", "test").Return(nil, errors.New("failed to fetch vouchers"))
-					cs.On("GetCouriersByShopID", 1).Return(nil, errors.New("failed to fetch couriers"))
+					cs.On("GetCouriersByProductID", 1).Return(nil, errors.New("failed to fetch couriers"))
 				},
 			},
 			expected: expected{
 				data: &dto.ProductDetail{
 					Product: model.Product{
+						ID:     1,
 						Code:   "product_code",
 						ShopID: 1,
 						Shop:   &shopModel.Shop{ID: 1, Slug: "test"},
@@ -125,18 +127,20 @@ func TestGetByCode(t *testing.T) {
 					pr.On("GetByCode", "product_code").Return(
 						&dto.ProductDetail{
 							Product: model.Product{
+								ID:     1,
 								Code:   "product_code",
 								ShopID: 1,
 								Shop:   &shopModel.Shop{ID: 1, Slug: "test"},
 							},
 						}, nil)
 					svs.On("GetShopVoucher", "test").Return([]*shopModel.ShopVoucher{}, nil)
-					cs.On("GetCouriersByShopID", 1).Return([]*shopModel.Courier{}, nil)
+					cs.On("GetCouriersByProductID", 1).Return([]*shopModel.Courier{}, nil)
 				},
 			},
 			expected: expected{
 				data: &dto.ProductDetail{
 					Product: model.Product{
+						ID:     1,
 						Code:   "product_code",
 						ShopID: 1,
 						Shop:   &shopModel.Shop{ID: 1, Slug: "test"},

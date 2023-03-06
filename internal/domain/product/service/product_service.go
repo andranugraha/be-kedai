@@ -55,7 +55,7 @@ func (s *productServiceImpl) GetByCode(code string) (*dto.ProductDetail, error) 
 		productDetail.Vouchers = vouchers
 	}
 
-	couriers, err := s.courierService.GetCouriersByShopID(productDetail.ShopID)
+	couriers, err := s.courierService.GetCouriersByProductID(productDetail.ID)
 	if err == nil {
 		productDetail.Couriers = couriers
 	}
