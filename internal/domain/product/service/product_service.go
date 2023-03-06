@@ -69,7 +69,7 @@ func (s *productServiceImpl) GetRecommendationByCategory(productId int, category
 func (s *productServiceImpl) ProductSearchFiltering(req dto.ProductSearchFilterRequest) (*commonDto.PaginationResponse, error) {
 	validateKeyword := strings.Trim(req.Keyword, " ")
 	var shopId int
-	if validateKeyword == "" {
+	if validateKeyword == "" && req.CategoryId == 0 {
 		return &commonDto.PaginationResponse{
 			Data:       []*dto.ProductResponse{},
 			Limit:      req.Limit,
