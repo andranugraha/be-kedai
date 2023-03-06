@@ -34,9 +34,15 @@ func createRouter() *gin.Engine {
 	db := connection.GetDB()
 	redis := connection.GetCache()
 
-	marketplaceVoucherRepo := marketplaceRepoPackage.NewMarketplaceVoucherRepository(&marketplaceRepoPackage.MarketplaceVoucherRConfig{
+	userVoucherRepo := userRepoPackage.NewUserVoucherRepository(&userRepoPackage.UserVoucherRConfig{
 		DB: db,
 	})
+
+	marketplaceVoucherRepo := marketplaceRepoPackage.NewMarketplaceVoucherRepository(&marketplaceRepoPackage.MarketplaceVoucherRConfig{
+		DB:                    db,
+		UserVoucherRepository: userVoucherRepo,
+	})
+
 	marketplaceVoucherService := marketplaceServicePackage.NewMarketplaceVoucherService(&marketplaceServicePackage.MarketplaceVoucherSConfig{
 		MarketplaceVoucherRepository: marketplaceVoucherRepo,
 	})
@@ -100,7 +106,8 @@ func createRouter() *gin.Engine {
 	})
 
 	shopVoucherRepo := shopRepoPackage.NewShopVoucherRepository(&shopRepoPackage.ShopVoucherRConfig{
-		DB: db,
+		DB:                    db,
+		UserVoucherRepository: userVoucherRepo,
 	})
 
 	shopVoucherService := shopServicePackage.NewShopVoucherService(&shopServicePackage.ShopVoucherSConfig{
