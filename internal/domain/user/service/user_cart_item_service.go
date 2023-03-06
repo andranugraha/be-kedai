@@ -16,6 +16,7 @@ type UserCartItemService interface {
 	PreCheckCartItem(*dto.UserCartItemRequest) (*model.CartItem, *productModel.Sku, error)
 	CreateCartItem(*dto.UserCartItemRequest) (*model.CartItem, error)
 	GetAllCartItem(*dto.GetCartItemsRequest) (*commonDto.PaginationResponse, error)
+	GetCartItemByIdAndUserId(int, int) (*model.CartItem, error)
 }
 
 type userCartItemServiceImpl struct {
@@ -146,4 +147,8 @@ func (s *userCartItemServiceImpl) GetAllCartItem(cartItemReq *dto.GetCartItemsRe
 	}
 
 	return res, nil
+}
+
+func (s *userCartItemServiceImpl) GetCartItemByIdAndUserId(id, userId int) (*model.CartItem, error) {
+	return s.cartItemRepository.GetCartItemByIdAndUserId(id, userId)
 }

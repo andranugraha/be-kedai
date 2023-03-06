@@ -21,6 +21,10 @@ import (
 	shopRepoPackage "kedai/backend/be-kedai/internal/domain/shop/repository"
 	shopServicePackage "kedai/backend/be-kedai/internal/domain/shop/service"
 
+	orderHandlerPackage "kedai/backend/be-kedai/internal/domain/order/handler"
+	orderRepoPackage "kedai/backend/be-kedai/internal/domain/order/repository"
+	orderServicePackage "kedai/backend/be-kedai/internal/domain/order/service"
+
 	"github.com/gin-gonic/gin"
 )
 
@@ -70,6 +74,14 @@ func createRouter() *gin.Engine {
 	})
 	walletService := userServicePackage.NewWalletService(&userServicePackage.WalletSConfig{
 		WalletRepo: walletRepo,
+	})
+
+	shopVoucherRepo := shopRepoPackage.NewShopVoucherRepository(&shopRepoPackage.ShopVoucherRConfig{
+		DB: db,
+	})
+
+	shopVoucherService := shopServicePackage.NewShopVoucherService(&shopServicePackage.ShopVoucherSConfig{
+		ShopVoucherRepository: shopVoucherRepo,
 	})
 
 	shopRepo := shopRepoPackage.NewShopRepository(&shopRepoPackage.ShopRConfig{
@@ -178,11 +190,27 @@ func createRouter() *gin.Engine {
 		ProductService:  productService,
 	})
 
+	invoiceRepo := orderRepoPackage.NewInvoiceRepository(&orderRepoPackage.InvoiceRConfig{
+		DB: db,
+	})
+	invoiceService := orderServicePackage.NewInvoiceService(&orderServicePackage.InvoiceSConfig{
+		InvoiceRepo:        invoiceRepo,
+		UserAddressService: userAddressService,
+		ShopService:        shopService,
+		ShopVoucherService: shopVoucherService,
+		CartItemService:    userCartItemService,
+	})
+
+	orderHandler := orderHandlerPackage.New(&orderHandlerPackage.Config{
+		InvoiceService: invoiceService,
+	})
+
 	return NewRouter(&RouterConfig{
 		UserHandler:     userHandler,
 		LocationHandler: locHandler,
 		ProductHandler:  productHandler,
 		ShopHandler:     shopHandler,
+		OrderHandler:    orderHandler,
 	})
 }
 

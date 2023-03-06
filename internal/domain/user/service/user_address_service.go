@@ -13,6 +13,7 @@ type UserAddressService interface {
 	UpdateUserAddress(*dto.AddressRequest) (*model.UserAddress, error)
 	GetAllUserAddress(userId int) ([]*model.UserAddress, error)
 	PreCheckAddress(*dto.AddressRequest) (*model.UserAddress, error)
+	GetUserAddressByIdAndUserId(id, userId int) (*model.UserAddress, error)
 }
 
 type userAddressService struct {
@@ -129,4 +130,8 @@ func (s *userAddressService) UpdateUserAddress(newAddress *dto.AddressRequest) (
 	}
 
 	return address, nil
+}
+
+func (s *userAddressService) GetUserAddressByIdAndUserId(id, userId int) (*model.UserAddress, error) {
+	return s.userAddressRepo.GetUserAddressByIdAndUserId(id, userId)
 }

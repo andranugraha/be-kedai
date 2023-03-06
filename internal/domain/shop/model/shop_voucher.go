@@ -20,3 +20,8 @@ type ShopVoucher struct {
 
 	gorm.Model `json:"-"`
 }
+
+const (
+	VoucherTypePercent = "percent"
+	VoucherTypeNominal = "nominal"
+)

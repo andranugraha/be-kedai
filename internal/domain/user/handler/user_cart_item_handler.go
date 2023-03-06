@@ -53,7 +53,7 @@ func (h *Handler) CreateCartItem(c *gin.Context) {
 
 func (h *Handler) GetAllCartItem(c *gin.Context) {
 	var req dto.GetCartItemsRequest
-	c.ShouldBindQuery(&req)
+	_ = c.ShouldBindQuery(&req)
 	req.Validate()
 	userId := c.GetInt("userId")
 	req.UserId = userId
