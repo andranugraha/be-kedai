@@ -2,7 +2,6 @@ package dto
 
 import (
 	"kedai/backend/be-kedai/internal/domain/order/model"
-	"time"
 )
 
 type TransactionReviewRequest struct {
@@ -25,6 +24,5 @@ func (req *TransactionReviewRequest) ToModel() *model.TransactionReview {
 		Rating:        req.Rating,
 		TransactionId: req.TransactionId,
 		ReviewMedias:  req.ToReviewMediaModels(),
-		ReviewDate:    time.Now(),
 	}
 }
