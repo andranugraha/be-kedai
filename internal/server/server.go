@@ -259,7 +259,7 @@ func createRouter() *gin.Engine {
 		SkuService:      skuService,
 	})
 
-	orderHanlder := orderHandlerPackage.New(&orderHandlerPackage.Config{
+	orderHandler := orderHandlerPackage.New(&orderHandlerPackage.Config{
 		TransactionReviewService: transactionReviewService,
 	})
 
@@ -269,7 +269,7 @@ func createRouter() *gin.Engine {
 		ProductHandler:     productHandler,
 		ShopHandler:        shopHandler,
 		MarketplaceHandler: marketplaceHandler,
-		OrderHandler:       orderHanlder,
+		OrderHandler:       orderHandler,
 	})
 }
 
