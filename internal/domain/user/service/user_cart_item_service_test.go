@@ -572,7 +572,7 @@ func TestGetAllCartItem(t *testing.T) {
 			expected: expected{
 				data: &commonDto.PaginationResponse{
 					Limit: 0,
-					Data:  dto.GetCartItemsResponses{}.GetCartItemsResponses,
+					Data:  []dto.GetCartItemsResponse{},
 				},
 				err: nil,
 			},
@@ -605,7 +605,7 @@ func TestUpdateCartItem(t *testing.T) {
 		beforeTest func(*mocks.UserCartItemRepository, *mocks.SkuService, *mocks.ProductService)
 	}
 	type expected struct {
-		data *model.CartItem
+		data *dto.UpdateCartItemResponse
 		err  error
 	}
 
@@ -719,7 +719,7 @@ func TestUpdateCartItem(t *testing.T) {
 				},
 			},
 			expected: expected{
-				data: &model.CartItem{ID: 4, UserId: 1, SkuId: 1, Quantity: 3},
+				data: &dto.UpdateCartItemResponse{SkuID: 1, Quantity: 3},
 				err:  nil,
 			},
 		},

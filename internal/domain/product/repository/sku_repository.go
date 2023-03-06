@@ -10,6 +10,7 @@ import (
 
 type SkuRepository interface {
 	GetByID(ID int) (*model.Sku, error)
+	GetByVariantIDs(variantIDs []int) (*model.Sku, error)
 }
 
 type skuRepositoryImpl struct {
@@ -39,4 +40,32 @@ func (r *skuRepositoryImpl) GetByID(ID int) (*model.Sku, error) {
 	}
 
 	return &sku, err
+}
+
+func (r *skuRepositoryImpl) GetByVariantIDs(variantIDs []int) (*model.Sku, error) {
+	var sku model.Sku
+	var err error
+
+	if len(variantIDs) < 2 {
+		err = r.db.
+			Joins("JOIN product_variants pv1 ON skus.id = pv1.sku_id").
+			Where("pv1.variant_id = ?", variantIDs[0]).
+			First(&sku).Error
+	} else {
+		err = r.db.
+			Joins("JOIN product_variants pv1 ON skus.id = pv1.sku_id").
+			Joins("JOIN product_variants pv2 ON pv1.sku_id = pv2.sku_id AND pv1.id != pv2.id").
+			Where("pv1.variant_id = ? AND pv2.variant_id = ?", variantIDs[0], variantIDs[1]).
+			First(&sku).Error
+	}
+
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, errs.ErrSKUDoesNotExist
+		}
+
+		return nil, err
+	}
+
+	return &sku, nil
 }
