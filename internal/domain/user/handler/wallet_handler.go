@@ -3,7 +3,7 @@ package handler
 import (
 	"errors"
 	"kedai/backend/be-kedai/internal/common/code"
-	errs	"kedai/backend/be-kedai/internal/common/error"
+	errs "kedai/backend/be-kedai/internal/common/error"
 	"kedai/backend/be-kedai/internal/domain/user/dto"
 	"kedai/backend/be-kedai/internal/utils/response"
 	"net/http"
@@ -57,9 +57,9 @@ func (h *Handler) TopUp(c *gin.Context) {
 		response.ErrorValidator(c, http.StatusBadRequest, err)
 		return
 	}
-	
+
 	userId := c.GetInt("userId")
-	
+
 	result, err := h.walletService.TopUp(userId, newTopUp)
 	if err != nil {
 		if errors.Is(err, errs.ErrWalletDoesNotExist) {

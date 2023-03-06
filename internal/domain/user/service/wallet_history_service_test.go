@@ -1,8 +1,8 @@
 package service_test
 
 import (
-	errs "kedai/backend/be-kedai/internal/common/error"
 	commonDto "kedai/backend/be-kedai/internal/common/dto"
+	errs "kedai/backend/be-kedai/internal/common/error"
 	"kedai/backend/be-kedai/internal/domain/user/dto"
 	"kedai/backend/be-kedai/internal/domain/user/model"
 	"kedai/backend/be-kedai/internal/domain/user/service"
@@ -20,7 +20,7 @@ func TestGetWalletHistoryById(t *testing.T) {
 		wallet   = &model.Wallet{
 			ID: 1,
 		}
-		history = []*model.WalletHistory{}
+		history    = []*model.WalletHistory{}
 		pagination = &commonDto.PaginationResponse{
 			Data: history,
 		}
@@ -47,7 +47,7 @@ func TestGetWalletHistoryById(t *testing.T) {
 			description: "should return list of wallet transaction histories when success",
 			input: input{
 				userId: userId,
-				req: request,
+				req:    request,
 				err:    nil,
 				beforeTest: func(whr *mocks.WalletHistoryRepository, ws *mocks.WalletService) {
 					ws.On("GetWalletByUserID", userId).Return(wallet, nil)
@@ -63,7 +63,7 @@ func TestGetWalletHistoryById(t *testing.T) {
 			description: "should return error when wallet no found",
 			input: input{
 				userId: userId,
-				req: request,
+				req:    request,
 				err:    errs.ErrWalletDoesNotExist,
 				beforeTest: func(whr *mocks.WalletHistoryRepository, ws *mocks.WalletService) {
 					ws.On("GetWalletByUserID", userId).Return(nil, errs.ErrWalletDoesNotExist)

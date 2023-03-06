@@ -20,9 +20,9 @@ import (
 
 func TestGetWalletHistory(t *testing.T) {
 	var (
-		userId        = 1
-		request       = dto.WalletHistoryRequest{
-			Page: 1,
+		userId  = 1
+		request = dto.WalletHistoryRequest{
+			Page:  1,
 			Limit: 10,
 		}
 		walletHistory = []*model.WalletHistory{}

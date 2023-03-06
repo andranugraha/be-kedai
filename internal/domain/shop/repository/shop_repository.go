@@ -79,12 +79,12 @@ func (r *shopRepositoryImpl) FindShopByKeyword(req dto.FindShopRequest) ([]*dto.
 		shopList  []*dto.FindShopResponse
 		totalRows int64
 		totalPage int
-		isActive = true
+		isActive  = true
 	)
 
 	db := r.db.Select(`shops.*, count(p.id) as product_count`).
-	Joins("left join products p on shops.id = p.shop_id and p.is_active = ?", isActive).
-	Group("shops.id").Where("shops.name ILIKE ?", "%"+req.Keyword+"%")
+		Joins("left join products p on shops.id = p.shop_id and p.is_active = ?", isActive).
+		Group("shops.id").Where("shops.name ILIKE ?", "%"+req.Keyword+"%")
 
 	db.Model(&model.Shop{}).Count(&totalRows)
 	totalPage = int(math.Ceil(float64(totalRows) / float64(req.Limit)))

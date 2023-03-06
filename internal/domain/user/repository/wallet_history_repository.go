@@ -33,7 +33,7 @@ func (r *walletHistoryRepoImpl) Create(tx *gorm.DB, history *model.WalletHistory
 }
 
 func (r *walletHistoryRepoImpl) GetWalletHistoryById(req dto.WalletHistoryRequest, id int) ([]*model.WalletHistory, int64, int, error) {
-	var(
+	var (
 		histories []*model.WalletHistory
 		totalRows int64
 		totalPage int

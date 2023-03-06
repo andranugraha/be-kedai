@@ -7,7 +7,7 @@ import (
 	"kedai/backend/be-kedai/internal/utils/hash"
 )
 
-const(
+const (
 	TopUp = "Top-up"
 )
 
@@ -49,12 +49,12 @@ func (s *walletServiceImpl) GetWalletByUserID(userID int) (*model.Wallet, error)
 
 func (s *walletServiceImpl) TopUp(userId int, req dto.TopUpRequest) (*model.WalletHistory, error) {
 	var history model.WalletHistory
-	
+
 	wallet, err := s.walletRepo.GetByUserID(userId)
 	if err != nil {
 		return nil, err
 	}
-	
+
 	history.WalletId = wallet.ID
 	history.Type = TopUp
 	history.Amount = req.Amount
