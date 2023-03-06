@@ -296,3 +296,107 @@ func TestProductSearchFiltering(t *testing.T) {
 		})
 	}
 }
+
+func TestGetProductsByShopSlug(t *testing.T) {
+	type input struct {
+		slug       string
+		request    *dto.ShopProductFilterRequest
+		mockReturn *commonDto.PaginationResponse
+		mockErr    error
+	}
+	type expected struct {
+		statusCode int
+		response   response.Response
+	}
+
+	tests := []struct {
+		description string
+		input
+		expected
+	}{
+		{
+			description: "should return error with status code 404 when shop not found",
+			input: input{
+				slug: "invalid-slug",
+				request: &dto.ShopProductFilterRequest{
+					Sort:      "recommended",
+					PriceSort: "price_low",
+					Limit:     10,
+					Page:      1,
+				},
+				mockReturn: nil,
+				mockErr:    errs.ErrShopNotFound,
+			},
+			expected: expected{
+				statusCode: http.StatusNotFound,
+				response: response.Response{
+					Code:    code.SHOP_NOT_REGISTERED,
+					Message: errs.ErrShopNotFound.Error(),
+				},
+			},
+		},
+		{
+			description: "should return error with status code 500 when failed to get shop product list",
+			input: input{
+				slug: "invalid-slug",
+				request: &dto.ShopProductFilterRequest{
+					Sort:      "recommended",
+					PriceSort: "price_low",
+					Limit:     10,
+					Page:      1,
+				},
+				mockReturn: nil,
+				mockErr:    errors.New("failed to get shop product list"),
+			},
+			expected: expected{
+				statusCode: http.StatusInternalServerError,
+				response: response.Response{
+					Code:    code.INTERNAL_SERVER_ERROR,
+					Message: errs.ErrInternalServerError.Error(),
+				},
+			},
+		},
+		{
+			description: "should return shop product list data with status code 200 when fetching data succeed",
+			input: input{
+				slug: "invalid-slug",
+				request: &dto.ShopProductFilterRequest{
+					Sort:      "recommended",
+					PriceSort: "price_low",
+					Limit:     10,
+					Page:      1,
+				},
+				mockReturn: &commonDto.PaginationResponse{},
+				mockErr:    nil,
+			},
+			expected: expected{
+				statusCode: http.StatusOK,
+				response: response.Response{
+					Code:    code.OK,
+					Message: "success",
+					Data:    &commonDto.PaginationResponse{},
+				},
+			},
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.description, func(t *testing.T) {
+			expectedRes, _ := json.Marshal(tc.expected.response)
+			mockService := new(mocks.ProductService)
+			mockService.On("GetProductsByShopSlug", tc.input.slug, tc.input.request).Return(tc.input.mockReturn, tc.input.mockErr)
+			rec := httptest.NewRecorder()
+			c, _ := gin.CreateTestContext(rec)
+			c.AddParam("slug", tc.input.slug)
+			h := handler.New(&handler.Config{
+				ProductService: mockService,
+			})
+			c.Request = httptest.NewRequest("GET", fmt.Sprintf("/shops/%s/products", tc.input.slug), nil)
+
+			h.GetProductsByShopSlug(c)
+
+			assert.Equal(t, tc.expected.statusCode, rec.Code)
+			assert.Equal(t, string(expectedRes), rec.Body.String())
+		})
+	}
+}

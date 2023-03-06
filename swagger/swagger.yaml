@@ -2773,6 +2773,120 @@ paths:
                   message:
                     type: string
                     example: "error message"
+  /v1/shops/{slug}/products:
+    get:
+      tags:
+        - Shop
+      summary: Get shop product list
+      description: Get all active products from given shop
+      parameters:
+        - in: path
+          name: slug
+          description: slug code for given shop
+          required: true
+          schema:
+            type: string
+            example: shop-slug
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            default: 10
+            example: 5
+        - in: query
+          name: page
+          schema:
+            type: integer
+            default: 1
+            example: 1
+        - in: query
+          name: sort
+          description: shop product list sort method
+          schema:
+            type: string
+            default: recommended
+            enum: [recommended, latest, top_sales]
+            example: recommended
+        - in: query
+          name: priceSort
+          description: shop product list price sort method
+          schema:
+            type: string
+            default: recommended
+            enum: [price_low, price_high]
+            example: price_low
+        - in: query
+          name: shopProductCategoryID
+          description: shop category ID. If not defined then will get products from all categories
+          schema:
+            type: integer
+            default: 0
+            example: 0
+        - in: query
+          name: exceptionID
+          description: product ID to hide from this list. If given, will get all product from given shop except product which has this ID
+          schema:
+            type: integer
+            example: 1
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - type: object
+                    properties:
+                      code:
+                        type: string
+                        example: OK
+                      message:
+                        type: string
+                        example: success
+                      data:
+                        allOf:
+                          - $ref: '#/components/schemas/PaginationResponse'
+                          - type: object
+                            properties:
+                              data:
+                                allOf:
+                                  - $ref: '#/components/schemas/Product'
+                                  - type: object
+                                    properties:
+                                      imageUrl:
+                                        type: string
+                                        example: http://example/image.png
+                                  - type: object
+                                    properties:
+                                      totalStock:
+                                        type: integer
+                                        example: 100
+        '404':
+          description: shop not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "SHOP_NOT_REGISTERED"
+                  message:
+                    type: string
+                    example: "error message"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "INTERNAL_SERVER_ERROR"
+                  message:
+                    type: string
+                    example: "error message"
   /v1/shops/{slug}/vouchers:
     get:
       tags:
