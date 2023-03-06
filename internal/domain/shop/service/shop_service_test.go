@@ -208,7 +208,7 @@ func TestFindShopBySlug(t *testing.T) {
 
 func TestFindShopByKeyword(t *testing.T) {
 	var (
-		shopList   = []*model.Shop{}
+		shopList   = []*dto.FindShopResponse{}
 		rows       = int64(1)
 		pages      = 1
 		limit      = 10
@@ -220,7 +220,7 @@ func TestFindShopByKeyword(t *testing.T) {
 			Limit:      limit,
 		}
 		emptyPagination = &commonDto.PaginationResponse{
-			Data:  []*model.Shop{},
+			Data:  []*dto.FindShopResponse{},
 			Page:  pages,
 			Limit: limit,
 		}
