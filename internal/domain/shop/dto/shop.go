@@ -6,6 +6,14 @@ type FindShopRequest struct {
 	Limit   int    `form:"limit"`
 }
 
+type FindShopResponse struct {
+	Slug         string  `json:"slug"`
+	Name         string  `json:"name"`
+	ProductCount int64   `json:"productCount"`
+	Rating       float64 `json:"rating"`
+	PhotoUrl     string  `json:"photoUrl"`
+}
+
 func (req *FindShopRequest) Validate() {
 	if req.Page < 1 {
 		req.Page = 1
