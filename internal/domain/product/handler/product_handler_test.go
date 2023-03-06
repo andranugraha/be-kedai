@@ -263,6 +263,21 @@ func TestProductSearchFiltering(t *testing.T) {
 			},
 		},
 		{
+			description: "should return error code 404 when shop not found",
+			input: input{
+				dto:     req,
+				product: nil,
+				err:     errs.ErrShopNotFound,
+			},
+			expected: expected{
+				statusCode: http.StatusNotFound,
+				response: response.Response{
+					Code:    code.NOT_FOUND,
+					Message: errs.ErrShopNotFound.Error(),
+				},
+			},
+		},
+		{
 			description: "should return error with code 500 when internal server error",
 			input: input{
 				dto:     req,
