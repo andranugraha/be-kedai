@@ -2917,6 +2917,12 @@ paths:
             type: integer
             default: 0
             example: 0
+        - in: query
+          name: exceptionID
+          description: product ID to hide from this list. If given, will get all product from given shop except product which has this ID
+          schema:
+            type: integer
+            example: 1
       responses:
         '200':
           description: successful operation
