@@ -7,6 +7,7 @@ import (
 
 type CourierService interface {
 	GetCouriersByShopID(shopID int) ([]*model.Courier, error)
+	GetCourierByServiceIDAndShopID(courierID, shopID int) (*model.Courier, error)
 }
 
 type courierServiceImpl struct {
@@ -28,4 +29,13 @@ func NewCourierService(cfg *CourierSConfig) CourierService {
 
 func (s *courierServiceImpl) GetCouriersByShopID(shopID int) ([]*model.Courier, error) {
 	return s.courierRepository.GetByShopID(shopID)
+}
+
+func (s *courierServiceImpl) GetCourierByServiceIDAndShopID(courierID, shopID int) (*model.Courier, error) {
+	courier, err := s.courierRepository.GetByServiceIDAndShopID(courierID, shopID)
+	if err != nil {
+		return nil, err
+	}
+
+	return courier, nil
 }

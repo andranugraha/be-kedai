@@ -14,11 +14,12 @@ type InvoicePerShop struct {
 	PromotionType   *string  `json:"promotionType,omitempty"`
 	Status          string   `json:"status"`
 
-	UserID      int  `json:"userId"`
-	VoucherID   *int `json:"voucherId,omitempty"`
-	ShopID      int  `json:"shopId"`
-	PromotionID *int `json:"promotionId,omitempty"`
-	InvoiceID   int  `json:"invoiceId"`
+	UserID           int  `json:"userId"`
+	VoucherID        *int `json:"voucherId,omitempty"`
+	ShopID           int  `json:"shopId"`
+	PromotionID      *int `json:"promotionId,omitempty"`
+	CourierServiceID int  `json:"courierServiceId"`
+	InvoiceID        int  `json:"invoiceId"`
 
 	Transactions []Transaction `json:"transactions" gorm:"foreignKey:InvoiceID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE;"`
 

@@ -13,6 +13,7 @@ type Invoice struct {
 	UserID          int  `json:"userId"`
 	VoucherID       *int `json:"voucherId,omitempty"`
 	PaymentMethodID int  `json:"paymentMethodId"`
+	UserAddressID   int  `json:"userAddressId"`
 
 	InvoicePerShops []InvoicePerShop `json:"invoicePerShops" gorm:"foreignKey:InvoiceID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE;"`
 

@@ -24,6 +24,7 @@ type invoiceServiceImpl struct {
 	shopService        shopService.ShopService
 	shopVoucherService shopService.ShopVoucherService
 	cartItemService    userService.UserCartItemService
+	shopCourierService shopService.CourierService
 }
 
 type InvoiceSConfig struct {
@@ -32,6 +33,7 @@ type InvoiceSConfig struct {
 	ShopService        shopService.ShopService
 	ShopVoucherService shopService.ShopVoucherService
 	CartItemService    userService.UserCartItemService
+	ShopCourierService shopService.CourierService
 }
 
 func NewInvoiceService(cfg *InvoiceSConfig) InvoiceService {
@@ -41,6 +43,7 @@ func NewInvoiceService(cfg *InvoiceSConfig) InvoiceService {
 		shopService:        cfg.ShopService,
 		shopVoucherService: cfg.ShopVoucherService,
 		cartItemService:    cfg.CartItemService,
+		shopCourierService: cfg.ShopCourierService,
 	}
 }
 
@@ -56,6 +59,11 @@ func (s *invoiceServiceImpl) Checkout(req dto.CheckoutRequest) (*dto.CheckoutRes
 	)
 	for _, item := range req.Items {
 		_, err := s.shopService.FindShopById(item.ShopID)
+		if err != nil {
+			return nil, err
+		}
+
+		_, err = s.shopCourierService.GetCourierByServiceIDAndShopID(item.CourierServiceID, item.ShopID)
 		if err != nil {
 			return nil, err
 		}
@@ -138,10 +146,11 @@ func (s *invoiceServiceImpl) Checkout(req dto.CheckoutRequest) (*dto.CheckoutRes
 				}
 				return nil
 			}(),
-			VoucherID:    item.VoucherID,
-			Status:       constant.TransactionStatusCreated,
-			UserID:       req.UserID,
-			Transactions: transactions,
+			VoucherID:        item.VoucherID,
+			Status:           constant.TransactionStatusCreated,
+			UserID:           req.UserID,
+			CourierServiceID: item.CourierServiceID,
+			Transactions:     transactions,
 		})
 
 		totalPrice += item.ShippingCost + shopTotalPrice
@@ -155,6 +164,7 @@ func (s *invoiceServiceImpl) Checkout(req dto.CheckoutRequest) (*dto.CheckoutRes
 	invoice := &model.Invoice{
 		Code:            s.generateInvoiceCode(),
 		Total:           0,
+		UserAddressID:   req.AddressID,
 		InvoicePerShops: shopInvoices,
 	}
 

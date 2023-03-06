@@ -221,6 +221,7 @@ func createRouter() *gin.Engine {
 		ShopService:        shopService,
 		ShopVoucherService: shopVoucherService,
 		CartItemService:    userCartItemService,
+		ShopCourierService: courierService,
 	})
 
 	orderHandler := orderHandlerPackage.New(&orderHandlerPackage.Config{

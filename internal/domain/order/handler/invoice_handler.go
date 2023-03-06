@@ -24,7 +24,8 @@ func (h *Handler) Checkout(c *gin.Context) {
 
 	invoice, err := h.invoiceService.Checkout(req)
 	if err != nil {
-		if errors.Is(err, commonErr.ErrAddressNotFound) || errors.Is(err, commonErr.ErrShopNotFound) || errors.Is(err, commonErr.ErrTotalPriceNotMatch) {
+		if errors.Is(err, commonErr.ErrAddressNotFound) || errors.Is(err, commonErr.ErrShopNotFound) ||
+			errors.Is(err, commonErr.ErrTotalPriceNotMatch) || errors.Is(err, commonErr.ErrCourierNotFound) {
 			response.Error(c, http.StatusBadRequest, code.BAD_REQUEST, err.Error())
 			return
 		}
