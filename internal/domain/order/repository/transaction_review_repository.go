@@ -3,12 +3,13 @@ package repository
 import (
 	commonErr "kedai/backend/be-kedai/internal/common/error"
 	"kedai/backend/be-kedai/internal/domain/order/model"
+	"time"
 
 	"gorm.io/gorm"
 )
 
 type TransactionReviewRepository interface {
-	Create(transactionReview *model.TransactionReview) error
+	Create(transactionReview *model.TransactionReview) (*model.TransactionReview, error)
 	GetByTransactionID(transactionID int) (*model.TransactionReview, error)
 }
 
@@ -26,16 +27,18 @@ func NewTransactionReviewRepository(config *TransactionReviewRConfig) Transactio
 	}
 }
 
-func (r *transactionReviewRepositoryImpl) Create(transactionReview *model.TransactionReview) error {
+func (r *transactionReviewRepositoryImpl) Create(transactionReview *model.TransactionReview) (*model.TransactionReview, error) {
+	transactionReview.ReviewDate = time.Now()
+
 	err := r.db.Create(transactionReview).Error
 	if err != nil {
 		if commonErr.IsDuplicateKeyError(err) {
-			return commonErr.ErrTransactionReviewAlreadyExist
+			return nil, commonErr.ErrTransactionReviewAlreadyExist
 		}
-		return err
+		return nil, err
 	}
 
-	return nil
+	return transactionReview, nil
 }
 
 func (r *transactionReviewRepositoryImpl) GetByTransactionID(transactionID int) (*model.TransactionReview, error) {
