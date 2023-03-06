@@ -1485,56 +1485,11 @@ paths:
                                     - type: object
                                       properties:
                                         shop:
-                                          $ref: '#/components/schemas/Shop'
+                                          $ref: '#/components/schemas/CartItemShopResponse'
                                     - type: object
                                       properties:
                                         cartItems:
-                                          type: array
-                                          items:
-                                            type: object
-                                            properties:
-                                              id:
-                                                type: integer
-                                                example: 1
-                                              skuId:
-                                                type: integer
-                                                example: 5
-                                              name:
-                                                type: string
-                                                example: Shoes
-                                              quantity:
-                                                type: integer
-                                                example: 29
-                                              stock:
-                                                type: integer
-                                                example: 2012
-                                              notes:
-                                                type: string
-                                                example: "notest test"
-                                              originalPrice:
-                                                type: number
-                                                format: float
-                                                example: 30000000
-                                              promotionType:
-                                                type: string
-                                                example: percent
-                                              promotionAmount:
-                                                type: number
-                                                format: float
-                                                example: 0.1
-                                              discountedPrice:
-                                                type: integer
-                                                format: float
-                                                example: 27000000
-                                              variants:
-                                                type: array
-                                                items:
-                                                  allOf:
-                                                    - $ref: '#/components/schemas/Variant'
-                                                    - type: object
-                                                      properties:
-                                                        group:
-                                                          $ref: '#/components/schemas/GroupVariant'
+                                          $ref: '#/components/schemas/CartItemResponse'
 
         '401':
           description: unauthorized
@@ -3774,6 +3729,72 @@ components:
         skuId:
           type: integer
           example: 1
+    CartItemResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        quantity:
+          type: integer
+          example: 1   
+        notes:
+          type: string
+          example: this is note
+        skuId:
+          type: integer
+          example: 1
+        name:
+          type: string
+          example: Bakmi
+        stock:
+          type: integer
+          example: 29
+        variants:
+          type: array
+          items:
+            allOf:
+              - $ref: '#/components/schemas/Variant'
+              - type: object
+                properties:
+                  group:
+                    $ref: '#/components/schemas/GroupVariant'
+        originalPrice:
+          type: number
+          format: float64
+          example: 500000
+        promotionType:
+          type: string
+          example: nominal
+        promotionAmount:
+          type: number
+          format: float64
+          example: 5000
+    CartItemShopResponse:
+      type: object
+      properties: 
+        id:
+          type: integer
+          example: 1
+        name:
+          type: string
+          example: Bakmi Acong
+        rating:
+          type: integer
+          example: 5
+        joinedDate:
+          type: string
+          example: "2006-01-02T00:00:00Z"
+          format: datetime
+        address:
+          type: string
+          example: Pekanbaru, Riau
+        slug:
+          type: string
+          example: bakmi-acong
+        postalCode:
+          type: string
+          example: 28292
     Variant:
       type: object
       properties:

@@ -38,6 +38,8 @@ type CartItemShopResponse struct {
 	Rating     float64   `json:"rating"`
 	JoinedDate time.Time `json:"joinedDate"`
 	Address    string    `json:"address"`
+	Slug       string    `json:"slug"`
+	PostalCode string    `json:"postalCode"`
 }
 
 type GetCartItemsResponse struct {
@@ -123,6 +125,8 @@ func (d *GetCartItemsResponse) ToGetCartItemsResponse(cartItems []CartItemRespon
 		Rating:     shop.Rating,
 		JoinedDate: shop.JoinedDate,
 		Address:    shop.Address.City.Name + ", " + shop.Address.Province.Name,
+		Slug:       shop.Slug,
+		PostalCode: shop.Address.Subdistrict.PostalCode,
 	}
 	d.Products = cartItems
 }
