@@ -1,12 +1,14 @@
 package service
 
 import (
+	"kedai/backend/be-kedai/internal/domain/marketplace/dto"
 	"kedai/backend/be-kedai/internal/domain/marketplace/model"
 	"kedai/backend/be-kedai/internal/domain/marketplace/repository"
 )
 
 type MarketplaceVoucherService interface {
-	GetMarketplaceVoucher() ([]*model.MarketplaceVoucher, error)
+	GetMarketplaceVoucher(req *dto.GetMarketplaceVoucherRequest) ([]*model.MarketplaceVoucher, error)
+	GetValidByUserID(req *dto.GetMarketplaceVoucherRequest) ([]*model.MarketplaceVoucher, error)
 }
 
 type marketplaceVoucherServiceImpl struct {
@@ -23,6 +25,10 @@ func NewMarketplaceVoucherService(cfg *MarketplaceVoucherSConfig) MarketplaceVou
 	}
 }
 
-func (s *marketplaceVoucherServiceImpl) GetMarketplaceVoucher() ([]*model.MarketplaceVoucher, error) {
-	return s.marketplaceVoucherRepository.GetMarketplaceVoucher()
+func (s *marketplaceVoucherServiceImpl) GetMarketplaceVoucher(req *dto.GetMarketplaceVoucherRequest) ([]*model.MarketplaceVoucher, error) {
+	return s.marketplaceVoucherRepository.GetMarketplaceVoucher(req)
+}
+
+func (s *marketplaceVoucherServiceImpl) GetValidByUserID(req *dto.GetMarketplaceVoucherRequest) ([]*model.MarketplaceVoucher, error) {
+	return s.marketplaceVoucherRepository.GetValidByUserID(req)
 }
