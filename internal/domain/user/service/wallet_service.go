@@ -1,6 +1,7 @@
 package service
 
 import (
+	"kedai/backend/be-kedai/internal/domain/user/dto"
 	"kedai/backend/be-kedai/internal/domain/user/model"
 	"kedai/backend/be-kedai/internal/domain/user/repository"
 	"kedai/backend/be-kedai/internal/utils/hash"
@@ -13,7 +14,7 @@ const(
 type WalletService interface {
 	RegisterWallet(userID int, pin string) (*model.Wallet, error)
 	GetWalletByUserID(userID int) (*model.Wallet, error)
-	TopUp(userId int, amount float64) (*model.WalletHistory, error)
+	TopUp(userId int, req dto.TopUpRequest) (*model.WalletHistory, error)
 }
 
 type walletServiceImpl struct {
@@ -46,7 +47,7 @@ func (s *walletServiceImpl) GetWalletByUserID(userID int) (*model.Wallet, error)
 	return s.walletRepo.GetByUserID(userID)
 }
 
-func (s *walletServiceImpl) TopUp(userId int, amount float64) (*model.WalletHistory, error) {
+func (s *walletServiceImpl) TopUp(userId int, req dto.TopUpRequest) (*model.WalletHistory, error) {
 	var history model.WalletHistory
 	
 	wallet, err := s.walletRepo.GetByUserID(userId)
@@ -56,7 +57,8 @@ func (s *walletServiceImpl) TopUp(userId int, amount float64) (*model.WalletHist
 	
 	history.WalletId = wallet.ID
 	history.Type = TopUp
-	history.Amount = amount
+	history.Amount = req.Amount
+	history.Reference = req.TxnId
 
 	return s.walletRepo.TopUp(&history, wallet)
 }
