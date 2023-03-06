@@ -162,8 +162,17 @@ paths:
         - User
       summary: User wallet top-up
       description: User wallet top-up
-      requestBody:
-        $ref: '#/components/requestBodies/TopUpBody'
+      parameters:
+        - in: query
+          name: amount
+          schema:
+            type: integer
+            example: 50000
+        - in: query
+          name: txn_id
+          schema:
+            type: string
+            example: 68102
       responses:
         '200':
           description: successful operation
