@@ -3,19 +3,22 @@ package jwttoken
 import (
 	"kedai/backend/be-kedai/config"
 	"kedai/backend/be-kedai/internal/domain/user/model"
+	"strconv"
 	"time"
 
 	"github.com/golang-jwt/jwt/v4"
 )
 
 func GenerateAccessToken(user *model.User) (string, error) {
+
+	accessTime := ParseTokenAgeFromENV(config.GetEnv("ACCESS_TOKEN_AGE", ""), "access")
 	claims := &model.Claim{
 		UserId:    user.ID,
 		TokenType: "access",
 		RegisteredClaims: jwt.RegisteredClaims{
 			IssuedAt:  jwt.NewNumericDate(time.Now()),
 			Issuer:    "Kedai",
-			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Minute * 5)),
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(accessTime)),
 		},
 	}
 
@@ -26,13 +29,14 @@ func GenerateAccessToken(user *model.User) (string, error) {
 }
 
 func GenerateRefreshToken(user *model.User) (string, error) {
+	refreshTime := ParseTokenAgeFromENV(config.GetEnv("REFRESH_TOKEN_AGE", ""), "refresh")
 	claims := &model.Claim{
 		UserId:    user.ID,
 		TokenType: "refresh",
 		RegisteredClaims: jwt.RegisteredClaims{
 			IssuedAt:  jwt.NewNumericDate(time.Now()),
 			Issuer:    "Kedai",
-			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Hour * 24)),
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(refreshTime)),
 		},
 	}
 
@@ -64,4 +68,38 @@ func ValidateToken(token string, secretKey string) (*model.Claim, error) {
 	}
 
 	return parsedClaim, nil
+}
+
+func ValidateRefreshToken(token string, secretKey string) (*model.Claim, error) {
+	parsedToken, err := jwt.ParseWithClaims(token, &model.Claim{}, func(t *jwt.Token) (interface{}, error) {
+		return []byte(secretKey), nil
+	})
+
+	if err != nil {
+		if ve, ok := err.(*jwt.ValidationError); ok {
+			if ve.Errors&jwt.ValidationErrorMalformed != 0 {
+				return nil, jwt.ErrTokenMalformed
+			}
+			if ve.Errors&(jwt.ValidationErrorExpired|jwt.ValidationErrorNotValidYet) != 0 {
+				return nil, jwt.ErrTokenExpired
+			}
+		}
+	}
+
+	parsedClaim := parsedToken.Claims.(*model.Claim)
+	if parsedClaim.TokenType != "refresh" {
+		return nil, jwt.ErrTokenInvalidClaims
+	}
+
+	return parsedClaim, nil
+}
+
+func ParseTokenAgeFromENV(age string, tokenType string) time.Duration {
+	ageNum, _ := strconv.Atoi(age)
+
+	if tokenType == "access" {
+		return time.Minute * time.Duration(ageNum)
+	}
+
+	return time.Hour * time.Duration(ageNum)
 }

@@ -17,5 +17,7 @@ func main() {
 		log.Fatal("couldn't connect to Cache:", err.Error())
 	}
 
+	connection.ConnectMailer()
+
 	server.Init()
 }

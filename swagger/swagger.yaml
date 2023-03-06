@@ -15,6 +15,8 @@ tags:
   - name: Location
   - name: User
   - name: Product
+  - name: Shop
+  - name: Marketplace
 paths:
   /v1/users/wallets:
     get:
@@ -36,6 +38,19 @@ paths:
                     properties:
                       data:
                         $ref: '#/components/schemas/Wallet'
+        '401':
+          description: unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "UNAUTHORIZED"
+                  message:
+                    type: string
+                    example: "invalid credential"
         '404':
           description: data not found
           content:
@@ -100,6 +115,19 @@ paths:
                   message:
                     type: string
                     example: "pin must be numeric and have 6 characters"
+        '401':
+          description: unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "UNAUTHORIZED"
+                  message:
+                    type: string
+                    example: "invalid credential"
         '409':
           description: User already has a wallet
           content:
@@ -208,6 +236,19 @@ paths:
                     properties:
                       data:
                         $ref: '#/components/schemas/User'
+        '401':
+          description: unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "UNAUTHORIZED"
+                  message:
+                    type: string
+                    example: "invalid credential"
         '404':
           description: not found
           content:
@@ -373,6 +414,78 @@ paths:
                   message:
                     type: string
                     example: "error message"
+  /v1/users/google-register:
+    post:
+      tags:
+        - User
+      summary: User register with google
+      description: User register with google to get auth token and refresh token
+      requestBody:
+        $ref: '#/components/requestBodies/GoogleRegisterUserBody'
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Response'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/Token'
+        '400':
+          description: bad request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "BAD_REQUEST"
+                  message:
+                    type: string
+                    example: "Credential is required"
+        '409':
+          description: duplicate entry
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "EMAIL_ALREADY_REGISTERED"
+                  message:
+                    type: string
+                    example: "User already exist"
+        '422':
+          description: invalid password pattern
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "INVALID_PASSWORD_PATTERN"
+                  message:
+                    type: string
+                    example: "invalid password pattern"
+        '500':
+          description: internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "INTERNAL_SERVER_ERROR"
+                  message:
+                    type: string
+                    example: "error message"                
   /v1/users/google-login:
     post:
       tags:
@@ -434,6 +547,724 @@ paths:
                     example: "user not found"
         '500':
           description: internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "INTERNAL_SERVER_ERROR"
+                  message:
+                    type: string
+                    example: "error message"
+  /v1/users/tokens/refresh:
+    post:
+      security:
+        - BearerAuth: []
+      tags:
+        - User
+      summary: Renew an access token
+      description: Renew an access token using refresh token. This will create a new access and refresh token
+      parameters:
+        - in: header
+          name: Authorization
+          required: true
+          schema:
+            type: string
+            description: refresh token
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Response'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/Token'
+        '401':
+          description: unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "UNAUTHORIZED"
+                  message:
+                    type: string
+                    example: "invalid credential"
+        '500':
+          description: internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "INTERNAL_SERVER_ERROR"
+                  message:
+                    type: string
+                    example: "error message"
+  /v1/users/passwords/change-request:
+    post:
+      security:
+        - BearerAuth: []
+      tags:
+        - User
+      summary: Request password change
+      description: This endpoint is the 1st step of a 2 step procedure. It will receive user's current password and new passowrd, then send a verification code to user's registered email if success.
+      requestBody:
+        $ref: '#/components/requestBodies/RequestPasswordChangeBody'
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "OK"
+                  message:
+                    type: string
+                    example: "ok"
+        '400':
+          description: bad request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "WRONG_PASSWORD"
+                  message:
+                    type: string
+                    example: "wrong password"          
+        '401':
+          description: unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "UNAUTHORIZED"
+                  message:
+                    type: string
+                    example: "invalid credential"
+        '404':
+          description: not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "NOT_FOUND"
+                  message:
+                    type: string
+                    example: "user not registered"
+        '422':
+          description: invalid password pattern
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "INVALID_PASSWORD_PATTERN"
+                  message:
+                    type: string
+                    example: "invalid password pattern"            
+                  
+        '500':
+          description: internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "INTERNAL_SERVER_ERROR"
+                  message:
+                    type: string
+                    example: "error message"             
+  /v1/users/passwords/change-confirmation:
+    post:
+      security:
+        - BearerAuth: []
+      tags:
+        - User
+      summary: Compete password change
+      description: This endpoint is the 2nd step of a 2 step procedure. It will receive verification code which has been sent to the user's email, then update the password, finally logging out the user from all devices.
+      requestBody:
+        $ref: '#/components/requestBodies/CompletePasswordChangeBody'
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "OK"
+                  message:
+                    type: string
+                    example: "ok"
+        '400':
+          description: bad request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "INCORRECT_VERIFICATION_CODE"
+                  message:
+                    type: string
+                    example: "incorrect verification code"          
+        '401':
+          description: unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "UNAUTHORIZED"
+                  message:
+                    type: string
+                    example: "invalid credential"
+        '404':
+          description: not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "NOT_FOUND"
+                  message:
+                    type: string
+                    example: "verification code not found"
+                  
+        '500':
+          description: internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "INTERNAL_SERVER_ERROR"
+                  message:
+                    type: string
+                    example: "error message"
+  /v1/users/passwords/reset-request:
+    post:
+      security:
+        - BearerAuth: []
+      tags:
+        - User
+      summary: Compete password change
+      description: This endpoint is the 1st step of a 2 step procedure. It will receive email, then send a reset password link to that email if it is connected to a user.
+      requestBody:
+        $ref: '#/components/requestBodies/RequestPasswordResetBody'
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "OK"
+                  message:
+                    type: string
+                    example: "ok"
+        '400':
+          description: bad request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "BAD_REQUEST"
+                  message:
+                    type: string
+                    example: "Email is required"          
+        '401':
+          description: unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "UNAUTHORIZED"
+                  message:
+                    type: string
+                    example: "invalid credential"
+        '404':
+          description: not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "USER_NOT_REGISTERED"
+                  message:
+                    type: string
+                    example: "user does not exist"
+        '500':
+          description: internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "INTERNAL_SERVER_ERROR"
+                  message:
+                    type: string
+                    example: "error message"       
+  /v1/users/passwords/reset-confirmation:
+    post:
+      security:
+        - BearerAuth: []
+      tags:
+        - User
+      summary: Compete password change
+      description: This endpoint is the 2nd step of a 2 step procedure. It will receive token and new password, then if the token and new password is valid the password will be reset. User will also get logged out from all devices.
+      requestBody:
+        $ref: '#/components/requestBodies/CompletePasswordResetBody'
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "OK"
+                  message:
+                    type: string
+                    example: "ok"
+        '400':
+          description: bad request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "SAME_PASSWORD"
+                  message:
+                    type: string
+                    example: "same_password"          
+        '401':
+          description: unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "UNAUTHORIZED"
+                  message:
+                    type: string
+                    example: "invalid credential"
+        '404':
+          description: not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "NOT_FOUND"
+                  message:
+                    type: string
+                    example: "reset password token not found"
+        '422':
+          description: invalid password pattern
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "INVALID_PASSWORD_PATTERN"
+                  message:
+                    type: string
+                    example: "invalid password pattern"             
+        '500':
+          description: internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "INTERNAL_SERVER_ERROR"
+                  message:
+                    type: string
+                    example: "error message"                  
+  /v1/users/logout:
+    post:
+      security:
+        - BearerAuth: []
+      tags:
+        - User
+      summary: Logout from current device
+      description: Remove both access token and refresh token from db.
+      requestBody:
+        $ref: '#/components/requestBodies/UserLogoutBody'
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "OK"
+                  message:
+                    type: string
+                    example: "ok"
+                  
+        '400':
+          description: bad request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: BAD_REQUEST
+                  message:
+                    type: string
+                    example: error message
+        '500':
+          description: internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "INTERNAL_SERVER_ERROR"
+                  message:
+                    type: string
+                    example: "error message"
+
+  /v1/users/emails:
+    put:
+      security:
+        - BearerAuth: []
+      tags:
+        - User
+      summary: Update user email
+      description: Replace current user email with a new one. Previous email will be unusable
+      requestBody:
+        $ref: '#/components/requestBodies/UpdateEmailBody'
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Response'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          email:
+                            type: string
+                            format: email
+                            example: user@email.com
+        '400':
+          description: bad request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: BAD_REQUEST
+                  message:
+                    type: string
+                    example: error message
+        '401':
+          description: unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "UNAUTHORIZED"
+                  message:
+                    type: string
+                    example: "invalid credential"
+        '409':
+          description: conflict
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: CONFLICT
+                  message:
+                    type: string
+                    example: error message
+        '500':
+          description: internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "INTERNAL_SERVER_ERROR"
+                  message:
+                    type: string
+                    example: "error message"
+  /v1/users/usernames:
+    put:
+      security:
+        - BearerAuth: []
+      tags:
+        - User
+      summary: Update user's username
+      description: Replace current username with a new one
+      requestBody:
+        $ref: '#/components/requestBodies/UpdateUsernameBody'
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Response'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          username:
+                            type: string
+                            format: email
+                            example: new_username
+        '400':
+          description: bad request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: BAD_REQUEST
+                  message:
+                    type: string
+                    example: error message
+        '401':
+          description: unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "UNAUTHORIZED"
+                  message:
+                    type: string
+                    example: "invalid credential"
+        '409':
+          description: conflict
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: CONFLICT
+                  message:
+                    type: string
+                    example: error message
+        '500':
+          description: internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: INTERNAL_SERVER_ERROR
+                  message:
+                    type: string
+                    example: error message
+  /v1/users/profiles:
+    put:
+      security:
+        - BearerAuth: []
+      tags:
+        - User
+      summary: Update user profile
+      description: Update user profile (name, phone number, gender, date of birth, and profile photo)
+      requestBody:
+        $ref: '#/components/requestBodies/UpdateProfileBody'
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Response'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          id:
+                            type: number
+                            example: 1
+                          name:
+                            type: string
+                            example: new name
+                          phoneNumber:
+                            type: string
+                            description: numeric
+                            minLength: 10
+                            maxLength: 15
+                            example: 0123456789
+                          dob:
+                            type: string
+                            format: date
+                            description: date format is YYYY-MM-DD
+                            example: "2006-01-02"
+                          gender:
+                            type: string
+                            example: others
+                          photoUrl:
+                            type: string
+                            format: url
+                            example: http://photo.url/example.png
+        '400':
+          description: bad request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: BAD_REQUEST
+                  message:
+                    type: string
+                    example: error message
+        '401':
+          description: unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "UNAUTHORIZED"
+                  message:
+                    type: string
+                    example: "invalid credential"
+        '500':
+          description: internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: INTERNAL_SERVER_ERROR
+                  message:
+                    type: string
+                    example: error message
+  /v1/locations/provinces:
+    get:
+      tags:
+        - Location
+      summary: Get province list
+      description: Get list of provinces
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Response'
+                  - type: object
+                    properties:
+                      code:
+                        example: 'OK'
+                      message:
+                        example: 'success'
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Province'
+        '500':
+          description: Internal server error
           content:
             application/json:
               schema:
@@ -509,7 +1340,854 @@ paths:
                   message:
                     type: string
                     example: "error message"
+  /v1/locations/districts:
+    get:
+      tags:
+        - Location
+      summary: Get district list
+      description: Get list of districts (can be filtered by city id)
+      parameters:
+        - in: query
+          name: cityId
+          schema:
+            type: integer
+          description: Filter to get districts by city
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Response'
+                  - type: object
+                    properties:
+                      code:
+                        example: 'OK'
+                      message:
+                        example: 'success'
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/District'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "INTERNAL_SERVER_ERROR"
+                  message:
+                    type: string
+                    example: "error message"
+  /v1/locations/subdistricts:
+    get:
+      tags:
+        - Location
+      summary: Get subdistrict list
+      description: Get list of subdistricts (can be filtered by district id)
+      parameters:
+        - in: query
+          name: districtId
+          schema:
+            type: integer
+          description: Filter to get subdistricts by district
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Response'
+                  - type: object
+                    properties:
+                      code:
+                        example: 'OK'
+                      message:
+                        example: 'success'
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Subdistrict'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "INTERNAL_SERVER_ERROR"
+                  message:
+                    type: string
+                    example: "error message"                              
+  /v1/users/carts:
+    get:
+      security:
+        - BearerAuth: []
+      tags:
+        - User
+      summary: Get cart items list
+      description: Get list of cart items
+      parameters:
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            default: 10
+          description: Default is 10 shop per page
+        - in: query
+          name: page
+          schema:
+            type: integer
+            default: 1
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Response'
+                  - type: object
+                    properties:
+                      code:
+                        example: 'OK'
+                      message:
+                        example: 'success'
+                      data:
+                        allOf:
+                          - $ref: '#/components/schemas/PaginationResponse'
+                          - type: object
+                            properties:
+                              data:
+                                type: array
+                                items:
+                                  allOf:
+                                    - type: object
+                                      properties:
+                                        shop:
+                                          $ref: '#/components/schemas/Shop'
+                                    - type: object
+                                      properties:
+                                        cartItems:
+                                          type: array
+                                          items:
+                                            type: object
+                                            properties:
+                                              id:
+                                                type: integer
+                                                example: 1
+                                              skuId:
+                                                type: integer
+                                                example: 5
+                                              name:
+                                                type: string
+                                                example: Shoes
+                                              quantity:
+                                                type: integer
+                                                example: 29
+                                              stock:
+                                                type: integer
+                                                example: 2012
+                                              notes:
+                                                type: string
+                                                example: "notest test"
+                                              originalPrice:
+                                                type: number
+                                                format: float
+                                                example: 30000000
+                                              promotionType:
+                                                type: string
+                                                example: percent
+                                              promotionAmount:
+                                                type: number
+                                                format: float
+                                                example: 0.1
+                                              discountedPrice:
+                                                type: integer
+                                                format: float
+                                                example: 27000000
+                                              variants:
+                                                type: array
+                                                items:
+                                                  allOf:
+                                                    - $ref: '#/components/schemas/Variant'
+                                                    - type: object
+                                                      properties:
+                                                        group:
+                                                          $ref: '#/components/schemas/GroupVariant'
+
+        '401':
+          description: unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "UNAUTHORIZED"
+                  message:
+                    type: string
+                    example: "invalid credential"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "INTERNAL_SERVER_ERROR"
+                  message:
+                    type: string
+                    example: "error message"
+    post:
+      security:
+        - BearerAuth: []
+      tags:
+        - User
+      summary: User add item to cart
+      description: Add item to user cart
+      requestBody:
+        $ref: '#/components/requestBodies/AddCartItemBody'
+      responses:
+        '201':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Response'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/CartItem'
+        '400':
+          description: bad request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "BAD_REQUEST"
+                  message:
+                    type: string
+                    example: "Quantity is required"
+        '401':
+          description: unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "UNAUTHORIZED"
+                  message:
+                    type: string
+                    example: "invalid credential"
+        '404':
+          description: not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "NOT_FOUND"
+                  message:
+                    type: string
+                    example: "sku not found"
+        '409':
+          description: conflict
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "CONFLICT"
+                  message:
+                    type: string
+                    example: "sku quantity not enough"
+        '403':
+          description: forbidden
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "FORBIDDEN"
+                  message:
+                    type: string
+                    example: "user is shop owner"            
+        '500':
+          description: internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "INTERNAL_SERVER_ERROR"
+                  message:
+                    type: string
+                    example: "error message"
+  /v1/users/carts/{skuId}:
+    put:
+      security:
+        - BearerAuth: []
+      tags:
+        - User
+      summary: Edit user cart
+      description: Edit an existing user cart item
+      parameters:
+        - in: path
+          name: skuId
+          required: true
+          description: product sku ID, must be an integer and greater than or equal 1
+          schema:
+            type: integer
+            example: 1
+            minimum: 1
+      requestBody:
+        $ref: '#/components/requestBodies/UpdateCartItemBody'
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Response'
+                  - type: object
+                    properties:
+                      code:
+                        type: string
+                        example: "UPDATED"
+                      message:
+                        type: string
+                        example: "update successful"
+                      data:
+                        $ref: '#/components/schemas/CartItem'
+        '400':
+          description: bad request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "BAD_REQUEST"
+                  message:
+                    type: string
+                    example: "Quantity is required"
+        '401':
+          description: unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "UNAUTHORIZED"
+                  message:
+                    type: string
+                    example: "invalid credential"
+        '404':
+          description: not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "NOT_FOUND"
+                  message:
+                    type: string
+                    example: "sku not found"
+        '409':
+          description: conflict
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "CONFLICT"
+                  message:
+                    type: string
+                    example: "sku quantity not enough"
+        '500':
+          description: internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "INTERNAL_SERVER_ERROR"
+                  message:
+                    type: string
+                    example: "error message"
+  /v1/users/addresses:
+    get:
+      security:
+        - BearerAuth: []
+      tags:
+        - User
+      summary: Get User Addresses
+      description: Get all user addresses
+      responses:
+        '200':
+          description: successful fetch
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Response'
+                  - type: object
+                    properties:
+                      code:
+                        example: 'OK'
+                      message:
+                        example: 'success'
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/UserAddress'
+        '401':
+          description: unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "UNAUTHORIZED"
+                  message:
+                    type: string
+                    example: "invalid credential"            
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "INTERNAL_SERVER_ERROR"
+                  message:
+                    type: string
+                    example: "error message"  
+    post:
+      security:
+        - BearerAuth: []
+      tags:
+        - User
+      summary: Add new address
+      description: Add new user address
+      requestBody:
+        $ref: '#/components/requestBodies/AddressBody'
+      responses:
+        '201':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Response'
+                  - type: object
+                    properties:
+                      code:
+                        example: 'CREATED'
+                      message:
+                        example: 'created'
+                      data:
+                        $ref: '#/components/schemas/UserAddress'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "BAD_REQUEST"
+                  message:
+                    type: string
+                    example: "error message"
+        '401':
+          description: unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "UNAUTHORIZED"
+                  message:
+                    type: string
+                    example: "invalid credential"            
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "SUBDISTRICT_NOT_FOUND"
+                  message:
+                    type: string
+                    example: "error message"         
+        '409':
+          description: Conflict
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "MAX_ADDRESS_REACHED"
+                  message:
+                    type: string
+                    example: "max address amount reached"            
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "INTERNAL_SERVER_ERROR"
+                  message:
+                    type: string
+                    example: "error message"
+  /v1/users/addresses/{addressId}:                  
+    put:
+      security:
+        - BearerAuth: []
+      tags:
+        - User
+      summary: Add new address
+      description: Add new user address
+      parameters:
+        - in: path
+          name: addressId
+          required: true
+          description: Address Id of the address to be updated
+          schema:
+            type: integer
+            example: 1
+      requestBody:
+        $ref: '#/components/requestBodies/AddressBody'
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Response'
+                  - type: object
+                    properties:
+                      code:
+                        example: 'OK'
+                      message:
+                        example: 'success'
+                      data:
+                        $ref: '#/components/schemas/UserAddress'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "BAD_REQUEST"
+                  message:
+                    type: string
+                    example: "error message"
+        '401':
+          description: unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "UNAUTHORIZED"
+                  message:
+                    type: string
+                    example: "invalid credential"            
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "ADDRESS_NOT_FOUND"
+                  message:
+                    type: string
+                    example: "error message"         
+        '409':
+          description: Conflict
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "MUST_HAVE_AT_LEAST_ONE_DEFAULT_ADDRESS"
+                  message:
+                    type: string
+                    example: "must have at least one default address"            
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "INTERNAL_SERVER_ERROR"
+                  message:
+                    type: string
+                    example: "error message"
+    delete:
+      security:
+        - BearerAuth: []
+      tags:
+        - User
+      summary: Delete existing user address
+      description: Delete user address using address id
+      parameters:
+        - in: path
+          name: addressId
+          required: true
+          description: Address Id of the address to be deleted
+          schema:
+            type: integer
+            example: 1
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "OK"
+                  message:
+                    type: string
+                    example: "success"
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "BAD_REQUEST"
+                  message:
+                    type: string
+                    example: "error message"
+        '401':
+          description: unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "UNAUTHORIZED"
+                  message:
+                    type: string
+                    example: "invalid credential"            
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "ADDRESS_NOT_FOUND"
+                  message:
+                    type: string
+                    example: "error message"         
+        '409':
+          description: Conflict
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "MUST_HAVE_AT_LEAST_ONE_DEFAULT_ADDRESS"
+                  message:
+                    type: string
+                    example: "must have at least one default address"            
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "INTERNAL_SERVER_ERROR"
+                  message:
+                    type: string
+                    example: "error message"                
   /v1/users/wishlists:
+    get:
+      security:
+        - BearerAuth: []
+      tags:
+        - User
+      summary: Get all wishlist products
+      description: Get all products in user wishlists with pagination, filter by category, minimun rating, price range, cities, and sort by recommended, latest, top sales, price low and price high
+      parameters:
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            default: 10
+          description: Set to 10 by default
+        - in: query
+          name: page
+          schema:
+            type: integer
+            default: 1
+        - in: query
+          name: categoryId
+          schema:
+            type: integer
+          description: Filter by categoryId
+        - in: query
+          name: minRating
+          schema:
+            type: integer
+          description: Filter by minimum product rating to be shown (1-5)
+        - in: query
+          name: minPrice
+          schema:
+            type: number
+            format: float
+          description: Filter by minimum product price to be shown
+        - in: query
+          name: maxPrice
+          schema:
+            type: number
+            format: float
+          description: Filter by maximum product price to be shown
+        - in: query
+          name: cityIds
+          schema:
+            type: string
+            example: 350,351
+          description: Filter by product shop city id. For multiple ids, separate with comma (,)
+        - in: query
+          name: sort
+          schema:
+            type: string
+            default: recommended
+          description: Sort by "recommended", "latest", "top_sales", "price_low", "price_high"
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Response'
+                  - type: object
+                    properties:
+                      code:
+                        example: 'OK'
+                      message:
+                        example: 'wishlists retrieved successfully'
+                      data:
+                        allOf:
+                          - $ref: '#/components/schemas/PaginationResponse'
+                          - type: object
+                            properties:
+                              data:
+                                type: array
+                                items:
+                                  $ref: '#/components/schemas/UserWishlist'
+        '401':
+          description: unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "UNAUTHORIZED"
+                  message:
+                    type: string
+                    example: "invalid credential"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "INTERNAL_SERVER_ERROR"
+                  message:
+                    type: string
+                    example: "error message"
     post:
       security:
         - BearerAuth: []
@@ -768,6 +2446,205 @@ paths:
                   message:
                     type: string
                     example: "error message"
+  /v1/products/{code}:
+    get:
+      tags:
+        - Product
+      summary: Get product by code
+      description: Get product detail information using product code. If a product doesn't have any variant, `sku` field will appear while `variantGroup` field will not appear, vice versa
+      parameters:
+        - in: path
+          name: code
+          required: true
+          schema:
+            type: string
+            example: product_code
+      responses:
+        '200':
+          description: operation successful
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Response'
+                  - type: object
+                    properties:
+                      data:
+                        allOf:
+                          - $ref: '#/components/schemas/Product'
+                          - type: object
+                            properties:
+                              totalStock:
+                                type: integer
+                                example: 100
+                          - type: object
+                            properties:
+                              vouchers:
+                                type: array
+                                items:
+                                  $ref: '#/components/schemas/ShopVoucher'
+                          - type: object
+                            properties:
+                              couriers:
+                                type: array
+                                items:
+                                  $ref: '#/components/schemas/Courier'
+                          - type: object
+                            properties:
+                              variantGroups:
+                                type: array
+                                items:
+                                  allOf:
+                                    - $ref: '#/components/schemas/GroupVariant'
+                                    - type: object
+                                      properties:
+                                        variants:
+                                          type: array
+                                          items:
+                                            $ref: '#/components/schemas/Variant'
+                          - type: object
+                            properties:
+                              shop:
+                                $ref: '#/components/schemas/Shop'
+                          - type: object
+                            properties:
+                              sku:
+                                $ref: '#/components/schemas/SKU'
+        '404':
+          description: product not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "PRODUCT_NOT_EXIST"
+                  message:
+                    type: string
+                    example: "error message"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "INTERNAL_SERVER_ERROR"
+                  message:
+                    type: string
+                    example: "error message"                
+  /v1/products:
+    get:
+      tags:
+        - Product
+      summary: Get product by keyword and filter
+      description: Get all products from keyword with pagination, filter by category, minimun rating, price range, cities, and sort by recommended, latest, top sales, price low and price high
+      parameters:
+        - in: query
+          name: keyword
+          schema:
+            type: string
+            example: "rtx"
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            default: 10
+          description: Set to 10 by default
+        - in: query
+          name: page
+          schema:
+            type: integer
+            default: 1
+        - in: query
+          name: categoryId
+          schema:
+            type: integer
+          description: Filter by categoryId
+        - in: query
+          name: minRating
+          schema:
+            type: integer
+          description: Filter by minimum product rating to be shown (1-5)
+        - in: query
+          name: minPrice
+          schema:
+            type: number
+            format: float
+          description: Filter by minimum product price to be shown
+        - in: query
+          name: maxPrice
+          schema:
+            type: number
+            format: float
+          description: Filter by maximum product price to be shown
+        - in: query
+          name: cityIds
+          schema:
+            type: string
+            example: 350,351
+          description: Filter by product shop city id. For multiple ids, separate with comma (,)
+        - in: query
+          name: sort
+          schema:
+            type: string
+            default: recommended
+          description: Sort by "recommended", "latest", "top_sales", "price_low", "price_high"
+      responses:
+        '200':
+          description: Successfull operation
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Response'
+                  - type: object
+                    properties:
+                      code:
+                        example: 'OK'
+                      message:
+                        example: "ok"
+                      data:
+                        allOf:
+                        - $ref: '#/components/schemas/PaginationResponse'
+                        - type: object
+                          properties:
+                            totalRows:
+                              example: 1
+                            totalPages:
+                              example: 1
+                            limit:
+                              example: 10
+                            data:
+                              type: array
+                              items:
+                                allOf:
+                                  - $ref: '#/components/schemas/Product'
+                                  - type: object
+                                    properties:
+                                      address:
+                                        type: string
+                                        example: Pekanbaru, Riau
+                                  - type: object
+                                    properties:
+                                      imageUrl:
+                                        type: string
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "INTERNAL_SERVER_ERROR"
+                  message:
+                    type: string
+                    example: "error message"
   /v1/products/categories:
     get:
       tags:
@@ -838,7 +2715,585 @@ paths:
                   message:
                     type: string
                     example: "error message"
-    
+  /v1/products/recommendations/categories:
+    get:
+      tags:
+        - Product
+      summary: Get product recommendation by categories
+      description: Get product recommendation for product in the same category
+      parameters:
+        - in: query
+          name: productId
+          required: true
+          schema:
+            type: string
+            example: "1"
+        - in: query
+          name: categoryId
+          required: true
+          schema:
+            type: string
+            example: "1"
+      responses:
+        '200':
+          description: successful opearation
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Response'
+                  - type: object
+                    properties:
+                      code:
+                        example: "OK"
+                      message:
+                        example: "ok"
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Product'
+        '400':
+          description: bad request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "BAD_REQUEST"
+                  message:
+                    type: string
+                    example: "ProductId is required"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "INTERNAL_SERVER_ERROR"
+                  message:
+                    type: string
+                    example: "error message"
+          
+  /v1/shops/{slug}:
+    get:
+      tags:
+        - Shop
+      summary: Get shop information
+      description: Get shop information by slug
+      parameters:
+        - in: path
+          name: slug
+          description: Slug code of chosen shop
+          required: true
+          schema:
+            type: string
+            example: "shop"
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Response'
+                  - type: object
+                    properties:
+                      code:
+                        example: "OK"
+                      message:
+                        example: "ok"
+                      data:
+                        $ref: '#/components/schemas/Shop'
+        '404':
+          description: shop not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "SHOP_NOT_FOUND"
+                  message:
+                    type: string
+                    example: "error message"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "INTERNAL_SERVER_ERROR"
+                  message:
+                    type: string
+                    example: "error message"
+  /v1/shops/{slug}/products:
+    get:
+      tags:
+        - Shop
+      summary: Get shop product list
+      description: Get all active products from given shop
+      parameters:
+        - in: path
+          name: slug
+          description: slug code for given shop
+          required: true
+          schema:
+            type: string
+            example: shop-slug
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            default: 10
+            example: 5
+        - in: query
+          name: page
+          schema:
+            type: integer
+            default: 1
+            example: 1
+        - in: query
+          name: sort
+          description: shop product list sort method
+          schema:
+            type: string
+            default: recommended
+            enum: [recommended, latest, top_sales]
+            example: recommended
+        - in: query
+          name: priceSort
+          description: shop product list price sort method
+          schema:
+            type: string
+            default: recommended
+            enum: [price_low, price_high]
+            example: price_low
+        - in: query
+          name: shopProductCategoryID
+          description: shop category ID. If not defined then will get products from all categories
+          schema:
+            type: integer
+            default: 0
+            example: 0
+        - in: query
+          name: exceptionID
+          description: product ID to hide from this list. If given, will get all product from given shop except product which has this ID
+          schema:
+            type: integer
+            example: 1
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - type: object
+                    properties:
+                      code:
+                        type: string
+                        example: OK
+                      message:
+                        type: string
+                        example: success
+                      data:
+                        allOf:
+                          - $ref: '#/components/schemas/PaginationResponse'
+                          - type: object
+                            properties:
+                              data:
+                                allOf:
+                                  - $ref: '#/components/schemas/Product'
+                                  - type: object
+                                    properties:
+                                      imageUrl:
+                                        type: string
+                                        example: http://example/image.png
+                                  - type: object
+                                    properties:
+                                      totalStock:
+                                        type: integer
+                                        example: 100
+        '404':
+          description: shop not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "SHOP_NOT_REGISTERED"
+                  message:
+                    type: string
+                    example: "error message"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "INTERNAL_SERVER_ERROR"
+                  message:
+                    type: string
+                    example: "error message"
+  /v1/shops/{slug}/vouchers:
+    get:
+      tags:
+        - Shop
+      summary: Get shop voucher
+      description: Get shop list of available vouchers
+      parameters:
+        - in: path
+          name: slug
+          description: Slug code of chosen shop
+          required: true
+          schema:
+            type: string
+            example: "shop"
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Response'
+                  - type: object
+                    properties:
+                      code:
+                        example: "OK"
+                      message:
+                        example: "ok"
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/ShopVoucher'
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "SHOP_NOT_REGISTERED"
+                  message:
+                    type: string
+                    example: "shop not found"                      
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "INTERNAL_SERVER_ERROR"
+                  message:
+                    type: string
+                    example: "error message"
+  /v1/shops/{slug}/vouchers/valid:
+    get:
+      security:
+        - BearerAuth: []
+      tags:
+        - Shop
+      summary: Get valid shop voucher
+      description: Get shop list of valid user shop vouchers
+      parameters:
+        - in: path
+          name: slug
+          description: Slug code of chosen shop
+          required: true
+          schema:
+            type: string
+            example: "shop"
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Response'
+                  - type: object
+                    properties:
+                      code:
+                        example: "OK"
+                      message:
+                        example: "ok"
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/ShopVoucher'
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "SHOP_NOT_REGISTERED"
+                  message:
+                    type: string
+                    example: "shop not found"                     
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "INTERNAL_SERVER_ERROR"
+                  message:
+                    type: string
+                    example: "error message"                  
+  /v1/users/sealabs-pays:
+    get:
+      security:
+        - BearerAuth: []
+      tags:
+        - User
+      summary: Get user's sealabs-pay accounts
+      description: Get list of user's sealabs-pay accounts
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Response'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/SealabsPay'
+        '401':
+          description: unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "UNAUTHORIZED"
+                  message:
+                    type: string
+                    example: "invalid credential"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "INTERNAL_SERVER_ERROR"
+                  message:
+                    type: string
+                    example: "error message"
+    post:
+      security:
+        - BearerAuth: []
+      tags:
+        - User
+      summary: Register new SeaLabs Pay account
+      description: Add new SeaLabs Pay to user account. A user can have more than 1 SeaLabs Pay
+      requestBody:
+        $ref: '#/components/requestBodies/RegisterSeaLabsPayBody'
+      responses:
+        '201':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Response'
+                  - type: object
+                    properties:
+                      code:
+                        example: 'CREATED'
+                      message:
+                        example: 'sealabs pay registered successfully'
+                      data:
+                        $ref: '#/components/schemas/SealabsPay'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "BAD_REQUEST"
+                  message:
+                    type: string
+                    example: "error message"
+        '401':
+          description: unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "UNAUTHORIZED"
+                  message:
+                    type: string
+                    example: "invalid credential"
+        '409':
+          description: Duplicate SeaLabs Pay account
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "CARD_NUMBER_REGISTERED"
+                  message:
+                    type: string
+                    example: "sealabs pay already registered"            
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "INTERNAL_SERVER_ERROR"
+                  message:
+                    type: string
+                    example: "error message"
+  /v1/marketplaces/vouchers:
+    get:
+      tags:
+        - Marketplace
+      parameters:
+        - in: query
+          name: categoryId
+          schema:
+            type: integer
+            default: 0
+          description: No default category, will get all if not specified
+        - in: query
+          name: paymentMethodId
+          schema:
+            type: integer
+            default: 0
+          description: No default payment method, will get all if not specified
+      summary: Get marketplace vouchers
+      description: Get list of available marketplace vouchers
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Response'
+                  - type: object
+                    properties:
+                      code:
+                        example: "OK"
+                      message:
+                        example: "ok"
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/MarketplaceVoucher'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "INTERNAL_SERVER_ERROR"
+                  message:
+                    type: string
+                    example: "error message"
+  /v1/marketplaces/vouchers/valid:
+    get:
+      security:
+        - BearerAuth: []
+      tags:
+        - Marketplace
+      parameters:
+        - in: query
+          name: categoryId
+          schema:
+            type: integer
+            default: 0
+          description: No default category, will get all if not specified
+        - in: query
+          name: paymentMethodId
+          schema:
+            type: integer
+            default: 0
+          description: No default payment method, will get all if not specified  
+      summary: Get valid user marketplace vouchers
+      description: Get list of valid user marketplace vouchers
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Response'
+                  - type: object
+                    properties:
+                      code:
+                        example: "OK"
+                      message:
+                        example: "ok"
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/MarketplaceVoucher'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "INTERNAL_SERVER_ERROR"
+                  message:
+                    type: string
+                    example: "error message"                            
 components:
   schemas:
     User:
@@ -856,8 +3311,6 @@ components:
           example: user_name
         profile:
           $ref: '#/components/schemas/UserProfile'
-        shop:
-          $ref: '#/components/schemas/Shop'
     UserProfile:
       type: object
       properties:
@@ -873,7 +3326,7 @@ components:
         dob:
           type: string
           format: date
-          example: 2006-01-02
+          example: "2006-01-02T:00:00:00Z"
         gender:
           type: string
           example: male
@@ -902,10 +3355,101 @@ components:
         joinedDate:
           type: string
           format: datetime
-          example: 2006-01-02T00:00:00Z
+          example: "2006-01-02T00:00:00Z"
         userId:
           type: integer
           example: 1
+        slug:
+          type: string
+          example: "user-shop"
+        shopCategories:
+          type: array
+          items:
+            $ref: '#/components/schemas/ShopCategory'
+    ShopCategory:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        name:
+          type: string
+          example: "electronics"
+        shopId:
+          type: integer
+          example: 1
+    ShopVoucher:
+      type: object
+      properties:
+        name:
+          type: string
+          example: "voucher"
+        code:
+          type: string
+          example: "code"
+        amount:
+          type: number
+          format: float
+          example: 50000
+        type:
+          type: string
+          example: "nominal"
+        isHidden:
+          type: boolean
+          example: false
+        description:
+          type: string
+          example: "desc"
+        minimumSpend:
+          type: number
+          format: float
+          example: 100000
+        expiredAt:
+          type: string
+          format: dateTime
+          example: "2006-01-02T00:00:00Z"
+        shopId:
+          type: number
+          example: 1
+    MarketplaceVoucher:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 2
+        code:
+          type: string
+          example: "code"
+        name:
+          type: string
+          example: "voucher"
+        amount:
+          type: number
+          format: float
+          example: 50000
+        type:
+          type: string
+          example: "nominal"
+        isHidden:
+          type: boolean
+          example: false
+        description:
+          type: string
+          example: "desc"
+        minimumSpend:
+          type: number
+          format: float
+          example: 100000
+        expiredAt:
+          type: string
+          format: dateTime
+          example: "2006-01-02T00:00:00Z"
+        categoryId:
+          type: integer
+          example: 1
+        paymentMethodId:
+          type: integer
+          example: 2
     Token:
       type: object
       properties:
@@ -915,6 +3459,15 @@ components:
         refreshToken:
           type: string
           example: "thisIsToken"
+    Province:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 11
+        name:
+          type: string
+          example: 'Banten'
     City:
       type: object
       properties:
@@ -927,6 +3480,34 @@ components:
         provinceId:
           type: integer
           example: 6
+    District:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 4351
+        name:
+          type: string
+          example: 'Driyorejo'
+        cityId:
+          type: integer
+          example: 133
+    Subdistrict:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 27
+        name:
+          type: string
+          example: 'Banjaran'
+        districtId:
+          type: integer
+          example: 4351
+        postalCode:
+          type: string
+          example: 61177
+          
     Wallet:
       type: object
       properties:
@@ -1010,6 +3591,62 @@ components:
         page:
           type: integer
           example: 1
+    Product:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        code:
+          type: string
+          example: ITEM-001
+        name:
+          type: string
+          example: VGA MSI GeForce RTX 409
+        description:
+          type: string
+        view:
+          type: integer
+        isHazardous:
+          type: boolean
+        weight:
+          type: number
+          format: float
+        length:
+          type: number
+          format: float
+        width:
+          type: number
+          format: float
+        height:
+          type: number
+          format: float
+        packagedSize:
+          type: number
+          format: float
+        isNew:
+          type: boolean
+        isActive:
+          type: boolean
+        rating:
+          type: number
+          format: float
+        sold:
+          type: integer
+        minPrice:
+          type: number
+          format: float
+        maxPrice:
+          type: number
+          format: float
+        promotionPercent:
+          type: number
+          format: float
+          example: 0.16
+        shopId:
+          type: integer
+        categoryId:
+          type: integer
     UserWishlist:
       type: object
       properties:
@@ -1022,6 +3659,159 @@ components:
         productId:
           type: integer
           example: 1
+        product:
+          allOf:
+            - $ref: '#/components/schemas/Product'
+            - type: object
+              properties:
+                address:
+                  type: string
+                  example: Pekanbaru, Riau
+            - type: object
+              properties:
+                imageUrl:
+                  type: string
+            - type: object
+              properties:
+                defaultSkuId:
+                  type: integer
+                  example: 1
+    CartItem:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        quantity:
+          type: integer
+          example: 1   
+        notes:
+          type: string
+          example: this is note
+        skuId:
+          type: integer
+          example: 1
+    Variant:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        value:
+          type: string
+          example: Blue
+        mediaUrl:
+          type: string
+          example: test.com/image.jpg
+        groupId:
+          type: integer
+          example: 1
+    GroupVariant:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        name:
+          type: string
+          example: Color
+        productId:
+          type: integer
+          example: 1
+    SKU:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        sku:
+          type: string
+          example: product_sku
+        price:
+          type: number
+          format: float
+          example: 20000
+        stock:
+          type: integer
+          example: 100
+        productId:
+          type: integer
+          example: 2
+    Courier:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        code:
+          type: string
+          example: courier_code
+        name:
+          type: string
+          example: courier name
+    UserAddress:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        userId:
+          type: integer
+          example: 101
+        name:
+          type: string
+          example: John
+        phoneNumber:
+          type: string
+          example: 012314213
+        street:
+          type: string
+          example: Jalan kamboja 123
+        details:
+          type: string
+          example: sopo del
+        subdistrictId:
+          type: integer
+          example: 27
+        subdistrict:
+          $ref: '#/components/schemas/Subdistrict'
+        districtId:
+          type: integer
+          example: 4351
+        district:
+          $ref: '#/components/schemas/District'
+        cityId:
+          type: integer
+          example: 133
+        city:
+          $ref: '#/components/schemas/City'
+        provinceId:
+          type: integer
+          example: 11
+        province:
+          $ref: '#/components/schemas/Province'
+        isDefault:
+          type: boolean
+          example: true
+          
+          
+        
+    SealabsPay:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        cardNumber:
+          type: string
+          format: numeric
+          example: 2795790398762135
+        cardName:
+          type: string
+          example: Marco Loen
+        expiryDate:
+          type: string
+          example: '2024-12-31T00:00:00Z'
   requestBodies:
     WalletBody:
       required: true
@@ -1087,7 +3877,183 @@ components:
               credential:
                 type: string
                 format: email
-                example: "googlejwttokenhere"         
+                example: "googlejwttokenhere"
+    GoogleRegisterUserBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - credential
+              - username
+              - password
+            properties:
+              credential:
+                type: string
+                format: jwt
+                example: "googlejwttokenhere"     
+              username:
+                type: string
+                minLength: 5
+                maxLength: 30
+                example: "Acong123"
+                description: username must includes at least one letter (case insensitive). May also includes number, underscore, or period
+              password:
+                type: string
+                minLength: 8
+                maxLength: 16
+                example: "Password123"
+                description: Password must include at least one uppercase letter, one lowercase letter, and one numeric. Also password must not include email or username.
+    UserLogoutBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - refreshToken
+            properties:
+              refreshToken:
+                type: string
+                format: jwt
+                example: "jwttokenhere"            
+    UpdateEmailBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - email
+            properties:
+              email:
+                type: string
+                format: email
+                description: email is case insensitive
+                example: user@email.com
+    UpdateUsernameBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - username
+            properties:
+              username:
+                type: string
+                description: username must includes at least one letter (case insensitive). May also includes number, underscore, or period
+                minLength: 6
+                maxLength: 30
+                example: new_us3r.name
+    UpdateProfileBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - name
+              - phoneNumber
+              - dob
+              - gender
+              - photoUrl
+            properties:
+              name:
+                type: string
+                example: new name
+              phoneNumber:
+                type: string
+                format: numeric
+                minLength: 10
+                maxLength: 15
+                example: 0123456789
+              dob:
+                type: string
+                format: date
+                description: date of birth. Required format is YYYY-MM-DD
+                example: "2006-01-02"
+              gender:
+                type: string
+                enum: [male, female, others]
+                example: other
+              photoUrl:
+                type: string
+                format: url
+                example: http://photo.url/example.png
+    RequestPasswordChangeBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - currentPassword
+              - newPassword
+            properties:
+              currentPassword:
+                type: string
+                example: "Password123"   
+                minLength: 8
+                maxLength: 16
+              newPassword:
+                type: string
+                minLength: 8
+                maxLength: 16
+                example: "Password1234"
+                description: Password must include at least one uppercase letter, one lowercase letter, and one numeric. Password cannot contain username as a part of it. Also password must not include email or username.
+    CompletePasswordChangeBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - verificationCode
+            properties:
+              verificationCode:
+                type: string
+                example: "k3DFs1"   
+                format: Alphanumeric
+                minLength: 6
+                maxLength: 6
+                description: Verification code is a randomly generated string which consists of 6 alphanumeric characters.
+    RequestPasswordResetBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - email
+            properties:
+              email:
+                type: string
+                format: email
+                example: "user@mail.com"
+    CompletePasswordResetBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - token
+              - newPassword
+            properties:
+              token:
+                type: string
+                example: "0020cf5fdf24ca583b988973fc985abc8910f049191ddfa7ca77dfd5ac705e66"   
+                format: alphanumeric
+                minLength: 64
+                maxLength: 64
+              newPassword:
+                type: string
+                minLength: 8
+                maxLength: 16
+                example: "Password1234"
+                description: Password must include at least one uppercase letter, one lowercase letter, and one numeric. Password cannot contain username as a part of it. Also password must not include email or username.
     AddWishlistBody:
       required: true
       content:
@@ -1100,21 +4066,103 @@ components:
               productId:
                 type: integer
                 example: 1
-    TopUpBody:
+    AddCartItemBody:
       required: true
       content:
         application/json:
           schema:
             type: object
             required:
-              - amount
+              - quantity
+              - skuId
             properties:
-              amount:
-                type: number
-                format: float
-                example: 50000
-                minimum: 10000
-                maximum: 200000000
+              quantity:
+                type: integer
+                example: 1   
+              notes:
+                type: string
+                maxLength: 50
+                example: this is note
+              skuId:
+                type: integer
+                example: 1
+    UpdateCartItemBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              quantity:
+                type: integer
+                minimum: 1
+                example: 10
+                description: quantity is required if `notes` field is empty
+              notes:
+                type: string
+                maxLength: 50
+                example: this is a note
+                description: notes is required if `quantity` field is empty
+    AddressBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - name
+              - phoneNumber
+              - street
+              - subdistrictId
+              - isDefault
+            properties:
+              name:
+                type: string
+                example: john
+                maxLength: 30
+              phoneNumber:
+                type: string
+                example: 08124212421
+                format: numeric
+              street:
+                type: integer
+                example: Jalan kamboja 123
+                maxLength: 200
+              details:
+                type: string
+                example: Sopo del
+                maxLength: 30
+              subdistrictId:
+                type: integer
+                example: 28
+              isDefault:
+                type: boolean
+                example: true
+                
+    RegisterSeaLabsPayBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - cardNumber
+              - cardName
+              - expiryDate
+            properties:
+              cardNumber:
+                type: string
+                format: numeric
+                minLength: 16
+                maxLength: 16
+                example: 2795790398762135
+              cardName:
+                type: string
+                example: Marco Loen
+              expiryDate:
+                type: string
+                pattern: '^(0[1-9]|1[0-2])\/[0-9]{2}$'
+                example: '12/24'
   securitySchemes:
     BearerAuth:
       type: http

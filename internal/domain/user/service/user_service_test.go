@@ -10,7 +10,9 @@ import (
 	mocks "kedai/backend/be-kedai/mocks"
 	"testing"
 
+	"github.com/redis/go-redis/v9"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 )
 
 func TestSignUp(t *testing.T) {
@@ -370,4 +372,850 @@ func TestGetSession(t *testing.T) {
 			assert.Equal(t, tc.expected.err, result)
 		})
 	}
+}
+
+func TestRenewToken(t *testing.T) {
+	type input struct {
+		userId       int
+		refreshToken string
+		beforeTest   func(*mocks.UserCache)
+	}
+	type expected struct {
+		token *dto.Token
+		err   error
+	}
+
+	tests := []struct {
+		description string
+		input
+		expected
+	}{
+		{
+			description: "should return error when refresh token is expired or does not exist",
+			input: input{
+				userId:       1,
+				refreshToken: "token",
+				beforeTest: func(uc *mocks.UserCache) {
+					uc.On("FindToken", 1, "token").Return(redis.Nil)
+				},
+			},
+			expected: expected{
+				token: nil,
+				err:   errs.ErrExpiredToken,
+			},
+		},
+		{
+			description: "should return error when failed to fetch token from redis",
+			input: input{
+				userId:       1,
+				refreshToken: "token",
+				beforeTest: func(uc *mocks.UserCache) {
+					uc.On("FindToken", 1, "token").Return(errors.New("failed to check token"))
+				},
+			},
+			expected: expected{
+				token: nil,
+				err:   errors.New("failed to check token"),
+			},
+		},
+		{
+			description: "should return error when failed to store renewed tokens",
+			input: input{
+				userId:       1,
+				refreshToken: "token",
+				beforeTest: func(uc *mocks.UserCache) {
+					uc.On("FindToken", 1, "token").Return(nil)
+					uc.On("DeleteToken", "user_1:token").Return(errors.New("failed to delete token"))
+				},
+			},
+			expected: expected{
+				token: nil,
+				err:   errors.New("failed to delete token"),
+			},
+		},
+		{
+			description: "should return error when failed to store renewed tokens",
+			input: input{
+				userId:       1,
+				refreshToken: "token",
+				beforeTest: func(uc *mocks.UserCache) {
+					uc.On("FindToken", 1, "token").Return(nil)
+					uc.On("DeleteToken", "user_1:token").Return(nil)
+					uc.On("StoreToken", mock.Anything, mock.Anything, mock.Anything).Return(errors.New("failed to store token"))
+				},
+			},
+			expected: expected{
+				token: nil,
+				err:   errors.New("failed to store token"),
+			},
+		},
+	}
+
+	for _, tc := range tests {
+		userCache := mocks.NewUserCache(t)
+		tc.beforeTest(userCache)
+		userService := service.NewUserService(&service.UserSConfig{
+			Redis: userCache,
+		})
+
+		actualToken, actualErr := userService.RenewToken(tc.input.userId, tc.input.refreshToken)
+
+		assert.Equal(t, tc.expected.token, actualToken)
+		assert.Equal(t, tc.expected.err, actualErr)
+	}
+}
+
+func TestUpdateEmail(t *testing.T) {
+	type input struct {
+		userId     int
+		request    *dto.UpdateEmailRequest
+		beforeTest func(*mocks.UserRepository)
+	}
+	type expected struct {
+		res *dto.UpdateEmailResponse
+		err error
+	}
+
+	cases := []struct {
+		description string
+		input
+		expected
+	}{
+		{
+			description: "should return error when email is used",
+			input: input{
+				userId: 1,
+				request: &dto.UpdateEmailRequest{
+					Email: "used.email@email.com",
+				},
+				beforeTest: func(ur *mocks.UserRepository) {
+					ur.On("GetByEmail", "used.email@email.com").Return(&model.User{Email: "used.email@email.com"}, nil)
+				},
+			},
+			expected: expected{
+				res: nil,
+				err: errs.ErrEmailUsed,
+			},
+		},
+		{
+			description: "should return error when failed to check if email is used or not",
+			input: input{
+				userId: 1,
+				request: &dto.UpdateEmailRequest{
+					Email: "used.email@email.com",
+				},
+				beforeTest: func(ur *mocks.UserRepository) {
+					ur.On("GetByEmail", "used.email@email.com").Return(nil, errors.New("failed to check email"))
+				},
+			},
+			expected: expected{
+				res: nil,
+				err: errors.New("failed to check email"),
+			},
+		},
+		{
+			description: "should return error when failed to update email",
+			input: input{
+				userId: 1,
+				request: &dto.UpdateEmailRequest{
+					Email: "new.email@email.com",
+				},
+				beforeTest: func(ur *mocks.UserRepository) {
+					ur.On("GetByEmail", "new.email@email.com").Return(nil, errs.ErrUserDoesNotExist)
+					ur.On("UpdateEmail", 1, "new.email@email.com").Return(nil, errors.New("failed to update email"))
+				},
+			},
+			expected: expected{
+				res: nil,
+				err: errors.New("failed to update email"),
+			},
+		},
+		{
+			description: "should return updated email when update email successed",
+			input: input{
+				userId: 1,
+				request: &dto.UpdateEmailRequest{
+					Email: "new.email@email.com",
+				},
+				beforeTest: func(ur *mocks.UserRepository) {
+					ur.On("GetByEmail", "new.email@email.com").Return(nil, errs.ErrUserDoesNotExist)
+					ur.On("UpdateEmail", 1, "new.email@email.com").Return(&model.User{Email: "new.email@email.com"}, nil)
+				},
+			},
+			expected: expected{
+				res: &dto.UpdateEmailResponse{
+					Email: "new.email@email.com",
+				},
+				err: nil,
+			},
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.description, func(t *testing.T) {
+			userRepo := mocks.NewUserRepository(t)
+			tc.beforeTest(userRepo)
+			userService := service.NewUserService(&service.UserSConfig{
+				Repository: userRepo,
+			})
+
+			res, err := userService.UpdateEmail(tc.input.userId, tc.input.request)
+
+			assert.Equal(t, tc.expected.res, res)
+			assert.Equal(t, tc.expected.err, err)
+		})
+	}
+}
+
+func TestUpdateUsername(t *testing.T) {
+	type input struct {
+		userId     int
+		request    *dto.UpdateUsernameRequest
+		beforeTest func(*mocks.UserRepository)
+	}
+	type expected struct {
+		res *dto.UpdateUsernameResponse
+		err error
+	}
+
+	cases := []struct {
+		description string
+		input
+		expected
+	}{
+		{
+			description: "should return error when username is not valid",
+			input: input{
+				userId: 1,
+				request: &dto.UpdateUsernameRequest{
+					Username: "new_u$ername",
+				},
+				beforeTest: func(ur *mocks.UserRepository) {},
+			},
+			expected: expected{
+				res: nil,
+				err: errs.ErrInvalidUsernamePattern,
+			},
+		},
+		{
+			description: "should return new username when update username successed",
+			input: input{
+				userId: 1,
+				request: &dto.UpdateUsernameRequest{
+					Username: "new_username",
+				},
+				beforeTest: func(ur *mocks.UserRepository) {
+					ur.On("UpdateUsername", 1, "new_username").Return(&model.User{Username: "new_username"}, nil)
+				},
+			},
+			expected: expected{
+				res: &dto.UpdateUsernameResponse{Username: "new_username"},
+				err: nil,
+			},
+		},
+		{
+			description: "should return error if failed to update username",
+			input: input{
+				userId: 1,
+				request: &dto.UpdateUsernameRequest{
+					Username: "new_username",
+				},
+				beforeTest: func(ur *mocks.UserRepository) {
+					ur.On("UpdateUsername", 1, "new_username").Return(nil, errors.New("failed to update username"))
+				},
+			},
+			expected: expected{
+				res: nil,
+				err: errors.New("failed to update username"),
+			},
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.description, func(t *testing.T) {
+			userRepo := mocks.NewUserRepository(t)
+			tc.beforeTest(userRepo)
+			userService := service.NewUserService(&service.UserSConfig{
+				Repository: userRepo,
+			})
+
+			actualRes, actualErr := userService.UpdateUsername(tc.input.userId, tc.input.request)
+
+			assert.Equal(t, tc.expected.res, actualRes)
+			assert.Equal(t, tc.expected.err, actualErr)
+		})
+	}
+}
+
+func TestSignOut(t *testing.T) {
+	type input struct {
+		data       dto.UserLogoutRequest
+		beforeTest func(*mocks.UserCache)
+	}
+	type expected struct {
+		err error
+	}
+
+	cases := []struct {
+		description string
+		input
+		expected
+	}{
+		{
+			description: "should return error if failed to sign out",
+			input: input{
+				data: dto.UserLogoutRequest{
+					UserId:       1,
+					RefreshToken: "refresh_token",
+					AccessToken:  "access_token",
+				},
+				beforeTest: func(ur *mocks.UserCache) {
+					ur.On("DeleteRefreshTokenAndAccessToken", 1, "refresh_token", "access_token").Return(errors.New("failed to sign out"))
+				},
+			},
+			expected: expected{
+				err: errors.New("failed to sign out"),
+			},
+		},
+		{
+			description: "should return nil if sign out successed",
+			input: input{
+				data: dto.UserLogoutRequest{
+					UserId:       1,
+					RefreshToken: "refresh_token",
+					AccessToken:  "access_token",
+				},
+				beforeTest: func(ur *mocks.UserCache) {
+					ur.On("DeleteRefreshTokenAndAccessToken", 1, "refresh_token", "access_token").Return(nil)
+				},
+			},
+			expected: expected{
+				err: nil,
+			},
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.description, func(t *testing.T) {
+			userCache := mocks.NewUserCache(t)
+			tc.beforeTest(userCache)
+			userService := service.NewUserService(&service.UserSConfig{
+				Redis: userCache,
+			})
+
+			actualErr := userService.SignOut(&tc.input.data)
+
+			assert.Equal(t, tc.expected.err, actualErr)
+		})
+	}
+
+}
+
+func TestRequestPasswordChange(t *testing.T) {
+	hashedPassword, _ := hash.HashAndSalt("Passwrod123")
+	type input struct {
+		request    *dto.RequestPasswordChangeRequest
+		beforeTest func(*mocks.UserRepository, *mocks.MailUtils, *mocks.RandomUtils, *mocks.UserCache)
+	}
+	type expected struct {
+		err error
+	}
+
+	cases := []struct {
+		description string
+		input
+		expected
+	}{
+		{
+			description: "should return error when GetByID failed",
+			input: input{
+				request: &dto.RequestPasswordChangeRequest{
+					UserId:          1,
+					CurrentPassword: "Passwrod123",
+					NewPassword:     "Passwrod1234",
+				},
+				beforeTest: func(ur *mocks.UserRepository, mu *mocks.MailUtils, ru *mocks.RandomUtils, uc *mocks.UserCache) {
+					ur.On("GetByID", 1).Return(nil, errs.ErrUserDoesNotExist)
+
+				},
+			},
+			expected: expected{
+				err: errs.ErrUserDoesNotExist,
+			},
+		},
+		{
+			description: "should return error when current password given is not valid",
+			input: input{
+				request: &dto.RequestPasswordChangeRequest{
+					UserId:          1,
+					CurrentPassword: "Password123",
+					NewPassword:     "Passwrod1234",
+				},
+				beforeTest: func(ur *mocks.UserRepository, mu *mocks.MailUtils, ru *mocks.RandomUtils, uc *mocks.UserCache) {
+					ur.On("GetByID", 1).Return(&model.User{ID: 1, Password: hashedPassword, Username: "test"}, nil)
+				},
+			},
+			expected: expected{
+				err: errs.ErrInvalidCredential,
+			},
+		},
+		{
+			description: "should return error when new password is not valid",
+			input: input{
+				request: &dto.RequestPasswordChangeRequest{
+					UserId:          1,
+					CurrentPassword: "Passwrod123",
+					NewPassword:     "Passwrod123",
+				},
+				beforeTest: func(ur *mocks.UserRepository, mu *mocks.MailUtils, ru *mocks.RandomUtils, uc *mocks.UserCache) {
+					ur.On("GetByID", 1).Return(&model.User{ID: 1, Password: hashedPassword, Username: "test"}, nil)
+				},
+			},
+			expected: expected{
+				err: errs.ErrSamePassword,
+			},
+		},
+		{
+			description: "should return error when StoreUserPasswordAndVerificationCode failed",
+			input: input{
+				request: &dto.RequestPasswordChangeRequest{
+					UserId:          1,
+					CurrentPassword: "Passwrod123",
+					NewPassword:     "Passwrod1234",
+				},
+				beforeTest: func(ur *mocks.UserRepository, mu *mocks.MailUtils, ru *mocks.RandomUtils, uc *mocks.UserCache) {
+					ur.On("GetByID", 1).Return(&model.User{ID: 1, Password: hashedPassword, Username: "test"}, nil)
+					ru.On("GenerateAlphanumericString", mock.Anything).Return("code", nil)
+					uc.On("StoreUserPasswordAndVerificationCode", 1, mock.Anything, mock.Anything).Return(errs.ErrUserDoesNotExist)
+				},
+			},
+			expected: expected{
+				err: errs.ErrUserDoesNotExist,
+			},
+		},
+		{
+			description: "should return error when SendUpdatePasswordEmail failed",
+			input: input{
+				request: &dto.RequestPasswordChangeRequest{
+					UserId:          1,
+					CurrentPassword: "Passwrod123",
+					NewPassword:     "Passwrod1234",
+				},
+				beforeTest: func(ur *mocks.UserRepository, mu *mocks.MailUtils, ru *mocks.RandomUtils, uc *mocks.UserCache) {
+					ur.On("GetByID", 1).Return(&model.User{ID: 1, Password: hashedPassword, Username: "test"}, nil)
+					ru.On("GenerateAlphanumericString", mock.Anything).Return("code", nil)
+					uc.On("StoreUserPasswordAndVerificationCode", 1, mock.Anything, mock.Anything).Return(nil)
+					mu.On("SendUpdatePasswordEmail", mock.Anything, mock.Anything, mock.Anything).Return(errs.ErrUserDoesNotExist)
+				},
+			},
+			expected: expected{
+				err: errs.ErrUserDoesNotExist,
+			},
+		},
+		{
+			description: "should return nil when success",
+			input: input{
+				request: &dto.RequestPasswordChangeRequest{
+					UserId:          1,
+					CurrentPassword: "Passwrod123",
+					NewPassword:     "Passwrod1234",
+				},
+				beforeTest: func(ur *mocks.UserRepository, mu *mocks.MailUtils, ru *mocks.RandomUtils, uc *mocks.UserCache) {
+					ur.On("GetByID", 1).Return(&model.User{ID: 1, Password: hashedPassword, Username: "test"}, nil)
+					ru.On("GenerateAlphanumericString", mock.Anything).Return("code", nil)
+					uc.On("StoreUserPasswordAndVerificationCode", 1, mock.Anything, mock.Anything).Return(nil)
+					mu.On("SendUpdatePasswordEmail", mock.Anything, mock.Anything, mock.Anything).Return(nil)
+				},
+			},
+			expected: expected{
+				err: nil,
+			},
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.description, func(t *testing.T) {
+			userRepo := mocks.NewUserRepository(t)
+			mailUtils := mocks.NewMailUtils(t)
+			randomUtils := mocks.NewRandomUtils(t)
+			userCache := mocks.NewUserCache(t)
+			tc.beforeTest(userRepo, mailUtils, randomUtils, userCache)
+			userService := service.NewUserService(&service.UserSConfig{
+				Repository:  userRepo,
+				MailUtils:   mailUtils,
+				RandomUtils: randomUtils,
+				Redis:       userCache,
+			})
+
+			actualErr := userService.RequestPasswordChange(tc.input.request)
+
+			assert.Equal(t, tc.expected.err, actualErr)
+		})
+	}
+
+}
+
+func TestCompletePasswordChange(t *testing.T) {
+	var (
+		verifcationCode      = "code"
+		newPassword          = "Passwrod1234"
+		wrongVerifcationCode = "wrongCode"
+	)
+	type input struct {
+		request    *dto.CompletePasswordChangeRequest
+		beforeTest func(*mocks.UserRepository, *mocks.UserCache)
+	}
+	type expected struct {
+		err error
+	}
+
+	cases := []struct {
+		description string
+		input
+		expected
+	}{
+		{
+			description: "should return error when FindUserPasswordAndVerificationCode failed",
+			input: input{
+				request: &dto.CompletePasswordChangeRequest{
+					UserId:           1,
+					VerificationCode: "code",
+				},
+				beforeTest: func(ur *mocks.UserRepository, uc *mocks.UserCache) {
+					uc.On("FindUserPasswordAndVerificationCode", 1).Return(newPassword, verifcationCode, errs.ErrUserDoesNotExist)
+				},
+			},
+			expected: expected{
+				err: errs.ErrUserDoesNotExist,
+			},
+		},
+		{
+			description: "should return error when verification code is wrong",
+			input: input{
+				request: &dto.CompletePasswordChangeRequest{
+					UserId:           1,
+					VerificationCode: wrongVerifcationCode,
+				},
+				beforeTest: func(ur *mocks.UserRepository, uc *mocks.UserCache) {
+					uc.On("FindUserPasswordAndVerificationCode", 1).Return(newPassword, verifcationCode, nil)
+				},
+			},
+			expected: expected{
+				err: errs.ErrIncorrectVerificationCode,
+			},
+		},
+		{
+			description: "should return error when UpdatePassword failed",
+			input: input{
+				request: &dto.CompletePasswordChangeRequest{
+					UserId:           1,
+					VerificationCode: verifcationCode,
+				},
+				beforeTest: func(ur *mocks.UserRepository, uc *mocks.UserCache) {
+					uc.On("FindUserPasswordAndVerificationCode", 1).Return(newPassword, verifcationCode, nil)
+					ur.On("UpdatePassword", 1, mock.Anything).Return(nil, errs.ErrUserDoesNotExist)
+				},
+			},
+			expected: expected{
+				err: errs.ErrUserDoesNotExist,
+			},
+		},
+
+		{
+			description: "should return error when DeleteUserPasswordAndVerificationCode failed",
+			input: input{
+				request: &dto.CompletePasswordChangeRequest{
+					UserId:           1,
+					VerificationCode: verifcationCode,
+				},
+				beforeTest: func(ur *mocks.UserRepository, uc *mocks.UserCache) {
+					uc.On("FindUserPasswordAndVerificationCode", 1).Return(newPassword, verifcationCode, nil)
+					ur.On("UpdatePassword", 1, mock.Anything).Return(nil, nil)
+					uc.On("DeleteUserPasswordAndVerificationCode", 1).Return(errs.ErrUserDoesNotExist)
+				},
+			},
+			expected: expected{
+				err: errs.ErrUserDoesNotExist,
+			},
+		},
+		{
+			description: "should return nil when success",
+			input: input{
+				request: &dto.CompletePasswordChangeRequest{
+					UserId:           1,
+					VerificationCode: verifcationCode,
+				},
+				beforeTest: func(ur *mocks.UserRepository, uc *mocks.UserCache) {
+					uc.On("FindUserPasswordAndVerificationCode", 1).Return(newPassword, verifcationCode, nil)
+					ur.On("UpdatePassword", 1, mock.Anything).Return(nil, nil)
+					uc.On("DeleteUserPasswordAndVerificationCode", 1).Return(nil)
+				},
+			},
+			expected: expected{
+				err: nil,
+			},
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.description, func(t *testing.T) {
+			userRepo := mocks.NewUserRepository(t)
+			userCache := mocks.NewUserCache(t)
+			tc.beforeTest(userRepo, userCache)
+			userService := service.NewUserService(&service.UserSConfig{
+				Repository: userRepo,
+				Redis:      userCache,
+			})
+
+			actualErr := userService.CompletePasswordChange(tc.input.request)
+
+			assert.Equal(t, tc.expected.err, actualErr)
+		})
+	}
+
+}
+
+func TestRequestPasswordReset(t *testing.T) {
+	var (
+		email = "email"
+	)
+	type input struct {
+		request    *dto.RequestPasswordResetRequest
+		beforeTest func(*mocks.UserRepository, *mocks.UserCache, *mocks.MailUtils, *mocks.RandomUtils)
+	}
+	type expected struct {
+		err error
+	}
+
+	cases := []struct {
+		description string
+		input
+		expected
+	}{
+		{
+			description: "should return error when FindUserByEmail failed",
+			input: input{
+				request: &dto.RequestPasswordResetRequest{
+					Email: email,
+				},
+				beforeTest: func(ur *mocks.UserRepository, uc *mocks.UserCache, mu *mocks.MailUtils, ru *mocks.RandomUtils) {
+					ur.On("GetByEmail", email).Return(nil, errs.ErrUserDoesNotExist)
+				},
+			},
+			expected: expected{
+				err: errs.ErrUserDoesNotExist,
+			},
+		},
+		{
+			description: "should return error when StoreResetPasswordToken failed",
+			input: input{
+				request: &dto.RequestPasswordResetRequest{
+					Email: email,
+				},
+				beforeTest: func(ur *mocks.UserRepository, uc *mocks.UserCache, mu *mocks.MailUtils, ru *mocks.RandomUtils) {
+					ur.On("GetByEmail", email).Return(&model.User{}, nil)
+					ru.On("GenerateSecureUniqueToken").Return("token")
+					uc.On("StoreResetPasswordToken", mock.Anything, mock.Anything).Return(errs.ErrUserDoesNotExist)
+				},
+			},
+			expected: expected{
+				err: errs.ErrUserDoesNotExist,
+			},
+		},
+		{
+			description: "should return error when SendResetPasswordEmail failed",
+			input: input{
+				request: &dto.RequestPasswordResetRequest{
+					Email: email,
+				},
+				beforeTest: func(ur *mocks.UserRepository, uc *mocks.UserCache, mu *mocks.MailUtils, ru *mocks.RandomUtils) {
+					ur.On("GetByEmail", email).Return(&model.User{}, nil)
+					ru.On("GenerateSecureUniqueToken").Return("token")
+					uc.On("StoreResetPasswordToken", mock.Anything, mock.Anything).Return(nil)
+					mu.On("SendResetPasswordEmail", mock.Anything, mock.Anything).Return(errs.ErrUserDoesNotExist)
+				},
+			},
+			expected: expected{
+				err: errs.ErrUserDoesNotExist,
+			},
+		},
+		{
+			description: "should return nil when success",
+			input: input{
+				request: &dto.RequestPasswordResetRequest{
+					Email: email,
+				},
+				beforeTest: func(ur *mocks.UserRepository, uc *mocks.UserCache, mu *mocks.MailUtils, ru *mocks.RandomUtils) {
+					ur.On("GetByEmail", email).Return(&model.User{}, nil)
+					ru.On("GenerateSecureUniqueToken").Return("token")
+					uc.On("StoreResetPasswordToken", mock.Anything, mock.Anything).Return(nil)
+					mu.On("SendResetPasswordEmail", mock.Anything, mock.Anything).Return(nil)
+				},
+			},
+			expected: expected{
+				err: nil,
+			},
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.description, func(t *testing.T) {
+			userRepo := mocks.NewUserRepository(t)
+			userCache := mocks.NewUserCache(t)
+			mailUtils := mocks.NewMailUtils(t)
+			randomUtils := mocks.NewRandomUtils(t)
+			tc.beforeTest(userRepo, userCache, mailUtils, randomUtils)
+			userService := service.NewUserService(&service.UserSConfig{
+				Repository:  userRepo,
+				Redis:       userCache,
+				MailUtils:   mailUtils,
+				RandomUtils: randomUtils,
+			})
+
+			actualErr := userService.RequestPasswordReset(tc.input.request)
+
+			assert.Equal(t, tc.expected.err, actualErr)
+		})
+	}
+
+}
+
+func TestCompletePasswordReset(t *testing.T) {
+	var (
+		token             = "token"
+		hashedPassword, _ = hash.HashAndSalt("forgottenPas5word")
+	)
+
+	type input struct {
+		request    *dto.CompletePasswordResetRequest
+		beforeTest func(*mocks.UserRepository, *mocks.UserCache)
+	}
+	type expected struct {
+		err error
+	}
+
+	cases := []struct {
+		description string
+		input
+		expected
+	}{
+		{
+			description: "should return error when FindResetPasswordToken failed",
+			input: input{
+				request: &dto.CompletePasswordResetRequest{
+					Token:       token,
+					NewPassword: "newPassword",
+				},
+				beforeTest: func(ur *mocks.UserRepository, uc *mocks.UserCache) {
+					uc.On("FindResetPasswordToken", token).Return(0, errs.ErrUserDoesNotExist)
+				},
+			},
+			expected: expected{
+				err: errs.ErrUserDoesNotExist,
+			},
+		},
+		{
+			description: "should return error when GetByID failed",
+			input: input{
+				request: &dto.CompletePasswordResetRequest{
+					Token:       token,
+					NewPassword: "newPassword",
+				},
+				beforeTest: func(ur *mocks.UserRepository, uc *mocks.UserCache) {
+					uc.On("FindResetPasswordToken", token).Return(1, nil)
+					ur.On("GetByID", 1).Return(nil, errs.ErrUserDoesNotExist)
+				},
+			},
+			expected: expected{
+				err: errs.ErrUserDoesNotExist,
+			},
+		},
+		{
+			description: "should return error when new password is invalid",
+			input: input{
+				request: &dto.CompletePasswordResetRequest{
+					Token:       token,
+					NewPassword: "asdASDa5d",
+				},
+				beforeTest: func(ur *mocks.UserRepository, uc *mocks.UserCache) {
+					uc.On("FindResetPasswordToken", token).Return(1, nil)
+					ur.On("GetByID", 1).Return(&model.User{Username: "asd", ID: 1, Password: hashedPassword}, nil)
+				},
+			},
+			expected: expected{
+				err: errs.ErrContainUsername,
+			},
+		},
+		{
+			description: "should return error when UpdatePassword failed",
+			input: input{
+				request: &dto.CompletePasswordResetRequest{
+					Token:       token,
+					NewPassword: "newPassword123",
+				},
+				beforeTest: func(ur *mocks.UserRepository, uc *mocks.UserCache) {
+					uc.On("FindResetPasswordToken", token).Return(1, nil)
+					ur.On("GetByID", 1).Return(&model.User{Username: "asd", ID: 1}, nil)
+					ur.On("UpdatePassword", mock.Anything, mock.Anything).Return(nil, errs.ErrUserDoesNotExist)
+				},
+			},
+			expected: expected{
+				err: errs.ErrUserDoesNotExist,
+			},
+		},
+		{
+			description: "should return error when DeleteResetPasswordToken failed",
+			input: input{
+				request: &dto.CompletePasswordResetRequest{
+					Token:       token,
+					NewPassword: "newPassword123",
+				},
+				beforeTest: func(ur *mocks.UserRepository, uc *mocks.UserCache) {
+					uc.On("FindResetPasswordToken", token).Return(1, nil)
+					ur.On("GetByID", 1).Return(&model.User{Username: "asd", ID: 1}, nil)
+					ur.On("UpdatePassword", 1, "newPassword123").Return(nil, nil)
+					uc.On("DeleteResetPasswordToken", token).Return(errs.ErrUserDoesNotExist)
+				},
+			},
+			expected: expected{
+				err: errs.ErrUserDoesNotExist,
+			},
+		},
+
+		{
+			description: "should return nil when success",
+			input: input{
+				request: &dto.CompletePasswordResetRequest{
+					Token:       token,
+					NewPassword: "newPassword123",
+				},
+				beforeTest: func(ur *mocks.UserRepository, uc *mocks.UserCache) {
+					uc.On("FindResetPasswordToken", token).Return(1, nil)
+					ur.On("GetByID", 1).Return(&model.User{Username: "asd", ID: 1}, nil)
+					ur.On("UpdatePassword", 1, "newPassword123").Return(nil, nil)
+					uc.On("DeleteResetPasswordToken", token).Return(nil)
+				},
+			},
+			expected: expected{
+				err: nil,
+			},
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.description, func(t *testing.T) {
+			userRepo := mocks.NewUserRepository(t)
+			userCache := mocks.NewUserCache(t)
+			tc.beforeTest(userRepo, userCache)
+			userService := service.NewUserService(&service.UserSConfig{
+				Repository: userRepo,
+				Redis:      userCache,
+			})
+
+			actualErr := userService.CompletePasswordReset(tc.input.request)
+
+			assert.Equal(t, tc.expected.err, actualErr)
+		})
+	}
+
 }
