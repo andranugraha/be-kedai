@@ -67,6 +67,7 @@ type ProductSearchFilterRequest struct {
 	MinRating  int     `form:"minRating"`
 	MinPrice   float64 `form:"minPrice"`
 	MaxPrice   float64 `form:"maxPrice"`
+	Shop       string  `form:"shop"`
 	CityIds    []int
 	Sort       string `form:"sort"`
 	Limit      int    `form:"limit"`
