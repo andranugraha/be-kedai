@@ -102,14 +102,18 @@ func (s *productServiceImpl) GetProductsByShopSlug(slug string, request *dto.Sho
 		return nil, err
 	}
 
-	products, err := s.productRepository.GetByShopID(shop.ID, request)
+	products, totalRows, totalPages, err := s.productRepository.GetByShopID(shop.ID, request)
 
 	if err != nil {
 		return nil, err
 	}
 
 	response := commonDto.PaginationResponse{
-		Data: products,
+		TotalRows:  totalRows,
+		TotalPages: totalPages,
+		Page:       request.Page,
+		Limit:      request.Limit,
+		Data:       products,
 	}
 
 	return &response, nil
