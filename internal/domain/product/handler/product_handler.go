@@ -26,7 +26,7 @@ func (h *Handler) GetRecommendationByCategory(c *gin.Context) {
 			return
 		}
 
-		response.Error(c, http.StatusInternalServerError, code.INTERNAL_SERVER_ERROR, err.Error())
+		response.Error(c, http.StatusInternalServerError, code.INTERNAL_SERVER_ERROR, errs.ErrInternalServerError.Error())
 		return
 	}
 
@@ -61,7 +61,7 @@ func (h *Handler) ProductSearchFiltering(c *gin.Context) {
 			response.Error(c, http.StatusNotFound, code.NOT_FOUND, err.Error())
 			return
 		}
-		response.Error(c, http.StatusInternalServerError, code.INTERNAL_SERVER_ERROR, err.Error())
+		response.Error(c, http.StatusInternalServerError, code.INTERNAL_SERVER_ERROR, errs.ErrInternalServerError.Error())
 		return
 	}
 
