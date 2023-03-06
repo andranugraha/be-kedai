@@ -123,6 +123,7 @@ func (p *ProductSearchFilterRequest) Offset() int {
 
 type ShopProductFilterRequest struct {
 	ShopProductCategoryID int    `form:"shopProductCategoryID"`
+	ExceptionID           int    `form:"exceptionID"`
 	PriceSort             string `form:"priceSort"`
 	Sort                  string `form:"sort"`
 	Limit                 int    `form:"limit"`

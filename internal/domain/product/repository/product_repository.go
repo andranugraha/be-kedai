@@ -149,7 +149,11 @@ func (r *productRepositoryImpl) GetByShopID(shopID int, request *dto.ShopProduct
 
 	totalPages = int(math.Ceil(float64(totalRows) / float64(request.Limit)))
 
-	err = query.Where("products.shop_id = ?", shopID).Limit(request.Limit).Offset(request.Offset()).Find(&products).Error
+	query = query.Where("products.shop_id = ?", shopID)
+	if request.ExceptionID > 0 {
+		query = query.Where("products.id != ?", request.ExceptionID)
+	}
+	err = query.Limit(request.Limit).Offset(request.Offset()).Find(&products).Error
 	if err != nil {
 		return nil, 0, 0, err
 	}
