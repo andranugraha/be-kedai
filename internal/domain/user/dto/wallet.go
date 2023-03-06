@@ -5,5 +5,6 @@ type RegisterWalletRequest struct {
 }
 
 type TopUpRequest struct {
-	Amount float64 `json:"amount" binding:"required,numeric,min=10000,max=20000000"`
+	Amount float64 `form:"amount"`
+	TxnId  string  `form:"txn_id"`
 }
