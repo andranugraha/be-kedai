@@ -21,7 +21,7 @@ func (h *Handler) FindShopBySlug(c *gin.Context) {
 			return
 		}
 
-		response.Error(c, http.StatusInternalServerError, code.INTERNAL_SERVER_ERROR, err.Error())
+		response.Error(c, http.StatusInternalServerError, code.INTERNAL_SERVER_ERROR, errs.ErrInternalServerError.Error())
 		return
 	}
 
@@ -35,7 +35,7 @@ func (h *Handler) FindShopByKeyword(c *gin.Context) {
 
 	result, err := h.shopService.FindShopByKeyword(req)
 	if err != nil {
-		response.Error(c, http.StatusInternalServerError, code.INTERNAL_SERVER_ERROR, err.Error())
+		response.Error(c, http.StatusInternalServerError, code.INTERNAL_SERVER_ERROR, errs.ErrInternalServerError.Error())
 		return
 	}
 
