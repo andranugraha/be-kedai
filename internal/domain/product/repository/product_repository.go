@@ -116,11 +116,11 @@ func (r *productRepositoryImpl) GetByShopID(shopID int, request *dto.ShopProduct
 		Joins("left join product_promotions pp on pp.sku_id = s.id and (select count(id) from shop_promotions sp where pp.promotion_id = sp.id and now() between sp.start_period and sp.end_period) > 0")
 
 	if request.ShopProductCategoryID > 0 {
-		query.Joins("left join shop_category_products scp on products.id = scp.product_id and scp.id = ?", request.ShopProductCategoryID)
+		query.Joins("left join shop_category_products scp on products.id = scp.product_id").Where("scp.id = ?", request.ShopProductCategoryID)
 	}
 
-	query = query.Group("products.id, s.price")
 	query = query.Where("is_active = ?", active)
+	query = query.Group("products.id, s.price")
 
 	var priceSort string
 	if request.PriceSort == constant.SortByPriceHigh {
