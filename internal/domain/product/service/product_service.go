@@ -12,7 +12,6 @@ import (
 type ProductService interface {
 	GetByID(id int) (*model.Product, error)
 	GetByCode(code string) (*dto.ProductDetail, error)
-	GetProductsByShopSlug(slug string, request *dto.ShopProductFilterRequest) (*commonDto.PaginationResponse, error)
 	GetRecommendationByCategory(productId int, categoryId int) ([]*dto.ProductResponse, error)
 	ProductSearchFiltering(req dto.ProductSearchFilterRequest) (*commonDto.PaginationResponse, error)
 }
@@ -69,6 +68,7 @@ func (s *productServiceImpl) GetRecommendationByCategory(productId int, category
 
 func (s *productServiceImpl) ProductSearchFiltering(req dto.ProductSearchFilterRequest) (*commonDto.PaginationResponse, error) {
 	validateKeyword := strings.Trim(req.Keyword, " ")
+	var shopId int
 	if validateKeyword == "" {
 		return &commonDto.PaginationResponse{
 			Data:       []*dto.ProductResponse{},
@@ -79,7 +79,15 @@ func (s *productServiceImpl) ProductSearchFiltering(req dto.ProductSearchFilterR
 		}, nil
 	}
 
-	res, rows, pages, err := s.productRepository.ProductSearchFiltering(req)
+	if req.Shop != "" {
+		shop, err := s.shopService.FindShopBySlug(req.Shop)
+		if err != nil {
+			return nil, err
+		}
+		shopId = shop.ID
+	}
+
+	res, rows, pages, err := s.productRepository.ProductSearchFiltering(req, shopId)
 	if err != nil {
 		return nil, err
 	}
@@ -93,24 +101,4 @@ func (s *productServiceImpl) ProductSearchFiltering(req dto.ProductSearchFilterR
 	}
 
 	return response, nil
-}
-
-func (s *productServiceImpl) GetProductsByShopSlug(slug string, request *dto.ShopProductFilterRequest) (*commonDto.PaginationResponse, error) {
-	shop, err := s.shopService.FindShopBySlug(slug)
-
-	if err != nil {
-		return nil, err
-	}
-
-	products, err := s.productRepository.GetByShopID(shop.ID, request)
-
-	if err != nil {
-		return nil, err
-	}
-
-	response := commonDto.PaginationResponse{
-		Data: products,
-	}
-
-	return &response, nil
 }
