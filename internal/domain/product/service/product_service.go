@@ -12,18 +12,21 @@ import (
 type ProductService interface {
 	GetByID(id int) (*model.Product, error)
 	GetByCode(code string) (*dto.ProductDetail, error)
+	GetProductsByShopSlug(slug string, request *dto.ShopProductFilterRequest) (*commonDto.PaginationResponse, error)
 	GetRecommendationByCategory(productId int, categoryId int) ([]*dto.ProductResponse, error)
 	ProductSearchFiltering(req dto.ProductSearchFilterRequest) (*commonDto.PaginationResponse, error)
 }
 
 type productServiceImpl struct {
 	productRepository  repository.ProductRepository
+	shopService        service.ShopService
 	shopVoucherService service.ShopVoucherService
 	courierService     service.CourierService
 }
 
 type ProductSConfig struct {
 	ProductRepository  repository.ProductRepository
+	ShopService        service.ShopService
 	ShopVoucherService service.ShopVoucherService
 	CourierService     service.CourierService
 }
@@ -33,6 +36,7 @@ func NewProductService(cfg *ProductSConfig) ProductService {
 		productRepository:  cfg.ProductRepository,
 		shopVoucherService: cfg.ShopVoucherService,
 		courierService:     cfg.CourierService,
+		shopService:        cfg.ShopService,
 	}
 }
 
@@ -89,4 +93,24 @@ func (s *productServiceImpl) ProductSearchFiltering(req dto.ProductSearchFilterR
 	}
 
 	return response, nil
+}
+
+func (s *productServiceImpl) GetProductsByShopSlug(slug string, request *dto.ShopProductFilterRequest) (*commonDto.PaginationResponse, error) {
+	shop, err := s.shopService.FindShopBySlug(slug)
+
+	if err != nil {
+		return nil, err
+	}
+
+	products, err := s.productRepository.GetByShopID(shop.ID, request)
+
+	if err != nil {
+		return nil, err
+	}
+
+	response := commonDto.PaginationResponse{
+		Data: products,
+	}
+
+	return &response, nil
 }
