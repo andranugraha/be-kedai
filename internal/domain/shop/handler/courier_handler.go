@@ -8,7 +8,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func (h *Handler) GetAllCourier(c *gin.Context) {
+func (h *Handler) GetAllCouriers(c *gin.Context) {
 	result, err := h.courierService.GetAllCouriers()
 	if err != nil {
 		response.Error(c, http.StatusInternalServerError, code.INTERNAL_SERVER_ERROR, err.Error())
