@@ -263,7 +263,7 @@ func TestTopUp(t *testing.T) {
 				response: &model.WalletHistory{
 					Amount: 50000,
 				},
-				query: "txn_id=50400&amount=50000",
+				query: "txnId=50400&amount=50000",
 				err:   nil,
 				beforeTest: func(mockWalletService *mocks.WalletService) {
 					mockWalletService.On("TopUp", userId, validRequest).Return(res, nil)
@@ -286,7 +286,7 @@ func TestTopUp(t *testing.T) {
 				response: &model.WalletHistory{
 					Amount: 50000,
 				},
-				query: "txn_id=50400&amount=50000",
+				query: "txnId=50400&amount=50000",
 				err:   errRes.ErrWalletDoesNotExist,
 				beforeTest: func(mockWalletService *mocks.WalletService) {
 					mockWalletService.On("TopUp", userId, validRequest).Return(nil, errRes.ErrWalletDoesNotExist)
@@ -324,7 +324,7 @@ func TestTopUp(t *testing.T) {
 				userId:   1,
 				data:     validRequest,
 				response: nil,
-				query:    "txn_id=50400&amount=50000",
+				query:    "txnId=50400&amount=50000",
 				err:      errRes.ErrInternalServerError,
 				beforeTest: func(mockWalletService *mocks.WalletService) {
 					mockWalletService.On("TopUp", userId, validRequest).Return(nil, errRes.ErrInternalServerError)
