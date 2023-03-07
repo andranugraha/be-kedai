@@ -2,11 +2,10 @@ package service
 
 import (
 	commonDto "kedai/backend/be-kedai/internal/common/dto"
-	commonError "kedai/backend/be-kedai/internal/common/error"
 	"kedai/backend/be-kedai/internal/domain/order/dto"
 	"kedai/backend/be-kedai/internal/domain/order/model"
 	"kedai/backend/be-kedai/internal/domain/order/repository"
-	"net/url"
+	"strings"
 )
 
 type InvoicePerShopService interface {
@@ -49,10 +48,7 @@ func (s *invoicePerShopServiceImpl) GetByID(id int) (*model.InvoicePerShop, erro
 }
 
 func (s *invoicePerShopServiceImpl) GetInvoicesByUserIDAndCode(userID int, code string) (*dto.InvoicePerShopDetail, error) {
-	decoded, err := url.QueryUnescape(code)
-	if err != nil {
-		return nil, commonError.ErrInvoiceCodeInvalid
-	}
+	decoded := strings.Replace(code, "-", "/", -1)
 
 	return s.invoicePerShopRepo.GetByUserIDAndCode(userID, decoded)
 }
