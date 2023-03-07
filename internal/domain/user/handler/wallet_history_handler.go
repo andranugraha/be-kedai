@@ -29,3 +29,20 @@ func (h *Handler) GetWalletHistory(c *gin.Context) {
 
 	response.Success(c, http.StatusOK, code.OK, "ok", result)
 }
+
+func (h *Handler) GetDetail(c *gin.Context) {
+	ref := c.Param("ref")
+	userId := c.GetInt("userId")
+
+	result, err := h.walletHistoryService.GetHistoryDetailById(userId, ref)
+	if err != nil {
+		if errors.Is(err, errs.ErrWalletHistoryDoesNotExist) {
+			response.Error(c, http.StatusNotFound, code.NOT_FOUND, err.Error())
+			return
+		}
+		response.Error(c, http.StatusInternalServerError, code.INTERNAL_SERVER_ERROR, err.Error())
+		return
+	}
+
+	response.Success(c, http.StatusOK, code.OK, "ok", result)
+}
