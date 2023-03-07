@@ -3717,7 +3717,96 @@ paths:
                   message:
                     type: string
                     example: "error message"                          
-
+  /v1/orders/invoices/{code}:
+    get:
+      tags:
+        - Order
+      security:
+        - BearerAuth: []
+      summary: Get user shop invoice by invoice code
+      description: Get user shop invoice using invoice code
+      parameters:
+        - in: path
+          name: code
+          required: true
+          description: all slash (`/`) in invoice code should be encoded to hypen (`-`)
+          schema:
+            type: string
+            example: INV-XX-X
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Response'
+                  - type: object
+                    properties:
+                      data:
+                        allOf:
+                          - $ref: '#/components/schemas/InvoicePerShop'
+                          - type: object
+                            properties:
+                              shop:
+                                $ref: '#/components/schemas/Shop'
+                          - type: object
+                            properties:
+                              marketplaceVoucherAmount:
+                                type: number
+                                nullable: true
+                                format: float
+                                example: 0.1
+                          - type: object
+                            properties:
+                              marketplaceVoucherType:
+                                type: string
+                                nullable: true
+                                example: percentage
+                          - type: object
+                            properties:
+                              paymentDte:
+                                type: string
+                                format: datetime
+                                example: "2006-01-02T00:00:00:000Z"
+                          - type: object
+                            properties:
+                              transactionItems:
+                                type: array
+                                items:
+                                  allOf:
+                                    - $ref: '#/components/schemas/Transaction'
+                                    - type: object
+                                      properties:
+                                        productName:
+                                          type: string
+                                          example: "product name"
+                                    - type: object
+                                      properties:
+                                        imageUrl:
+                                          type: string
+                                          format: url
+                                          example: http://example.image/test.png
+                                    - type: object
+                                      properties:
+                                        sku:
+                                          allOf:
+                                            - $ref: '#/components/schemas/SKU'
+                                            - type: object
+                                              properties:
+                                                variants:
+                                                  type: array
+                                                  items:
+                                                    $ref: '#/components/schemas/Variant'
+                                    - type: object
+                                      properties:
+                                        review:
+                                          $ref: '#/components/schemas/TransactionReview'
+                                    - type: object
+                                      properties:
+                                        address:
+                                          $ref: '#/components/schemas/UserAddress'
+                                          
 components:
   schemas:
     User:
