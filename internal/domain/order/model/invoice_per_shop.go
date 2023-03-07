@@ -1,6 +1,10 @@
 package model
 
-import "gorm.io/gorm"
+import (
+	"kedai/backend/be-kedai/internal/domain/shop/model"
+
+	"gorm.io/gorm"
+)
 
 type InvoicePerShop struct {
 	ID              int     `json:"id"`
@@ -19,6 +23,8 @@ type InvoicePerShop struct {
 	ShopID      int `json:"shopId"`
 	PromotionID int `json:"promotionId"`
 	InvoiceID   int `json:"invoiceId"`
+
+	Shop *model.Shop `json:"shop,omitempty"`
 
 	gorm.Model `json:"-"`
 }

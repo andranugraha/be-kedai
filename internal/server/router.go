@@ -149,6 +149,11 @@ func NewRouter(cfg *RouterConfig) *gin.Engine {
 		{
 			authenticated := order.Group("", middleware.JWTAuthorization, cfg.UserHandler.GetSession)
 			{
+				invoice := authenticated.Group("/invoices")
+				{
+					invoice.GET("", cfg.OrderHandler.GetInvoicePerShopsByUserID)
+				}
+
 				transaction := authenticated.Group("/transactions")
 				{
 					review := transaction.Group("/reviews")
