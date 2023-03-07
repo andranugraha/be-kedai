@@ -48,7 +48,7 @@ func TestGetInvoicesByUserID(t *testing.T) {
 				statusCode: http.StatusBadRequest,
 				response: response.Response{
 					Code:    code.BAD_REQUEST,
-					Message: "StartDate must be YYYY-MM-DD",
+					Message: "EndDate is required",
 				},
 			},
 		},
