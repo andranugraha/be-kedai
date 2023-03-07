@@ -44,7 +44,7 @@ func TestGetHistoryDetailById(t *testing.T) {
 		{
 			description: "should return history detail when success",
 			input: input{
-				id: userId,
+				id:     userId,
 				ref:    ref,
 				wallet: wallet,
 				err:    nil,
@@ -61,26 +61,26 @@ func TestGetHistoryDetailById(t *testing.T) {
 		{
 			description: "should return error when user wallet does not exist",
 			input: input{
-				id: userId,
-				ref: ref,
+				id:     userId,
+				ref:    ref,
 				wallet: nil,
-				err: errs.ErrWalletDoesNotExist,
+				err:    errs.ErrWalletDoesNotExist,
 				beforeTest: func(ws *mocks.WalletService, whr *mocks.WalletHistoryRepository) {
 					ws.On("GetWalletByUserID", userId).Return(nil, errs.ErrWalletDoesNotExist)
 				},
 			},
 			expected: expected{
 				result: nil,
-				err: errs.ErrWalletDoesNotExist,
+				err:    errs.ErrWalletDoesNotExist,
 			},
 		},
 		{
 			description: "should return error when internal server error",
 			input: input{
-				id: userId,
-				ref: ref,
+				id:     userId,
+				ref:    ref,
 				wallet: wallet,
-				err: errs.ErrInternalServerError,
+				err:    errs.ErrInternalServerError,
 				beforeTest: func(ws *mocks.WalletService, whr *mocks.WalletHistoryRepository) {
 					ws.On("GetWalletByUserID", userId).Return(wallet, nil)
 					whr.On("GetHistoryDetailById", ref, wallet).Return(nil, errs.ErrInternalServerError)
@@ -88,7 +88,7 @@ func TestGetHistoryDetailById(t *testing.T) {
 			},
 			expected: expected{
 				result: nil,
-				err: errs.ErrInternalServerError,
+				err:    errs.ErrInternalServerError,
 			},
 		},
 	} {
@@ -98,7 +98,7 @@ func TestGetHistoryDetailById(t *testing.T) {
 			tc.beforeTest(mockService, mockRepo)
 			service := service.NewWalletHistoryService(&service.WalletHistorySConfig{
 				WalletHistoryRepository: mockRepo,
-				WalletService: mockService,
+				WalletService:           mockService,
 			})
 
 			result, err := service.GetHistoryDetailById(tc.input.id, tc.input.ref)

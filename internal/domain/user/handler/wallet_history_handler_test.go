@@ -150,7 +150,7 @@ func TestGetDetail(t *testing.T) {
 				id:     historyId,
 				result: history,
 				userId: userId,
-				ref: ref,
+				ref:    ref,
 				err:    nil,
 			},
 			expected: expected{
@@ -168,7 +168,7 @@ func TestGetDetail(t *testing.T) {
 				id:     historyId,
 				result: nil,
 				userId: userId,
-				ref: ref,
+				ref:    ref,
 				err:    errs.ErrWalletHistoryDoesNotExist,
 			},
 			expected: expected{
@@ -185,7 +185,7 @@ func TestGetDetail(t *testing.T) {
 				id:     historyId,
 				result: nil,
 				userId: userId,
-				ref: ref,
+				ref:    ref,
 				err:    errs.ErrInternalServerError,
 			},
 			expected: expected{
