@@ -3637,60 +3637,62 @@ paths:
                           - type: object
                             properties:
                               data:
-                                allOf:
-                                  - $ref: '#/components/schemas/InvoicePerShop'
-                                  - type: object
-                                    properties:
-                                      shop:
-                                        $ref: '#/components/schemas/Shop'
-                                  - type: object
-                                    properties:
-                                      marketplaceVoucherAmount:
-                                        type: number
-                                        nullable: true
-                                        format: float
-                                        example: 0.1
-                                  - type: object
-                                    properties:
-                                      marketplaceVoucherType:
-                                        type: string
-                                        nullable: true
-                                        example: percentage
-                                  - type: object
-                                    properties:
-                                      paymentDte:
-                                        type: string
-                                        format: datetime
-                                        example: "2006-01-02T00:00:00:000Z"
-                                  - type: object
-                                    properties:
-                                      transactionItems:
-                                        type: array
-                                        items:
-                                          allOf:
-                                            - $ref: '#/components/schemas/Transaction'
-                                            - type: object
-                                              properties:
-                                                productName:
-                                                  type: string
-                                                  example: "product name"
-                                            - type: object
-                                              properties:
-                                                imageUrl:
-                                                  type: string
-                                                  format: url
-                                                  example: http://example.image/test.png
-                                            - type: object
-                                              properties:
-                                                sku:
-                                                  allOf:
-                                                    - $ref: '#/components/schemas/SKU'
-                                                    - type: object
-                                                      properties:
-                                                        variants:
-                                                          type: array
-                                                          items:
-                                                            $ref: '#/components/schemas/Variant'
+                                type: array
+                                items:
+                                  allOf:
+                                    - $ref: '#/components/schemas/InvoicePerShop'
+                                    - type: object
+                                      properties:
+                                        shop:
+                                          $ref: '#/components/schemas/Shop'
+                                    - type: object
+                                      properties:
+                                        marketplaceVoucherAmount:
+                                          type: number
+                                          nullable: true
+                                          format: float
+                                          example: 0.1
+                                    - type: object
+                                      properties:
+                                        marketplaceVoucherType:
+                                          type: string
+                                          nullable: true
+                                          example: percentage
+                                    - type: object
+                                      properties:
+                                        paymentDte:
+                                          type: string
+                                          format: datetime
+                                          example: "2006-01-02T00:00:00:000Z"
+                                    - type: object
+                                      properties:
+                                        transactionItems:
+                                          type: array
+                                          items:
+                                            allOf:
+                                              - $ref: '#/components/schemas/Transaction'
+                                              - type: object
+                                                properties:
+                                                  productName:
+                                                    type: string
+                                                    example: "product name"
+                                              - type: object
+                                                properties:
+                                                  imageUrl:
+                                                    type: string
+                                                    format: url
+                                                    example: http://example.image/test.png
+                                              - type: object
+                                                properties:
+                                                  sku:
+                                                    allOf:
+                                                      - $ref: '#/components/schemas/SKU'
+                                                      - type: object
+                                                        properties:
+                                                          variants:
+                                                            type: array
+                                                            items:
+                                                              $ref: '#/components/schemas/Variant'
         '400':
           description: bad request
           content:
@@ -4355,21 +4357,12 @@ components:
         trackingNumber:
           type: int
           example: 123
-        promotionAmount:
-          type: number
-          format: float
-          nullable: true
-          example: 0.1
-        promotionType:
-          type: string
-          nullable: true
-          example: percentage
-        shopVoucherAmount:
+        voucherAmount:
           type: number
           format: float
           nullable: true
           example: 1000
-        shopVoucherType:
+        voucherType:
           type: string
           nullable: true
           example: nominal
@@ -4378,10 +4371,6 @@ components:
           example: COMPLETED
         shopId:
           type: integer
-          example: 1
-        promotionId:
-          type: integer
-          nullable: true
           example: 1
         userId:
           type: integer
