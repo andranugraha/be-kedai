@@ -126,13 +126,14 @@ func (r *invoicePerShopRepositoryImpl) GetByUserIDAndCode(userID int, code strin
 			Joins("JOIN products ON skus.product_id = products.id")
 	}).
 		Preload("TransactionItems.Sku.Variants").
-		Preload("TransactionItems.Review.ReviewMedias").
-		Preload("TransactionItems.Address.Province").
-		Preload("TransactionItems.Address.City").
-		Preload("TransactionItems.Address.District").
-		Preload("TransactionItems.Address.Subdistrict")
+		Preload("TransactionItems.Review.ReviewMedias")
 
-	err := query.Preload("StatusList").Preload("Shop").First(&invoice).Error
+	query = query.Preload("Address.Province").
+		Preload("Address.City").
+		Preload("Address.District").
+		Preload("Address.Subdistrict")
+
+	err := query.Preload("CourierService.Courier").Preload("StatusList").Preload("Shop").First(&invoice).Error
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, commonErr.ErrInvoiceNotFound
