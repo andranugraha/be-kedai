@@ -12,6 +12,103 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func TestGetHistoryDetailById(t *testing.T) {
+	var (
+		userId = 1
+		wallet = &model.Wallet{
+			ID: 1,
+		}
+		detail = &model.WalletHistory{
+			WalletId: 1,
+		}
+		ref = "1"
+	)
+	type input struct {
+		id         int
+		ref        string
+		wallet     *model.Wallet
+		err        error
+		beforeTest func(*mocks.WalletService, *mocks.WalletHistoryRepository)
+	}
+	type expected struct {
+		result *model.WalletHistory
+		err    error
+	}
+	type cases struct {
+		description string
+		input
+		expected
+	}
+
+	for _, tc := range []cases{
+		{
+			description: "should return history detail when success",
+			input: input{
+				id: userId,
+				ref:    ref,
+				wallet: wallet,
+				err:    nil,
+				beforeTest: func(ws *mocks.WalletService, whr *mocks.WalletHistoryRepository) {
+					ws.On("GetWalletByUserID", userId).Return(wallet, nil)
+					whr.On("GetHistoryDetailById", ref, wallet).Return(detail, nil)
+				},
+			},
+			expected: expected{
+				result: detail,
+				err:    nil,
+			},
+		},
+		{
+			description: "should return error when user wallet does not exist",
+			input: input{
+				id: userId,
+				ref: ref,
+				wallet: nil,
+				err: errs.ErrWalletDoesNotExist,
+				beforeTest: func(ws *mocks.WalletService, whr *mocks.WalletHistoryRepository) {
+					ws.On("GetWalletByUserID", userId).Return(nil, errs.ErrWalletDoesNotExist)
+				},
+			},
+			expected: expected{
+				result: nil,
+				err: errs.ErrWalletDoesNotExist,
+			},
+		},
+		{
+			description: "should return error when internal server error",
+			input: input{
+				id: userId,
+				ref: ref,
+				wallet: wallet,
+				err: errs.ErrInternalServerError,
+				beforeTest: func(ws *mocks.WalletService, whr *mocks.WalletHistoryRepository) {
+					ws.On("GetWalletByUserID", userId).Return(wallet, nil)
+					whr.On("GetHistoryDetailById", ref, wallet).Return(nil, errs.ErrInternalServerError)
+				},
+			},
+			expected: expected{
+				result: nil,
+				err: errs.ErrInternalServerError,
+			},
+		},
+	} {
+		t.Run(tc.description, func(t *testing.T) {
+			mockRepo := new(mocks.WalletHistoryRepository)
+			mockService := new(mocks.WalletService)
+			tc.beforeTest(mockService, mockRepo)
+			service := service.NewWalletHistoryService(&service.WalletHistorySConfig{
+				WalletHistoryRepository: mockRepo,
+				WalletService: mockService,
+			})
+
+			result, err := service.GetHistoryDetailById(tc.input.id, tc.input.ref)
+
+			assert.Equal(t, tc.expected.err, err)
+			assert.Equal(t, tc.expected.result, result)
+		})
+	}
+}
+
 func TestGetWalletHistoryById(t *testing.T) {
 	var (
 		userId   = 1
@@ -72,6 +169,22 @@ func TestGetWalletHistoryById(t *testing.T) {
 			expected: expected{
 				result: nil,
 				err:    errs.ErrWalletDoesNotExist,
+			},
+		},
+		{
+			description: "should return error when internal server error",
+			input: input{
+				userId: userId,
+				req:    request,
+				err:    errs.ErrInternalServerError,
+				beforeTest: func(whr *mocks.WalletHistoryRepository, ws *mocks.WalletService) {
+					ws.On("GetWalletByUserID", userId).Return(wallet, nil)
+					whr.On("GetWalletHistoryById", request, walletId).Return(nil, int64(0), 0, errs.ErrInternalServerError)
+				},
+			},
+			expected: expected{
+				result: nil,
+				err:    errs.ErrInternalServerError,
 			},
 		},
 	} {
