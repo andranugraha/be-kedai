@@ -116,3 +116,104 @@ func TestGetWalletHistory(t *testing.T) {
 		})
 	}
 }
+
+func TestGetDetail(t *testing.T) {
+	var (
+		historyId = 1
+		history   = &model.WalletHistory{
+			ID: 1,
+		}
+		userId = 1
+		ref    = "1"
+	)
+	type input struct {
+		id     int
+		userId int
+		ref    string
+		result *model.WalletHistory
+		err    error
+	}
+	type expected struct {
+		statusCode int
+		response   response.Response
+	}
+	type cases struct {
+		description string
+		input
+		expected
+	}
+
+	for _, tc := range []cases{
+		{
+			description: "should return history detail with code 200 when success",
+			input: input{
+				id:     historyId,
+				result: history,
+				userId: userId,
+				ref: ref,
+				err:    nil,
+			},
+			expected: expected{
+				statusCode: http.StatusOK,
+				response: response.Response{
+					Code:    code.OK,
+					Message: "ok",
+					Data:    history,
+				},
+			},
+		},
+		{
+			description: "should return error with code 404 when history not found",
+			input: input{
+				id:     historyId,
+				result: nil,
+				userId: userId,
+				ref: ref,
+				err:    errs.ErrWalletHistoryDoesNotExist,
+			},
+			expected: expected{
+				statusCode: http.StatusNotFound,
+				response: response.Response{
+					Code:    code.NOT_FOUND,
+					Message: errs.ErrWalletHistoryDoesNotExist.Error(),
+				},
+			},
+		},
+		{
+			description: "should return error with code 500 when internal server error",
+			input: input{
+				id:     historyId,
+				result: nil,
+				userId: userId,
+				ref: ref,
+				err:    errs.ErrInternalServerError,
+			},
+			expected: expected{
+				statusCode: http.StatusInternalServerError,
+				response: response.Response{
+					Code:    code.INTERNAL_SERVER_ERROR,
+					Message: errs.ErrInternalServerError.Error(),
+				},
+			},
+		},
+	} {
+		t.Run(tc.description, func(t *testing.T) {
+			expectedRes, _ := json.Marshal(tc.expected.response)
+			rec := httptest.NewRecorder()
+			c, _ := gin.CreateTestContext(rec)
+			c.Set("userId", userId)
+			c.AddParam("ref", "1")
+			mockWalletHistoryService := new(mocks.WalletHistoryService)
+			mockWalletHistoryService.On("GetHistoryDetailById", tc.input.userId, tc.input.ref).Return(tc.input.result, tc.input.err)
+			handler := handler.New(&handler.HandlerConfig{
+				WalletHistoryService: mockWalletHistoryService,
+			})
+			c.Request, _ = http.NewRequest("POST", "/users/wallets/histories", nil)
+
+			handler.GetDetail(c)
+
+			assert.Equal(t, tc.expected.statusCode, rec.Code)
+			assert.Equal(t, string(expectedRes), rec.Body.String())
+		})
+	}
+}
