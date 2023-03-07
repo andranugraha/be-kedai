@@ -17,6 +17,7 @@ tags:
   - name: Product
   - name: Shop
   - name: Marketplace
+  - name: Order
 paths:
   /v1/users/wallets:
     get:
@@ -3234,6 +3235,149 @@ paths:
                   message:
                     type: string
                     example: "error message"                            
+  /v1/orders/invoices:
+    get:
+      security:
+        - BearerAuth: []
+      tags:
+        - Order
+      summary: Get user invoice per shop histories
+      description: Get user invoice per shop histories
+      parameters:
+        - in: query
+          name: page
+          schema:
+            type: integer
+            default: 1
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            default: 10
+        - in: query
+          name: status
+          description: invoice status. Any other value than those defined below will be set `''`
+          schema:
+            type: string
+            default: ''
+            enum: ['', 'COMPLETED', 'CREATED', 'SENT', 'RECEIVED', 'COMPLAINED', 'COMPLAINT_CONFIRMED', 'COMPLAINT_REJECTED', 'CANCELLED']
+        - in: query
+          name: startDate
+          description: startDate format is YYYY-MM-DD. If startDate is stated in the request, endDate should be stated as well
+          schema:
+            type: string
+            format: date
+            example: 2006-01-02
+        - in: query
+          name: endDate
+          description: endDate format is YYYY-MM-DD. If endDate is stated in the request, startDate should be stated as well
+          schema:
+            type: string
+            format: date
+            example: 2006-01-02
+        - in: query
+          name: s
+          description: search query (can be either shop name, product name, or invoice code)
+          schema:
+            type: string
+            example: INV/
+      responses:
+        '200':
+          description: operation successful
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Response'
+                  - type: object
+                    properties:
+                      data:
+                        allOf:
+                          - $ref: '#/components/schemas/PaginationResponse'
+                          - type: object
+                            properties:
+                              data:
+                                allOf:
+                                  - $ref: '#/components/schemas/InvoicePerShop'
+                                  - type: object
+                                    properties:
+                                      shop:
+                                        $ref: '#/components/schemas/Shop'
+                                  - type: object
+                                    properties:
+                                      voucherAmount:
+                                        type: number
+                                        nullable: true
+                                        format: float
+                                        example: 0.1
+                                  - type: object
+                                    properties:
+                                      voucherType:
+                                        type: string
+                                        nullable: true
+                                        example: percentage
+                                  - type: object
+                                    properties:
+                                      paymentDte:
+                                        type: string
+                                        format: datetime
+                                        example: "2006-01-02T00:00:00:000Z"
+                                  - type: object
+                                    properties:
+                                      transactionItems:
+                                        type: array
+                                        items:
+                                          allOf:
+                                            - $ref: '#/components/schemas/Transaction'
+                                            - type: object
+                                              properties:
+                                                productName:
+                                                  type: string
+                                                  example: "product name"
+                                            - type: object
+                                              properties:
+                                                imageUrl:
+                                                  type: string
+                                                  format: url
+                                                  example: http://example.image/test.png
+                                            - type: object
+                                              properties:
+                                                sku:
+                                                  allOf:
+                                                    - $ref: '#/components/schemas/SKU'
+                                                    - type: object
+                                                      properties:
+                                                        variants:
+                                                          type: array
+                                                          items:
+                                                            $ref: '#/components/schemas/Variant'
+        '400':
+          description: bad request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "BAD_REQUEST"
+                  message:
+                    type: string
+                    example: "error message"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "INTERNAL_SERVER_ERROR"
+                  message:
+                    type: string
+                    example: "error message"                          
+
 components:
   schemas:
     User:
@@ -3710,9 +3854,6 @@ components:
         isDefault:
           type: boolean
           example: true
-          
-          
-        
     SealabsPay:
       type: object
       properties:
@@ -3729,6 +3870,104 @@ components:
         expiryDate:
           type: string
           example: '2024-12-31T00:00:00Z'
+    InvoicePerShop:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        code:
+          type: string
+          example: INV/XX/X
+        subtotal:
+          type: number
+          format: float
+          example: 10000
+        total:
+          type: number
+          format: float
+          example: 10000
+        shippingCost:
+          type: number
+          format: float
+          example: 1000
+        trackingNumber:
+          type: int
+          example: 123
+        promotionAmount:
+          type: number
+          format: float
+          nullable: true
+          example: 0.1
+        promotionType:
+          type: string
+          nullable: true
+          example: percentage
+        shopVoucherAmount:
+          type: number
+          format: float
+          nullable: true
+          example: 1000
+        shopVoucherType:
+          type: string
+          nullable: true
+          example: nominal
+        status:
+          type: string
+          example: COMPLETED
+        shopId:
+          type: integer
+          example: 1
+        promotionId:
+          type: integer
+          nullable: true
+          example: 1
+        userId:
+          type: integer
+          example: 1
+        voucherId:
+          type: integer
+          nullable: true
+          example: 1
+        invoiceId:
+          type: integer
+          example: 1
+        courierServiceId:
+          type: integer
+          example: 1
+    Transaction:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        price:
+          type: number
+          format: float
+          example: 1000000
+        totalPrice:
+          type: number
+          format: float
+          example: 4000000
+        quantity:
+          type: integer
+          example: 4
+        note:
+          type: string
+          nullable: true
+          example: "purchase note"
+        invoiceId:
+          type: integer
+          example: 1
+        addressId:
+          type: integer
+          example: 1
+        userId:
+          type: integer
+          example: 1
+        skuId:
+          type: integer
+          example: 1
   requestBodies:
     WalletBody:
       required: true
