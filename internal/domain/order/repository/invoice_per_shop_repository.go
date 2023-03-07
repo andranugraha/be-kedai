@@ -44,7 +44,7 @@ func (r *invoicePerShopRepositoryImpl) GetByUserID(userID int, request *dto.Invo
 		Joins("JOIN products ON skus.product_id = products.id").
 		Joins("JOIN shops ON products.shop_id = shops.id").
 		Where("invoice_per_shops.user_id = ?", userID).
-		Where("products.name ILIKE ? OR shops.name ILIKE ? OR invoice_per_shops.code = ?", fmt.Sprintf("%%%s%%", request.S), fmt.Sprintf("%%%s%%", request.S), fmt.Sprintf("%%%s%%", request.S))
+		Where("products.name ILIKE ? OR shops.name ILIKE ? OR invoice_per_shops.code ILIKE ?", fmt.Sprintf("%%%s%%", request.S), fmt.Sprintf("%%%s%%", request.S), fmt.Sprintf("%%%s%%", request.S))
 
 	if request.Status != "" {
 		query = query.Where("invoice_per_shops.status = ?", request.Status)
