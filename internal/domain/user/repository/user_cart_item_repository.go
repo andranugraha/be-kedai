@@ -125,7 +125,7 @@ func (r *userCartItemRepository) GetCartItemByIdAndUserId(id, userId int) (*mode
 		Joins("join skus s on cart_items.sku_id = s.id").
 		Joins("join products p on s.product_id = p.id").
 		Where("p.is_active = ?", true).
-		Preload("Sku.Product").Preload("Sku.Promotion").First(&cartItem).Error
+		Preload("Sku.Product.Bulk").Preload("Sku.Promotion").First(&cartItem).Error
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, errs.ErrCartItemNotFound
@@ -137,7 +137,7 @@ func (r *userCartItemRepository) GetCartItemByIdAndUserId(id, userId int) (*mode
 }
 
 func (r *userCartItemRepository) DeleteCartItemBySkuIdsAndUserId(tx *gorm.DB, skuIds []int, userId int) error {
-	err := tx.Where("sku_id IN ?", skuIds).Where("user_id = ?", userId).Delete(&model.CartItem{}).Error
+	err := tx.Unscoped().Where("sku_id IN ?", skuIds).Where("user_id = ?", userId).Delete(&model.CartItem{}).Error
 	if err != nil {
 		return err
 	}

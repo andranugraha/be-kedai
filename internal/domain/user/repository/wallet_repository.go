@@ -69,10 +69,12 @@ func (r *walletRepositoryImpl) DeductBalanceByUserID(tx *gorm.DB, userID int, am
 		Clauses(clause.Returning{}).
 		Update("balance", gorm.Expr("balance - ?", amount))
 	if err.Error != nil {
+		tx.Rollback()
 		return err.Error
 	}
 
 	if err.RowsAffected == 0 {
+		tx.Rollback()
 		return errRes.ErrInsufficientBalance
 	}
 
@@ -83,6 +85,7 @@ func (r *walletRepositoryImpl) DeductBalanceByUserID(tx *gorm.DB, userID int, am
 		Reference: txnID,
 	})
 	if historyErr != nil {
+		tx.Rollback()
 		return historyErr
 	}
 

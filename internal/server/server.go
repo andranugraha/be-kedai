@@ -38,6 +38,10 @@ func createRouter() *gin.Engine {
 	db := connection.GetDB()
 	redis := connection.GetCache()
 
+	userCache := userCache.NewUserCache(&userCache.UserCConfig{
+		RDC: redis,
+	})
+
 	userVoucherRepo := userRepoPackage.NewUserVoucherRepository(&userRepoPackage.UserVoucherRConfig{
 		DB: db,
 	})
@@ -98,6 +102,7 @@ func createRouter() *gin.Engine {
 
 	walletService := userServicePackage.NewWalletService(&userServicePackage.WalletSConfig{
 		WalletRepo: walletRepo,
+		Redis:      userCache,
 	})
 
 	walletHistoryService := userServicePackage.NewWalletHistoryService(&userServicePackage.WalletHistorySConfig{
@@ -152,9 +157,6 @@ func createRouter() *gin.Engine {
 		ShopVoucherService: shopVoucherService,
 	})
 
-	userCache := userCache.NewUserCache(&userCache.UserCConfig{
-		RDC: redis,
-	})
 	userProfileRepo := userRepoPackage.NewUserProfileRepository(&userRepoPackage.UserProfileRConfig{
 		DB: db,
 	})
@@ -271,8 +273,16 @@ func createRouter() *gin.Engine {
 		SkuService:      skuService,
 	})
 
-	invoiceRepo := orderRepoPackage.NewInvoiceRepository(&orderRepoPackage.InvoiceRConfig{
+	invoiceStatusRepo := orderRepoPackage.NewInvoiceStatusRepository(&orderRepoPackage.InvoiceStatusRConfig{
 		DB: db,
+	})
+	invoiceRepo := orderRepoPackage.NewInvoiceRepository(&orderRepoPackage.InvoiceRConfig{
+		DB:                db,
+		UserCartItemRepo:  userCartItemRepo,
+		SkuRepo:           skuRepo,
+		UserWalletRepo:    walletRepo,
+		InvoiceStatusRepo: invoiceStatusRepo,
+		Redis:             userCache,
 	})
 	invoiceService := orderServicePackage.NewInvoiceService(&orderServicePackage.InvoiceSConfig{
 		InvoiceRepo:               invoiceRepo,

@@ -7,7 +7,7 @@ import (
 )
 
 type InvoiceStatusRepository interface {
-	Create(*gorm.DB, []model.InvoiceStatus) error
+	Create(*gorm.DB, []*model.InvoiceStatus) error
 }
 
 type invoiceStatusRepositoryImpl struct {
@@ -24,7 +24,12 @@ func NewInvoiceStatusRepository(cfg *InvoiceStatusRConfig) InvoiceStatusReposito
 	}
 }
 
-func (r *invoiceStatusRepositoryImpl) Create(tx *gorm.DB, status []model.InvoiceStatus) error {
+func (r *invoiceStatusRepositoryImpl) Create(tx *gorm.DB, status []*model.InvoiceStatus) error {
 	err := tx.Create(&status).Error
-	return err
+	if err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	return nil
 }

@@ -7,6 +7,7 @@ import (
 	"kedai/backend/be-kedai/internal/domain/order/dto"
 	"kedai/backend/be-kedai/internal/utils/response"
 	"net/http"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 )
@@ -28,7 +29,8 @@ func (h *Handler) Checkout(c *gin.Context) {
 	invoice, err := h.invoiceService.Checkout(req)
 	if err != nil {
 		if errors.Is(err, commonErr.ErrAddressNotFound) || errors.Is(err, commonErr.ErrShopNotFound) ||
-			errors.Is(err, commonErr.ErrTotalPriceNotMatch) || errors.Is(err, commonErr.ErrCourierNotFound) {
+			errors.Is(err, commonErr.ErrTotalPriceNotMatch) || errors.Is(err, commonErr.ErrCourierNotFound) ||
+			errors.Is(err, commonErr.ErrInvalidVoucher) {
 			response.Error(c, http.StatusBadRequest, code.BAD_REQUEST, err.Error())
 			return
 		}
@@ -63,4 +65,25 @@ func (h *Handler) PayInvoice(c *gin.Context) {
 	}
 
 	req.UserID = c.GetInt("userId")
+
+	token := c.GetHeader("authorization")
+	token = strings.Replace(token, "Bearer ", "", -1)
+
+	invoice, err := h.invoiceService.PayInvoice(req, token)
+	if err != nil {
+		if errors.Is(err, commonErr.ErrInvoiceNotFound) || errors.Is(err, commonErr.ErrInvoiceAlreadyPaid) {
+			response.Error(c, http.StatusBadRequest, code.BAD_REQUEST, err.Error())
+			return
+		}
+
+		if errors.Is(err, commonErr.ErrInsufficientBalance) {
+			response.Error(c, http.StatusBadRequest, code.INSUFFICIENT_BALANCE, err.Error())
+			return
+		}
+
+		response.Error(c, http.StatusInternalServerError, code.INTERNAL_SERVER_ERROR, commonErr.ErrInternalServerError.Error())
+		return
+	}
+
+	response.Success(c, http.StatusOK, code.OK, "pay invoice success", invoice)
 }

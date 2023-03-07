@@ -23,7 +23,7 @@ type Invoice struct {
 	UserAddressID   int  `json:"userAddressId"`
 
 	Voucher         *userModel.UserVoucher `json:"voucher,omitempty" gorm:"foreignKey:VoucherID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE;"`
-	InvoicePerShops []InvoicePerShop       `json:"invoicePerShops" gorm:"foreignKey:InvoiceID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE;"`
+	InvoicePerShops []*InvoicePerShop      `json:"invoicePerShops" gorm:"foreignKey:InvoiceID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE;"`
 
 	gorm.Model `json:"-"`
 }

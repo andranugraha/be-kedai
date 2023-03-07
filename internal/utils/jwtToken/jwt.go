@@ -9,12 +9,13 @@ import (
 	"github.com/golang-jwt/jwt/v4"
 )
 
-func GenerateAccessToken(user *model.User) (string, error) {
+func GenerateAccessToken(user *model.User, level int) (string, error) {
 
 	accessTime := ParseTokenAgeFromENV(config.GetEnv("ACCESS_TOKEN_AGE", ""), "access")
 	claims := &model.Claim{
 		UserId:    user.ID,
 		TokenType: "access",
+		Level:     level,
 		RegisteredClaims: jwt.RegisteredClaims{
 			IssuedAt:  jwt.NewNumericDate(time.Now()),
 			Issuer:    "Kedai",
@@ -28,11 +29,12 @@ func GenerateAccessToken(user *model.User) (string, error) {
 	return tokenString, nil
 }
 
-func GenerateRefreshToken(user *model.User) (string, error) {
+func GenerateRefreshToken(user *model.User, level int) (string, error) {
 	refreshTime := ParseTokenAgeFromENV(config.GetEnv("REFRESH_TOKEN_AGE", ""), "refresh")
 	claims := &model.Claim{
 		UserId:    user.ID,
 		TokenType: "refresh",
+		Level:     level,
 		RegisteredClaims: jwt.RegisteredClaims{
 			IssuedAt:  jwt.NewNumericDate(time.Now()),
 			Issuer:    "Kedai",

@@ -27,3 +27,7 @@ func (req *WalletHistoryRequest) Validate() {
 func (req *WalletHistoryRequest) Offset() int {
 	return (req.Page - 1) * req.Limit
 }
+
+type StepUpRequest struct {
+	Pin string `form:"pin" binding:"required,numeric,len=6"`
+}

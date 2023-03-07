@@ -10,14 +10,17 @@ import (
 	"kedai/backend/be-kedai/internal/domain/order/repository"
 	shopModel "kedai/backend/be-kedai/internal/domain/shop/model"
 	shopService "kedai/backend/be-kedai/internal/domain/shop/service"
+	"kedai/backend/be-kedai/internal/domain/user/cache"
+	userDto "kedai/backend/be-kedai/internal/domain/user/dto"
 	userModel "kedai/backend/be-kedai/internal/domain/user/model"
 	userService "kedai/backend/be-kedai/internal/domain/user/service"
+	"kedai/backend/be-kedai/internal/utils/random"
 	"time"
 )
 
 type InvoiceService interface {
 	Checkout(req dto.CheckoutRequest) (*dto.CheckoutResponse, error)
-	PayInvoice(req dto.PayInvoiceRequest) (*dto.PayInvoiceResponse, error)
+	PayInvoice(req dto.PayInvoiceRequest, token string) (*userDto.Token, error)
 }
 
 type invoiceServiceImpl struct {
@@ -28,6 +31,7 @@ type invoiceServiceImpl struct {
 	cartItemService           userService.UserCartItemService
 	shopCourierService        shopService.CourierService
 	marketplaceVoucherService marketplaceService.MarketplaceVoucherService
+	redis                     cache.UserCache
 }
 
 type InvoiceSConfig struct {
@@ -38,6 +42,7 @@ type InvoiceSConfig struct {
 	CartItemService           userService.UserCartItemService
 	ShopCourierService        shopService.CourierService
 	MarketplaceVoucherService marketplaceService.MarketplaceVoucherService
+	Redis                     cache.UserCache
 }
 
 func NewInvoiceService(cfg *InvoiceSConfig) InvoiceService {
@@ -49,6 +54,7 @@ func NewInvoiceService(cfg *InvoiceSConfig) InvoiceService {
 		cartItemService:           cfg.CartItemService,
 		shopCourierService:        cfg.ShopCourierService,
 		marketplaceVoucherService: cfg.MarketplaceVoucherService,
+		redis:                     cfg.Redis,
 	}
 }
 
@@ -69,7 +75,7 @@ func (s *invoiceServiceImpl) Checkout(req dto.CheckoutRequest) (*dto.CheckoutRes
 	var (
 		totalPrice        float64
 		totalShippingCost float64
-		shopInvoices      []model.InvoicePerShop
+		shopInvoices      []*model.InvoicePerShop
 	)
 	for _, item := range req.Items {
 		_, err := s.shopService.FindShopById(item.ShopID)
@@ -84,7 +90,7 @@ func (s *invoiceServiceImpl) Checkout(req dto.CheckoutRequest) (*dto.CheckoutRes
 
 		var (
 			shopTotalPrice float64
-			transactions   []model.Transaction
+			transactions   []*model.Transaction
 		)
 		for _, product := range item.Products {
 			cartItem, err := s.cartItemService.GetCartItemByIdAndUserId(product.CartItemID, req.UserID)
@@ -100,7 +106,15 @@ func (s *invoiceServiceImpl) Checkout(req dto.CheckoutRequest) (*dto.CheckoutRes
 				return nil, commonError.ErrProductQuantityNotEnough
 			}
 
+			if marketplaceVoucher != nil && marketplaceVoucher.CategoryID != nil && cartItem.Sku.Product.CategoryID != *marketplaceVoucher.CategoryID {
+				return nil, commonError.ErrInvalidVoucher
+			}
+
 			price := cartItem.Sku.Price
+			if cartItem.Sku.Product.Bulk != nil && product.Quantity >= cartItem.Sku.Product.Bulk.MinQuantity {
+				price = cartItem.Sku.Product.Bulk.Price
+			}
+
 			if cartItem.Sku.Promotion != nil {
 				switch cartItem.Sku.Promotion.Type {
 				case shopModel.PromotionTypePercent:
@@ -110,18 +124,13 @@ func (s *invoiceServiceImpl) Checkout(req dto.CheckoutRequest) (*dto.CheckoutRes
 				}
 			}
 
-			if marketplaceVoucher != nil && marketplaceVoucher.CategoryID != nil && cartItem.Sku.Product.CategoryID != *marketplaceVoucher.CategoryID {
-				return nil, commonError.ErrInvalidVoucher
-			}
-
-			transactions = append(transactions, model.Transaction{
+			transactions = append(transactions, &model.Transaction{
 				SkuID:      cartItem.SkuId,
 				Price:      price,
 				Quantity:   product.Quantity,
 				TotalPrice: price * float64(product.Quantity),
 				Note:       &cartItem.Notes,
 				UserID:     req.UserID,
-				AddressID:  req.AddressID,
 			})
 
 			shopTotalPrice += price * float64(product.Quantity)
@@ -139,7 +148,7 @@ func (s *invoiceServiceImpl) Checkout(req dto.CheckoutRequest) (*dto.CheckoutRes
 			return nil, commonError.ErrTotalSpentBelowMinimumSpendingRequirement
 		}
 
-		shopInvoices = append(shopInvoices, model.InvoicePerShop{
+		shopInvoices = append(shopInvoices, &model.InvoicePerShop{
 			ShopID: item.ShopID,
 			Total: func() float64 {
 				price := shopTotalPrice + item.ShippingCost
@@ -182,6 +191,7 @@ func (s *invoiceServiceImpl) Checkout(req dto.CheckoutRequest) (*dto.CheckoutRes
 			Status:           constant.TransactionStatusWaitingForPayment,
 			UserID:           req.UserID,
 			CourierServiceID: item.CourierServiceID,
+			AddressID:        req.AddressID,
 			Transactions:     transactions,
 		})
 
@@ -256,7 +266,7 @@ func (s *invoiceServiceImpl) Checkout(req dto.CheckoutRequest) (*dto.CheckoutRes
 	}, nil
 }
 
-func (s *invoiceServiceImpl) PayInvoice(req dto.PayInvoiceRequest) (*dto.PayInvoiceResponse, error) {
+func (s *invoiceServiceImpl) PayInvoice(req dto.PayInvoiceRequest, token string) (*userDto.Token, error) {
 	invoice, err := s.invoiceRepo.GetByIDAndUserID(req.InvoiceID, req.UserID)
 	if err != nil {
 		return nil, err
@@ -266,11 +276,15 @@ func (s *invoiceServiceImpl) PayInvoice(req dto.PayInvoiceRequest) (*dto.PayInvo
 		if invoice.PaymentMethodID == constant.PaymentMethodSeaLabsPay {
 			return nil, commonError.ErrSealabsPayTransactionID
 		}
+
+		randomGen := random.NewRandomUtils(&random.RandomUtilsConfig{})
+		defaultRefLength := 5
+		req.TxnID = randomGen.GenerateNumericString(defaultRefLength)
 	}
 
 	var (
 		skuIds          []int
-		invoiceStatuses []model.InvoiceStatus
+		invoiceStatuses []*model.InvoiceStatus
 	)
 	for _, shopInvoice := range invoice.InvoicePerShops {
 		if shopInvoice.Status != constant.TransactionStatusWaitingForPayment {
@@ -279,7 +293,7 @@ func (s *invoiceServiceImpl) PayInvoice(req dto.PayInvoiceRequest) (*dto.PayInvo
 
 		shopInvoice.Status = constant.TransactionStatusCreated
 
-		invoiceStatuses = append(invoiceStatuses, model.InvoiceStatus{
+		invoiceStatuses = append(invoiceStatuses, &model.InvoiceStatus{
 			Status:           shopInvoice.Status,
 			InvoicePerShopID: shopInvoice.ID,
 		})
@@ -291,12 +305,10 @@ func (s *invoiceServiceImpl) PayInvoice(req dto.PayInvoiceRequest) (*dto.PayInvo
 
 	invoice.PaymentDate = time.Now()
 
-	invoice, err = s.invoiceRepo.Pay(invoice, skuIds, invoiceStatuses, req.TxnID)
+	newToken, err := s.invoiceRepo.Pay(invoice, skuIds, invoiceStatuses, req.TxnID, token)
 	if err != nil {
 		return nil, err
 	}
 
-	return &dto.PayInvoiceResponse{
-		ID: invoice.ID,
-	}, nil
+	return newToken, nil
 }

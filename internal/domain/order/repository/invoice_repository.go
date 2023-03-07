@@ -6,7 +6,11 @@ import (
 	errs "kedai/backend/be-kedai/internal/common/error"
 	"kedai/backend/be-kedai/internal/domain/order/model"
 	productRepo "kedai/backend/be-kedai/internal/domain/product/repository"
+	"kedai/backend/be-kedai/internal/domain/user/cache"
+	userDto "kedai/backend/be-kedai/internal/domain/user/dto"
+	userModel "kedai/backend/be-kedai/internal/domain/user/model"
 	userRepo "kedai/backend/be-kedai/internal/domain/user/repository"
+	jwttoken "kedai/backend/be-kedai/internal/utils/jwtToken"
 
 	"gorm.io/gorm"
 )
@@ -14,7 +18,7 @@ import (
 type InvoiceRepository interface {
 	Create(invoice *model.Invoice) (*model.Invoice, error)
 	GetByIDAndUserID(id, userID int) (*model.Invoice, error)
-	Pay(invoice *model.Invoice, skuIds []int, invoiceStatuses []model.InvoiceStatus, txnID string) (*model.Invoice, error)
+	Pay(invoice *model.Invoice, skuIds []int, invoiceStatuses []*model.InvoiceStatus, txnID, token string) (*userDto.Token, error)
 }
 
 type invoiceRepositoryImpl struct {
@@ -23,6 +27,7 @@ type invoiceRepositoryImpl struct {
 	skuRepo           productRepo.SkuRepository
 	userWalletRepo    userRepo.WalletRepository
 	invoiceStatusRepo InvoiceStatusRepository
+	redis             cache.UserCache
 }
 
 type InvoiceRConfig struct {
@@ -31,6 +36,7 @@ type InvoiceRConfig struct {
 	SkuRepo           productRepo.SkuRepository
 	UserWalletRepo    userRepo.WalletRepository
 	InvoiceStatusRepo InvoiceStatusRepository
+	Redis             cache.UserCache
 }
 
 func NewInvoiceRepository(config *InvoiceRConfig) InvoiceRepository {
@@ -40,6 +46,7 @@ func NewInvoiceRepository(config *InvoiceRConfig) InvoiceRepository {
 		skuRepo:           config.SkuRepo,
 		userWalletRepo:    config.UserWalletRepo,
 		invoiceStatusRepo: config.InvoiceStatusRepo,
+		redis:             config.Redis,
 	}
 }
 
@@ -82,7 +89,7 @@ func (r *invoiceRepositoryImpl) GetByIDAndUserID(id, userID int) (*model.Invoice
 	return &invoice, nil
 }
 
-func (r *invoiceRepositoryImpl) Pay(invoice *model.Invoice, skuIds []int, invoiceStatuses []model.InvoiceStatus, txnID string) (*model.Invoice, error) {
+func (r *invoiceRepositoryImpl) Pay(invoice *model.Invoice, skuIds []int, invoiceStatuses []*model.InvoiceStatus, txnID, token string) (*userDto.Token, error) {
 	tx := r.db.Begin()
 	defer tx.Commit()
 
@@ -94,7 +101,7 @@ func (r *invoiceRepositoryImpl) Pay(invoice *model.Invoice, skuIds []int, invoic
 		}
 	}
 
-	err := tx.Save(invoice).Error
+	err := tx.Session(&gorm.Session{FullSaveAssociations: true}).Save(invoice).Error
 	if err != nil {
 		tx.Rollback()
 		return nil, err
@@ -112,5 +119,30 @@ func (r *invoiceRepositoryImpl) Pay(invoice *model.Invoice, skuIds []int, invoic
 		return nil, err
 	}
 
-	return invoice, nil
+	err = r.redis.DeleteToken(token)
+	if err != nil {
+		tx.Rollback()
+		return nil, err
+	}
+
+	var (
+		user = &userModel.User{
+			ID: invoice.UserID,
+		}
+		defaultLevel = 0
+	)
+	accessToken, _ := jwttoken.GenerateAccessToken(user, defaultLevel)
+	refreshToken, _ := jwttoken.GenerateRefreshToken(user, defaultLevel)
+
+	newToken := &userDto.Token{
+		AccessToken:  accessToken,
+		RefreshToken: refreshToken,
+	}
+
+	err = r.redis.StoreToken(invoice.UserID, accessToken, refreshToken)
+	if err != nil {
+		return nil, err
+	}
+
+	return newToken, nil
 }

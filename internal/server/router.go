@@ -73,6 +73,7 @@ func NewRouter(cfg *RouterConfig) *gin.Engine {
 					wallet.GET("/:ref", cfg.UserHandler.GetDetail)
 					wallet.POST("/top-up", cfg.UserHandler.TopUp)
 					wallet.GET("/histories", cfg.UserHandler.GetWalletHistory)
+					wallet.POST("/step-up", cfg.UserHandler.StepUp)
 				}
 				wishlists := userAuthenticated.Group("/wishlists")
 				{
@@ -150,6 +151,10 @@ func NewRouter(cfg *RouterConfig) *gin.Engine {
 			authenticated := order.Group("", middleware.JWTAuthorization, cfg.UserHandler.GetSession)
 			{
 				authenticated.POST("", cfg.OrderHandler.Checkout)
+				invoice := authenticated.Group("/invoices")
+				{
+					invoice.POST("", middleware.StepUp, cfg.OrderHandler.PayInvoice)
+				}
 				transaction := authenticated.Group("/transactions")
 				{
 					review := transaction.Group("/reviews")
