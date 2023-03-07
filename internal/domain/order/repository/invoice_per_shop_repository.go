@@ -1,6 +1,8 @@
 package repository
 
 import (
+	"errors"
+	commonErr "kedai/backend/be-kedai/internal/common/error"
 	"kedai/backend/be-kedai/internal/domain/order/model"
 
 	"gorm.io/gorm"
@@ -8,6 +10,7 @@ import (
 
 type InvoicePerShopRepository interface {
 	Create(tx *gorm.DB, invoicePerShop *model.InvoicePerShop) error
+	GetByID(id int) (*model.InvoicePerShop, error)
 }
 
 type invoicePerShopRepositoryImpl struct {
@@ -31,4 +34,17 @@ func (r *invoicePerShopRepositoryImpl) Create(tx *gorm.DB, invoicePerShop *model
 	}
 
 	return nil
+}
+
+func (r *invoicePerShopRepositoryImpl) GetByID(id int) (*model.InvoicePerShop, error) {
+	invoicePerShop := &model.InvoicePerShop{}
+	err := r.db.First(invoicePerShop, id).Error
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, commonErr.ErrInvoiceNotFound
+		}
+		return nil, err
+	}
+
+	return invoicePerShop, nil
 }

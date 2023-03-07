@@ -24,7 +24,6 @@ import (
 	orderHandlerPackage "kedai/backend/be-kedai/internal/domain/order/handler"
 	orderRepoPackage "kedai/backend/be-kedai/internal/domain/order/repository"
 	orderServicePackage "kedai/backend/be-kedai/internal/domain/order/service"
-
 	mail "kedai/backend/be-kedai/internal/utils/mail"
 	random "kedai/backend/be-kedai/internal/utils/random"
 
@@ -88,11 +87,22 @@ func createRouter() *gin.Engine {
 		SubdistrictService: subdistrictService,
 	})
 
-	walletRepo := userRepoPackage.NewWalletRepository(&userRepoPackage.WalletRConfig{
+	walletHistoryRepo := userRepoPackage.NewWalletHistoryRepository(&userRepoPackage.WalletHistoryRConfig{
 		DB: connection.GetDB(),
 	})
+
+	walletRepo := userRepoPackage.NewWalletRepository(&userRepoPackage.WalletRConfig{
+		DB:            connection.GetDB(),
+		WalletHistory: walletHistoryRepo,
+	})
+
 	walletService := userServicePackage.NewWalletService(&userServicePackage.WalletSConfig{
 		WalletRepo: walletRepo,
+	})
+
+	walletHistoryService := userServicePackage.NewWalletHistoryService(&userServicePackage.WalletHistorySConfig{
+		WalletHistoryRepository: walletHistoryRepo,
+		WalletService:           walletService,
 	})
 
 	courierRepo := shopRepoPackage.NewCourierRepository(&shopRepoPackage.CourierRConfig{
@@ -199,6 +209,31 @@ func createRouter() *gin.Engine {
 		ProductService:     productService,
 		ShopService:        shopService,
 	})
+	transactionRepo := orderRepoPackage.NewTransactionRepository(&orderRepoPackage.TransactionRConfig{
+		DB: db,
+	})
+
+	transactionService := orderServicePackage.NewTransactionService(&orderServicePackage.TransactionSConfig{
+		TransactionRepo: transactionRepo,
+	})
+
+	invoicePerShopRepo := orderRepoPackage.NewInvoicePerShopRepository(&orderRepoPackage.InvoicePerShopRConfig{
+		DB: db,
+	})
+
+	invoicePerShopService := orderServicePackage.NewInvoicePerShopService(&orderServicePackage.InvoicePerShopSConfig{
+		InvoicePerShopRepo: invoicePerShopRepo,
+	})
+
+	transactionReviewRepo := orderRepoPackage.NewTransactionReviewRepository(&orderRepoPackage.TransactionReviewRConfig{
+		DB: db,
+	})
+
+	transactionReviewService := orderServicePackage.NewTransactionReviewService(&orderServicePackage.TransactionReviewSConfig{
+		TransactionReviewRepo: transactionReviewRepo,
+		TransactionService:    transactionService,
+		InvoicePerShopService: invoicePerShopService,
+	})
 
 	sealabsPayRepo := userRepoPackage.NewSealabsPayRepository(&userRepoPackage.SealabsPayRConfig{
 		DB: db,
@@ -209,13 +244,14 @@ func createRouter() *gin.Engine {
 	})
 
 	userHandler := userHandlerPackage.New(&userHandlerPackage.HandlerConfig{
-		UserService:         userService,
-		WalletService:       walletService,
-		UserWishlistService: userWishlistService,
-		UserCartItemService: userCartItemService,
-		SealabsPayService:   sealabsPayService,
-		UserAddressService:  userAddressService,
-		UserProfileService:  userProfileService,
+		UserService:          userService,
+		WalletService:        walletService,
+		WalletHistoryService: walletHistoryService,
+		UserWishlistService:  userWishlistService,
+		UserCartItemService:  userCartItemService,
+		SealabsPayService:    sealabsPayService,
+		UserAddressService:   userAddressService,
+		UserProfileService:   userProfileService,
 	})
 	marketplaceHandler := marketplaceHandlerPackage.New(&marketplaceHandlerPackage.HandlerConfig{
 		MarketplaceVoucherService: marketplaceVoucherService,
@@ -249,7 +285,8 @@ func createRouter() *gin.Engine {
 	})
 
 	orderHandler := orderHandlerPackage.New(&orderHandlerPackage.Config{
-		InvoiceService: invoiceService,
+		InvoiceService:           invoiceService,
+		TransactionReviewService: transactionReviewService,
 	})
 
 	return NewRouter(&RouterConfig{

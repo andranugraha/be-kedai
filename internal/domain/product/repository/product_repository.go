@@ -17,7 +17,7 @@ type ProductRepository interface {
 	GetByCode(code string) (*dto.ProductDetail, error)
 	GetByShopID(shopID int, request *dto.ShopProductFilterRequest) ([]*dto.ProductDetail, int64, int, error)
 	GetRecommendationByCategory(productId int, categoryId int) ([]*dto.ProductResponse, error)
-	ProductSearchFiltering(req dto.ProductSearchFilterRequest) ([]*dto.ProductResponse, int64, int, error)
+	ProductSearchFiltering(req dto.ProductSearchFilterRequest, shopId int) ([]*dto.ProductResponse, int64, int, error)
 }
 
 type productRepositoryImpl struct {
@@ -161,7 +161,7 @@ func (r *productRepositoryImpl) GetByShopID(shopID int, request *dto.ShopProduct
 	return products, totalRows, totalPages, nil
 }
 
-func (r *productRepositoryImpl) ProductSearchFiltering(req dto.ProductSearchFilterRequest) ([]*dto.ProductResponse, int64, int, error) {
+func (r *productRepositoryImpl) ProductSearchFiltering(req dto.ProductSearchFilterRequest, shopId int) ([]*dto.ProductResponse, int64, int, error) {
 	var (
 		productList []*dto.ProductResponse
 		totalRows   int64
@@ -205,6 +205,10 @@ func (r *productRepositoryImpl) ProductSearchFiltering(req dto.ProductSearchFilt
 		}
 	}
 
+	if shopId != 0 {
+		db = db.Where("products.shop_id = ?", shopId)
+	}
+
 	switch req.Sort {
 	case constant.SortByRecommended:
 		db = db.Order("products.rating desc, products.sold desc")
@@ -213,9 +217,9 @@ func (r *productRepositoryImpl) ProductSearchFiltering(req dto.ProductSearchFilt
 	case constant.SortByTopSales:
 		db = db.Order("products.sold desc")
 	case constant.SortByPriceLow:
-		db = db.Where("s.id = (select id from skus where product_id = products.id order by price asc limit 1)").Order("s.price asc")
+		db = db.Where("s.id = (select id from skus where product_id = products.id order by price asc limit 1)").Group("s.id").Order("s.price asc")
 	case constant.SortByPriceHigh:
-		db = db.Where("s.id = (select id from skus where product_id = products.id order by price asc limit 1)").Order("s.price desc")
+		db = db.Where("s.id = (select id from skus where product_id = products.id order by price asc limit 1)").Group("s.id").Order("s.price desc")
 	default:
 		db = db.Order("products.created_at desc")
 	}

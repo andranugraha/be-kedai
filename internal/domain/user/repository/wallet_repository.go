@@ -4,6 +4,7 @@ import (
 	"errors"
 	errRes "kedai/backend/be-kedai/internal/common/error"
 	"kedai/backend/be-kedai/internal/domain/user/model"
+	"time"
 
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
@@ -13,6 +14,7 @@ type WalletRepository interface {
 	Create(wallet *model.Wallet) (*model.Wallet, error)
 	GetByUserID(userID int) (*model.Wallet, error)
 	DeductBalanceByUserID(tx *gorm.DB, userID int, amount float64, txnID string) error
+	TopUp(history *model.WalletHistory, wallet *model.Wallet) (*model.WalletHistory, error)
 }
 
 type walletRepositoryImpl struct {
@@ -85,4 +87,22 @@ func (r *walletRepositoryImpl) DeductBalanceByUserID(tx *gorm.DB, userID int, am
 	}
 
 	return nil
+}
+
+func (r *walletRepositoryImpl) TopUp(history *model.WalletHistory, wallet *model.Wallet) (*model.WalletHistory, error) {
+	history.Date = time.Now()
+
+	r.db.Transaction(func(tx *gorm.DB) error {
+		if err := tx.Model(&model.Wallet{}).Where("id = ?", wallet.ID).Update("balance", gorm.Expr("balance + ?", history.Amount)).Error; err != nil {
+			return err
+		}
+
+		if err := r.walletHistoryRepo.Create(tx, history); err != nil {
+			return err
+		}
+
+		return nil
+	})
+
+	return history, nil
 }

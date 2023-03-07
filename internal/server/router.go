@@ -70,6 +70,9 @@ func NewRouter(cfg *RouterConfig) *gin.Engine {
 				{
 					wallet.GET("", cfg.UserHandler.GetWalletByUserID)
 					wallet.POST("", cfg.UserHandler.RegisterWallet)
+					wallet.GET("/:ref", cfg.UserHandler.GetDetail)
+					wallet.POST("/top-up", cfg.UserHandler.TopUp)
+					wallet.GET("/histories", cfg.UserHandler.GetWalletHistory)
 				}
 				wishlists := userAuthenticated.Group("/wishlists")
 				{
@@ -124,6 +127,7 @@ func NewRouter(cfg *RouterConfig) *gin.Engine {
 
 		shop := v1.Group("/shops")
 		{
+			shop.GET("", cfg.ShopHandler.FindShopByKeyword)
 			shop.GET("/:slug", cfg.ShopHandler.FindShopBySlug)
 			shop.GET("/:slug/products", cfg.ProductHandler.GetProductsByShopSlug)
 			shop.GET("/:slug/vouchers", cfg.ShopHandler.GetShopVoucher)
@@ -146,6 +150,13 @@ func NewRouter(cfg *RouterConfig) *gin.Engine {
 			authenticated := order.Group("", middleware.JWTAuthorization, cfg.UserHandler.GetSession)
 			{
 				authenticated.POST("", cfg.OrderHandler.Checkout)
+				transaction := authenticated.Group("/transactions")
+				{
+					review := transaction.Group("/reviews")
+					{
+						review.POST("", cfg.OrderHandler.AddTransactionReview)
+					}
+				}
 			}
 		}
 	}
