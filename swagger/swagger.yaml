@@ -18,6 +18,7 @@ tags:
   - name: Shop
   - name: Marketplace
   - name: Order
+  - name: Seller
 paths:
   /v1/orders/transactions/reviews:
     post:
@@ -3572,7 +3573,46 @@ paths:
                     example: "INTERNAL_SERVER_ERROR"
                   message:
                     type: string
-                    example: "error message"                            
+                    example: "error message"       
+  /v1/sellers/couriers:
+    get:
+      security:
+        - BearerAuth: []
+      tags:
+        - Seller
+      summary: Get all couriers
+      description: Get all available couriers
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Response'
+                  - type: object
+                    properties:
+                      code:
+                        example: "OK"
+                      message:
+                        example: "ok"
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Courier'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "INTERNAL_SERVER_ERROR"
+                  message:
+                    type: string
+                    example: "error message"     
 components:
   schemas:
     User:
