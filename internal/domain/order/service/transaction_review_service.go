@@ -69,6 +69,11 @@ func (s *transactionReviewServiceImpl) Create(req dto.TransactionReviewRequest) 
 }
 
 func (s *transactionReviewServiceImpl) GetReviews(req productDto.GetReviewRequest) (*commonDto.PaginationResponse, error) {
+	_, err := s.productService.GetByCode(req.ProductCode)
+	if err != nil {
+		return nil, err
+	}
+
 	reviews, totalRows, totalPages, err := s.transactionReviewRepo.GetReviews(req)
 	if err != nil {
 		return nil, err
@@ -86,6 +91,11 @@ func (s *transactionReviewServiceImpl) GetReviews(req productDto.GetReviewReques
 }
 
 func (s *transactionReviewServiceImpl) GetReviewStats(productCode string) (*productDto.GetReviewStatsResponse, error) {
+	_, err := s.productService.GetByCode(productCode)
+	if err != nil {
+		return nil, err
+	}
+
 	reviewStats, err := s.transactionReviewRepo.GetReviewStats(productCode)
 	if err != nil {
 		return nil, err
