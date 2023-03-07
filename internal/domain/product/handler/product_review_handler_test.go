@@ -36,6 +36,24 @@ func TestGetProductReviews(t *testing.T) {
 		expected    expected
 	}{
 		{
+			description: "should return not found when product does not exist",
+			input: input{
+				req: dto.GetReviewRequest{
+					Limit: 6,
+					Page:  1,
+				},
+				res: commonDto.PaginationResponse{},
+				err: commonErr.ErrProductDoesNotExist,
+			},
+			expected: expected{
+				statusCode: http.StatusNotFound,
+				response: response.Response{
+					Code:    code.PRODUCT_NOT_EXISTS,
+					Message: commonErr.ErrProductDoesNotExist.Error(),
+				},
+			},
+		},
+		{
 			description: "should return internal server error",
 			input: input{
 				req: dto.GetReviewRequest{
@@ -116,6 +134,21 @@ func TestGetProductReviewStats(t *testing.T) {
 		input       input
 		expected    expected
 	}{
+		{
+			description: "should return not found when product does not exist",
+			input: input{
+				code: "test",
+				res:  dto.GetReviewStatsResponse{},
+				err:  commonErr.ErrProductDoesNotExist,
+			},
+			expected: expected{
+				statusCode: http.StatusNotFound,
+				response: response.Response{
+					Code:    code.PRODUCT_NOT_EXISTS,
+					Message: commonErr.ErrProductDoesNotExist.Error(),
+				},
+			},
+		},
 		{
 			description: "should return internal server error",
 			input: input{
