@@ -229,6 +229,224 @@ paths:
                   message:
                     type: string
                     example: "error message"
+  /v1/users/wallets/{ref}:
+    get:
+      security:
+        - BearerAuth: []
+      tags:
+        - User
+      summary: Get wallet transaction information
+      description: Get user's wallet transaction information
+      parameters:
+        - in: path
+          name: ref
+          description: Reference code of chosen transaction detail
+          required: true
+          schema:
+            type: string
+            example: "129920"
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Response'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/WalletHistory'
+        '401':
+          description: unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "UNAUTHORIZED"
+                  message:
+                    type: string
+                    example: "invalid credential"
+        '404':
+          description: data not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: NOT_FOUND
+                  message:
+                    type: string
+                    example: error message
+        '500':
+          description: internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: INTERNAL_SERVER_ERROR
+                  message:
+                    type: string
+                    example: error message
+  /v1/users/wallets/histories:
+    get:
+      security:
+        - BearerAuth: []
+      tags:
+        - User
+      summary: User get wallet transaction histories
+      description: User get wallet transaction histories
+      parameters:
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            default: 10
+        - in: query
+          name: page
+          schema:
+            type: integer
+            default: 1
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Response'
+                  - type: object
+                    properties:
+                      data:
+                        allOf:
+                          - $ref: '#/components/schemas/PaginationResponse'
+                          - type: object
+                            properties:
+                              data:
+                                type: array
+                                items:
+                                  $ref: '#/components/schemas/WalletHistory'
+        '404':
+          description: wallet not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "NOT_FOUND"
+                  message:
+                    type: string
+                    example: "user wallet does not exist"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "INTERNAL_SERVER_ERROR"
+                  message:
+                    type: string
+                    example: "error message"
+          
+  /v1/users/wallets/top-up:
+    post:
+      security:
+        - BearerAuth: []
+      tags:
+        - User
+      summary: User wallet top-up
+      description: User wallet top-up
+      parameters:
+        - in: query
+          name: amount
+          required: true
+          schema:
+            type: integer
+            example: 50000
+        - in: query
+          name: txnId
+          required: true
+          schema:
+            type: string
+            example: 68102
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Response'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/WalletHistory'
+        '400':
+          description: invalid amount
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "BAD_REQUEST"
+                  message:
+                    type: string
+                    example: "amount must be greater than 10000"
+        '404':
+          description: wallet not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "NOT_FOUND"
+                  message:
+                    type: string
+                    example: "user wallet does not exist"
+        '401':
+          description: unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "UNAUTHORIZED"
+                  message:
+                    type: string
+                    example: "invalid credential"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "INTERNAL_SERVER_ERROR"
+                  message:
+                    type: string
+                    example: "error message"
+        
   /v1/users:
     get:
       security:
@@ -3580,6 +3798,29 @@ components:
           example: 1
         balance:
           type: integer
+    WalletHistory:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        type:
+          type: string
+          example: "Top-up"
+        reference:
+          type: string
+          example: 192388482000
+        date:
+          type: string
+          format: datetime
+          example: 2006-02-01
+        amount:
+          type: number
+          format: float
+          example: 50000
+        walletId:
+          type: integer
+          example: 1
     Category:
       type: object
       properties:

@@ -2,6 +2,8 @@ package handler_test
 
 import (
 	"encoding/json"
+	"errors"
+	"fmt"
 	"kedai/backend/be-kedai/internal/common/code"
 	errRes "kedai/backend/be-kedai/internal/common/error"
 	"kedai/backend/be-kedai/internal/domain/user/dto"
@@ -215,5 +217,144 @@ func TestGetWalletByUserID(t *testing.T) {
 
 		assert.Equal(t, tc.expected.statusCode, rec.Code)
 		assert.Equal(t, string(expectedRes), rec.Body.String())
+	}
+}
+
+func TestTopUp(t *testing.T) {
+	var (
+		userId       = 1
+		validRequest = dto.TopUpRequest{
+			Amount: 50000,
+			TxnId:  "50400",
+		}
+		invalidRequest = dto.TopUpRequest{
+			Amount: 5000,
+		}
+		res = &model.WalletHistory{
+			Amount: 50000,
+		}
+	)
+	type input struct {
+		userId     int
+		data       dto.TopUpRequest
+		response   *model.WalletHistory
+		query      string
+		err        error
+		beforeTest func(mockWalletService *mocks.WalletService)
+	}
+
+	type expected struct {
+		statusCode int
+		response   response.Response
+	}
+
+	type cases struct {
+		description string
+		input
+		expected
+	}
+
+	for _, tc := range []cases{
+		{
+			description: "should return code 200 with top-up wallet history when success",
+			input: input{
+				userId: 1,
+				data:   validRequest,
+				response: &model.WalletHistory{
+					Amount: 50000,
+				},
+				query: "txnId=50400&amount=50000",
+				err:   nil,
+				beforeTest: func(mockWalletService *mocks.WalletService) {
+					mockWalletService.On("TopUp", userId, validRequest).Return(res, nil)
+				},
+			},
+			expected: expected{
+				statusCode: 200,
+				response: response.Response{
+					Code:    code.OK,
+					Message: "success",
+					Data:    res,
+				},
+			},
+		},
+		{
+			description: "should return code 200 with top-up wallet history when success",
+			input: input{
+				userId: 1,
+				data:   validRequest,
+				response: &model.WalletHistory{
+					Amount: 50000,
+				},
+				query: "txnId=50400&amount=50000",
+				err:   errRes.ErrWalletDoesNotExist,
+				beforeTest: func(mockWalletService *mocks.WalletService) {
+					mockWalletService.On("TopUp", userId, validRequest).Return(nil, errRes.ErrWalletDoesNotExist)
+				},
+			},
+			expected: expected{
+				statusCode: http.StatusNotFound,
+				response: response.Response{
+					Code:    code.WALLET_DOES_NOT_EXIST,
+					Message: errRes.ErrWalletDoesNotExist.Error(),
+					Data:    nil,
+				},
+			},
+		},
+		{
+			description: "should return code 400 when input condition doesn't met",
+			input: input{
+				userId:     1,
+				data:       invalidRequest,
+				response:   nil,
+				err:        errors.New("error"),
+				beforeTest: func(mockWalletService *mocks.WalletService) {},
+			},
+			expected: expected{
+				statusCode: 400,
+				response: response.Response{
+					Code:    code.BAD_REQUEST,
+					Message: "TxnId is required",
+				},
+			},
+		},
+		{
+			description: "should return code 500 when internal server error",
+			input: input{
+				userId:   1,
+				data:     validRequest,
+				response: nil,
+				query:    "txnId=50400&amount=50000",
+				err:      errRes.ErrInternalServerError,
+				beforeTest: func(mockWalletService *mocks.WalletService) {
+					mockWalletService.On("TopUp", userId, validRequest).Return(nil, errRes.ErrInternalServerError)
+				},
+			},
+			expected: expected{
+				statusCode: 500,
+				response: response.Response{
+					Code:    code.INTERNAL_SERVER_ERROR,
+					Message: errRes.ErrInternalServerError.Error(),
+				},
+			},
+		},
+	} {
+		t.Run(tc.description, func(t *testing.T) {
+			expectedRes, _ := json.Marshal(tc.expected.response)
+			rec := httptest.NewRecorder()
+			c, _ := gin.CreateTestContext(rec)
+			c.Set("userId", tc.input.userId)
+			walletService := mocks.NewWalletService(t)
+			tc.beforeTest(walletService)
+			handler := handler.New(&handler.HandlerConfig{
+				WalletService: walletService,
+			})
+			c.Request, _ = http.NewRequest("POST", fmt.Sprintf("/users/wallets/top-up?%s", tc.query), nil)
+
+			handler.TopUp(c)
+
+			assert.Equal(t, tc.expected.statusCode, rec.Code)
+			assert.Equal(t, string(expectedRes), rec.Body.String())
+		})
 	}
 }
