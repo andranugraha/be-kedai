@@ -1,6 +1,8 @@
 package repository
 
 import (
+	"errors"
+	errs "kedai/backend/be-kedai/internal/common/error"
 	"kedai/backend/be-kedai/internal/domain/user/dto"
 	"kedai/backend/be-kedai/internal/domain/user/model"
 	"math"
@@ -10,6 +12,7 @@ import (
 
 type WalletHistoryRepository interface {
 	Create(*gorm.DB, *model.WalletHistory) error
+	GetHistoryDetailById(ref string, wallet *model.Wallet) (*model.WalletHistory, error)
 	GetWalletHistoryById(req dto.WalletHistoryRequest, id int) ([]*model.WalletHistory, int64, int, error)
 }
 
@@ -30,6 +33,21 @@ func NewWalletHistoryRepository(cfg *WalletHistoryRConfig) WalletHistoryReposito
 func (r *walletHistoryRepoImpl) Create(tx *gorm.DB, history *model.WalletHistory) error {
 	err := tx.Create(&history).Error
 	return err
+}
+
+func (r *walletHistoryRepoImpl) GetHistoryDetailById(ref string, wallet *model.Wallet) (*model.WalletHistory, error) {
+	var history *model.WalletHistory
+
+	err := r.db.Where("reference = ? and wallet_id = ?", ref, wallet.ID).First(&history).Error
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, errs.ErrWalletHistoryDoesNotExist
+		}
+
+		return nil, err
+	}
+
+	return history, nil
 }
 
 func (r *walletHistoryRepoImpl) GetWalletHistoryById(req dto.WalletHistoryRequest, id int) ([]*model.WalletHistory, int64, int, error) {
