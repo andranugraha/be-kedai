@@ -7,6 +7,7 @@ import (
 )
 
 type CourierRepository interface {
+	GetAll() ([]*model.Courier, error)
 	GetByShopID(shopID int) ([]*model.Courier, error)
 	GetByProductID(productID int) ([]*model.Courier, error)
 }
@@ -23,6 +24,17 @@ func NewCourierRepository(cfg *CourierRConfig) CourierRepository {
 	return &courierRepositoryImpl{
 		db: cfg.DB,
 	}
+}
+
+func (r *courierRepositoryImpl) GetAll() ([]*model.Courier, error) {
+	var couriers []*model.Courier
+
+	err := r.db.Find(&couriers).Error
+	if err != nil {
+		return nil, err
+	}
+
+	return couriers, nil
 }
 
 func (r *courierRepositoryImpl) GetByShopID(shopID int) ([]*model.Courier, error) {
