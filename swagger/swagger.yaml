@@ -229,6 +229,73 @@ paths:
                   message:
                     type: string
                     example: "error message"
+  /v1/users/wallets/{ref}:
+    get:
+      security:
+        - BearerAuth: []
+      tags:
+        - User
+      summary: Get wallet transaction information
+      description: Get user's wallet transaction information
+      parameters:
+        - in: path
+          name: ref
+          description: Reference code of chosen transaction detail
+          required: true
+          schema:
+            type: string
+            example: "129920"
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Response'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/WalletHistory'
+        '401':
+          description: unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "UNAUTHORIZED"
+                  message:
+                    type: string
+                    example: "invalid credential"
+        '404':
+          description: data not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: NOT_FOUND
+                  message:
+                    type: string
+                    example: error message
+        '500':
+          description: internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: INTERNAL_SERVER_ERROR
+                  message:
+                    type: string
+                    example: error message
   /v1/users/wallets/histories:
     get:
       security:
@@ -237,6 +304,17 @@ paths:
         - User
       summary: User get wallet transaction histories
       description: User get wallet transaction histories
+      parameters:
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            default: 10
+        - in: query
+          name: page
+          schema:
+            type: integer
+            default: 1
       responses:
         '200':
           description: successful operation
@@ -299,7 +377,7 @@ paths:
             type: integer
             example: 50000
         - in: query
-          name: txn_id
+          name: txnId
           required: true
           schema:
             type: string
