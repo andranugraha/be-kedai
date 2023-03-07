@@ -74,7 +74,7 @@ func TestGetAllCouriers(t *testing.T) {
 	}
 	type expected struct {
 		result []*model.Courier
-		err error
+		err    error
 	}
 	type cases struct {
 		description string
@@ -90,7 +90,7 @@ func TestGetAllCouriers(t *testing.T) {
 			},
 			expected: expected{
 				result: []*model.Courier{},
-				err: nil,
+				err:    nil,
 			},
 		},
 	} {
