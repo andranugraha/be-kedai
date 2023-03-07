@@ -1,8 +1,6 @@
 package model
 
 import (
-	"kedai/backend/be-kedai/internal/domain/location/model"
-
 	"gorm.io/gorm"
 )
 
@@ -14,12 +12,10 @@ type Transaction struct {
 	Note       *string `json:"note"`
 
 	InvoiceID int `json:"invoiceId"`
-	AddressID int `json:"addressId"`
 	UserID    int `json:"userId"`
 	SkuID     int `json:"skuId"`
 
-	Review  *TransactionReview `json:"review,omitempty"`
-	Address model.UserAddress  `json:"address"`
+	Review *TransactionReview `json:"review,omitempty"`
 
 	gorm.Model `json:"-"`
 }
