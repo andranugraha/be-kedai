@@ -74,6 +74,8 @@ func ErrorValidator(c *gin.Context, statusCode int, err error) {
 			message = fmt.Sprintf("%s must be either %s", validator.Field(), valMessage)
 		case "required_without":
 			message = fmt.Sprintf("%s is required", validator.Field())
+		case "required_with":
+			message = fmt.Sprintf("%s is required", validator.Field())
 		}
 	}
 

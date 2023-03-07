@@ -13,6 +13,10 @@ import (
 	userRepoPackage "kedai/backend/be-kedai/internal/domain/user/repository"
 	userServicePackage "kedai/backend/be-kedai/internal/domain/user/service"
 
+	orderHandlerPackage "kedai/backend/be-kedai/internal/domain/order/handler"
+	orderRepoPackage "kedai/backend/be-kedai/internal/domain/order/repository"
+	orderServicePackage "kedai/backend/be-kedai/internal/domain/order/service"
+
 	productHandlerPackage "kedai/backend/be-kedai/internal/domain/product/handler"
 	productRepoPackage "kedai/backend/be-kedai/internal/domain/product/repository"
 	productServicePackage "kedai/backend/be-kedai/internal/domain/product/service"
@@ -20,10 +24,6 @@ import (
 	shopHandlerPackage "kedai/backend/be-kedai/internal/domain/shop/handler"
 	shopRepoPackage "kedai/backend/be-kedai/internal/domain/shop/repository"
 	shopServicePackage "kedai/backend/be-kedai/internal/domain/shop/service"
-
-	orderHandlerPackage "kedai/backend/be-kedai/internal/domain/order/handler"
-	orderRepoPackage "kedai/backend/be-kedai/internal/domain/order/repository"
-	orderServicePackage "kedai/backend/be-kedai/internal/domain/order/service"
 	mail "kedai/backend/be-kedai/internal/utils/mail"
 	random "kedai/backend/be-kedai/internal/utils/random"
 
@@ -87,11 +87,22 @@ func createRouter() *gin.Engine {
 		SubdistrictService: subdistrictService,
 	})
 
-	walletRepo := userRepoPackage.NewWalletRepository(&userRepoPackage.WalletRConfig{
+	walletHistoryRepo := userRepoPackage.NewWalletHistoryRepository(&userRepoPackage.WalletHistoryRConfig{
 		DB: connection.GetDB(),
 	})
+
+	walletRepo := userRepoPackage.NewWalletRepository(&userRepoPackage.WalletRConfig{
+		DB:            connection.GetDB(),
+		WalletHistory: walletHistoryRepo,
+	})
+
 	walletService := userServicePackage.NewWalletService(&userServicePackage.WalletSConfig{
 		WalletRepo: walletRepo,
+	})
+
+	walletHistoryService := userServicePackage.NewWalletHistoryService(&userServicePackage.WalletHistorySConfig{
+		WalletHistoryRepository: walletHistoryRepo,
+		WalletService:           walletService,
 	})
 
 	courierRepo := shopRepoPackage.NewCourierRepository(&shopRepoPackage.CourierRConfig{
@@ -107,6 +118,13 @@ func createRouter() *gin.Engine {
 
 	shopService := shopServicePackage.NewShopService(&shopServicePackage.ShopSConfig{
 		ShopRepository: shopRepo,
+	})
+
+	invoicePerShopRepo := orderRepoPackage.NewInvoicePerShopRepository(&orderRepoPackage.InvoicePerShopRConfig{
+		DB: db,
+	})
+	invoicePerShopService := orderServicePackage.NewInvoicePerShopService(&orderServicePackage.InvoicePerShopSConfig{
+		InvoicePerShopRepo: invoicePerShopRepo,
 	})
 
 	shopVoucherRepo := shopRepoPackage.NewShopVoucherRepository(&shopRepoPackage.ShopVoucherRConfig{
@@ -206,14 +224,6 @@ func createRouter() *gin.Engine {
 		TransactionRepo: transactionRepo,
 	})
 
-	invoicePerShopRepo := orderRepoPackage.NewInvoicePerShopRepository(&orderRepoPackage.InvoicePerShopRConfig{
-		DB: db,
-	})
-
-	invoicePerShopService := orderServicePackage.NewInvoicePerShopService(&orderServicePackage.InvoicePerShopSConfig{
-		InvoicePerShopRepo: invoicePerShopRepo,
-	})
-
 	transactionReviewRepo := orderRepoPackage.NewTransactionReviewRepository(&orderRepoPackage.TransactionReviewRConfig{
 		DB: db,
 	})
@@ -233,13 +243,14 @@ func createRouter() *gin.Engine {
 	})
 
 	userHandler := userHandlerPackage.New(&userHandlerPackage.HandlerConfig{
-		UserService:         userService,
-		WalletService:       walletService,
-		UserWishlistService: userWishlistService,
-		UserCartItemService: userCartItemService,
-		SealabsPayService:   sealabsPayService,
-		UserAddressService:  userAddressService,
-		UserProfileService:  userProfileService,
+		UserService:          userService,
+		WalletService:        walletService,
+		WalletHistoryService: walletHistoryService,
+		UserWishlistService:  userWishlistService,
+		UserCartItemService:  userCartItemService,
+		SealabsPayService:    sealabsPayService,
+		UserAddressService:   userAddressService,
+		UserProfileService:   userProfileService,
 	})
 	marketplaceHandler := marketplaceHandlerPackage.New(&marketplaceHandlerPackage.HandlerConfig{
 		MarketplaceVoucherService: marketplaceVoucherService,
@@ -262,6 +273,7 @@ func createRouter() *gin.Engine {
 
 	orderHandler := orderHandlerPackage.New(&orderHandlerPackage.Config{
 		TransactionReviewService: transactionReviewService,
+		InvoicePerShopService:    invoicePerShopService,
 	})
 
 	return NewRouter(&RouterConfig{
