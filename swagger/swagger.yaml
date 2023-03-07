@@ -2849,18 +2849,20 @@ paths:
                           - type: object
                             properties:
                               data:
-                                allOf:
-                                  - $ref: '#/components/schemas/Product'
-                                  - type: object
-                                    properties:
-                                      imageUrl:
-                                        type: string
-                                        example: http://example/image.png
-                                  - type: object
-                                    properties:
-                                      totalStock:
-                                        type: integer
-                                        example: 100
+                                type: array
+                                items:
+                                  allOf:
+                                    - $ref: '#/components/schemas/Product'
+                                    - type: object
+                                      properties:
+                                        imageUrl:
+                                          type: string
+                                          example: http://example/image.png
+                                    - type: object
+                                      properties:
+                                        totalStock:
+                                          type: integer
+                                          example: 100
         '404':
           description: shop not found
           content:
