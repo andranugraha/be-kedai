@@ -15,3 +15,7 @@ type InvoiceStatus struct {
 
 	gorm.Model `json:"-"`
 }
+
+func (InvoiceStatus) TableName() string {
+	return "invoice_status"
+}
