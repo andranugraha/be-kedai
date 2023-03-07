@@ -13,6 +13,10 @@ import (
 	userRepoPackage "kedai/backend/be-kedai/internal/domain/user/repository"
 	userServicePackage "kedai/backend/be-kedai/internal/domain/user/service"
 
+	orderHandlerPackage "kedai/backend/be-kedai/internal/domain/order/handler"
+	orderRepoPackage "kedai/backend/be-kedai/internal/domain/order/repository"
+	orderServicePackage "kedai/backend/be-kedai/internal/domain/order/service"
+
 	productHandlerPackage "kedai/backend/be-kedai/internal/domain/product/handler"
 	productRepoPackage "kedai/backend/be-kedai/internal/domain/product/repository"
 	productServicePackage "kedai/backend/be-kedai/internal/domain/product/service"
@@ -20,10 +24,6 @@ import (
 	shopHandlerPackage "kedai/backend/be-kedai/internal/domain/shop/handler"
 	shopRepoPackage "kedai/backend/be-kedai/internal/domain/shop/repository"
 	shopServicePackage "kedai/backend/be-kedai/internal/domain/shop/service"
-
-	orderHandlerPackage "kedai/backend/be-kedai/internal/domain/order/handler"
-	orderRepoPackage "kedai/backend/be-kedai/internal/domain/order/repository"
-	orderServicePackage "kedai/backend/be-kedai/internal/domain/order/service"
 	mail "kedai/backend/be-kedai/internal/utils/mail"
 	random "kedai/backend/be-kedai/internal/utils/random"
 
@@ -125,6 +125,13 @@ func createRouter() *gin.Engine {
 		ShopRepository: shopRepo,
 	})
 
+	invoicePerShopRepo := orderRepoPackage.NewInvoicePerShopRepository(&orderRepoPackage.InvoicePerShopRConfig{
+		DB: db,
+	})
+	invoicePerShopService := orderServicePackage.NewInvoicePerShopService(&orderServicePackage.InvoicePerShopSConfig{
+		InvoicePerShopRepo: invoicePerShopRepo,
+	})
+
 	shopVoucherRepo := shopRepoPackage.NewShopVoucherRepository(&shopRepoPackage.ShopVoucherRConfig{
 		DB:                    db,
 		UserVoucherRepository: userVoucherRepo,
@@ -219,14 +226,6 @@ func createRouter() *gin.Engine {
 		TransactionRepo: transactionRepo,
 	})
 
-	invoicePerShopRepo := orderRepoPackage.NewInvoicePerShopRepository(&orderRepoPackage.InvoicePerShopRConfig{
-		DB: db,
-	})
-
-	invoicePerShopService := orderServicePackage.NewInvoicePerShopService(&orderServicePackage.InvoicePerShopSConfig{
-		InvoicePerShopRepo: invoicePerShopRepo,
-	})
-
 	transactionReviewRepo := orderRepoPackage.NewTransactionReviewRepository(&orderRepoPackage.TransactionReviewRConfig{
 		DB: db,
 	})
@@ -297,6 +296,7 @@ func createRouter() *gin.Engine {
 	orderHandler := orderHandlerPackage.New(&orderHandlerPackage.Config{
 		InvoiceService:           invoiceService,
 		TransactionReviewService: transactionReviewService,
+		InvoicePerShopService:    invoicePerShopService,
 	})
 
 	return NewRouter(&RouterConfig{

@@ -2,6 +2,7 @@ package model
 
 import (
 	"fmt"
+	"kedai/backend/be-kedai/internal/domain/shop/model"
 	userModel "kedai/backend/be-kedai/internal/domain/user/model"
 	"kedai/backend/be-kedai/internal/utils/random"
 	"time"
@@ -29,6 +30,7 @@ type InvoicePerShop struct {
 
 	Voucher      *userModel.UserVoucher `json:"voucher,omitempty" gorm:"foreignKey:VoucherID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE;"`
 	Transactions []*Transaction         `json:"transactions" gorm:"foreignKey:InvoiceID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE;"`
+	Shop         *model.Shop            `json:"shop,omitempty"`
 
 	gorm.Model `json:"-"`
 }

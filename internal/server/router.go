@@ -154,7 +154,9 @@ func NewRouter(cfg *RouterConfig) *gin.Engine {
 				invoice := authenticated.Group("/invoices")
 				{
 					invoice.POST("", middleware.StepUp, cfg.OrderHandler.PayInvoice)
+					invoice.GET("", cfg.OrderHandler.GetInvoicePerShopsByUserID)
 				}
+
 				transaction := authenticated.Group("/transactions")
 				{
 					review := transaction.Group("/reviews")
