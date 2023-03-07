@@ -3378,7 +3378,7 @@ paths:
             default: 10
         - in: query
           name: status
-          description: invoice status. Any other value than those defined below will be set `''`
+          description: invoice status. Any other value than those defined below will be set `''` (all)
           schema:
             type: string
             default: ''
