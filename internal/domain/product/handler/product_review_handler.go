@@ -1,7 +1,9 @@
 package handler
 
 import (
+	"errors"
 	"kedai/backend/be-kedai/internal/common/code"
+
 	errs "kedai/backend/be-kedai/internal/common/error"
 	"kedai/backend/be-kedai/internal/domain/product/dto"
 	"kedai/backend/be-kedai/internal/utils/response"
@@ -18,6 +20,10 @@ func (h *Handler) GetProductReviews(c *gin.Context) {
 
 	result, err := h.transactionReviewService.GetReviews(req)
 	if err != nil {
+		if errors.Is(err, errs.ErrProductDoesNotExist) {
+			response.Error(c, http.StatusNotFound, code.PRODUCT_NOT_EXISTS, err.Error())
+			return
+		}
 		response.Error(c, http.StatusInternalServerError, code.INTERNAL_SERVER_ERROR, errs.ErrInternalServerError.Error())
 		return
 	}
@@ -30,6 +36,10 @@ func (h *Handler) GetProductReviewStats(c *gin.Context) {
 
 	result, err := h.transactionReviewService.GetReviewStats(productCode)
 	if err != nil {
+		if errors.Is(err, errs.ErrProductDoesNotExist) {
+			response.Error(c, http.StatusNotFound, code.PRODUCT_NOT_EXISTS, err.Error())
+			return
+		}
 		response.Error(c, http.StatusInternalServerError, code.INTERNAL_SERVER_ERROR, errs.ErrInternalServerError.Error())
 		return
 	}
