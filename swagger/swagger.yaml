@@ -2935,7 +2935,7 @@ paths:
           description: shop product list price sort method
           schema:
             type: string
-            default: recommended
+            default: price_low
             enum: [price_low, price_high]
             example: price_low
         - in: query
