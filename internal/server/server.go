@@ -13,6 +13,10 @@ import (
 	userRepoPackage "kedai/backend/be-kedai/internal/domain/user/repository"
 	userServicePackage "kedai/backend/be-kedai/internal/domain/user/service"
 
+	orderHandlerPackage "kedai/backend/be-kedai/internal/domain/order/handler"
+	orderRepoPackage "kedai/backend/be-kedai/internal/domain/order/repository"
+	orderServicePackage "kedai/backend/be-kedai/internal/domain/order/service"
+
 	productHandlerPackage "kedai/backend/be-kedai/internal/domain/product/handler"
 	productRepoPackage "kedai/backend/be-kedai/internal/domain/product/repository"
 	productServicePackage "kedai/backend/be-kedai/internal/domain/product/service"
@@ -103,6 +107,16 @@ func createRouter() *gin.Engine {
 
 	shopService := shopServicePackage.NewShopService(&shopServicePackage.ShopSConfig{
 		ShopRepository: shopRepo,
+	})
+
+	invoicePerShopRepo := orderRepoPackage.NewInvoicePerShopRepository(&orderRepoPackage.InvoicePerShopRConfig{
+		DB: db,
+	})
+	invoicePerShopService := orderServicePackage.NewInvoicePerShopService(&orderServicePackage.InvoicePerShopSConfig{
+		InvoicePerShopRepo: invoicePerShopRepo,
+	})
+	orderHandler := orderHandlerPackage.New(&orderHandlerPackage.HandlerConfig{
+		InvoicePerShopService: invoicePerShopService,
 	})
 
 	shopVoucherRepo := shopRepoPackage.NewShopVoucherRepository(&shopRepoPackage.ShopVoucherRConfig{
@@ -236,6 +250,7 @@ func createRouter() *gin.Engine {
 		ProductHandler:     productHandler,
 		ShopHandler:        shopHandler,
 		MarketplaceHandler: marketplaceHandler,
+		OrderHandler:       orderHandler,
 	})
 }
 

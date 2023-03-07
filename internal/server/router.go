@@ -6,6 +6,7 @@ import (
 
 	locationHandler "kedai/backend/be-kedai/internal/domain/location/handler"
 	marketplaceHandler "kedai/backend/be-kedai/internal/domain/marketplace/handler"
+	orderHandler "kedai/backend/be-kedai/internal/domain/order/handler"
 	productHandler "kedai/backend/be-kedai/internal/domain/product/handler"
 	shopHandler "kedai/backend/be-kedai/internal/domain/shop/handler"
 	userHandler "kedai/backend/be-kedai/internal/domain/user/handler"
@@ -20,6 +21,7 @@ type RouterConfig struct {
 	ProductHandler     *productHandler.Handler
 	ShopHandler        *shopHandler.Handler
 	MarketplaceHandler *marketplaceHandler.Handler
+	OrderHandler       *orderHandler.Handler
 }
 
 func NewRouter(cfg *RouterConfig) *gin.Engine {
@@ -95,6 +97,11 @@ func NewRouter(cfg *RouterConfig) *gin.Engine {
 					sealabsPay.POST("", cfg.UserHandler.RegisterSealabsPay)
 				}
 			}
+		}
+
+		order := v1.Group("/orders", middleware.JWTAuthorization, cfg.UserHandler.GetSession)
+		{
+			order.GET("/invoices", cfg.OrderHandler.GetInvoicePerShopsByUserID)
 		}
 
 		location := v1.Group("/locations")
