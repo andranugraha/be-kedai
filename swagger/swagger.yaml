@@ -19,6 +19,80 @@ tags:
   - name: Marketplace
   - name: Order
 paths:
+  /v1/orders/transactions/reviews:
+    post:
+      security:
+        - BearerAuth: []
+      tags:
+        - Order
+      summary: Post a transaction review
+      description: Add transaction review to a transaction
+      requestBody:
+        $ref: '#/components/requestBodies/TransactionReviewBody'
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Response'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/TransactionReview'
+        '401':
+          description: unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "UNAUTHORIZED"
+                  message:
+                    type: string
+                    example: "invalid credential"
+        '404':
+          description: data not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: NOT_FOUND
+                  message:
+                    type: string
+                    example: error message
+        '409':
+          description: Conflict
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: TRANSACTION_REVIEW_ALREADY_EXIST
+                  message:
+                    type: string
+                    example: error message            
+        '500':
+          description: internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: INTERNAL_SERVER_ERROR
+                  message:
+                    type: string
+                    example: error message    
   /v1/users/wallets:
     get:
       security:
@@ -1411,56 +1485,11 @@ paths:
                                     - type: object
                                       properties:
                                         shop:
-                                          $ref: '#/components/schemas/Shop'
+                                          $ref: '#/components/schemas/CartItemShopResponse'
                                     - type: object
                                       properties:
                                         cartItems:
-                                          type: array
-                                          items:
-                                            type: object
-                                            properties:
-                                              id:
-                                                type: integer
-                                                example: 1
-                                              skuId:
-                                                type: integer
-                                                example: 5
-                                              name:
-                                                type: string
-                                                example: Shoes
-                                              quantity:
-                                                type: integer
-                                                example: 29
-                                              stock:
-                                                type: integer
-                                                example: 2012
-                                              notes:
-                                                type: string
-                                                example: "notest test"
-                                              originalPrice:
-                                                type: number
-                                                format: float
-                                                example: 30000000
-                                              promotionType:
-                                                type: string
-                                                example: percent
-                                              promotionAmount:
-                                                type: number
-                                                format: float
-                                                example: 0.1
-                                              discountedPrice:
-                                                type: integer
-                                                format: float
-                                                example: 27000000
-                                              variants:
-                                                type: array
-                                                items:
-                                                  allOf:
-                                                    - $ref: '#/components/schemas/Variant'
-                                                    - type: object
-                                                      properties:
-                                                        group:
-                                                          $ref: '#/components/schemas/GroupVariant'
+                                          $ref: '#/components/schemas/CartItemResponse'
 
         '401':
           description: unauthorized
@@ -2488,6 +2517,11 @@ paths:
             type: string
             example: "rtx"
         - in: query
+          name: shop
+          schema:
+            type: string
+            example: "shop"
+        - in: query
           name: limit
           schema:
             type: integer
@@ -2571,6 +2605,19 @@ paths:
                                     properties:
                                       imageUrl:
                                         type: string
+        '404':
+          description: shop not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "SHOP_NOT_FOUND"
+                  message:
+                    type: string
+                    example: "error message"
         '500':
           description: Internal server error
           content:
@@ -2717,7 +2764,82 @@ paths:
                   message:
                     type: string
                     example: "error message"
-          
+  /v1/shops:
+    get:
+      tags:
+        - Shop
+      summary: Find shop by keyword
+      description: Find shop that match with the given keyword with pagination
+      parameters:
+        - in: query
+          name: keyword
+          schema:
+            type: string
+            example: "rtx"
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            default: 10
+          description: Set to 10 by default
+        - in: query
+          name: page
+          schema:
+            type: integer
+            default: 1
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Response'
+                  - type: object
+                    properties:
+                      code:
+                        example: 'OK'
+                      message:
+                        example: 'success'
+                      data:
+                        allOf:
+                          - $ref: '#/components/schemas/PaginationResponse'
+                          - type: object
+                            properties:
+                              data:
+                                type: array
+                                items:
+                                  type: object
+                                  properties:
+                                    slug:
+                                      type: string
+                                      example: "slug"
+                                    name:
+                                      type: string
+                                      example: "shop"
+                                    productCount:
+                                      type: number
+                                      example: 2
+                                    rating:
+                                      type: number
+                                      format: float
+                                      example: 2.5
+                                    photoUrl:
+                                      type: string
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "INTERNAL_SERVER_ERROR"
+                  message:
+                    type: string
+                    example: "error message"
+                  
   /v1/shops/{slug}:
     get:
       tags:
@@ -3305,14 +3427,14 @@ paths:
                                         $ref: '#/components/schemas/Shop'
                                   - type: object
                                     properties:
-                                      voucherAmount:
+                                      marketplaceVoucherAmount:
                                         type: number
                                         nullable: true
                                         format: float
                                         example: 0.1
                                   - type: object
                                     properties:
-                                      voucherType:
+                                      marketplaceVoucherType:
                                         type: string
                                         nullable: true
                                         example: percentage
@@ -3752,6 +3874,72 @@ components:
         skuId:
           type: integer
           example: 1
+    CartItemResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        quantity:
+          type: integer
+          example: 1   
+        notes:
+          type: string
+          example: this is note
+        skuId:
+          type: integer
+          example: 1
+        name:
+          type: string
+          example: Bakmi
+        stock:
+          type: integer
+          example: 29
+        variants:
+          type: array
+          items:
+            allOf:
+              - $ref: '#/components/schemas/Variant'
+              - type: object
+                properties:
+                  group:
+                    $ref: '#/components/schemas/GroupVariant'
+        originalPrice:
+          type: number
+          format: float64
+          example: 500000
+        promotionType:
+          type: string
+          example: nominal
+        promotionAmount:
+          type: number
+          format: float64
+          example: 5000
+    CartItemShopResponse:
+      type: object
+      properties: 
+        id:
+          type: integer
+          example: 1
+        name:
+          type: string
+          example: Bakmi Acong
+        rating:
+          type: integer
+          example: 5
+        joinedDate:
+          type: string
+          example: "2006-01-02T00:00:00Z"
+          format: datetime
+        address:
+          type: string
+          example: Pekanbaru, Riau
+        slug:
+          type: string
+          example: bakmi-acong
+        postalCode:
+          type: string
+          example: 28292
     Variant:
       type: object
       properties:
@@ -3854,6 +4042,38 @@ components:
         isDefault:
           type: boolean
           example: true
+    TransactionReview:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        description:
+          type: string
+          example: Good!
+        rating:
+          example: 2
+          type: integer
+        transactionId:
+          type: integer
+          example: 1
+        reviewMedia:
+          type: array
+          items:
+            oneOf:
+            - $ref: '#/components/schemas/ReviewMedia'
+    ReviewMedia:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        url:
+          type: string
+          example: image.jpg
+        reviewId:
+          type: integer
+          example: 1
     SealabsPay:
       type: object
       properties:
@@ -4294,7 +4514,48 @@ components:
               isDefault:
                 type: boolean
                 example: true
-                
+    ReviewMediaBody:
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - url
+            properties:
+              url:
+                type: string
+                example: https://image.com/image.jpg            
+    TransactionReviewBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - rating
+              - transactionId
+            properties:
+              rating:
+                type: integer
+                example: 5
+                minimum: 1
+                maximum: 5
+                description: rate the transaction
+              transactionId:
+                type: integer
+                example: 1
+                minimum: 1
+                description: id of the transaction to be rated
+              description:
+                type: string
+                example: Very nice product!
+                maxLength: 500
+              reviewMedias:
+                type: array
+                items:
+                  oneOf:
+                    - $ref: '#/components/requestBodies/ReviewMediaBody'
+    
     RegisterSeaLabsPayBody:
       required: true
       content:

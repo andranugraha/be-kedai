@@ -99,11 +99,6 @@ func NewRouter(cfg *RouterConfig) *gin.Engine {
 			}
 		}
 
-		order := v1.Group("/orders", middleware.JWTAuthorization, cfg.UserHandler.GetSession)
-		{
-			order.GET("/invoices", cfg.OrderHandler.GetInvoicePerShopsByUserID)
-		}
-
 		location := v1.Group("/locations")
 		{
 			location.GET("/cities", cfg.LocationHandler.GetCities)
@@ -129,6 +124,7 @@ func NewRouter(cfg *RouterConfig) *gin.Engine {
 
 		shop := v1.Group("/shops")
 		{
+			shop.GET("", cfg.ShopHandler.FindShopByKeyword)
 			shop.GET("/:slug", cfg.ShopHandler.FindShopBySlug)
 			shop.GET("/:slug/products", cfg.ProductHandler.GetProductsByShopSlug)
 			shop.GET("/:slug/vouchers", cfg.ShopHandler.GetShopVoucher)
@@ -143,6 +139,25 @@ func NewRouter(cfg *RouterConfig) *gin.Engine {
 			authenticated := marketplace.Group("", middleware.JWTAuthorization, cfg.UserHandler.GetSession)
 			{
 				authenticated.GET("/vouchers/valid", cfg.MarketplaceHandler.GetValidMarketplaceVoucher)
+			}
+		}
+
+		order := v1.Group("/orders")
+		{
+			authenticated := order.Group("", middleware.JWTAuthorization, cfg.UserHandler.GetSession)
+			{
+				invoice := authenticated.Group("/invoices")
+				{
+					invoice.GET("", cfg.OrderHandler.GetInvoicePerShopsByUserID)
+				}
+
+				transaction := authenticated.Group("/transactions")
+				{
+					review := transaction.Group("/reviews")
+					{
+						review.POST("", cfg.OrderHandler.AddTransactionReview)
+					}
+				}
 			}
 		}
 	}

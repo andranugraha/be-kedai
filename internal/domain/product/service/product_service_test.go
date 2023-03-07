@@ -242,6 +242,7 @@ func TestProductSearchFiltering(t *testing.T) {
 	var (
 		validReq = dto.ProductSearchFilterRequest{
 			Keyword: "test",
+			Shop:    "shop",
 		}
 		invalidReq = dto.ProductSearchFilterRequest{
 			Keyword: "  ",
@@ -255,11 +256,15 @@ func TestProductSearchFiltering(t *testing.T) {
 		emptyRes = &commonDto.PaginationResponse{
 			Data: product,
 		}
+		shop = &shopModel.Shop{
+			ID: 1,
+		}
+		shopId = 1
 	)
 	type input struct {
 		dto        dto.ProductSearchFilterRequest
 		err        error
-		beforeTest func(*mocks.ProductRepository)
+		beforeTest func(*mocks.ProductRepository, *mocks.ShopService)
 	}
 	type expected struct {
 		result *commonDto.PaginationResponse
@@ -278,8 +283,9 @@ func TestProductSearchFiltering(t *testing.T) {
 			input: input{
 				dto: validReq,
 				err: nil,
-				beforeTest: func(pr *mocks.ProductRepository) {
-					pr.On("ProductSearchFiltering", validReq).Return(product, int64(1), 1, nil)
+				beforeTest: func(pr *mocks.ProductRepository, sr *mocks.ShopService) {
+					sr.On("FindShopBySlug", validReq.Shop).Return(shop, nil)
+					pr.On("ProductSearchFiltering", validReq, shopId).Return(product, int64(1), 1, nil)
 				},
 			},
 			expected: expected{
@@ -288,12 +294,27 @@ func TestProductSearchFiltering(t *testing.T) {
 			},
 		},
 		{
+			description: "should return error when shop not found",
+			input: input{
+				dto: validReq,
+				err: errorResponse.ErrShopNotFound,
+				beforeTest: func(pr *mocks.ProductRepository, sr *mocks.ShopService) {
+					sr.On("FindShopBySlug", validReq.Shop).Return(shop, errorResponse.ErrShopNotFound)
+				},
+			},
+			expected: expected{
+				result: nil,
+				err:    errorResponse.ErrShopNotFound,
+			},
+		},
+		{
 			description: "should return error when internal server error",
 			input: input{
 				dto: validReq,
 				err: nil,
-				beforeTest: func(pr *mocks.ProductRepository) {
-					pr.On("ProductSearchFiltering", validReq).Return(nil, int64(0), 0, errors.New("error"))
+				beforeTest: func(pr *mocks.ProductRepository, sr *mocks.ShopService) {
+					sr.On("FindShopBySlug", validReq.Shop).Return(shop, nil)
+					pr.On("ProductSearchFiltering", validReq, shopId).Return(nil, int64(0), 0, errors.New("error"))
 				},
 			},
 			expected: expected{
@@ -306,7 +327,7 @@ func TestProductSearchFiltering(t *testing.T) {
 			input: input{
 				dto:        invalidReq,
 				err:        nil,
-				beforeTest: func(pr *mocks.ProductRepository) {},
+				beforeTest: func(pr *mocks.ProductRepository, sr *mocks.ShopService) {},
 			},
 			expected: expected{
 				result: emptyRes,
@@ -315,10 +336,12 @@ func TestProductSearchFiltering(t *testing.T) {
 		},
 	} {
 		t.Run(tc.description, func(t *testing.T) {
-			mockRepo := new(mocks.ProductRepository)
-			tc.beforeTest(mockRepo)
+			mockProductRepo := new(mocks.ProductRepository)
+			mockShopService := new(mocks.ShopService)
+			tc.beforeTest(mockProductRepo, mockShopService)
 			service := service.NewProductService(&service.ProductSConfig{
-				ProductRepository: mockRepo,
+				ProductRepository: mockProductRepo,
+				ShopService:       mockShopService,
 			})
 
 			result, err := service.ProductSearchFiltering(tc.dto)

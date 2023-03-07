@@ -20,7 +20,7 @@ func (h *Handler) GetUserWishlists(c *gin.Context) {
 
 	wishlists, err := h.userWishlistService.GetUserWishlists(req)
 	if err != nil {
-		response.Error(c, http.StatusInternalServerError, code.INTERNAL_SERVER_ERROR, err.Error())
+		response.Error(c, http.StatusInternalServerError, code.INTERNAL_SERVER_ERROR, errs.ErrInternalServerError.Error())
 		return
 	}
 
@@ -56,7 +56,7 @@ func (h *Handler) GetUserWishlist(c *gin.Context) {
 			return
 		}
 
-		response.Error(c, http.StatusInternalServerError, code.INTERNAL_SERVER_ERROR, err.Error())
+		response.Error(c, http.StatusInternalServerError, code.INTERNAL_SERVER_ERROR, errs.ErrInternalServerError.Error())
 		return
 	}
 
@@ -92,7 +92,7 @@ func (h *Handler) AddUserWishlist(c *gin.Context) {
 			return
 		}
 
-		response.Error(c, http.StatusInternalServerError, code.INTERNAL_SERVER_ERROR, err.Error())
+		response.Error(c, http.StatusInternalServerError, code.INTERNAL_SERVER_ERROR, errs.ErrInternalServerError.Error())
 		return
 	}
 
@@ -128,7 +128,7 @@ func (h *Handler) RemoveUserWishlist(c *gin.Context) {
 			return
 		}
 
-		response.Error(c, http.StatusInternalServerError, code.INTERNAL_SERVER_ERROR, err.Error())
+		response.Error(c, http.StatusInternalServerError, code.INTERNAL_SERVER_ERROR, errs.ErrInternalServerError.Error())
 		return
 	}
 

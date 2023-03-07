@@ -7,23 +7,22 @@ import (
 )
 
 type InvoicePerShop struct {
-	ID                int      `json:"id"`
-	Code              string   `json:"code"`
-	Subtotal          float64  `json:"subtotal"`
-	Total             float64  `json:"total"`
-	ShippingCost      float64  `json:"shippingCost"`
-	TrackingNumber    int      `json:"trackingNumber"`
-	PromotionAmount   *float64 `json:"promotionAmount,omitempty"`
-	PromotionType     *string  `json:"promotionType,omitempty"`
-	ShopVoucherAmount *float64 `json:"shopVoucherAmount,omitempty" gorm:"column:voucher_amount"`
-	ShopVoucherType   *string  `json:"shopVoucherType,omitempty" gorm:"column:voucher_type"`
-	Status            string   `json:"status"`
-	PromotionID       *int     `json:"promotionId,omitempty"`
-	ShopID            int      `json:"shopId"`
-	UserID            int      `json:"userId"`
-	VoucherID         *int     `json:"voucherId,omitempty"`
-	InvoiceID         int      `json:"invoiceId"`
-	CourierServiceID  int      `json:"courierServiceId"`
+	ID              int     `json:"id"`
+	Code            string  `json:"code"`
+	Total           float64 `json:"total"`
+	Subtotal        float64 `json:"subtotal"`
+	ShippingCost    float64 `json:"shippingCost"`
+	VoucherAmount   float64 `json:"voucherAmount"`
+	VoucherType     string  `json:"voucherType"`
+	PromotionAmount float64 `json:"promotionAmount"`
+	PromotionType   string  `json:"promotionType"`
+	Status          string  `json:"status"`
+
+	UserID      int `json:"userId"`
+	VoucherID   int `json:"voucherId"`
+	ShopID      int `json:"shopId"`
+	PromotionID int `json:"promotionId"`
+	InvoiceID   int `json:"invoiceId"`
 
 	Shop *model.Shop `json:"shop,omitempty"`
 

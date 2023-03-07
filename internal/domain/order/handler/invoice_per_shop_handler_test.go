@@ -98,7 +98,7 @@ func TestGetInvoicesByUserID(t *testing.T) {
 			c, _ := gin.CreateTestContext(rec)
 			c.Set("userId", tc.input.userID)
 			c.Request, _ = http.NewRequest(http.MethodGet, fmt.Sprintf("/orders/invoices?startDate=%s&endDate=%s&s=%s&status=%s", tc.input.request.StartDate, tc.input.request.EndDate, tc.input.request.S, tc.input.request.Status), nil)
-			handler := handler.New(&handler.HandlerConfig{
+			handler := handler.New(&handler.Config{
 				InvoicePerShopService: invoicePerShopService,
 			})
 

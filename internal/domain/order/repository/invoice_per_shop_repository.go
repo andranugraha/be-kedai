@@ -1,7 +1,9 @@
 package repository
 
 import (
+	"errors"
 	"fmt"
+	commonErr "kedai/backend/be-kedai/internal/common/error"
 	"kedai/backend/be-kedai/internal/domain/order/dto"
 	"kedai/backend/be-kedai/internal/domain/order/model"
 	"math"
@@ -12,6 +14,8 @@ import (
 
 type InvoicePerShopRepository interface {
 	GetByUserID(userID int, request *dto.InvoicePerShopFilterRequest) ([]*dto.InvoicePerShopDetail, int64, int, error)
+	Create(tx *gorm.DB, invoicePerShop *model.InvoicePerShop) error
+	GetByID(id int) (*model.InvoicePerShop, error)
 }
 
 type invoicePerShopRepositoryImpl struct {
@@ -37,7 +41,7 @@ func (r *invoicePerShopRepositoryImpl) GetByUserID(userID int, request *dto.Invo
 
 	query := r.db.
 		Distinct().
-		Select("invoice_per_shops.*, invoices.voucher_amount AS voucher_amount, invoices.voucher_type AS voucher_type, invoices.payment_date AS payment_date").
+		Select("invoice_per_shops.*, invoices.voucher_amount AS marketplace_voucher_amount, invoices.voucher_type AS marketplace_voucher_type, invoices.payment_date AS payment_date").
 		Joins("JOIN invoices ON invoices.id = invoice_per_shops.invoice_id").
 		Joins("JOIN transactions ON invoice_per_shops.id = transactions.invoice_id").
 		Joins("JOIN skus ON transactions.sku_id = skus.id").
@@ -78,4 +82,26 @@ func (r *invoicePerShopRepositoryImpl) GetByUserID(userID int, request *dto.Invo
 	}
 
 	return invoices, totalRows, totalPages, nil
+}
+
+func (r *invoicePerShopRepositoryImpl) Create(tx *gorm.DB, invoicePerShop *model.InvoicePerShop) error {
+	err := tx.Create(invoicePerShop).Error
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (r *invoicePerShopRepositoryImpl) GetByID(id int) (*model.InvoicePerShop, error) {
+	invoicePerShop := &model.InvoicePerShop{}
+	err := r.db.First(invoicePerShop, id).Error
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, commonErr.ErrInvoiceNotFound
+		}
+		return nil, err
+	}
+
+	return invoicePerShop, nil
 }

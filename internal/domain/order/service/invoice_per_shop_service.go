@@ -3,11 +3,13 @@ package service
 import (
 	commonDto "kedai/backend/be-kedai/internal/common/dto"
 	"kedai/backend/be-kedai/internal/domain/order/dto"
+	"kedai/backend/be-kedai/internal/domain/order/model"
 	"kedai/backend/be-kedai/internal/domain/order/repository"
 )
 
 type InvoicePerShopService interface {
 	GetInvoicesByUserID(userID int, request *dto.InvoicePerShopFilterRequest) (*commonDto.PaginationResponse, error)
+	GetByID(id int) (*model.InvoicePerShop, error)
 }
 
 type invoicePerShopServiceImpl struct {
@@ -37,4 +39,8 @@ func (s *invoicePerShopServiceImpl) GetInvoicesByUserID(userID int, request *dto
 		Page:       request.Page,
 		Data:       res,
 	}, nil
+}
+
+func (s *invoicePerShopServiceImpl) GetByID(id int) (*model.InvoicePerShop, error) {
+	return s.invoicePerShopRepo.GetByID(id)
 }

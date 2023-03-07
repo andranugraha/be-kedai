@@ -9,10 +9,10 @@ import (
 
 type InvoicePerShopDetail struct {
 	model.InvoicePerShop
-	VoucherAmount    float64            `json:"voucherAmount,omitempty"`
-	VoucherType      string             `json:"voucherType,omitempty"`
-	PaymentDate      time.Time          `json:"paymentDate"`
-	TransactionItems []*TransactionItem `json:"transactionItems" gorm:"foreignKey:InvoiceID"`
+	MarketplaceVoucherAmount float64            `json:"marketplaceVoucherAmount"`
+	MarketplaceVoucherType   string             `json:"marketplaceVoucherType"`
+	PaymentDate              time.Time          `json:"paymentDate"`
+	TransactionItems         []*TransactionItem `json:"transactionItems" gorm:"foreignKey:InvoiceID"`
 }
 
 func (InvoicePerShopDetail) TableName() string {
@@ -20,7 +20,7 @@ func (InvoicePerShopDetail) TableName() string {
 }
 
 type TransactionItem struct {
-	model.Transactions
+	model.Transaction
 	ProductName string            `json:"productName"`
 	ImageUrl    string            `json:"imageUrl"`
 	Sku         *productModel.Sku `json:"sku"`
