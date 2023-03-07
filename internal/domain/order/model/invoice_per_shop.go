@@ -1,6 +1,13 @@
 package model
 
-import "gorm.io/gorm"
+import (
+	"fmt"
+	userModel "kedai/backend/be-kedai/internal/domain/user/model"
+	"kedai/backend/be-kedai/internal/utils/random"
+	"time"
+
+	"gorm.io/gorm"
+)
 
 type InvoicePerShop struct {
 	ID              int      `json:"id"`
@@ -8,6 +15,7 @@ type InvoicePerShop struct {
 	Total           float64  `json:"total"`
 	Subtotal        float64  `json:"subtotal"`
 	ShippingCost    float64  `json:"shippingCost"`
+	TrackingNumber  string   `json:"trackingNumber"`
 	VoucherAmount   *float64 `json:"voucherAmount,omitempty"`
 	VoucherType     *string  `json:"voucherType,omitempty"`
 	PromotionAmount *float64 `json:"promotionAmount,omitempty"`
@@ -21,7 +29,21 @@ type InvoicePerShop struct {
 	CourierServiceID int  `json:"courierServiceId"`
 	InvoiceID        int  `json:"invoiceId"`
 
-	Transactions []Transaction `json:"transactions" gorm:"foreignKey:InvoiceID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE;"`
+	Voucher      *userModel.UserVoucher `json:"voucher,omitempty" gorm:"foreignKey:VoucherID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE;"`
+	Transactions []Transaction          `json:"transactions" gorm:"foreignKey:InvoiceID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE;"`
 
 	gorm.Model `json:"-"`
+}
+
+func (i *InvoicePerShop) BeforeCreate(tx *gorm.DB) (err error) {
+	var currentTotal int64
+	tx.Model(&InvoicePerShop{}).Where("shop_id = ?", i.ShopID).Count(&currentTotal)
+
+	now := time.Now()
+	i.Code = fmt.Sprintf("INV/%d%d%d/%d", now.Year(), now.Month(), now.Day(), currentTotal+1)
+
+	randomGenerator := random.NewRandomUtils(&random.RandomUtilsConfig{})
+	i.TrackingNumber = randomGenerator.GenerateNumericString(10)
+
+	return
 }

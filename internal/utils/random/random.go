@@ -4,11 +4,13 @@ import (
 	cryptoRand "crypto/rand"
 	"encoding/hex"
 	"math/rand"
+	"strconv"
 	"time"
 )
 
 type RandomUtils interface {
 	GenerateAlphanumericString(length int) string
+	GenerateNumericString(length int) string
 	GenerateSecureUniqueToken() string
 }
 
@@ -30,6 +32,17 @@ func (u *randomUtilsImpl) GenerateAlphanumericString(length int) string {
 	}
 
 	return string(b)
+}
+
+func (u *randomUtilsImpl) GenerateNumericString(length int) string {
+	rand.Seed(time.Now().UnixNano())
+	var result string
+	for i := 0; i < length; i++ {
+		digit := rand.Intn(10)
+		result += strconv.Itoa(digit)
+	}
+
+	return result
 }
 
 func (u *randomUtilsImpl) GenerateSecureUniqueToken() string {

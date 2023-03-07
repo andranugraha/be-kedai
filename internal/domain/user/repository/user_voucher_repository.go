@@ -28,7 +28,7 @@ func NewUserVoucherRepository(cfg *UserVoucherRConfig) UserVoucherRepository {
 func (r *userVoucherRepositoryImpl) GetUsedMarketplaceByUserID(userID int) ([]*model.UserVoucher, error) {
 	var userVouchers []*model.UserVoucher
 
-	err := r.db.Where("user_id = ?", userID).Where("is_used != ?", true).Not("marketplace_voucher_id IS NULL").Find(&userVouchers).Error
+	err := r.db.Where("user_id = ?", userID).Where("is_used = ?", true).Not("marketplace_voucher_id IS NULL").Find(&userVouchers).Error
 	if err != nil {
 		return nil, err
 	}
@@ -39,7 +39,7 @@ func (r *userVoucherRepositoryImpl) GetUsedMarketplaceByUserID(userID int) ([]*m
 func (r *userVoucherRepositoryImpl) GetUsedShopByUserID(userID int) ([]*model.UserVoucher, error) {
 	var userVouchers []*model.UserVoucher
 
-	err := r.db.Where("user_id = ?", userID).Where("is_used != ?", true).Not("shop_voucher_id IS NULL").Find(&userVouchers).Error
+	err := r.db.Where("user_id = ?", userID).Where("is_used = ?", true).Not("shop_voucher_id IS NULL").Find(&userVouchers).Error
 	if err != nil {
 		return nil, err
 	}

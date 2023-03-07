@@ -18,7 +18,10 @@ func (h *Handler) Checkout(c *gin.Context) {
 		return
 	}
 
-	req.Validate()
+	if err := req.Validate(); err != nil {
+		response.Error(c, http.StatusBadRequest, code.BAD_REQUEST, err.Error())
+		return
+	}
 
 	req.UserID = c.GetInt("userId")
 
@@ -40,9 +43,24 @@ func (h *Handler) Checkout(c *gin.Context) {
 			return
 		}
 
+		if errors.Is(err, commonErr.ErrTotalSpentBelowMinimumSpendingRequirement) {
+			response.Error(c, http.StatusBadRequest, code.MINIMUM_SPEND_REQUIREMENT_NOT_MET, err.Error())
+			return
+		}
+
 		response.Error(c, http.StatusInternalServerError, code.INTERNAL_SERVER_ERROR, commonErr.ErrInternalServerError.Error())
 		return
 	}
 
 	response.Success(c, http.StatusCreated, code.CREATED, "checkout success", invoice)
+}
+
+func (h *Handler) PayInvoice(c *gin.Context) {
+	var req dto.PayInvoiceRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.ErrorValidator(c, http.StatusBadRequest, err)
+		return
+	}
+
+	req.UserID = c.GetInt("userId")
 }

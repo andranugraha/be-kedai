@@ -9,6 +9,7 @@ import (
 type MarketplaceVoucherService interface {
 	GetMarketplaceVoucher(req *dto.GetMarketplaceVoucherRequest) ([]*model.MarketplaceVoucher, error)
 	GetValidByUserID(req *dto.GetMarketplaceVoucherRequest) ([]*model.MarketplaceVoucher, error)
+	GetValidForCheckout(id, userID, PaymentMethodID int) (*model.MarketplaceVoucher, error)
 }
 
 type marketplaceVoucherServiceImpl struct {
@@ -31,4 +32,8 @@ func (s *marketplaceVoucherServiceImpl) GetMarketplaceVoucher(req *dto.GetMarket
 
 func (s *marketplaceVoucherServiceImpl) GetValidByUserID(req *dto.GetMarketplaceVoucherRequest) ([]*model.MarketplaceVoucher, error) {
 	return s.marketplaceVoucherRepository.GetValidByUserID(req)
+}
+
+func (s *marketplaceVoucherServiceImpl) GetValidForCheckout(id, userID, PaymentMethodID int) (*model.MarketplaceVoucher, error) {
+	return s.marketplaceVoucherRepository.GetValid(id, userID, PaymentMethodID)
 }

@@ -17,6 +17,7 @@ type UserCartItemRepository interface {
 	GetCartItemByUserIdAndSkuId(userId int, skuId int) (*model.CartItem, error)
 	UpdateCartItem(cartItem *model.CartItem) (*model.CartItem, error)
 	GetCartItemByIdAndUserId(id, userId int) (*model.CartItem, error)
+	DeleteCartItemBySkuIdsAndUserId(tx *gorm.DB, skuIds []int, userIds int) error
 }
 
 type userCartItemRepository struct {
@@ -132,4 +133,13 @@ func (r *userCartItemRepository) GetCartItemByIdAndUserId(id, userId int) (*mode
 	}
 
 	return &cartItem, nil
+}
+
+func (r *userCartItemRepository) DeleteCartItemBySkuIdsAndUserId(tx *gorm.DB, skuIds []int, userId int) error {
+	err := tx.Where("sku_id IN ?", skuIds).Where("user_id = ?", userId).Delete(&model.CartItem{}).Error
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

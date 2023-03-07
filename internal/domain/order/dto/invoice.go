@@ -37,9 +37,30 @@ func (c *CheckoutRequest) Validate() error {
 		return commonError.ErrCheckoutItemCantBeEmpty
 	}
 
+	switch c.PaymentMethodID {
+	case constant.PaymentMethodSeaLabsPay:
+		if c.SealabsPayID == nil {
+			return commonError.ErrSealabsPayIdIsRequired
+		}
+	case constant.PaymentMethodWallet:
+		return nil
+	default:
+		return commonError.ErrUnsupportedPaymentMethod
+	}
+
 	if c.PaymentMethodID == constant.PaymentMethodSeaLabsPay && c.SealabsPayID == nil {
 		return commonError.ErrSealabsPayIdIsRequired
 	}
 
 	return nil
+}
+
+type PayInvoiceRequest struct {
+	InvoiceID int    `json:"invoiceId" binding:"required"`
+	TxnID     string `json:"txnId"`
+	UserID    int
+}
+
+type PayInvoiceResponse struct {
+	ID int `json:"id"`
 }
