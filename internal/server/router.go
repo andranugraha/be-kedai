@@ -152,6 +152,7 @@ func NewRouter(cfg *RouterConfig) *gin.Engine {
 				invoice := authenticated.Group("/invoices")
 				{
 					invoice.GET("", cfg.OrderHandler.GetInvoicePerShopsByUserID)
+					invoice.GET("/:code", cfg.OrderHandler.GetInvoiceByCode)
 				}
 
 				transaction := authenticated.Group("/transactions")
