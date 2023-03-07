@@ -70,6 +70,7 @@ func NewRouter(cfg *RouterConfig) *gin.Engine {
 				{
 					wallet.GET("", cfg.UserHandler.GetWalletByUserID)
 					wallet.POST("", cfg.UserHandler.RegisterWallet)
+					wallet.GET("/:ref", cfg.UserHandler.GetDetail)
 					wallet.POST("/top-up", cfg.UserHandler.TopUp)
 					wallet.GET("/histories", cfg.UserHandler.GetWalletHistory)
 				}
