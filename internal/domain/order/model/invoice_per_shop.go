@@ -24,7 +24,8 @@ type InvoicePerShop struct {
 	PromotionID int `json:"promotionId"`
 	InvoiceID   int `json:"invoiceId"`
 
-	Shop *model.Shop `json:"shop,omitempty"`
+	Shop       *model.Shop      `json:"shop,omitempty"`
+	StatusList []*InvoiceStatus `json:"statusList"`
 
 	gorm.Model `json:"-"`
 }
