@@ -6,6 +6,7 @@ import (
 )
 
 type CourierService interface {
+	GetAllCouriers() ([]*model.Courier, error)
 	GetCouriersByShopID(shopID int) ([]*model.Courier, error)
 	GetCouriersByProductID(productID int) ([]*model.Courier, error)
 }
@@ -25,6 +26,10 @@ func NewCourierService(cfg *CourierSConfig) CourierService {
 		courierRepository: cfg.CourierRepository,
 		shopService:       cfg.ShopService,
 	}
+}
+
+func (s *courierServiceImpl) GetAllCouriers() ([]*model.Courier, error) {
+	return s.courierRepository.GetAll()
 }
 
 func (s *courierServiceImpl) GetCouriersByShopID(shopID int) ([]*model.Courier, error) {
