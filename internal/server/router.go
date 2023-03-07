@@ -158,6 +158,11 @@ func NewRouter(cfg *RouterConfig) *gin.Engine {
 				}
 			}
 		}
+
+		seller := v1.Group("/sellers")
+		{
+			seller.GET("/couriers", cfg.ShopHandler.GetAllCourier)
+		}
 	}
 
 	return r

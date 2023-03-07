@@ -150,6 +150,7 @@ func createRouter() *gin.Engine {
 	shopHandler := shopHandlerPackage.New(&shopHandlerPackage.HandlerConfig{
 		ShopService:        shopService,
 		ShopVoucherService: shopVoucherService,
+		CourierService: courierService,
 	})
 
 	userCache := userCache.NewUserCache(&userCache.UserCConfig{
