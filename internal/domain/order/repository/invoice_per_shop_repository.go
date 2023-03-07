@@ -127,7 +127,7 @@ func (r *invoicePerShopRepositoryImpl) GetByUserIDAndCode(userID int, code strin
 	}).
 		Preload("TransactionItems.Sku.Variants").
 		Preload("TransactionItems.Review.ReviewMedias").
-		Preload("TransactionItems.Address.Provice").
+		Preload("TransactionItems.Address.Province").
 		Preload("TransactionItems.Address.City").
 		Preload("TransactionItems.Address.District").
 		Preload("TransactionItems.Address.Subdistrict")
