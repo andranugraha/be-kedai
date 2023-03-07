@@ -67,3 +67,44 @@ func TestGetCouriersByProductID(t *testing.T) {
 		})
 	}
 }
+
+func TestGetAllCouriers(t *testing.T) {
+	type input struct {
+		err error
+	}
+	type expected struct {
+		result []*model.Courier
+		err error
+	}
+	type cases struct {
+		description string
+		input
+		expected
+	}
+
+	for _, tc := range []cases{
+		{
+			description: "should return result and error when called",
+			input: input{
+				err: nil,
+			},
+			expected: expected{
+				result: []*model.Courier{},
+				err: nil,
+			},
+		},
+	} {
+		t.Run(tc.description, func(t *testing.T) {
+			courierRepo := mocks.NewCourierRepository(t)
+			courierRepo.On("GetAll").Return(tc.result, nil)
+			courierService := service.NewCourierService(&service.CourierSConfig{
+				CourierRepository: courierRepo,
+			})
+
+			result, err := courierService.GetAllCouriers()
+
+			assert.Equal(t, tc.expected.result, result)
+			assert.Equal(t, tc.expected.err, err)
+		})
+	}
+}
