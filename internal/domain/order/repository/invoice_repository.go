@@ -19,6 +19,7 @@ type InvoiceRepository interface {
 	Create(invoice *model.Invoice) (*model.Invoice, error)
 	GetByIDAndUserID(id, userID int) (*model.Invoice, error)
 	Pay(invoice *model.Invoice, skuIds []int, invoiceStatuses []*model.InvoiceStatus, txnID, token string) (*userDto.Token, error)
+	Delete(invoice *model.Invoice) error
 }
 
 type invoiceRepositoryImpl struct {
@@ -77,6 +78,8 @@ func (r *invoiceRepositoryImpl) GetByIDAndUserID(id, userID int) (*model.Invoice
 	var invoice model.Invoice
 	err := r.db.Where("user_id = ?", userID).
 		Preload("InvoicePerShops.Transactions").
+		Preload("InvoicePerShops.Voucher").
+		Preload("Voucher").
 		First(&invoice, id).Error
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -145,4 +148,54 @@ func (r *invoiceRepositoryImpl) Pay(invoice *model.Invoice, skuIds []int, invoic
 	}
 
 	return newToken, nil
+}
+
+func (r *invoiceRepositoryImpl) Delete(invoice *model.Invoice) error {
+	tx := r.db.Begin()
+	defer tx.Commit()
+
+	var shopVouchers []*userModel.UserVoucher
+	for _, invoicePerShop := range invoice.InvoicePerShops {
+		for _, transaction := range invoicePerShop.Transactions {
+			err := r.skuRepo.IncreaseStock(tx, transaction.SkuID, transaction.Quantity)
+			if err != nil {
+				tx.Rollback()
+				return err
+			}
+
+			err = tx.Unscoped().Delete(transaction).Error
+			if err != nil {
+				tx.Rollback()
+				return err
+			}
+		}
+
+		if invoicePerShop.VoucherID != nil {
+			shopVouchers = append(shopVouchers, invoicePerShop.Voucher)
+		}
+	}
+
+	err := tx.Unscoped().Select("InvoicePerShops").Delete(invoice).Error
+	if err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	if invoice.VoucherID != nil {
+		err = tx.Unscoped().Model(&userModel.UserVoucher{}).Delete(invoice.Voucher).Error
+		if err != nil {
+			tx.Rollback()
+			return err
+		}
+	}
+
+	if len(shopVouchers) > 0 {
+		err = tx.Unscoped().Model(&userModel.UserVoucher{}).Delete(&shopVouchers).Error
+		if err != nil {
+			tx.Rollback()
+			return err
+		}
+	}
+
+	return nil
 }

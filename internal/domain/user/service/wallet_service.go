@@ -10,8 +10,6 @@ import (
 	"kedai/backend/be-kedai/internal/domain/user/repository"
 	"kedai/backend/be-kedai/internal/utils/hash"
 	jwttoken "kedai/backend/be-kedai/internal/utils/jwtToken"
-
-	errRes "kedai/backend/be-kedai/internal/common/error"
 )
 
 const (
@@ -89,7 +87,7 @@ func (s *walletServiceImpl) StepUp(userId int, req dto.StepUpRequest) (*dto.Toke
 	}
 
 	if !hash.ComparePassword(wallet.Pin, req.Pin) {
-		return nil, errRes.ErrWrongPin
+		return nil, errs.ErrWrongPin
 	}
 
 	var (

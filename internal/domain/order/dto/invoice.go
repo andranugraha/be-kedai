@@ -1,8 +1,11 @@
 package dto
 
 import (
+	"fmt"
+	"kedai/backend/be-kedai/config"
 	"kedai/backend/be-kedai/internal/common/constant"
 	commonError "kedai/backend/be-kedai/internal/common/error"
+	"kedai/backend/be-kedai/internal/utils/hash"
 )
 
 type CheckoutRequest struct {
@@ -56,11 +59,41 @@ func (c *CheckoutRequest) Validate() error {
 }
 
 type PayInvoiceRequest struct {
-	InvoiceID int    `json:"invoiceId" binding:"required"`
-	TxnID     string `json:"txnId"`
-	UserID    int
+	InvoiceID       int     `json:"invoiceId" binding:"required"`
+	PaymentMethodID int     `json:"paymentMethodId" binding:"required"`
+	CardNumber      string  `json:"cardNumber" binding:"required_unless=PaymentMethodID 1"`
+	Signature       string  `json:"signature" binding:"required_unless=PaymentMethodID 1"`
+	Amount          float64 `json:"amount" binding:"required_unless=PaymentMethodID 1"`
+	TxnID           string  `json:"txnId" binding:"required_unless=PaymentMethodID 1"`
+	UserID          int
 }
 
-type PayInvoiceResponse struct {
-	ID int `json:"id"`
+func (p *PayInvoiceRequest) Validate(level int) error {
+	switch p.PaymentMethodID {
+	case constant.PaymentMethodSeaLabsPay:
+		return p.validateSealabsPay()
+	case constant.PaymentMethodWallet:
+		if level == 1 {
+			return nil
+		}
+
+		return commonError.ErrUnauthorized
+	default:
+		return commonError.ErrUnsupportedPaymentMethod
+	}
+}
+
+func (p *PayInvoiceRequest) validateSealabsPay() error {
+	signaturePayload := fmt.Sprintf("%s:%v:%s", p.CardNumber, p.Amount, config.MerchantCode)
+	hashedPayload := hash.HashSHA256(signaturePayload)
+	if !hash.CompareSignature(hashedPayload, p.Signature) {
+		return commonError.ErrPaymentRequired
+	}
+
+	return nil
+}
+
+type CancelCheckoutRequest struct {
+	InvoiceID int `json:"invoiceId" binding:"required"`
+	UserID    int
 }

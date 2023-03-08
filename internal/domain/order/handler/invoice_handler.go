@@ -64,6 +64,22 @@ func (h *Handler) PayInvoice(c *gin.Context) {
 		return
 	}
 
+	accessLevel := c.GetInt("level")
+	if err := req.Validate(accessLevel); err != nil {
+		if errors.Is(err, commonErr.ErrUnauthorized) {
+			response.Error(c, http.StatusUnauthorized, code.UNAUTHORIZED, err.Error())
+			return
+		}
+
+		if errors.Is(err, commonErr.ErrPaymentRequired) {
+			response.Error(c, http.StatusPaymentRequired, code.PAYMENT_REQUIRED, err.Error())
+			return
+		}
+
+		response.Error(c, http.StatusBadRequest, code.BAD_REQUEST, err.Error())
+		return
+	}
+
 	req.UserID = c.GetInt("userId")
 
 	token := c.GetHeader("authorization")
@@ -86,4 +102,27 @@ func (h *Handler) PayInvoice(c *gin.Context) {
 	}
 
 	response.Success(c, http.StatusOK, code.OK, "pay invoice success", invoice)
+}
+
+func (h *Handler) CancelCheckout(c *gin.Context) {
+	var req dto.CancelCheckoutRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.ErrorValidator(c, http.StatusBadRequest, err)
+		return
+	}
+
+	req.UserID = c.GetInt("userId")
+
+	err := h.invoiceService.CancelCheckout(req)
+	if err != nil {
+		if errors.Is(err, commonErr.ErrInvoiceNotFound) {
+			response.Error(c, http.StatusBadRequest, code.BAD_REQUEST, err.Error())
+			return
+		}
+
+		response.Error(c, http.StatusInternalServerError, code.INTERNAL_SERVER_ERROR, commonErr.ErrInternalServerError.Error())
+		return
+	}
+
+	response.Success(c, http.StatusOK, code.OK, "cancel checkout success", nil)
 }

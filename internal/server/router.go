@@ -157,7 +157,8 @@ func NewRouter(cfg *RouterConfig) *gin.Engine {
 				authenticated.POST("", cfg.OrderHandler.Checkout)
 				invoice := authenticated.Group("/invoices")
 				{
-					invoice.POST("", middleware.StepUp, cfg.OrderHandler.PayInvoice)
+					invoice.POST("", cfg.OrderHandler.PayInvoice)
+					invoice.POST("/cancel", cfg.OrderHandler.CancelCheckout)
 					invoice.GET("", cfg.OrderHandler.GetInvoicePerShopsByUserID)
 					invoice.GET("/:code", cfg.OrderHandler.GetInvoiceByCode)
 				}

@@ -12,6 +12,7 @@ type SkuRepository interface {
 	GetByID(ID int) (*model.Sku, error)
 	GetByVariantIDs(variantIDs []int) (*model.Sku, error)
 	ReduceStock(tx *gorm.DB, skuID int, quantity int) error
+	IncreaseStock(tx *gorm.DB, skuID int, quantity int) error
 }
 
 type skuRepositoryImpl struct {
@@ -77,11 +78,25 @@ func (r *skuRepositoryImpl) ReduceStock(tx *gorm.DB, skuID int, quantity int) er
 		Where("stock >= ?", quantity).
 		Update("stock", gorm.Expr("stock - ?", quantity))
 	if err.Error != nil {
+		tx.Rollback()
 		return err.Error
 	}
 
 	if err.RowsAffected == 0 {
+		tx.Rollback()
 		return errs.ErrProductQuantityNotEnough
+	}
+
+	return nil
+}
+
+func (r *skuRepositoryImpl) IncreaseStock(tx *gorm.DB, skuID int, quantity int) error {
+	err := tx.Model(&model.Sku{}).
+		Where("id = ?", skuID).
+		Update("stock", gorm.Expr("stock + ?", quantity))
+	if err.Error != nil {
+		tx.Rollback()
+		return err.Error
 	}
 
 	return nil

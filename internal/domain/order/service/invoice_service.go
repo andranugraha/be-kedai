@@ -21,6 +21,7 @@ import (
 type InvoiceService interface {
 	Checkout(req dto.CheckoutRequest) (*dto.CheckoutResponse, error)
 	PayInvoice(req dto.PayInvoiceRequest, token string) (*userDto.Token, error)
+	CancelCheckout(req dto.CancelCheckoutRequest) error
 }
 
 type invoiceServiceImpl struct {
@@ -197,7 +198,7 @@ func (s *invoiceServiceImpl) Checkout(req dto.CheckoutRequest) (*dto.CheckoutRes
 		totalShippingCost += item.ShippingCost
 	}
 
-	subtotal := totalPrice + totalShippingCost
+	subtotal := totalPrice
 
 	if marketplaceVoucher != nil {
 		if marketplaceVoucher.MinimumSpend > totalPrice {
@@ -309,4 +310,19 @@ func (s *invoiceServiceImpl) PayInvoice(req dto.PayInvoiceRequest, token string)
 	}
 
 	return newToken, nil
+}
+
+func (s *invoiceServiceImpl) CancelCheckout(req dto.CancelCheckoutRequest) error {
+	invoice, err := s.invoiceRepo.GetByIDAndUserID(req.InvoiceID, req.UserID)
+	if err != nil {
+		return err
+	}
+
+	for _, shopInvoice := range invoice.InvoicePerShops {
+		if shopInvoice.Status != constant.TransactionStatusWaitingForPayment {
+			return commonError.ErrInvoiceAlreadyPaid
+		}
+	}
+
+	return s.invoiceRepo.Delete(invoice)
 }
