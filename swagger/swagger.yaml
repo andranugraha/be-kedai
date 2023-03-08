@@ -1961,23 +1961,16 @@ paths:
                   message:
                     type: string
                     example: "error message"
-  /v1/users/carts/{cartItemId}:
-    put:
+  /v1/users/carts:
+    delete:
       security:
         - BearerAuth: []
       tags:
         - User
       summary: Delete user cart item
       description: Delete cart item from cart with cart item id
-      parameters:
-        - in: path
-          name: cartItemId
-          required: true
-          description: cart item id, must be an integer and greater than or equal 1
-          schema:
-            type: integer
-            example: 1
-            minimum: 1
+      requestBody:
+        $ref: '#/components/requestBodies/DeleteCartBody'
       responses:
         '200':
           description: successful operation
