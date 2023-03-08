@@ -2027,7 +2027,7 @@ paths:
       tags:
         - User
       summary: Get User Addresses
-      description: Get all user addresses
+      description: Get all user addresses (sorted by default address first, then pickup address, then add date)
       responses:
         '200':
           description: successful fetch
@@ -2267,7 +2267,7 @@ paths:
       tags:
         - User
       summary: Delete existing user address
-      description: Delete user address using address id
+      description: Delete user address using address id. Cannot delete default address or pickup address.
       parameters:
         - in: path
           name: addressId
@@ -5266,6 +5266,7 @@ components:
               - street
               - subdistrictId
               - isDefault
+              - isPickup
             properties:
               name:
                 type: string
@@ -5287,6 +5288,9 @@ components:
                 type: integer
                 example: 28
               isDefault:
+                type: boolean
+                example: true
+              isPickup:
                 type: boolean
                 example: true
     ReviewMediaBody:
