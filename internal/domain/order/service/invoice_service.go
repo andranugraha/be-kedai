@@ -1,6 +1,7 @@
 package service
 
 import (
+	"kedai/backend/be-kedai/config"
 	"kedai/backend/be-kedai/internal/common/constant"
 	commonError "kedai/backend/be-kedai/internal/common/error"
 	marketplaceModel "kedai/backend/be-kedai/internal/domain/marketplace/model"
@@ -14,6 +15,7 @@ import (
 	userModel "kedai/backend/be-kedai/internal/domain/user/model"
 	userService "kedai/backend/be-kedai/internal/domain/user/service"
 	"kedai/backend/be-kedai/internal/utils/random"
+	"strconv"
 	"time"
 )
 
@@ -239,7 +241,7 @@ func (s *invoiceServiceImpl) Checkout(req dto.CheckoutRequest) (*dto.CheckoutRes
 		}
 	}
 
-	const platformFee = 5000
+	platformFee, _ := strconv.ParseFloat(config.PlatformFee, 64)
 	grandTotal := totalPrice + totalShippingCost + platformFee
 	if grandTotal != req.TotalPrice {
 		return nil, commonError.ErrTotalPriceNotMatch
