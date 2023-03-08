@@ -2660,6 +2660,10 @@ paths:
                           - $ref: '#/components/schemas/Product'
                           - type: object
                             properties:
+                              bulk:
+                                $ref: '#/components/schemas/ProductBulkPrice'
+                          - type: object
+                            properties:
                               totalStock:
                                 type: integer
                                 example: 100
@@ -3719,6 +3723,82 @@ paths:
                   message:
                     type: string
                     example: "error message"                          
+  /v1/orders/transactions/{transactionId}/reviews:
+    get:
+      tags:
+        - Order
+      security:
+        - BearerAuth: []
+      summary: Get transaction review by transaction ID
+      description: Get user transaction review by transaction ID
+      parameters:
+        - in: path
+          name: transactionId
+          required: true
+          schema:
+            type: integer
+            example: 1
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Response'
+                  - type: object
+                    properties:
+                      code:
+                        type: string
+                        example: OK
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                        example: success
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/TransactionReview'
+        '400':
+          description: invalid transaction id
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "BAD_REQUEST"
+                  message:
+                    type: string
+                    example: "error message"
+        '404':
+          description: not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "NOT_FOUND"
+                  message:
+                    type: string
+                    example: "error message"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "INTERNAL_SERVER_ERROR"
+                  message:
+                    type: string
+                    example: "error message"
   /v1/orders/invoices/{code}:
     get:
       tags:
@@ -3810,10 +3890,6 @@ paths:
                                                   type: array
                                                   items:
                                                     $ref: '#/components/schemas/Variant'
-                                    - type: object
-                                      properties:
-                                        review:
-                                          $ref: '#/components/schemas/TransactionReview'
                                     - type: object
                                       properties:
                                         courierService:
@@ -4202,6 +4278,22 @@ components:
           type: integer
         categoryId:
           type: integer
+    ProductBulkPrice:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        minQuantity:
+          type: integer
+          example: 10
+        price:
+          type: number
+          format: float
+          example: 1000
+        productId:
+          type: integer
+          example: 1
     UserWishlist:
       type: object
       properties:
@@ -4444,11 +4536,10 @@ components:
         transactionId:
           type: integer
           example: 1
-        reviewMedia:
+        reviewMedias:
           type: array
           items:
-            oneOf:
-            - $ref: '#/components/schemas/ReviewMedia'
+            $ref: '#/components/schemas/ReviewMedia'
     ReviewMedia:
       type: object
       properties:
