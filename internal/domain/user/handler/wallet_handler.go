@@ -66,6 +66,10 @@ func (h *Handler) TopUp(c *gin.Context) {
 			response.Error(c, http.StatusNotFound, code.WALLET_DOES_NOT_EXIST, err.Error())
 			return
 		}
+		if errors.Is(err, errs.ErrInvalidSignature) {
+			response.Error(c, http.StatusBadRequest, code.BAD_REQUEST, err.Error())
+			return
+		}
 		response.Error(c, http.StatusInternalServerError, code.INTERNAL_SERVER_ERROR, err.Error())
 		return
 	}
