@@ -1,6 +1,7 @@
 package service_test
 
 import (
+	"errors"
 	"kedai/backend/be-kedai/internal/common/constant"
 	commonErr "kedai/backend/be-kedai/internal/common/error"
 	"kedai/backend/be-kedai/internal/domain/order/dto"
@@ -191,4 +192,62 @@ func TestCreate(t *testing.T) {
 		})
 	}
 
+}
+
+func TestGetReviewByTransactionID(t *testing.T) {
+	type input struct {
+		transactionID int
+		mockData      *model.TransactionReview
+		mockErr       error
+	}
+	type expected struct {
+		data *model.TransactionReview
+		err  error
+	}
+
+	tests := []struct {
+		description string
+		input
+		expected
+	}{
+		{
+			description: "should return error when failed to fetch review",
+			input: input{
+				transactionID: 1,
+				mockData:      nil,
+				mockErr:       errors.New("failed to fetch review"),
+			},
+			expected: expected{
+				data: nil,
+				err:  errors.New("failed to fetch review"),
+			},
+		},
+		{
+			description: "should return review data when succeed to fetch review",
+			input: input{
+				transactionID: 1,
+				mockData:      &model.TransactionReview{},
+				mockErr:       nil,
+			},
+			expected: expected{
+				data: &model.TransactionReview{},
+				err:  nil,
+			},
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.description, func(t *testing.T) {
+			reviewRepo := mocks.NewTransactionReviewRepository(t)
+			reviewRepo.On("GetByTransactionID", tc.input.transactionID).Return(tc.input.mockData, tc.input.mockErr)
+			reviewService := service.NewTransactionReviewService(&service.TransactionReviewSConfig{
+				TransactionReviewRepo: reviewRepo,
+			})
+
+			actualData, actualErr := reviewService.GetReviewByTransactionID(tc.input.transactionID)
+
+			assert.Equal(t, tc.expected.data, actualData)
+			assert.Equal(t, tc.expected.err, actualErr)
+		})
+	}
 }
