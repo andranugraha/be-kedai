@@ -225,36 +225,37 @@ func TestTopUp(t *testing.T) {
 
 func TestRequestPinChange(t *testing.T) {
 	type input struct {
-		userID  int
-		request *dto.ChangePinRequest
+		userID     int
+		request    *dto.ChangePinRequest
+		beforeTest func(*mocks.WalletRepository, *mocks.UserService, *mocks.WalletCache, *mocks.RandomUtils, *mocks.MailUtils)
 	}
 	type expected struct {
 		err error
 	}
 
 	var (
-		userID          = 1
-		oldPin          = "123456"
-		hashedOldPin, _ = hash.HashAndSalt(oldPin)
-		// codeLength       = 6
-		// verificationCode = "a1b2c3"
-		// email            = "test@email.com"
+		userID           = 1
+		oldPin           = "123456"
+		hashedOldPin, _  = hash.HashAndSalt(oldPin)
+		codeLength       = 6
+		verificationCode = "a1b2c3"
+		email            = "test@email.com"
 	)
 
 	tests := []struct {
 		description string
-		beforeTest  func(*mocks.WalletRepository, *mocks.UserService, *mocks.WalletCache, *mocks.RandomUtils, *mocks.MailUtils)
+
 		input
 		expected
 	}{
 		{
 			description: "should return error when failed to get wallet",
-			beforeTest: func(wr *mocks.WalletRepository, us *mocks.UserService, wc *mocks.WalletCache, ru *mocks.RandomUtils, mu *mocks.MailUtils) {
-				wr.On("GetByUserID", userID).Return(nil, errors.New("failed to get wallet"))
-			},
 			input: input{
 				userID:  userID,
 				request: &dto.ChangePinRequest{},
+				beforeTest: func(wr *mocks.WalletRepository, us *mocks.UserService, wc *mocks.WalletCache, ru *mocks.RandomUtils, mu *mocks.MailUtils) {
+					wr.On("GetByUserID", userID).Return(nil, errors.New("failed to get wallet"))
+				},
 			},
 			expected: expected{
 				err: errors.New("failed to get wallet"),
@@ -262,17 +263,94 @@ func TestRequestPinChange(t *testing.T) {
 		},
 		{
 			description: "should return error when current pin is invalid",
-			beforeTest: func(wr *mocks.WalletRepository, us *mocks.UserService, wc *mocks.WalletCache, ru *mocks.RandomUtils, mu *mocks.MailUtils) {
-				wr.On("GetByUserID", userID).Return(&model.Wallet{Pin: hashedOldPin}, nil)
-			},
 			input: input{
 				userID: userID,
 				request: &dto.ChangePinRequest{
 					CurrentPin: "789012",
 				},
+				beforeTest: func(wr *mocks.WalletRepository, us *mocks.UserService, wc *mocks.WalletCache, ru *mocks.RandomUtils, mu *mocks.MailUtils) {
+					wr.On("GetByUserID", userID).Return(&model.Wallet{Pin: hashedOldPin}, nil)
+				},
 			},
 			expected: expected{
 				err: errRes.ErrPinMismatch,
+			},
+		},
+		{
+			description: "should return error when failed to store token",
+			input: input{
+				userID: userID,
+				request: &dto.ChangePinRequest{
+					CurrentPin: oldPin,
+					NewPin:     "098765",
+				},
+				beforeTest: func(wr *mocks.WalletRepository, us *mocks.UserService, wc *mocks.WalletCache, ru *mocks.RandomUtils, mu *mocks.MailUtils) {
+					wr.On("GetByUserID", userID).Return(&model.Wallet{Pin: hashedOldPin}, nil)
+					ru.On("GenerateAlphanumericString", codeLength).Return(verificationCode)
+					wc.On("StorePinAndVerificationCode", userID, mock.Anything, verificationCode).Return(errors.New("failed to store token"))
+				},
+			},
+			expected: expected{
+				err: errors.New("failed to store token"),
+			},
+		},
+		{
+			description: "should return error when failed to get user",
+			input: input{
+				userID: userID,
+				request: &dto.ChangePinRequest{
+					CurrentPin: oldPin,
+					NewPin:     "098765",
+				},
+				beforeTest: func(wr *mocks.WalletRepository, us *mocks.UserService, wc *mocks.WalletCache, ru *mocks.RandomUtils, mu *mocks.MailUtils) {
+					wr.On("GetByUserID", userID).Return(&model.Wallet{Pin: hashedOldPin}, nil)
+					ru.On("GenerateAlphanumericString", codeLength).Return(verificationCode)
+					wc.On("StorePinAndVerificationCode", userID, mock.Anything, verificationCode).Return(nil)
+					us.On("GetByID", userID).Return(nil, errors.New("failed to get user"))
+				},
+			},
+			expected: expected{
+				err: errors.New("failed to get user"),
+			},
+		},
+		{
+			description: "should return error when failed to send email",
+			input: input{
+				userID: userID,
+				request: &dto.ChangePinRequest{
+					CurrentPin: oldPin,
+					NewPin:     "098765",
+				},
+				beforeTest: func(wr *mocks.WalletRepository, us *mocks.UserService, wc *mocks.WalletCache, ru *mocks.RandomUtils, mu *mocks.MailUtils) {
+					wr.On("GetByUserID", userID).Return(&model.Wallet{Pin: hashedOldPin}, nil)
+					ru.On("GenerateAlphanumericString", codeLength).Return(verificationCode)
+					wc.On("StorePinAndVerificationCode", userID, mock.Anything, verificationCode).Return(nil)
+					us.On("GetByID", userID).Return(&model.User{Email: email}, nil)
+					mu.On("SendUpdatePinEmail", email, verificationCode).Return(errors.New("failed to send email"))
+				},
+			},
+			expected: expected{
+				err: errors.New("failed to send email"),
+			},
+		},
+		{
+			description: "should return nil when suceed to send email",
+			input: input{
+				userID: userID,
+				request: &dto.ChangePinRequest{
+					CurrentPin: oldPin,
+					NewPin:     "098765",
+				},
+				beforeTest: func(wr *mocks.WalletRepository, us *mocks.UserService, wc *mocks.WalletCache, ru *mocks.RandomUtils, mu *mocks.MailUtils) {
+					wr.On("GetByUserID", userID).Return(&model.Wallet{Pin: hashedOldPin}, nil)
+					ru.On("GenerateAlphanumericString", codeLength).Return(verificationCode)
+					wc.On("StorePinAndVerificationCode", userID, mock.Anything, verificationCode).Return(nil)
+					us.On("GetByID", userID).Return(&model.User{Email: email}, nil)
+					mu.On("SendUpdatePinEmail", email, verificationCode).Return(nil)
+				},
+			},
+			expected: expected{
+				err: nil,
 			},
 		},
 	}
@@ -298,4 +376,8 @@ func TestRequestPinChange(t *testing.T) {
 			assert.Equal(t, tc.expected.err, err)
 		})
 	}
+}
+
+func TestCompletePinChange(t *testing.T) {
+	
 }
