@@ -9,4 +9,5 @@ var (
 	ErrWalletDoesNotExist        = errors.New("user does not have any wallet yet")
 	ErrWalletHistoryDoesNotExist = errors.New("wallet transaction history not exist")
 	ErrInvalidSignature          = errors.New("invalid signature")
+	ErrResetPinTokenNotFound     = errors.New("reset wallet pin token not found")
 )

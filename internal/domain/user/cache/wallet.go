@@ -95,7 +95,7 @@ func (c *walletCacheImpl) FindResetPinToken(token string) error {
 	_, err := c.rdc.Get(context.Background(), key).Int()
 	if err != nil {
 		if err == redis.Nil {
-			err = errs.ErrResetPasswordTokenNotFound
+			err = errs.ErrResetPinTokenNotFound
 		}
 
 		return err
