@@ -74,9 +74,11 @@ func (s *invoiceServiceImpl) Checkout(req dto.CheckoutRequest) (*dto.CheckoutRes
 	}
 
 	var (
-		totalPrice        float64
-		totalShippingCost float64
-		shopInvoices      []*model.InvoicePerShop
+		totalPrice           float64
+		totalShippingCost    float64
+		shopInvoices         []*model.InvoicePerShop
+		randomGen            = random.NewRandomUtils(&random.RandomUtilsConfig{})
+		trackingNumberLength = 20
 	)
 	for _, item := range req.Items {
 		_, err := s.shopService.FindShopById(item.ShopID)
@@ -164,6 +166,9 @@ func (s *invoiceServiceImpl) Checkout(req dto.CheckoutRequest) (*dto.CheckoutRes
 			Total:        shopTotalAfterVoucher + item.ShippingCost,
 			Subtotal:     shopTotalPrice,
 			ShippingCost: item.ShippingCost,
+			TrackingNumber: func() string {
+				return randomGen.GenerateNumericString(trackingNumberLength)
+			}(),
 			VoucherAmount: func() *float64 {
 				if voucher != nil {
 					return &voucher.Amount
