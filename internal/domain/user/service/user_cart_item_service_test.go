@@ -744,3 +744,47 @@ func TestUpdateCartItem(t *testing.T) {
 		})
 	}
 }
+
+func TestDeleteCartItem(t *testing.T) {
+	type input struct {
+		req        *dto.DeleteCartItemRequest
+		beforeTest func(ucir *mocks.UserCartItemRepository)
+	}
+
+	type expected struct {
+		err error
+	}
+
+	tests := []struct {
+		description string
+		input       input
+		expected    expected
+	}{
+		{
+			description: "should return error when failed to get cart item",
+			input: input{
+				req: &dto.DeleteCartItemRequest{},
+				beforeTest: func(ucir *mocks.UserCartItemRepository) {
+					ucir.On("DeleteCartItem", &dto.DeleteCartItemRequest{}).Return(errors.New("failed to get cart item"))
+				},
+			},
+			expected: expected{
+				err: errors.New("failed to get cart item"),
+			},
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.description, func(t *testing.T) {
+			cartItemRepo := mocks.NewUserCartItemRepository(t)
+			tc.input.beforeTest(cartItemRepo)
+			cartItemService := service.NewUserCartItemService(&service.UserCartItemSConfig{
+				CartItemRepository: cartItemRepo,
+			})
+			deletedErr := cartItemService.DeleteCartItem(tc.input.req)
+
+			assert.Equal(t, tc.expected.err, deletedErr)
+		})
+	}
+
+}

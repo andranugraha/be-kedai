@@ -86,6 +86,7 @@ func NewRouter(cfg *RouterConfig) *gin.Engine {
 					carts.POST("", cfg.UserHandler.CreateCartItem)
 					carts.GET("", cfg.UserHandler.GetAllCartItem)
 					carts.PUT("/:skuId", cfg.UserHandler.UpdateCartItem)
+					carts.DELETE("/:cartItemId", cfg.UserHandler.DeleteCartItem)
 				}
 				addresses := userAuthenticated.Group("/addresses")
 				{
