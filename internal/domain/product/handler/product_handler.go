@@ -70,7 +70,7 @@ func (h *Handler) ProductSearchFiltering(c *gin.Context) {
 
 func (h *Handler) GetProductsByShopSlug(c *gin.Context) {
 	var request dto.ShopProductFilterRequest
-	c.ShouldBindQuery(&request)
+	_ = c.ShouldBindQuery(&request)
 
 	request.Validate()
 
