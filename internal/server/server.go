@@ -8,7 +8,7 @@ import (
 	locationRepoPackage "kedai/backend/be-kedai/internal/domain/location/repository"
 	locationServicePackage "kedai/backend/be-kedai/internal/domain/location/service"
 
-	userCache "kedai/backend/be-kedai/internal/domain/user/cache"
+	userCachePackage "kedai/backend/be-kedai/internal/domain/user/cache"
 	userHandlerPackage "kedai/backend/be-kedai/internal/domain/user/handler"
 	userRepoPackage "kedai/backend/be-kedai/internal/domain/user/repository"
 	userServicePackage "kedai/backend/be-kedai/internal/domain/user/service"
@@ -96,15 +96,6 @@ func createRouter() *gin.Engine {
 		WalletHistory: walletHistoryRepo,
 	})
 
-	walletService := userServicePackage.NewWalletService(&userServicePackage.WalletSConfig{
-		WalletRepo: walletRepo,
-	})
-
-	walletHistoryService := userServicePackage.NewWalletHistoryService(&userServicePackage.WalletHistorySConfig{
-		WalletHistoryRepository: walletHistoryRepo,
-		WalletService:           walletService,
-	})
-
 	courierRepo := shopRepoPackage.NewCourierRepository(&shopRepoPackage.CourierRConfig{
 		DB: db,
 	})
@@ -159,7 +150,7 @@ func createRouter() *gin.Engine {
 		ShopVoucherService: shopVoucherService,
 	})
 
-	userCache := userCache.NewUserCache(&userCache.UserCConfig{
+	userCache := userCachePackage.NewUserCache(&userCachePackage.UserCConfig{
 		RDC: redis,
 	})
 	userProfileRepo := userRepoPackage.NewUserProfileRepository(&userRepoPackage.UserProfileRConfig{
@@ -181,6 +172,23 @@ func createRouter() *gin.Engine {
 
 	userProfileService := userServicePackage.NewUserProfileService(&userServicePackage.UserProfileSConfig{
 		Repository: userProfileRepo,
+	})
+
+	walletCache := userCachePackage.NewWalletCache(&userCachePackage.WalletCConfig{
+		RDC: redis,
+	})
+
+	walletService := userServicePackage.NewWalletService(&userServicePackage.WalletSConfig{
+		WalletRepo:  walletRepo,
+		UserService: userService,
+		MailUtils:   mailUtils,
+		RandomUtils: randomUtils,
+		WalletCache: walletCache,
+	})
+
+	walletHistoryService := userServicePackage.NewWalletHistoryService(&userServicePackage.WalletHistorySConfig{
+		WalletHistoryRepository: walletHistoryRepo,
+		WalletService:           walletService,
 	})
 
 	userWishlistRepo := userRepoPackage.NewUserWishlistRepository(&userRepoPackage.UserWishlistRConfig{
