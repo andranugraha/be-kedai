@@ -13,7 +13,7 @@ type TransactionReview struct {
 	ReviewDate  time.Time `json:"reviewDate"`
 
 	TransactionId int          `json:"transactionId"`
-	Transaction   *Transaction `json:"transactions" gorm:"foreignKey:TransactionId"`
+	Transaction   *Transaction `json:"transactions,omitempty" gorm:"foreignKey:TransactionId"`
 
 	ReviewMedias []*ReviewMedia `json:"reviewMedias" gorm:"foreignKey:ReviewId"`
 

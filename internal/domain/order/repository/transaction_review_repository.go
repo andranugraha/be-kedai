@@ -48,7 +48,7 @@ func (r *transactionReviewRepositoryImpl) Create(transactionReview *model.Transa
 
 func (r *transactionReviewRepositoryImpl) GetByTransactionID(transactionID int) (*model.TransactionReview, error) {
 	var transactionReview model.TransactionReview
-	err := r.db.Where("transaction_id = ?", transactionID).First(&transactionReview).Error
+	err := r.db.Preload("ReviewMedias").Where("transaction_id = ?", transactionID).First(&transactionReview).Error
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
 			return nil, commonErr.ErrTransactionReviewNotFound
