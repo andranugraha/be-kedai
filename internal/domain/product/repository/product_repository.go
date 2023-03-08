@@ -238,11 +238,11 @@ func (r *productRepositoryImpl) ProductSearchFiltering(req dto.ProductSearchFilt
 }
 
 func (r *productRepositoryImpl) SearchAutocomplete(req dto.ProductSearchAutocomplete) ([]*dto.ProductResponse, error) {
-	var(
+	var (
 		products []*dto.ProductResponse
-		active = true
-	) 
-	
+		active   = true
+	)
+
 	db := r.db.Select(`products.*, (select url from product_medias pm where products.id = pm.product_id limit 1) as image_url`)
 
 	db = db.Where("products.is_active = ?", active).Where("products.name ILIKE ?", "%"+req.Keyword+"%").Order("products.rating desc")

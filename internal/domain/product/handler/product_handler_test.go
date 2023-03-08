@@ -449,9 +449,9 @@ func TestSearchAutocomplete(t *testing.T) {
 			expected: expected{
 				statusCode: http.StatusOK,
 				response: response.Response{
-					Code: code.OK,
+					Code:    code.OK,
 					Message: "ok",
-					Data: res,
+					Data:    res,
 				},
 			},
 		},
@@ -465,7 +465,7 @@ func TestSearchAutocomplete(t *testing.T) {
 			expected: expected{
 				statusCode: http.StatusInternalServerError,
 				response: response.Response{
-					Code: code.INTERNAL_SERVER_ERROR,
+					Code:    code.INTERNAL_SERVER_ERROR,
 					Message: errs.ErrInternalServerError.Error(),
 				},
 			},
