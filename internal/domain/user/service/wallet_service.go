@@ -125,7 +125,9 @@ func (s *walletServiceImpl) CompletePinChange(userID int, request *dto.CompleteC
 		return err
 	}
 
-	return s.walletCache.DeletePinAndVerificationCode(userID)
+	_ = s.walletCache.DeletePinAndVerificationCode(userID)
+
+	return nil
 }
 
 func (s *walletServiceImpl) RequestPinReset(userID int) error {
@@ -141,12 +143,7 @@ func (s *walletServiceImpl) RequestPinReset(userID int) error {
 		return err
 	}
 
-	err = s.mailUtils.SendResetPasswordEmail(user.Email, verificationCode)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return s.mailUtils.SendResetPinEmail(user.Email, verificationCode)
 }
 
 func (s *walletServiceImpl) CompletePinReset(userID int, request *dto.CompleteResetPinRequest) error {
@@ -162,5 +159,7 @@ func (s *walletServiceImpl) CompletePinReset(userID int, request *dto.CompleteRe
 		return err
 	}
 
-	return s.walletCache.DeleteResetPinToken(request.Token)
+	_ = s.walletCache.DeleteResetPinToken(request.Token)
+
+	return nil
 }
