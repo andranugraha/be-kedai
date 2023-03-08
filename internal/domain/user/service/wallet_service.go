@@ -8,7 +8,6 @@ import (
 	"kedai/backend/be-kedai/internal/domain/user/model"
 	"kedai/backend/be-kedai/internal/domain/user/repository"
 	"kedai/backend/be-kedai/internal/utils/hash"
-	"log"
 )
 
 const (
@@ -56,8 +55,7 @@ func (s *walletServiceImpl) TopUp(userId int, req dto.TopUpRequest) (*model.Wall
 
 	signString := fmt.Sprintf("%s:%d:%s", req.CardNumber, int(req.Amount), config.MerchantCode)
 	hashedString := hash.HashSHA256(signString)
-	log.Print(signString)
-	
+
 	isValid := hash.CompareSignature(req.Signature, hashedString)
 	if !isValid {
 		return nil, errs.ErrInvalidSignature
