@@ -1,6 +1,9 @@
 package model
 
 import (
+	productModel "kedai/backend/be-kedai/internal/domain/product/model"
+	userModel "kedai/backend/be-kedai/internal/domain/user/model"
+
 	"gorm.io/gorm"
 )
 
@@ -16,6 +19,8 @@ type Transaction struct {
 	SkuID     int `json:"skuId"`
 
 	Review *TransactionReview `json:"review,omitempty"`
+	User   *userModel.User    `json:"user,omitempty" gorm:"foreignKey:UserID"`
+	Sku    *productModel.Sku  `json:"sku,omitempty" gorm:"foreignKey:SkuID"`
 
 	gorm.Model `json:"-"`
 }
