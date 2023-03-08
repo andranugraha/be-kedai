@@ -15,6 +15,7 @@ type ShopRepository interface {
 	FindShopByUserId(userId int) (*model.Shop, error)
 	FindShopBySlug(slug string) (*model.Shop, error)
 	FindShopByKeyword(req dto.FindShopRequest) ([]*dto.FindShopResponse, int64, int, error)
+	UpdateShopAddressIdByUserId(tx *gorm.DB, userId int, addressId int) error
 }
 
 type shopRepositoryImpl struct {
@@ -95,4 +96,19 @@ func (r *shopRepositoryImpl) FindShopByKeyword(req dto.FindShopRequest) ([]*dto.
 	}
 
 	return shopList, totalRows, totalPage, nil
+}
+
+func (r *shopRepositoryImpl) UpdateShopAddressIdByUserId(tx *gorm.DB, userId int, addressId int) error {
+	res := tx.Model(&model.Shop{}).Where("user_id = ?", userId).Update("address_id", addressId)
+	if err := res.Error; err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	if res.RowsAffected == 0 {
+		tx.Rollback()
+		return errs.ErrShopNotFound
+	}
+
+	return nil
 }
