@@ -5,8 +5,10 @@ type RegisterWalletRequest struct {
 }
 
 type TopUpRequest struct {
-	Amount float64 `form:"amount" binding:"required,numeric,min=10000,max=20000000"`
-	TxnId  string  `form:"txnId" binding:"required"`
+	CardNumber string  `form:"cardNumber" binding:"required"`
+	Signature  string  `form:"signature" binding:"required"`
+	Amount     float64 `form:"amount" binding:"required,numeric,min=10000,max=20000000"`
+	TxnId      string  `form:"txnId" binding:"required"`
 }
 
 type WalletHistoryRequest struct {

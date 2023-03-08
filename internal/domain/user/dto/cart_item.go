@@ -32,6 +32,11 @@ type GetCartItemsRequest struct {
 	Page   int `form:"page"`
 }
 
+type DeleteCartItemRequest struct {
+	UserId     int
+	CartItemId int
+}
+
 type CartItemShopResponse struct {
 	ID         int       `json:"id"`
 	Name       string    `json:"name"`

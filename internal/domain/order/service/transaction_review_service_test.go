@@ -1,11 +1,14 @@
 package service_test
 
 import (
+	"errors"
 	"kedai/backend/be-kedai/internal/common/constant"
+	commonDto "kedai/backend/be-kedai/internal/common/dto"
 	commonErr "kedai/backend/be-kedai/internal/common/error"
 	"kedai/backend/be-kedai/internal/domain/order/dto"
 	"kedai/backend/be-kedai/internal/domain/order/model"
 	"kedai/backend/be-kedai/internal/domain/order/service"
+	productDto "kedai/backend/be-kedai/internal/domain/product/dto"
 	"kedai/backend/be-kedai/mocks"
 	"testing"
 
@@ -191,4 +194,231 @@ func TestCreate(t *testing.T) {
 		})
 	}
 
+}
+
+func TestGetReviews(t *testing.T) {
+	type input struct {
+		req        productDto.GetReviewRequest
+		beforeTest func(mockTransactionReviewRepo *mocks.TransactionReviewRepository, mockProductService *mocks.ProductService)
+	}
+
+	type expected struct {
+		data *commonDto.PaginationResponse
+		err  error
+	}
+
+	cases := []struct {
+		description string
+		input       input
+		expected    expected
+	}{
+		{
+			description: "should return error when GetByCode return error",
+			input: input{
+				req: productDto.GetReviewRequest{
+					ProductCode: "",
+				},
+				beforeTest: func(mockTransactionReviewRepo *mocks.TransactionReviewRepository, mockProductService *mocks.ProductService) {
+					mockProductService.On("GetByCode", "").Return(nil, commonErr.ErrInternalServerError)
+				},
+			},
+			expected: expected{
+				data: nil,
+				err:  commonErr.ErrInternalServerError,
+			},
+		},
+
+		{
+			description: "should return error when GetReviews return error",
+			input: input{
+				req: productDto.GetReviewRequest{
+					ProductCode: "",
+				},
+				beforeTest: func(mockTransactionReviewRepo *mocks.TransactionReviewRepository, mockProductService *mocks.ProductService) {
+					mockProductService.On("GetByCode", "").Return(&productDto.ProductDetail{}, nil)
+					mockTransactionReviewRepo.On("GetReviews", productDto.GetReviewRequest{}).Return(nil, int64(0), 0, commonErr.ErrInternalServerError)
+				},
+			},
+			expected: expected{
+				data: nil,
+				err:  commonErr.ErrInternalServerError,
+			},
+		},
+		{
+			description: "should return pagination response and nil error when GetReviews success",
+			input: input{
+				req: productDto.GetReviewRequest{
+					ProductCode: "",
+				},
+				beforeTest: func(mockTransactionReviewRepo *mocks.TransactionReviewRepository, mockProductService *mocks.ProductService) {
+					mockProductService.On("GetByCode", "").Return(&productDto.ProductDetail{}, nil)
+					mockTransactionReviewRepo.On("GetReviews", productDto.GetReviewRequest{}).Return([]*model.TransactionReview{}, int64(0), 0, nil)
+				},
+			},
+			expected: expected{
+				data: &commonDto.PaginationResponse{
+					Data: []*dto.ReviewResponse{},
+				},
+				err: nil,
+			},
+		},
+	}
+
+	for _, c := range cases {
+		t.Run(c.description, func(t *testing.T) {
+			mockTransactionReviewRepo := new(mocks.TransactionReviewRepository)
+			mockProductService := new(mocks.ProductService)
+
+			c.input.beforeTest(mockTransactionReviewRepo, mockProductService)
+
+			transactionReviewService := service.NewTransactionReviewService(&service.TransactionReviewSConfig{
+				TransactionReviewRepo: mockTransactionReviewRepo,
+				ProductService:        mockProductService,
+			})
+
+			data, err := transactionReviewService.GetReviews(c.input.req)
+
+			assert.Equal(t, c.expected.err, err)
+			assert.Equal(t, c.expected.data, data)
+		})
+	}
+
+}
+
+func TestGetReviewStats(t *testing.T) {
+
+	type input struct {
+		req        string
+		beforeTest func(mockTransactionReviewRepo *mocks.TransactionReviewRepository, mockProductService *mocks.ProductService)
+	}
+
+	type expected struct {
+		data *productDto.GetReviewStatsResponse
+		err  error
+	}
+
+	cases := []struct {
+		description string
+		input       input
+		expected    expected
+	}{
+		{
+			description: "should return error when GetReviewStats return error",
+			input: input{
+				req: "",
+				beforeTest: func(mockTransactionReviewRepo *mocks.TransactionReviewRepository, mockProductService *mocks.ProductService) {
+					mockProductService.On("GetByCode", "").Return(&productDto.ProductDetail{}, nil)
+					mockTransactionReviewRepo.On("GetReviewStats", "").Return(nil, commonErr.ErrInternalServerError)
+				},
+			},
+			expected: expected{
+				data: nil,
+				err:  commonErr.ErrInternalServerError,
+			},
+		},
+		{
+			description: "should return error when GetByCode return error",
+			input: input{
+				req: "",
+				beforeTest: func(mockTransactionReviewRepo *mocks.TransactionReviewRepository, mockProductService *mocks.ProductService) {
+					mockProductService.On("GetByCode", "").Return(nil, commonErr.ErrInternalServerError)
+				},
+			},
+			expected: expected{
+				data: nil,
+				err:  commonErr.ErrInternalServerError,
+			},
+		},
+		{
+			description: "should return review stats and nil error when GetReviewStats success",
+			input: input{
+				req: "",
+				beforeTest: func(mockTransactionReviewRepo *mocks.TransactionReviewRepository, mockProductService *mocks.ProductService) {
+					mockProductService.On("GetByCode", "").Return(&productDto.ProductDetail{}, nil)
+					mockTransactionReviewRepo.On("GetReviewStats", "").Return(&productDto.GetReviewStatsResponse{}, nil)
+				},
+			},
+			expected: expected{
+				data: &productDto.GetReviewStatsResponse{},
+				err:  nil,
+			},
+		},
+	}
+
+	for _, c := range cases {
+		t.Run(c.description, func(t *testing.T) {
+			mockTransactionReviewRepo := new(mocks.TransactionReviewRepository)
+			mockProductService := new(mocks.ProductService)
+
+			c.input.beforeTest(mockTransactionReviewRepo, mockProductService)
+
+			transactionReviewService := service.NewTransactionReviewService(&service.TransactionReviewSConfig{
+				TransactionReviewRepo: mockTransactionReviewRepo,
+				ProductService:        mockProductService,
+			})
+
+			data, err := transactionReviewService.GetReviewStats(c.input.req)
+
+			assert.Equal(t, c.expected.err, err)
+			assert.Equal(t, c.expected.data, data)
+		})
+	}
+}
+
+func TestGetReviewByTransactionID(t *testing.T) {
+	type input struct {
+		transactionID int
+		mockData      *model.TransactionReview
+		mockErr       error
+	}
+	type expected struct {
+		data *model.TransactionReview
+		err  error
+	}
+
+	tests := []struct {
+		description string
+		input
+		expected
+	}{
+		{
+			description: "should return error when failed to fetch review",
+			input: input{
+				transactionID: 1,
+				mockData:      nil,
+				mockErr:       errors.New("failed to fetch review"),
+			},
+			expected: expected{
+				data: nil,
+				err:  errors.New("failed to fetch review"),
+			},
+		},
+		{
+			description: "should return review data when succeed to fetch review",
+			input: input{
+				transactionID: 1,
+				mockData:      &model.TransactionReview{},
+				mockErr:       nil,
+			},
+			expected: expected{
+				data: &model.TransactionReview{},
+				err:  nil,
+			},
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.description, func(t *testing.T) {
+			reviewRepo := mocks.NewTransactionReviewRepository(t)
+			reviewRepo.On("GetByTransactionID", tc.input.transactionID).Return(tc.input.mockData, tc.input.mockErr)
+			reviewService := service.NewTransactionReviewService(&service.TransactionReviewSConfig{
+				TransactionReviewRepo: reviewRepo,
+			})
+
+			actualData, actualErr := reviewService.GetReviewByTransactionID(tc.input.transactionID)
+
+			assert.Equal(t, tc.expected.data, actualData)
+			assert.Equal(t, tc.expected.err, actualErr)
+		})
+	}
 }

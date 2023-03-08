@@ -5,11 +5,13 @@ import (
 	"kedai/backend/be-kedai/internal/domain/order/dto"
 	"kedai/backend/be-kedai/internal/domain/order/model"
 	"kedai/backend/be-kedai/internal/domain/order/repository"
+	"strings"
 )
 
 type InvoicePerShopService interface {
 	GetInvoicesByUserID(userID int, request *dto.InvoicePerShopFilterRequest) (*commonDto.PaginationResponse, error)
 	GetByID(id int) (*model.InvoicePerShop, error)
+	GetInvoicesByUserIDAndCode(userID int, code string) (*dto.InvoicePerShopDetail, error)
 }
 
 type invoicePerShopServiceImpl struct {
@@ -43,4 +45,10 @@ func (s *invoicePerShopServiceImpl) GetInvoicesByUserID(userID int, request *dto
 
 func (s *invoicePerShopServiceImpl) GetByID(id int) (*model.InvoicePerShop, error) {
 	return s.invoicePerShopRepo.GetByID(id)
+}
+
+func (s *invoicePerShopServiceImpl) GetInvoicesByUserIDAndCode(userID int, code string) (*dto.InvoicePerShopDetail, error) {
+	decoded := strings.Replace(code, "-", "/", -1)
+
+	return s.invoicePerShopRepo.GetByUserIDAndCode(userID, decoded)
 }
