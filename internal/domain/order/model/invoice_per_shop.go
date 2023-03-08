@@ -2,6 +2,7 @@ package model
 
 import (
 	"fmt"
+	locationModel "kedai/backend/be-kedai/internal/domain/location/model"
 	"kedai/backend/be-kedai/internal/domain/shop/model"
 	userModel "kedai/backend/be-kedai/internal/domain/user/model"
 	"kedai/backend/be-kedai/internal/utils/random"
@@ -23,14 +24,17 @@ type InvoicePerShop struct {
 
 	UserID           int  `json:"userId"`
 	VoucherID        *int `json:"voucherId,omitempty"`
+	AddressID        int  `json:"addressId"`
 	ShopID           int  `json:"shopId"`
 	CourierServiceID int  `json:"courierServiceId"`
-	AddressID        int  `json:"addressId"`
 	InvoiceID        int  `json:"invoiceId"`
 
-	Voucher      *userModel.UserVoucher `json:"voucher,omitempty" gorm:"foreignKey:VoucherID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE;"`
-	Transactions []*Transaction         `json:"transactions" gorm:"foreignKey:InvoiceID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE;"`
-	Shop         *model.Shop            `json:"shop,omitempty"`
+	Voucher        *userModel.UserVoucher     `json:"voucher,omitempty" gorm:"foreignKey:VoucherID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE;"`
+	Transactions   []*Transaction             `json:"transactions" gorm:"foreignKey:InvoiceID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE;"`
+	Shop           *model.Shop                `json:"shop,omitempty"`
+	StatusList     []*InvoiceStatus           `json:"statusList,omitempty"`
+	Address        *locationModel.UserAddress `json:"address,omitempty"`
+	CourierService *model.CourierService      `json:"courierService,omitempty"`
 
 	gorm.Model `json:"-"`
 }

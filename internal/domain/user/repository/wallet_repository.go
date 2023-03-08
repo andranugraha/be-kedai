@@ -95,7 +95,7 @@ func (r *walletRepositoryImpl) DeductBalanceByUserID(tx *gorm.DB, userID int, am
 func (r *walletRepositoryImpl) TopUp(history *model.WalletHistory, wallet *model.Wallet) (*model.WalletHistory, error) {
 	history.Date = time.Now()
 
-	r.db.Transaction(func(tx *gorm.DB) error {
+	err := r.db.Transaction(func(tx *gorm.DB) error {
 		if err := tx.Model(&model.Wallet{}).Where("id = ?", wallet.ID).Update("balance", gorm.Expr("balance + ?", history.Amount)).Error; err != nil {
 			return err
 		}
@@ -106,6 +106,10 @@ func (r *walletRepositoryImpl) TopUp(history *model.WalletHistory, wallet *model
 
 		return nil
 	})
+
+	if err != nil {
+		return nil, err
+	}
 
 	return history, nil
 }

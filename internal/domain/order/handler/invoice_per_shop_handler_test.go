@@ -109,3 +109,93 @@ func TestGetInvoicesByUserID(t *testing.T) {
 		})
 	}
 }
+
+func TestGetInvoiceByCode(t *testing.T) {
+	type input struct {
+		userID   int
+		code     string
+		mockData *dto.InvoicePerShopDetail
+		mockErr  error
+	}
+	type expected struct {
+		statusCode int
+		response   response.Response
+	}
+
+	tests := []struct {
+		description string
+		input
+		expected
+	}{
+		{
+			description: "should return error with status code 404 when invoice does not exist",
+			input: input{
+				userID:   1,
+				code:     "INV/XX/X",
+				mockData: nil,
+				mockErr:  errs.ErrInvoiceNotFound,
+			},
+			expected: expected{
+				statusCode: http.StatusNotFound,
+				response: response.Response{
+					Code:    code.INVOICE_NOT_FOUND,
+					Message: errs.ErrInvoiceNotFound.Error(),
+				},
+			},
+		},
+		{
+			description: "should return error with status code 500 when failed to get invoice",
+			input: input{
+				userID:   1,
+				code:     "INV-XX-X",
+				mockData: nil,
+				mockErr:  errors.New("failed to get invoice"),
+			},
+			expected: expected{
+				statusCode: http.StatusInternalServerError,
+				response: response.Response{
+					Code:    code.INTERNAL_SERVER_ERROR,
+					Message: errs.ErrInternalServerError.Error(),
+				},
+			},
+		},
+		{
+			description: "should return invoice with status code 200 when fetching invoice succeed",
+			input: input{
+				userID:   1,
+				code:     "INV/XX/X",
+				mockData: &dto.InvoicePerShopDetail{},
+				mockErr:  nil,
+			},
+			expected: expected{
+				statusCode: http.StatusOK,
+				response: response.Response{
+					Code:    code.OK,
+					Message: "success",
+					Data:    &dto.InvoicePerShopDetail{},
+				},
+			},
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.description, func(t *testing.T) {
+			expectedJson, _ := json.Marshal(tc.expected.response)
+			invoicePerShopService := mocks.NewInvoicePerShopService(t)
+			invoicePerShopService.On("GetInvoicesByUserIDAndCode", tc.input.userID, tc.input.code).Return(tc.input.mockData, tc.input.mockErr)
+			rec := httptest.NewRecorder()
+			c, _ := gin.CreateTestContext(rec)
+			c.Set("userId", tc.input.userID)
+			c.AddParam("code", tc.input.code)
+			c.Request, _ = http.NewRequest(http.MethodGet, fmt.Sprintf("/orders/invoices/%s", tc.input.code), nil)
+			handler := handler.New(&handler.Config{
+				InvoicePerShopService: invoicePerShopService,
+			})
+
+			handler.GetInvoiceByCode(c)
+
+			assert.Equal(t, tc.expected.statusCode, rec.Code)
+			assert.Equal(t, string(expectedJson), rec.Body.String())
+		})
+	}
+}
