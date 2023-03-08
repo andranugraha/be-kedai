@@ -9,6 +9,20 @@ type TopUpRequest struct {
 	TxnId  string  `form:"txnId" binding:"required"`
 }
 
+type ChangePinRequest struct {
+	CurrentPin string `json:"currentPin" binding:"required,numeric,len=6"`
+	NewPin     string `json:"newPin" binding:"required,numeric,len=6"`
+}
+
+type CompleteChangePinRequest struct {
+	VerificationCode string `json:"verificationCode" binding:"required,alphanum,len=6"`
+}
+
+type CompleteResetPinRequest struct {
+	Token  string `json:"token" binding:"required,alphanum,len=6"`
+	NewPin string `json:"newPin" binding:"required,numeric,len=6"`
+}
+
 type WalletHistoryRequest struct {
 	Page  int `form:"page"`
 	Limit int `form:"limit"`
