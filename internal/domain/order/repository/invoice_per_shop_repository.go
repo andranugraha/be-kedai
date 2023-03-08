@@ -125,8 +125,7 @@ func (r *invoicePerShopRepositoryImpl) GetByUserIDAndCode(userID int, code strin
 			Joins("JOIN skus ON skus.id = transactions.sku_id").
 			Joins("JOIN products ON skus.product_id = products.id")
 	}).
-		Preload("TransactionItems.Sku.Variants").
-		Preload("TransactionItems.Review.ReviewMedias")
+		Preload("TransactionItems.Sku.Variants")
 
 	query = query.Preload("Address.Province").
 		Preload("Address.City").
