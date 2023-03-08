@@ -6,6 +6,7 @@ import (
 	"kedai/backend/be-kedai/internal/domain/user/dto"
 	"kedai/backend/be-kedai/internal/domain/user/model"
 	"kedai/backend/be-kedai/internal/domain/user/service"
+	"kedai/backend/be-kedai/internal/utils/hash"
 	"kedai/backend/be-kedai/mocks"
 	"testing"
 
@@ -218,6 +219,83 @@ func TestTopUp(t *testing.T) {
 
 			assert.Equal(t, tc.expected.err, err)
 			assert.Equal(t, tc.expected.data, result)
+		})
+	}
+}
+
+func TestRequestPinChange(t *testing.T) {
+	type input struct {
+		userID  int
+		request *dto.ChangePinRequest
+	}
+	type expected struct {
+		err error
+	}
+
+	var (
+		userID          = 1
+		oldPin          = "123456"
+		hashedOldPin, _ = hash.HashAndSalt(oldPin)
+		// codeLength       = 6
+		// verificationCode = "a1b2c3"
+		// email            = "test@email.com"
+	)
+
+	tests := []struct {
+		description string
+		beforeTest  func(*mocks.WalletRepository, *mocks.UserService, *mocks.WalletCache, *mocks.RandomUtils, *mocks.MailUtils)
+		input
+		expected
+	}{
+		{
+			description: "should return error when failed to get wallet",
+			beforeTest: func(wr *mocks.WalletRepository, us *mocks.UserService, wc *mocks.WalletCache, ru *mocks.RandomUtils, mu *mocks.MailUtils) {
+				wr.On("GetByUserID", userID).Return(nil, errors.New("failed to get wallet"))
+			},
+			input: input{
+				userID:  userID,
+				request: &dto.ChangePinRequest{},
+			},
+			expected: expected{
+				err: errors.New("failed to get wallet"),
+			},
+		},
+		{
+			description: "should return error when current pin is invalid",
+			beforeTest: func(wr *mocks.WalletRepository, us *mocks.UserService, wc *mocks.WalletCache, ru *mocks.RandomUtils, mu *mocks.MailUtils) {
+				wr.On("GetByUserID", userID).Return(&model.Wallet{Pin: hashedOldPin}, nil)
+			},
+			input: input{
+				userID: userID,
+				request: &dto.ChangePinRequest{
+					CurrentPin: "789012",
+				},
+			},
+			expected: expected{
+				err: errRes.ErrPinMismatch,
+			},
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.description, func(t *testing.T) {
+			walletRepo := mocks.NewWalletRepository(t)
+			randomUtils := mocks.NewRandomUtils(t)
+			mailUtils := mocks.NewMailUtils(t)
+			userService := mocks.NewUserService(t)
+			walletCache := mocks.NewWalletCache(t)
+			tc.beforeTest(walletRepo, userService, walletCache, randomUtils, mailUtils)
+			walletService := service.NewWalletService(&service.WalletSConfig{
+				WalletRepo:  walletRepo,
+				UserService: userService,
+				WalletCache: walletCache,
+				RandomUtils: randomUtils,
+				MailUtils:   mailUtils,
+			})
+
+			err := walletService.RequestPinChange(tc.input.userID, tc.input.request)
+
+			assert.Equal(t, tc.expected.err, err)
 		})
 	}
 }
