@@ -43,7 +43,11 @@ type WalletSConfig struct {
 
 func NewWalletService(cfg *WalletSConfig) WalletService {
 	return &walletServiceImpl{
-		walletRepo: cfg.WalletRepo,
+		walletRepo:  cfg.WalletRepo,
+		walletCache: cfg.WalletCache,
+		userService: cfg.UserService,
+		randomUtils: cfg.RandomUtils,
+		mailUtils:   cfg.MailUtils,
 	}
 }
 
@@ -107,12 +111,12 @@ func (s *walletServiceImpl) RequestPinChange(userID int, request *dto.ChangePinR
 }
 
 func (s *walletServiceImpl) CompletePinChange(userID int, request *dto.CompleteChangePinRequest) error {
-	newPin, verifcationCode, err := s.walletCache.FindPinAndVerificationCode(userID)
+	newPin, verificationCode, err := s.walletCache.FindPinAndVerificationCode(userID)
 	if err != nil {
 		return err
 	}
 
-	if verifcationCode != request.VerificationCode {
+	if verificationCode != request.VerificationCode {
 		return errs.ErrIncorrectVerificationCode
 	}
 
