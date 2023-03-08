@@ -123,7 +123,7 @@ func (h *Handler) CompleteChangeWalletPin(c *gin.Context) {
 		}
 
 		if errors.Is(err, errs.ErrIncorrectVerificationCode) {
-			response.Error(c, http.StatusBadRequest, code.BAD_REQUEST, err.Error())
+			response.Error(c, http.StatusBadRequest, code.INCORRECT_VERIFICATION_CODE, err.Error())
 			return
 		}
 

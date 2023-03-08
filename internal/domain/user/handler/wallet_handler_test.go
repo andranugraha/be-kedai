@@ -615,7 +615,7 @@ func TestCompleteChangeWalletPin(t *testing.T) {
 			expected: expected{
 				statusCode: http.StatusBadRequest,
 				response: response.Response{
-					Code:    code.BAD_REQUEST,
+					Code:    code.INCORRECT_VERIFICATION_CODE,
 					Message: errRes.ErrIncorrectVerificationCode.Error(),
 				},
 			},
