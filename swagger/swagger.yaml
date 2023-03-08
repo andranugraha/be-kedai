@@ -2780,7 +2780,147 @@ paths:
                     example: "INTERNAL_SERVER_ERROR"
                   message:
                     type: string
-                    example: "error message"                
+                    example: "error message"
+  /v1/products/{code}/reviews:
+    get:
+      tags:
+        - Product
+      summary: Get product reviews by code
+      description: Get product reviews by product code
+      parameters:
+        - in: path
+          name: code
+          required: true
+          schema:
+            type: string
+            example: product_code
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            default: 6
+            maximum: 50
+          description: Set to 6 by default and the maximum limit is 50.
+        - in: query
+          name: page
+          schema:
+            type: integer
+            default: 1    
+      responses:
+        '200':
+          description: operation successful
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Response'
+                  - type: object
+                    properties:
+                      code:
+                        example: 'OK'
+                      message:
+                        example: "ok"
+                      data:
+                        allOf:
+                        - $ref: '#/components/schemas/PaginationResponse'
+                        - type: object
+                          properties:
+                            totalRows:
+                              example: 1
+                            totalPages:
+                              example: 1
+                            limit:
+                              example: 10
+                            data:
+                              type: array
+                              items:
+                                allOf:
+                                  - $ref: '#/components/schemas/ReviewResponse'
+        '404':
+          description: product not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "PRODUCT_NOT_EXIST"
+                  message:
+                    type: string
+                    example: "error message"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "INTERNAL_SERVER_ERROR"
+                  message:
+                    type: string
+                    example: "error message"
+  /v1/products/{code}/reviews/stats:
+    get:
+      tags:
+        - Product
+      summary: Get product review stats by code
+      description: Get product review stats by product code. The stats consists of average rating, total review count, five star count, four star count, three star count, two star count, one star count, with picture and with comment.
+      parameters:
+        - in: path
+          name: code
+          required: true
+          schema:
+            type: string
+            example: product_code
+      responses:
+        '200':
+          description: operation successful
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Response'
+                  - type: object
+                    properties:
+                      code:
+                        example: 'OK'
+                      message:
+                        example: "ok"
+                      data:
+                        allOf:
+                        - type: object
+                          properties:
+                            data:
+                              $ref: '#/components/schemas/GetReviewStatsReponse'
+        '404':
+          description: product not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "PRODUCT_NOT_EXIST"
+                  message:
+                    type: string
+                    example: "error message"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "INTERNAL_SERVER_ERROR"
+                  message:
+                    type: string
+                    example: "error message"                    
   /v1/products:
     get:
       tags:
@@ -3866,6 +4006,9 @@ components:
     ShopVoucher:
       type: object
       properties:
+        id:
+          type: integer
+          example: 1
         name:
           type: string
           example: "voucher"
@@ -4414,7 +4557,7 @@ components:
           format: float
           example: 1000
         trackingNumber:
-          type: int
+          type: integer
           example: 123
         voucherAmount:
           type: number
@@ -4444,6 +4587,73 @@ components:
         courierServiceId:
           type: integer
           example: 1
+    UserReviewResponse:
+      type: object
+      properties:
+        username:
+          type: string
+          example: joe123
+        photoUrl:
+          type: string
+          example: test.jpg
+    TransactionReviewResponse:
+      type: object
+      properties:
+        description:
+          type: string
+          example: Good product!
+        rating:
+          type: integer
+          example: 4
+        reviewDate:
+          type: string
+          example: '2024-12-31T00:00:00Z'
+        reviewMedias:
+          type: array
+          items:
+            $ref: '#/components/schemas/ReviewMedia'
+    ReviewResponse:
+      type: object
+      properties:
+        user:
+          $ref: '#/components/schemas/UserReviewResponse'
+        transactionReview:
+          $ref: '#/components/schemas/TransactionReviewResponse'
+        variant:
+          type: array
+          items:
+            $ref: '#/components/schemas/Variant'
+    GetReviewStatsReponse:
+      type: object
+      properties:
+        averageRating:
+          type: number
+          format: float64
+          example: 4.8
+        totalReview:
+          type: integer
+          example: 542
+        fiveStar:
+          type: integer
+          example: 20
+        fourStar:
+          type: integer
+          example: 20
+        threeStar:
+          type: integer
+          example: 20
+        twoStar:
+          type: integer
+          example: 20
+        oneStar:
+          type: integer
+          example: 20  
+        withPicture:
+          type: integer
+          example: 10
+        withComment:
+          type: integer
+          example: 40
     Transaction:
       type: object
       properties:
