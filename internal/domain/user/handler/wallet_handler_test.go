@@ -224,9 +224,9 @@ func TestTopUp(t *testing.T) {
 	var (
 		userId       = 1
 		validRequest = dto.TopUpRequest{
-			Amount: 50000,
-			TxnId:  "50400",
-			Signature: "1243asdkjaisdw",
+			Amount:     50000,
+			TxnId:      "50400",
+			Signature:  "1243asdkjaisdw",
 			CardNumber: "12388394834",
 		}
 		invalidRequest = dto.TopUpRequest{
