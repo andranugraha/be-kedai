@@ -157,6 +157,7 @@ func NewRouter(cfg *RouterConfig) *gin.Engine {
 
 				transaction := authenticated.Group("/transactions")
 				{
+					transaction.GET("/:transactionId/reviews", cfg.OrderHandler.GetReviewByTransactionID)
 					review := transaction.Group("/reviews")
 					{
 						review.POST("", cfg.OrderHandler.AddTransactionReview)
