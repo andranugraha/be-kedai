@@ -110,3 +110,25 @@ func (h *Handler) UpdateCartItem(c *gin.Context) {
 
 	response.Success(c, http.StatusOK, code.UPDATED, "update cart item succesful", updatedCart)
 }
+
+func (h *Handler) DeleteCartItem(c *gin.Context) {
+	var req dto.DeleteCartItemRequest
+	cartItemId := c.Param("cartItemId")
+	cartItemIdInt, _ := strconv.Atoi(cartItemId)
+
+	req.CartItemId = cartItemIdInt
+	req.UserId = c.GetInt("userId")
+
+	err := h.userCartItemService.DeleteCartItem(&req)
+	if err != nil {
+		if errors.Is(err, errs.ErrCartItemNotFound) {
+			response.Error(c, http.StatusNotFound, code.CART_ITEM_NOT_FOUND, err.Error())
+			return
+		}
+
+		response.Error(c, http.StatusInternalServerError, code.INTERNAL_SERVER_ERROR, errs.ErrInternalServerError.Error())
+		return
+	}
+
+	response.Success(c, http.StatusOK, code.DELETED, "delete cart item succesful", nil)
+}

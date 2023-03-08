@@ -18,6 +18,7 @@ type UserCartItemService interface {
 	UpdateCartItem(userID int, request *dto.UpdateCartItemRequest) (*dto.UpdateCartItemResponse, error)
 	GetAllCartItem(*dto.GetCartItemsRequest) (*commonDto.PaginationResponse, error)
 	GetCartItemByIdAndUserId(int, int) (*model.CartItem, error)
+	DeleteCartItem(*dto.DeleteCartItemRequest) error
 }
 
 type userCartItemServiceImpl struct {
@@ -187,4 +188,8 @@ func (s *userCartItemServiceImpl) validateProductSKU(skuID int) (*productModel.S
 	}
 
 	return sku, nil
+}
+
+func (s *userCartItemServiceImpl) DeleteCartItem(cartItemReq *dto.DeleteCartItemRequest) error {
+	return s.cartItemRepository.DeleteCartItem(cartItemReq)
 }
