@@ -14,7 +14,6 @@ import (
 	"kedai/backend/be-kedai/mocks"
 	"net/http"
 	"net/http/httptest"
-	"strconv"
 	"testing"
 
 	"github.com/gin-gonic/gin"
@@ -535,16 +534,37 @@ func TestDeleteCartItem(t *testing.T) {
 		expected    expected
 	}{
 		{
-			description: "should return error with status code 400 when sku id is invalid",
+			description: "should return error with status code 400 when cartItemIds is empty",
 			input: input{
 				req: &dto.DeleteCartItemRequest{
-					UserId:     1,
-					CartItemId: 1,
+					UserId: 1,
+				},
+				beforeTest: func(ucis *mocks.UserCartItemService) {
+				},
+			},
+			expected: expected{
+				statusCode: http.StatusBadRequest,
+				response: response.Response{
+					Code:    code.BAD_REQUEST,
+					Message: "CartItemIds is required",
+				},
+			},
+		},
+		{
+			description: "should return error with status code 404 when cart item not found",
+			input: input{
+				req: &dto.DeleteCartItemRequest{
+					UserId: 1,
+					CartItemIds: []int{
+						1, 2,
+					},
 				},
 				beforeTest: func(ucis *mocks.UserCartItemService) {
 					ucis.On("DeleteCartItem", &dto.DeleteCartItemRequest{
-						UserId:     1,
-						CartItemId: 1,
+						UserId: 1,
+						CartItemIds: []int{
+							1, 2,
+						},
 					}).Return(errs.ErrCartItemNotFound)
 				},
 			},
@@ -560,13 +580,17 @@ func TestDeleteCartItem(t *testing.T) {
 			description: "should return error with status code 500 when failed to delete cart item",
 			input: input{
 				req: &dto.DeleteCartItemRequest{
-					UserId:     1,
-					CartItemId: 1,
+					UserId: 1,
+					CartItemIds: []int{
+						1, 2,
+					},
 				},
 				beforeTest: func(ucis *mocks.UserCartItemService) {
 					ucis.On("DeleteCartItem", &dto.DeleteCartItemRequest{
-						UserId:     1,
-						CartItemId: 1,
+						UserId: 1,
+						CartItemIds: []int{
+							1, 2,
+						},
 					}).Return(errs.ErrInternalServerError)
 				},
 			},
@@ -582,13 +606,17 @@ func TestDeleteCartItem(t *testing.T) {
 			description: "should return error with status code 200 when delete cart item succeed",
 			input: input{
 				req: &dto.DeleteCartItemRequest{
-					UserId:     1,
-					CartItemId: 1,
+					UserId: 1,
+					CartItemIds: []int{
+						1, 2,
+					},
 				},
 				beforeTest: func(ucis *mocks.UserCartItemService) {
 					ucis.On("DeleteCartItem", &dto.DeleteCartItemRequest{
-						UserId:     1,
-						CartItemId: 1,
+						UserId: 1,
+						CartItemIds: []int{
+							1, 2,
+						},
 					}).Return(nil)
 				},
 			},
@@ -610,8 +638,9 @@ func TestDeleteCartItem(t *testing.T) {
 			rec := httptest.NewRecorder()
 			c, _ := gin.CreateTestContext(rec)
 			c.Set("userId", tc.input.req.UserId)
-			c.AddParam("cartItemId", strconv.Itoa(tc.input.req.CartItemId))
-			c.Request, _ = http.NewRequest(http.MethodDelete, "v1/users/carts", nil)
+			payload := test.MakeRequestBody(tc.input.req)
+
+			c.Request, _ = http.NewRequest(http.MethodDelete, "v1/users/carts", payload)
 			handler := handler.New(&handler.HandlerConfig{
 				UserCartItemService: cartItemService,
 			})
