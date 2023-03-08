@@ -382,3 +382,514 @@ func TestTopUp(t *testing.T) {
 		})
 	}
 }
+
+func TestRequestWalletPinChange(t *testing.T) {
+	type input struct {
+		userID  int
+		request *dto.ChangePinRequest
+	}
+	type expected struct {
+		statusCode int
+		response   response.Response
+	}
+
+	var (
+		userID     = 1
+		currentPin = "123456"
+		NewPin     = "098765"
+	)
+
+	tests := []struct {
+		description string
+		input
+		beforeTest func(*mocks.WalletService)
+		expected
+	}{
+		{
+			description: "should return error with status code 400 when given invalid request body",
+			input: input{
+				userID: userID,
+				request: &dto.ChangePinRequest{
+					CurrentPin: currentPin,
+					NewPin:     "12",
+				},
+			},
+			expected: expected{
+				statusCode: http.StatusBadRequest,
+				response: response.Response{
+					Code:    code.BAD_REQUEST,
+					Message: "NewPin must be 6 characters",
+				},
+			},
+			beforeTest: func(ws *mocks.WalletService) {},
+		},
+		{
+			description: "should return error with status code 404 when wallet does not exist",
+			input: input{
+				userID: userID,
+				request: &dto.ChangePinRequest{
+					CurrentPin: currentPin,
+					NewPin:     NewPin,
+				},
+			},
+			beforeTest: func(ws *mocks.WalletService) {
+				ws.On("RequestPinChange", userID, &dto.ChangePinRequest{
+					CurrentPin: currentPin,
+					NewPin:     NewPin,
+				}).Return(errRes.ErrWalletDoesNotExist)
+			},
+			expected: expected{
+				statusCode: http.StatusNotFound,
+				response: response.Response{
+					Code:    code.NOT_FOUND,
+					Message: errRes.ErrWalletDoesNotExist.Error(),
+				},
+			},
+		},
+		{
+			description: "should return error with status code 400 when given wrong pin",
+			input: input{
+				userID: userID,
+				request: &dto.ChangePinRequest{
+					CurrentPin: "102938",
+					NewPin:     NewPin,
+				},
+			},
+			beforeTest: func(ws *mocks.WalletService) {
+				ws.On("RequestPinChange", userID, &dto.ChangePinRequest{
+					CurrentPin: "102938",
+					NewPin:     NewPin,
+				}).Return(errRes.ErrPinMismatch)
+			},
+			expected: expected{
+				statusCode: http.StatusBadRequest,
+				response: response.Response{
+					Code:    code.WRONG_PIN,
+					Message: errRes.ErrPinMismatch.Error(),
+				},
+			},
+		},
+		{
+			description: "should return error with status code 500 when failed to generate token",
+			input: input{
+				userID: userID,
+				request: &dto.ChangePinRequest{
+					CurrentPin: currentPin,
+					NewPin:     NewPin,
+				},
+			},
+			beforeTest: func(ws *mocks.WalletService) {
+				ws.On("RequestPinChange", userID, &dto.ChangePinRequest{
+					CurrentPin: currentPin,
+					NewPin:     NewPin,
+				}).Return(errors.New("failed to generate token"))
+			},
+			expected: expected{
+				statusCode: http.StatusInternalServerError,
+				response: response.Response{
+					Code:    code.INTERNAL_SERVER_ERROR,
+					Message: errRes.ErrInternalServerError.Error(),
+				},
+			},
+		},
+		{
+			description: "should return nil with status code 200 when succeed to generate token",
+			input: input{
+				userID: userID,
+				request: &dto.ChangePinRequest{
+					CurrentPin: currentPin,
+					NewPin:     NewPin,
+				},
+			},
+			beforeTest: func(ws *mocks.WalletService) {
+				ws.On("RequestPinChange", userID, &dto.ChangePinRequest{
+					CurrentPin: currentPin,
+					NewPin:     NewPin,
+				}).Return(nil)
+			},
+			expected: expected{
+				statusCode: http.StatusOK,
+				response: response.Response{
+					Code:    code.OK,
+					Message: "success",
+					Data:    nil,
+				},
+			},
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.description, func(t *testing.T) {
+			expectedRes, _ := json.Marshal(tc.expected.response)
+			walletService := mocks.NewWalletService(t)
+			tc.beforeTest(walletService)
+			rec := httptest.NewRecorder()
+			c, _ := gin.CreateTestContext(rec)
+			c.Set("userId", tc.input.userID)
+			handler := handler.New(&handler.HandlerConfig{
+				WalletService: walletService,
+			})
+			payload := testutil.MakeRequestBody(tc.input.request)
+			c.Request, _ = http.NewRequest(http.MethodPost, "/v1/users/wallets/pins/change-requests", payload)
+
+			handler.RequestWalletPinChange(c)
+
+			assert.Equal(t, tc.expected.statusCode, rec.Code)
+			assert.Equal(t, string(expectedRes), rec.Body.String())
+		})
+	}
+}
+
+func TestCompleteChangeWalletPin(t *testing.T) {
+	type input struct {
+		userID  int
+		request *dto.CompleteChangePinRequest
+	}
+	type expected struct {
+		statusCode int
+		response   response.Response
+	}
+
+	var (
+		userID           = 1
+		verificationCode = "a1b2c3"
+	)
+
+	tests := []struct {
+		description string
+		input
+		beforeTest func(*mocks.WalletService)
+		expected
+	}{
+		{
+			description: "should return error with status code 400 when given invalid request body",
+			input: input{
+				userID: userID,
+				request: &dto.CompleteChangePinRequest{
+					VerificationCode: "aa",
+				},
+			},
+			beforeTest: func(ws *mocks.WalletService) {},
+			expected: expected{
+				statusCode: http.StatusBadRequest,
+				response: response.Response{
+					Code:    code.BAD_REQUEST,
+					Message: "VerificationCode must be 6 characters",
+				},
+			},
+		},
+		{
+			description: "should return error with status code 404 when verification code not found",
+			input: input{
+				userID: userID,
+				request: &dto.CompleteChangePinRequest{
+					VerificationCode: verificationCode,
+				},
+			},
+			beforeTest: func(ws *mocks.WalletService) {
+				ws.On("CompletePinChange", userID, &dto.CompleteChangePinRequest{
+					VerificationCode: verificationCode,
+				}).Return(errRes.ErrVerificationCodeNotFound)
+			},
+			expected: expected{
+				statusCode: http.StatusNotFound,
+				response: response.Response{
+					Code:    code.NOT_FOUND,
+					Message: errRes.ErrVerificationCodeNotFound.Error(),
+				},
+			},
+		},
+		{
+			description: "should return error with status code 400 when verification code is incorrect",
+			input: input{
+				userID: userID,
+				request: &dto.CompleteChangePinRequest{
+					VerificationCode: verificationCode,
+				},
+			},
+			beforeTest: func(ws *mocks.WalletService) {
+				ws.On("CompletePinChange", userID, &dto.CompleteChangePinRequest{
+					VerificationCode: verificationCode,
+				}).Return(errRes.ErrIncorrectVerificationCode)
+			},
+			expected: expected{
+				statusCode: http.StatusBadRequest,
+				response: response.Response{
+					Code:    code.BAD_REQUEST,
+					Message: errRes.ErrIncorrectVerificationCode.Error(),
+				},
+			},
+		},
+		{
+			description: "should return error with status code 500 when failed to change pin",
+			input: input{
+				userID: userID,
+				request: &dto.CompleteChangePinRequest{
+					VerificationCode: verificationCode,
+				},
+			},
+			beforeTest: func(ws *mocks.WalletService) {
+				ws.On("CompletePinChange", userID, &dto.CompleteChangePinRequest{
+					VerificationCode: verificationCode,
+				}).Return(errors.New("failed to complete change pin"))
+			},
+			expected: expected{
+				statusCode: http.StatusInternalServerError,
+				response: response.Response{
+					Code:    code.INTERNAL_SERVER_ERROR,
+					Message: errRes.ErrInternalServerError.Error(),
+				},
+			},
+		},
+		{
+			description: "should return nil with status code 200 when succeed to change pin",
+			input: input{
+				userID: userID,
+				request: &dto.CompleteChangePinRequest{
+					VerificationCode: verificationCode,
+				},
+			},
+			beforeTest: func(ws *mocks.WalletService) {
+				ws.On("CompletePinChange", userID, &dto.CompleteChangePinRequest{
+					VerificationCode: verificationCode,
+				}).Return(nil)
+			},
+			expected: expected{
+				statusCode: http.StatusOK,
+				response: response.Response{
+					Code:    code.OK,
+					Message: "success",
+				},
+			},
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.description, func(t *testing.T) {
+			expectedRes, _ := json.Marshal(tc.expected.response)
+			walletService := mocks.NewWalletService(t)
+			tc.beforeTest(walletService)
+			rec := httptest.NewRecorder()
+			c, _ := gin.CreateTestContext(rec)
+			c.Set("userId", tc.input.userID)
+			handler := handler.New(&handler.HandlerConfig{
+				WalletService: walletService,
+			})
+			payload := testutil.MakeRequestBody(tc.input.request)
+			c.Request, _ = http.NewRequest(http.MethodPost, "/v1/users/wallets/pins/change-confirmations", payload)
+
+			handler.CompleteChangeWalletPin(c)
+
+			assert.Equal(t, tc.expected.statusCode, rec.Code)
+			assert.Equal(t, string(expectedRes), rec.Body.String())
+		})
+	}
+}
+
+func TestRequestWalletPinReset(t *testing.T) {
+	type input struct {
+		userID int
+	}
+	type expected struct {
+		statusCode int
+		response   response.Response
+	}
+
+	var (
+		userID = 1
+	)
+
+	tests := []struct {
+		description string
+		input
+		beforeTest func(*mocks.WalletService)
+		expected
+	}{
+		{
+			description: "should return error with status code 500 when failed to generate token",
+			input: input{
+				userID: userID,
+			},
+			beforeTest: func(ws *mocks.WalletService) {
+				ws.On("RequestPinReset", userID).Return(errors.New("failed to generate token"))
+			},
+			expected: expected{
+				statusCode: http.StatusInternalServerError,
+				response: response.Response{
+					Code:    code.INTERNAL_SERVER_ERROR,
+					Message: errRes.ErrInternalServerError.Error(),
+				},
+			},
+		},
+		{
+			description: "should return nil with status code 200 when succeed to generate token",
+			input: input{
+				userID: userID,
+			},
+			beforeTest: func(ws *mocks.WalletService) {
+				ws.On("RequestPinReset", userID).Return(nil)
+			},
+			expected: expected{
+				statusCode: http.StatusOK,
+				response: response.Response{
+					Code:    code.OK,
+					Message: "success",
+					Data:    nil,
+				},
+			},
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.description, func(t *testing.T) {
+			expectedRes, _ := json.Marshal(tc.expected.response)
+			walletService := mocks.NewWalletService(t)
+			tc.beforeTest(walletService)
+			rec := httptest.NewRecorder()
+			c, _ := gin.CreateTestContext(rec)
+			c.Set("userId", tc.input.userID)
+			handler := handler.New(&handler.HandlerConfig{
+				WalletService: walletService,
+			})
+			c.Request, _ = http.NewRequest(http.MethodPost, "/v1/users/wallets/pins/reset-requests", nil)
+
+			handler.RequestWalletPinReset(c)
+
+			assert.Equal(t, tc.expected.statusCode, rec.Code)
+			assert.Equal(t, string(expectedRes), rec.Body.String())
+		})
+	}
+}
+
+func TestCompleteResetWalletPin(t *testing.T) {
+	type input struct {
+		userID  int
+		request *dto.CompleteResetPinRequest
+	}
+	type expected struct {
+		statusCode int
+		response   response.Response
+	}
+
+	var (
+		userID = 1
+		token  = "a1b2c3"
+		newPin = "123456"
+	)
+
+	tests := []struct {
+		description string
+		input
+		beforeTest func(*mocks.WalletService)
+		expected
+	}{
+		{
+			description: "should return error with status code 400 when given invalid request body",
+			input: input{
+				userID: userID,
+				request: &dto.CompleteResetPinRequest{
+					Token:  "aa",
+					NewPin: newPin,
+				},
+			},
+			beforeTest: func(ws *mocks.WalletService) {},
+			expected: expected{
+				statusCode: http.StatusBadRequest,
+				response: response.Response{
+					Code:    code.BAD_REQUEST,
+					Message: "Token must be 6 characters",
+				},
+			},
+		},
+		{
+			description: "should return error with status code 404 when token not found",
+			input: input{
+				userID: userID,
+				request: &dto.CompleteResetPinRequest{
+					Token:  token,
+					NewPin: newPin,
+				},
+			},
+			beforeTest: func(ws *mocks.WalletService) {
+				ws.On("CompletePinReset", userID, &dto.CompleteResetPinRequest{
+					Token:  token,
+					NewPin: newPin,
+				}).Return(errRes.ErrResetPinTokenNotFound)
+			},
+			expected: expected{
+				statusCode: http.StatusNotFound,
+				response: response.Response{
+					Code:    code.NOT_FOUND,
+					Message: errRes.ErrResetPinTokenNotFound.Error(),
+				},
+			},
+		},
+		{
+			description: "should return error with status code 500 when failed to change pin",
+			input: input{
+				userID: userID,
+				request: &dto.CompleteResetPinRequest{
+					Token:  token,
+					NewPin: newPin,
+				},
+			},
+			beforeTest: func(ws *mocks.WalletService) {
+				ws.On("CompletePinReset", userID, &dto.CompleteResetPinRequest{
+					Token:  token,
+					NewPin: newPin,
+				}).Return(errors.New("failed to complete change pin"))
+			},
+			expected: expected{
+				statusCode: http.StatusInternalServerError,
+				response: response.Response{
+					Code:    code.INTERNAL_SERVER_ERROR,
+					Message: errRes.ErrInternalServerError.Error(),
+				},
+			},
+		},
+		{
+			description: "should return nil with status code 200 when succeed to change pin",
+			input: input{
+				userID: userID,
+				request: &dto.CompleteResetPinRequest{
+					Token:  token,
+					NewPin: newPin,
+				},
+			},
+			beforeTest: func(ws *mocks.WalletService) {
+				ws.On("CompletePinReset", userID, &dto.CompleteResetPinRequest{
+					Token:  token,
+					NewPin: newPin,
+				}).Return(nil)
+			},
+			expected: expected{
+				statusCode: http.StatusOK,
+				response: response.Response{
+					Code:    code.OK,
+					Message: "success",
+				},
+			},
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.description, func(t *testing.T) {
+			expectedRes, _ := json.Marshal(tc.expected.response)
+			walletService := mocks.NewWalletService(t)
+			tc.beforeTest(walletService)
+			rec := httptest.NewRecorder()
+			c, _ := gin.CreateTestContext(rec)
+			c.Set("userId", tc.input.userID)
+			handler := handler.New(&handler.HandlerConfig{
+				WalletService: walletService,
+			})
+			payload := testutil.MakeRequestBody(tc.input.request)
+			c.Request, _ = http.NewRequest(http.MethodPost, "/v1/users/wallets/pins/reset-confirmations", payload)
+
+			handler.CompleteResetWalletPin(c)
+
+			assert.Equal(t, tc.expected.statusCode, rec.Code)
+			assert.Equal(t, string(expectedRes), rec.Body.String())
+		})
+	}
+}

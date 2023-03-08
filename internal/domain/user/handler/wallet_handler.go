@@ -102,12 +102,12 @@ func (h *Handler) RequestWalletPinChange(c *gin.Context) {
 		return
 	}
 
-	response.Success(c, http.StatusOK, code.OK, "ok", nil)
+	response.Success(c, http.StatusOK, code.OK, "success", nil)
 }
 
 func (h *Handler) CompleteChangeWalletPin(c *gin.Context) {
 	var request dto.CompleteChangePinRequest
-	err := c.ShouldBindQuery(&request)
+	err := c.ShouldBindJSON(&request)
 	if err != nil {
 		response.ErrorValidator(c, http.StatusBadRequest, err)
 		return
