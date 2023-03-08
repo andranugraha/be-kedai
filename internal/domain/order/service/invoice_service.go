@@ -154,9 +154,17 @@ func (s *invoiceServiceImpl) Checkout(req dto.CheckoutRequest) (*dto.CheckoutRes
 		if voucher != nil {
 			switch voucher.Type {
 			case shopModel.VoucherTypePercent:
-				shopTotalAfterVoucher -= (shopTotalPrice * voucher.Amount)
+				if voucher.Amount > 1 {
+					shopTotalAfterVoucher = 0
+				} else {
+					shopTotalAfterVoucher -= (shopTotalPrice * voucher.Amount)
+				}
 			case shopModel.VoucherTypeNominal:
-				shopTotalAfterVoucher -= voucher.Amount
+				if voucher.Amount > shopTotalPrice {
+					shopTotalAfterVoucher = 0
+				} else {
+					shopTotalAfterVoucher -= voucher.Amount
+				}
 			}
 		}
 
@@ -211,11 +219,23 @@ func (s *invoiceServiceImpl) Checkout(req dto.CheckoutRequest) (*dto.CheckoutRes
 
 		switch marketplaceVoucher.Type {
 		case marketplaceModel.VoucherTypePercent:
-			totalPrice = totalPrice - (totalPrice * marketplaceVoucher.Amount)
+			if marketplaceVoucher.Amount > 1 {
+				totalPrice = 0
+			} else {
+				totalPrice = totalPrice - (totalPrice * marketplaceVoucher.Amount)
+			}
 		case marketplaceModel.VoucherTypeNominal:
-			totalPrice = totalPrice - marketplaceVoucher.Amount
+			if marketplaceVoucher.Amount > totalPrice {
+				totalPrice = 0
+			} else {
+				totalPrice = totalPrice - marketplaceVoucher.Amount
+			}
 		case marketplaceModel.VoucherTypeShipping:
-			totalShippingCost = totalShippingCost - marketplaceVoucher.Amount
+			if marketplaceVoucher.Amount > totalShippingCost {
+				totalShippingCost = 0
+			} else {
+				totalShippingCost = totalShippingCost - marketplaceVoucher.Amount
+			}
 		}
 	}
 
