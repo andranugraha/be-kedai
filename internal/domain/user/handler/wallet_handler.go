@@ -67,7 +67,7 @@ func (h *Handler) TopUp(c *gin.Context) {
 			return
 		}
 		if errors.Is(err, errs.ErrInvalidSignature) {
-			response.Error(c, http.StatusBadRequest, code.BAD_REQUEST, err.Error())
+			response.Error(c, http.StatusUnprocessableEntity, code.INVALID_SIGNATURE, err.Error())
 			return
 		}
 		response.Error(c, http.StatusInternalServerError, code.INTERNAL_SERVER_ERROR, err.Error())
