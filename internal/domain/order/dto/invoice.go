@@ -14,7 +14,6 @@ type CheckoutRequest struct {
 	TotalPrice      float64        `json:"totalPrice" binding:"required"`
 	VoucherID       *int           `json:"voucherId"`
 	PaymentMethodID int            `json:"paymentMethodId" binding:"required"`
-	SealabsPayID    *int           `json:"sealabsPayId"`
 	UserID          int
 }
 
@@ -40,19 +39,8 @@ func (c *CheckoutRequest) Validate() error {
 		return commonError.ErrCheckoutItemCantBeEmpty
 	}
 
-	switch c.PaymentMethodID {
-	case constant.PaymentMethodSeaLabsPay:
-		if c.SealabsPayID == nil {
-			return commonError.ErrSealabsPayIdIsRequired
-		}
-	case constant.PaymentMethodWallet:
-		return nil
-	default:
+	if c.PaymentMethodID != constant.PaymentMethodSeaLabsPay && c.PaymentMethodID != constant.PaymentMethodWallet {
 		return commonError.ErrUnsupportedPaymentMethod
-	}
-
-	if c.PaymentMethodID == constant.PaymentMethodSeaLabsPay && c.SealabsPayID == nil {
-		return commonError.ErrSealabsPayIdIsRequired
 	}
 
 	return nil

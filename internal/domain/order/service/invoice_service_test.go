@@ -43,7 +43,6 @@ func TestCheckout(t *testing.T) {
 			VoucherID:       &one,
 			UserID:          1,
 			PaymentMethodID: 2,
-			SealabsPayID:    &one,
 			Items:           items,
 		}
 	)
@@ -100,7 +99,6 @@ func TestCheckout(t *testing.T) {
 				VoucherID:       req.VoucherID,
 				UserID:          req.UserID,
 				PaymentMethodID: req.PaymentMethodID,
-				SealabsPayID:    req.SealabsPayID,
 				Items: []dto.CheckoutItem{
 					{
 						ShopID:           1,
@@ -146,7 +144,6 @@ func TestCheckout(t *testing.T) {
 				VoucherID:       nil,
 				UserID:          req.UserID,
 				PaymentMethodID: req.PaymentMethodID,
-				SealabsPayID:    req.SealabsPayID,
 				Items: []dto.CheckoutItem{
 					{
 						ShopID:           1,

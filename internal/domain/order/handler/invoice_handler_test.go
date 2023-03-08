@@ -44,7 +44,6 @@ func TestCheckout(t *testing.T) {
 			VoucherID:       &one,
 			UserID:          1,
 			PaymentMethodID: 2,
-			SealabsPayID:    &one,
 			Items:           items,
 		}
 	)
@@ -97,13 +96,14 @@ func TestCheckout(t *testing.T) {
 				AddressID:       req.AddressID,
 				TotalPrice:      req.TotalPrice,
 				PaymentMethodID: req.PaymentMethodID,
-				Items:           req.Items,
+				Items:           []dto.CheckoutItem{},
+				UserID:          req.UserID,
 			},
 			wantCheckoutRes: nil,
-			wantCheckoutErr: errs.ErrSealabsPayIdIsRequired,
+			wantCheckoutErr: errs.ErrCheckoutItemCantBeEmpty,
 			want: response.Response{
 				Code:    code.BAD_REQUEST,
-				Message: errs.ErrSealabsPayIdIsRequired.Error(),
+				Message: errs.ErrCheckoutItemCantBeEmpty.Error(),
 			},
 			code:       http.StatusBadRequest,
 			beforeTest: func(is *mocks.InvoiceService) {},

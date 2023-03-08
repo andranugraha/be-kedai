@@ -292,6 +292,7 @@ func createRouter() *gin.Engine {
 		CartItemService:           userCartItemService,
 		ShopCourierService:        courierService,
 		MarketplaceVoucherService: marketplaceVoucherService,
+		SealabsPayService:         sealabsPayService,
 	})
 
 	orderHandler := orderHandlerPackage.New(&orderHandlerPackage.Config{

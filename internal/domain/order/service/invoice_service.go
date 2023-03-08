@@ -10,7 +10,6 @@ import (
 	"kedai/backend/be-kedai/internal/domain/order/repository"
 	shopModel "kedai/backend/be-kedai/internal/domain/shop/model"
 	shopService "kedai/backend/be-kedai/internal/domain/shop/service"
-	"kedai/backend/be-kedai/internal/domain/user/cache"
 	userDto "kedai/backend/be-kedai/internal/domain/user/dto"
 	userModel "kedai/backend/be-kedai/internal/domain/user/model"
 	userService "kedai/backend/be-kedai/internal/domain/user/service"
@@ -32,7 +31,7 @@ type invoiceServiceImpl struct {
 	cartItemService           userService.UserCartItemService
 	shopCourierService        shopService.CourierService
 	marketplaceVoucherService marketplaceService.MarketplaceVoucherService
-	redis                     cache.UserCache
+	sealabsPayService         userService.SealabsPayService
 }
 
 type InvoiceSConfig struct {
@@ -43,7 +42,7 @@ type InvoiceSConfig struct {
 	CartItemService           userService.UserCartItemService
 	ShopCourierService        shopService.CourierService
 	MarketplaceVoucherService marketplaceService.MarketplaceVoucherService
-	Redis                     cache.UserCache
+	SealabsPayService         userService.SealabsPayService
 }
 
 func NewInvoiceService(cfg *InvoiceSConfig) InvoiceService {
@@ -55,7 +54,7 @@ func NewInvoiceService(cfg *InvoiceSConfig) InvoiceService {
 		cartItemService:           cfg.CartItemService,
 		shopCourierService:        cfg.ShopCourierService,
 		marketplaceVoucherService: cfg.MarketplaceVoucherService,
-		redis:                     cfg.Redis,
+		sealabsPayService:         cfg.SealabsPayService,
 	}
 }
 
@@ -284,6 +283,13 @@ func (s *invoiceServiceImpl) PayInvoice(req dto.PayInvoiceRequest, token string)
 		randomGen := random.NewRandomUtils(&random.RandomUtilsConfig{})
 		defaultRefLength := 5
 		req.TxnID = randomGen.GenerateNumericString(defaultRefLength)
+	}
+
+	if invoice.PaymentMethodID == constant.PaymentMethodSeaLabsPay {
+		_, err = s.sealabsPayService.GetValidSealabsPayByCardNumberAndUserID(req.CardNumber, req.UserID)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	var (
