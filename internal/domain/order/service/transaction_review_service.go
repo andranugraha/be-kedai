@@ -10,6 +10,7 @@ import (
 
 type TransactionReviewService interface {
 	Create(req dto.TransactionReviewRequest) (*model.TransactionReview, error)
+	GetReviewByTransactionID(transactionID int) (*model.TransactionReview, error)
 }
 
 type transactionReviewServiceImpl struct {
@@ -58,4 +59,8 @@ func (s *transactionReviewServiceImpl) Create(req dto.TransactionReviewRequest) 
 	}
 
 	return review, nil
+}
+
+func (s *transactionReviewServiceImpl) GetReviewByTransactionID(transactionID int) (*model.TransactionReview, error) {
+	return s.transactionReviewRepo.GetByTransactionID(transactionID)
 }
