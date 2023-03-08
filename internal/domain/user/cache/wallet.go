@@ -41,18 +41,13 @@ func (c *walletCacheImpl) StorePinAndVerificationCode(userID int, pin string, ve
 		return err
 	}
 
-	err = c.rdc.Expire(context.Background(), key, expireTime).Err()
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return c.rdc.Expire(context.Background(), key, expireTime).Err()
 }
 
-func (c *walletCacheImpl) FindPinAndVerificationCode(userID int) (pin string, verificationCode string, err error) {
+func (c *walletCacheImpl) FindPinAndVerificationCode(userID int) (string, string, error) {
 	key := fmt.Sprintf("user_%d-updatePin", userID)
 
-	pin, err = c.rdc.HGet(context.Background(), key, "newPin").Result()
+	pin, err := c.rdc.HGet(context.Background(), key, "newPin").Result()
 	if err != nil {
 		if err == redis.Nil {
 			err = errs.ErrVerificationCodeNotFound
@@ -60,7 +55,7 @@ func (c *walletCacheImpl) FindPinAndVerificationCode(userID int) (pin string, ve
 		return "", "", err
 	}
 
-	verificationCode, err = c.rdc.HGet(context.Background(), key, "verificationCode").Result()
+	verificationCode, err := c.rdc.HGet(context.Background(), key, "verificationCode").Result()
 	if err != nil {
 		if err == redis.Nil {
 			err = errs.ErrVerificationCodeNotFound
@@ -68,7 +63,7 @@ func (c *walletCacheImpl) FindPinAndVerificationCode(userID int) (pin string, ve
 		return "", "", err
 	}
 
-	return
+	return pin, verificationCode, nil
 }
 
 func (c *walletCacheImpl) DeletePinAndVerificationCode(userID int) error {
