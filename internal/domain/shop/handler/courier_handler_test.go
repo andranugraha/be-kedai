@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"kedai/backend/be-kedai/internal/common/code"
 	errs "kedai/backend/be-kedai/internal/common/error"
+	"kedai/backend/be-kedai/internal/domain/shop/dto"
 	"kedai/backend/be-kedai/internal/domain/shop/handler"
 	"kedai/backend/be-kedai/internal/domain/shop/model"
 	"kedai/backend/be-kedai/internal/utils/response"
@@ -17,8 +18,9 @@ import (
 )
 
 func TestGetAllCouriers(t *testing.T) {
+	var shopId = 1
 	type input struct {
-		result []*model.Courier
+		result []*dto.ShipmentCourierResponse
 		err    error
 	}
 	type expected struct {
@@ -35,7 +37,7 @@ func TestGetAllCouriers(t *testing.T) {
 		{
 			description: "should return list of couriers with code 200 when success",
 			input: input{
-				result: []*model.Courier{},
+				result: []*dto.ShipmentCourierResponse{},
 				err:    nil,
 			},
 			expected: expected{
@@ -67,11 +69,11 @@ func TestGetAllCouriers(t *testing.T) {
 			rec := httptest.NewRecorder()
 			c, _ := gin.CreateTestContext(rec)
 			mockService := new(mocks.CourierService)
-			mockService.On("GetAllCouriers").Return(tc.input.result, tc.input.err)
+			mockService.On("GetShipmentList", shopId).Return(tc.input.result, tc.input.err)
 			handler := handler.New(&handler.HandlerConfig{
 				CourierService: mockService,
 			})
-			c.Request, _ = http.NewRequest("GET", "/sellers/couriers", nil)
+			c.Request, _ = http.NewRequest("GET", "/sellers/couriers?shopId=1", nil)
 
 			handler.GetAllCouriers(c)
 
