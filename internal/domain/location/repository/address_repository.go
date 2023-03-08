@@ -104,6 +104,7 @@ func (r *addressRepository) GetAllUserAddress(userId int) ([]*model.UserAddress,
 		Preload("District").
 		Preload("City").
 		Preload("Province").
+		Order("created_at desc").
 		Find(&addresses).Error
 	if err != nil {
 		return nil, err
