@@ -196,18 +196,21 @@ func createRouter() *gin.Engine {
 	userCartItemRepo := userRepoPackage.NewUserCartItemRepository(&userRepoPackage.UserCartItemRConfig{
 		DB: db,
 	})
-	userAddressRepo := userRepoPackage.NewUserAddressRepository(&userRepoPackage.UserAddressRConfig{
+
+	addressRepo := locationRepoPackage.NewAddressRepository(&locationRepoPackage.AddressRConfig{
 		DB:              db,
 		UserProfileRepo: userProfileRepo,
+		ShopRepo:        shopRepo,
 	})
 
-	userAddressService := userServicePackage.NewUserAddressService(&userServicePackage.UserAddressSConfig{
-		UserAddressRepo:    userAddressRepo,
+	addressService := locationServicePackage.NewAddressService(&locationServicePackage.AddressSConfig{
+		AddressRepo:        addressRepo,
 		ProvinceService:    provinceService,
 		DistrictService:    districtService,
 		SubdistrictService: subdistrictService,
 		CityService:        cityService,
 		UserProfileService: userProfileService,
+		ShopService:        shopService,
 	})
 
 	userCartItemService := userServicePackage.NewUserCartItemService(&userServicePackage.UserCartItemSConfig{
@@ -249,7 +252,7 @@ func createRouter() *gin.Engine {
 		UserWishlistService:  userWishlistService,
 		UserCartItemService:  userCartItemService,
 		SealabsPayService:    sealabsPayService,
-		UserAddressService:   userAddressService,
+		AddressService:       addressService,
 		UserProfileService:   userProfileService,
 	})
 	marketplaceHandler := marketplaceHandlerPackage.New(&marketplaceHandlerPackage.HandlerConfig{
