@@ -133,12 +133,21 @@ func TestTopUp(t *testing.T) {
 			ID: 1,
 		}
 		req = dto.TopUpRequest{
-			Amount: 50000,
-			TxnId:  "15602",
+			Amount:     50000,
+			TxnId:      "15602",
+			Signature:  "027e361f8776a9fb6f25961687e3cf0879af6fdfe00e03335fbb5764a3763d40",
+			CardNumber: "2793765051084376",
+		}
+		invalidReq = dto.TopUpRequest{
+			Amount:     50000,
+			TxnId:      "15602",
+			Signature:  "d714a01f755b9f5f2c6fdb1d41107cace0e220154b3edc8603c0800e32b479e0",
+			CardNumber: "2793765051084376",
 		}
 	)
 	type input struct {
 		userId      int
+		request     dto.TopUpRequest
 		history     *model.WalletHistory
 		wallet      *model.Wallet
 		err         error
@@ -161,6 +170,7 @@ func TestTopUp(t *testing.T) {
 			description: "should return wallet top-up history when success",
 			input: input{
 				userId:  userId,
+				request: req,
 				history: history,
 				wallet:  wallet,
 				err:     nil,
@@ -178,6 +188,7 @@ func TestTopUp(t *testing.T) {
 			description: "should return error when user wallet does not exist",
 			input: input{
 				userId:  userId,
+				request: req,
 				history: history,
 				wallet:  nil,
 				err:     errRes.ErrWalletDoesNotExist,
@@ -191,9 +202,26 @@ func TestTopUp(t *testing.T) {
 			},
 		},
 		{
+			description: "should return error when signature is invalid",
+			input: input{
+				userId:  userId,
+				request: invalidReq,
+				history: nil,
+				wallet:  nil,
+				err:     errRes.ErrInvalidSignature,
+				beforeTests: func(mockWalletRepo *mocks.WalletRepository) {
+				},
+			},
+			expected: expected{
+				data: nil,
+				err:  errRes.ErrInvalidSignature,
+			},
+		},
+		{
 			description: "should return error when internal server error",
 			input: input{
 				userId:  1,
+				request: req,
 				history: history,
 				wallet:  wallet,
 				err:     errRes.ErrInternalServerError,
@@ -215,7 +243,7 @@ func TestTopUp(t *testing.T) {
 				WalletRepo: mockWalletRepo,
 			})
 
-			result, err := service.TopUp(tc.input.userId, req)
+			result, err := service.TopUp(tc.input.userId, tc.input.request)
 
 			assert.Equal(t, tc.expected.err, err)
 			assert.Equal(t, tc.expected.data, result)

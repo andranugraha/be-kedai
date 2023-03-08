@@ -382,6 +382,18 @@ paths:
           schema:
             type: string
             example: 68102
+        - in: query
+          name: signature
+          required: true
+          schema:
+            type: string
+            example: "aisjd81923jikasd123324008123"
+        - in: query
+          name: cardNumber
+          required: true
+          schema:
+            type: string
+            example: "293774202332"
       responses:
         '200':
           description: successful operation
@@ -407,6 +419,19 @@ paths:
                   message:
                     type: string
                     example: "amount must be greater than 10000"
+        '422':
+          description: invalid signature pattern
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "INVALID_SIGNATURE"
+                  message:
+                    type: string
+                    example: "invalid signature"
         '404':
           description: wallet not found
           content:
