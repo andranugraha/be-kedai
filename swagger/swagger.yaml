@@ -5132,8 +5132,8 @@ components:
           format: float
           example: 1000
         trackingNumber:
-          type: integer
-          example: 123
+          type: string
+          example: "123"
         voucherAmount:
           type: number
           format: float
