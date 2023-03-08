@@ -1,6 +1,8 @@
 package repository
 
 import (
+	"errors"
+	errs "kedai/backend/be-kedai/internal/common/error"
 	"kedai/backend/be-kedai/internal/domain/shop/model"
 	"time"
 
@@ -69,6 +71,9 @@ func (r *shopVoucherRepositoryImpl) GetValidByIdAndUserId(id, userId int) (*mode
 
 	err = db.Where("expired_at > now()").First(&shopVoucher, id).Error
 	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, errs.ErrInvalidVoucher
+		}
 		return nil, err
 	}
 

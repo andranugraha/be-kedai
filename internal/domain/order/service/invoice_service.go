@@ -148,21 +148,19 @@ func (s *invoiceServiceImpl) Checkout(req dto.CheckoutRequest) (*dto.CheckoutRes
 			return nil, commonError.ErrTotalSpentBelowMinimumSpendingRequirement
 		}
 
-		shopInvoices = append(shopInvoices, &model.InvoicePerShop{
-			ShopID: item.ShopID,
-			Total: func() float64 {
-				price := shopTotalPrice + item.ShippingCost
-				if voucher != nil {
-					switch voucher.Type {
-					case shopModel.VoucherTypePercent:
-						return price - (price * voucher.Amount)
-					case shopModel.VoucherTypeNominal:
-						return price - voucher.Amount
-					}
-				}
+		shopTotalAfterVoucher := shopTotalPrice
+		if voucher != nil {
+			switch voucher.Type {
+			case shopModel.VoucherTypePercent:
+				shopTotalAfterVoucher -= (shopTotalPrice * voucher.Amount)
+			case shopModel.VoucherTypeNominal:
+				shopTotalAfterVoucher -= voucher.Amount
+			}
+		}
 
-				return price
-			}(),
+		shopInvoices = append(shopInvoices, &model.InvoicePerShop{
+			ShopID:       item.ShopID,
+			Total:        shopTotalAfterVoucher + item.ShippingCost,
 			Subtotal:     shopTotalPrice,
 			ShippingCost: item.ShippingCost,
 			VoucherAmount: func() *float64 {
@@ -195,7 +193,7 @@ func (s *invoiceServiceImpl) Checkout(req dto.CheckoutRequest) (*dto.CheckoutRes
 			Transactions:     transactions,
 		})
 
-		totalPrice += shopTotalPrice
+		totalPrice += shopTotalAfterVoucher
 		totalShippingCost += item.ShippingCost
 	}
 
