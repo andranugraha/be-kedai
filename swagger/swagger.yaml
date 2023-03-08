@@ -3052,6 +3052,53 @@ paths:
                   message:
                     type: string
                     example: "error message"
+  /v1/products/autocompletes:
+    get:
+      tags:
+        - Product
+      summary: Get product name by keyword
+      description: Get list of matched product name with keyword
+      parameters:
+        - in: query
+          name: keyword
+          schema:
+            type: string
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            default: 10
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                  allOf:
+                    - $ref: '#/components/schemas/Response'
+                    - type: object
+                      properties:
+                        code:
+                          example: 'OK'
+                        message:
+                          example: 'success'
+                        data:
+                          type: array
+                          items:
+                            $ref: '#/components/schemas/Product'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "INTERNAL_SERVER_ERROR"
+                  message:
+                    type: string
+                    example: "error message"          
   /v1/products/categories:
     get:
       tags:
