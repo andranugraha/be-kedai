@@ -149,3 +149,64 @@ func TestGetInvoicesByUserID(t *testing.T) {
 		})
 	}
 }
+
+func TestGetInvoicesByUserIDAndCode(t *testing.T) {
+	type input struct {
+		userID   int
+		code     string
+		mockData *dto.InvoicePerShopDetail
+		mockErr  error
+	}
+	type expected struct {
+		data *dto.InvoicePerShopDetail
+		err  error
+	}
+
+	tests := []struct {
+		description string
+		input
+		expected
+	}{
+		{
+			description: "should return error when failed to get invoice",
+			input: input{
+				userID:   1,
+				code:     "INV/XX/X",
+				mockData: nil,
+				mockErr:  errors.New("failed to get invoice"),
+			},
+			expected: expected{
+				data: nil,
+				err:  errors.New("failed to get invoice"),
+			},
+		},
+		{
+			description: "should return invoice data when fetching succeed",
+			input: input{
+				userID:   1,
+				code:     "INV/XX/X",
+				mockData: &dto.InvoicePerShopDetail{},
+				mockErr:  nil,
+			},
+			expected: expected{
+				data: &dto.InvoicePerShopDetail{},
+				err:  nil,
+			},
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.description, func(t *testing.T) {
+			invoicePerShopRepo := mocks.NewInvoicePerShopRepository(t)
+			invoicePerShopRepo.On("GetByUserIDAndCode", tc.input.userID, tc.input.code).Return(tc.input.mockData, tc.input.mockErr)
+			invoicePerShopService := service.NewInvoicePerShopService(&service.InvoicePerShopSConfig{
+				InvoicePerShopRepo: invoicePerShopRepo,
+			})
+
+			actualData, actualErr := invoicePerShopService.GetInvoicesByUserIDAndCode(tc.input.userID, tc.input.code)
+
+			assert.Equal(t, tc.expected.data, actualData)
+			assert.Equal(t, tc.expected.err, actualErr)
+		})
+	}
+}

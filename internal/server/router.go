@@ -86,6 +86,7 @@ func NewRouter(cfg *RouterConfig) *gin.Engine {
 					carts.POST("", cfg.UserHandler.CreateCartItem)
 					carts.GET("", cfg.UserHandler.GetAllCartItem)
 					carts.PUT("/:skuId", cfg.UserHandler.UpdateCartItem)
+					carts.DELETE("/:cartItemId", cfg.UserHandler.DeleteCartItem)
 				}
 				addresses := userAuthenticated.Group("/addresses")
 				{
@@ -114,6 +115,8 @@ func NewRouter(cfg *RouterConfig) *gin.Engine {
 		{
 			product.GET("", cfg.ProductHandler.ProductSearchFiltering)
 			product.GET("/:code", cfg.ProductHandler.GetProductByCode)
+			product.GET("/:code/reviews", cfg.ProductHandler.GetProductReviews)
+			product.GET("/:code/reviews/stats", cfg.ProductHandler.GetProductReviewStats)
 			product.GET("/recommendations/categories", cfg.ProductHandler.GetRecommendationByCategory)
 			product.GET("/autocompletes", cfg.ProductHandler.SearchAutocomplete)
 			category := product.Group("/categories")
@@ -124,6 +127,7 @@ func NewRouter(cfg *RouterConfig) *gin.Engine {
 			{
 				sku.GET("", cfg.ProductHandler.GetSKUByVariantIDs)
 			}
+
 		}
 
 		shop := v1.Group("/shops")
@@ -153,10 +157,12 @@ func NewRouter(cfg *RouterConfig) *gin.Engine {
 				invoice := authenticated.Group("/invoices")
 				{
 					invoice.GET("", cfg.OrderHandler.GetInvoicePerShopsByUserID)
+					invoice.GET("/:code", cfg.OrderHandler.GetInvoiceByCode)
 				}
 
 				transaction := authenticated.Group("/transactions")
 				{
+					transaction.GET("/:transactionId/reviews", cfg.OrderHandler.GetReviewByTransactionID)
 					review := transaction.Group("/reviews")
 					{
 						review.POST("", cfg.OrderHandler.AddTransactionReview)

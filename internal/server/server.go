@@ -265,9 +265,10 @@ func createRouter() *gin.Engine {
 	})
 
 	productHandler := productHandlerPackage.New(&productHandlerPackage.Config{
-		CategoryService: categoryService,
-		ProductService:  productService,
-		SkuService:      skuService,
+		CategoryService:          categoryService,
+		ProductService:           productService,
+		SkuService:               skuService,
+		TransactionReviewService: transactionReviewService,
 	})
 
 	orderHandler := orderHandlerPackage.New(&orderHandlerPackage.Config{

@@ -123,14 +123,17 @@ func (r *productRepositoryImpl) GetByShopID(shopID int, request *dto.ShopProduct
 	query = query.Where("is_active = ?", active)
 	query = query.Group("products.id")
 
-	var priceSort string
-	if request.PriceSort == constant.SortByPriceHigh {
-		priceSort = "desc"
-	} else {
-		priceSort = "asc"
+	query = query.Where("products.shop_id = ?", shopID)
+	if request.ExceptionID > 0 {
+		query = query.Where("products.id != ?", request.ExceptionID)
 	}
 
-	query.Order(fmt.Sprintf("min(s.price) %s", priceSort))
+	err := query.Model(&model.Product{}).Count(&totalRows).Error
+	if err != nil {
+		return nil, 0, 0, err
+	}
+
+	totalPages = int(math.Ceil(float64(totalRows) / float64(request.Limit)))
 
 	switch request.Sort {
 	case constant.SortByRecommended:
@@ -143,17 +146,15 @@ func (r *productRepositoryImpl) GetByShopID(shopID int, request *dto.ShopProduct
 		query = query.Order("products.created_at desc")
 	}
 
-	err := query.Model(&model.Product{}).Count(&totalRows).Error
-	if err != nil {
-		return nil, 0, 0, err
+	var priceSort string
+	if request.PriceSort == constant.SortByPriceHigh {
+		priceSort = "desc"
+	} else {
+		priceSort = "asc"
 	}
 
-	totalPages = int(math.Ceil(float64(totalRows) / float64(request.Limit)))
+	query.Order(fmt.Sprintf("min(s.price) %s", priceSort))
 
-	query = query.Where("products.shop_id = ?", shopID)
-	if request.ExceptionID > 0 {
-		query = query.Where("products.id != ?", request.ExceptionID)
-	}
 	err = query.Limit(request.Limit).Offset(request.Offset()).Find(&products).Error
 	if err != nil {
 		return nil, 0, 0, err
