@@ -2,6 +2,8 @@ package handler_test
 
 import (
 	"encoding/json"
+	"errors"
+	"fmt"
 	"kedai/backend/be-kedai/internal/common/code"
 	"kedai/backend/be-kedai/internal/domain/order/dto"
 	"kedai/backend/be-kedai/internal/domain/order/handler"
@@ -11,6 +13,7 @@ import (
 	"kedai/backend/be-kedai/mocks"
 	"net/http"
 	"net/http/httptest"
+	"strconv"
 	"testing"
 
 	"github.com/gin-gonic/gin"
@@ -209,7 +212,7 @@ func TestAddTransactionReview(t *testing.T) {
 			c.Set("userId", 1)
 
 			payload := test.MakeRequestBody(tc.input.req)
-			c.Request, _ = http.NewRequest(http.MethodGet, "/orders/transactions/reviews", payload)
+			c.Request, _ = http.NewRequest(http.MethodPost, "/orders/transactions/reviews", payload)
 
 			mockTransactionReviewService := new(mocks.TransactionReviewService)
 			tc.input.beforeTest(mockTransactionReviewService)
@@ -226,4 +229,106 @@ func TestAddTransactionReview(t *testing.T) {
 		})
 	}
 
+}
+
+func TestGetReviewByTranscationID(t *testing.T) {
+	type input struct {
+		transactionID int
+		beforeTest    func(*mocks.TransactionReviewService)
+	}
+	type expected struct {
+		statusCode int
+		response   response.Response
+	}
+
+	tests := []struct {
+		description string
+		input
+		expected
+	}{
+		{
+			description: "should return error with status code 400 when given invalid transaction id",
+			input: input{
+				transactionID: -1,
+				beforeTest:    func(trs *mocks.TransactionReviewService) {},
+			},
+			expected: expected{
+				statusCode: http.StatusBadRequest,
+				response: response.Response{
+					Code:    code.BAD_REQUEST,
+					Message: commonErr.ErrInvalidTransactionID.Error(),
+				},
+			},
+		},
+		{
+			description: "should return error with status code 404 when review not found",
+			input: input{
+				transactionID: 1,
+				beforeTest: func(trs *mocks.TransactionReviewService) {
+					trs.On("GetReviewByTransactionID", 1).Return(nil, commonErr.ErrTransactionReviewNotFound)
+				},
+			},
+			expected: expected{
+				statusCode: http.StatusNotFound,
+				response: response.Response{
+					Code:    code.NOT_FOUND,
+					Message: commonErr.ErrTransactionReviewNotFound.Error(),
+				},
+			},
+		},
+		{
+			description: "should return error with status code 500 when failed to get review",
+			input: input{
+				transactionID: 1,
+				beforeTest: func(trs *mocks.TransactionReviewService) {
+					trs.On("GetReviewByTransactionID", 1).Return(nil, errors.New("failed to get review"))
+				},
+			},
+			expected: expected{
+				statusCode: http.StatusInternalServerError,
+				response: response.Response{
+					Code:    code.INTERNAL_SERVER_ERROR,
+					Message: commonErr.ErrInternalServerError.Error(),
+				},
+			},
+		},
+		{
+			description: "should return error with status code 200 when succeed to get review",
+			input: input{
+				transactionID: 1,
+				beforeTest: func(trs *mocks.TransactionReviewService) {
+					trs.On("GetReviewByTransactionID", 1).Return(&model.TransactionReview{}, nil)
+				},
+			},
+			expected: expected{
+				statusCode: http.StatusOK,
+				response: response.Response{
+					Code:    code.OK,
+					Message: "success",
+					Data:    &model.TransactionReview{},
+				},
+			},
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.description, func(t *testing.T) {
+			expectedJson, _ := json.Marshal(tc.expected.response)
+			reviewService := mocks.NewTransactionReviewService(t)
+			tc.input.beforeTest(reviewService)
+			rec := httptest.NewRecorder()
+			c, _ := gin.CreateTestContext(rec)
+			c.AddParam("transactionId", strconv.Itoa(tc.input.transactionID))
+			c.Request, _ = http.NewRequest(http.MethodGet, fmt.Sprintf("/v1/orders/transactions/%d/reviews", tc.input.transactionID), nil)
+
+			handler := handler.New(&handler.Config{
+				TransactionReviewService: reviewService,
+			})
+
+			handler.GetReviewByTransactionID(c)
+
+			assert.Equal(t, tc.expected.statusCode, rec.Code)
+			assert.Equal(t, string(expectedJson), rec.Body.String())
+		})
+	}
 }
