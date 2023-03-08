@@ -15,12 +15,12 @@ type Transaction struct {
 	Note       *string `json:"note"`
 
 	InvoiceID int `json:"invoiceId"`
-	AddressID int `json:"addressId"`
 	UserID    int `json:"userId"`
 	SkuID     int `json:"skuId"`
 
-	User *userModel.User   `json:"user,omitempty" gorm:"foreignKey:UserID"`
-	Sku  *productModel.Sku `json:"sku,omitempty" gorm:"foreignKey:SkuID"`
+	Review *TransactionReview `json:"review,omitempty"`
+	User   *userModel.User    `json:"user,omitempty" gorm:"foreignKey:UserID"`
+	Sku    *productModel.Sku  `json:"sku,omitempty" gorm:"foreignKey:SkuID"`
 
 	gorm.Model `json:"-"`
 }
