@@ -22,7 +22,7 @@ func (h *Handler) AddUserAddress(c *gin.Context) {
 	userId := c.GetInt("userId")
 	newAddress.UserID = userId
 
-	address, err := h.userAddressService.AddUserAddress(&newAddress)
+	address, err := h.addressService.AddUserAddress(&newAddress)
 	if err != nil {
 
 		if errors.Is(err, errs.ErrProvinceNotFound) ||
@@ -38,6 +38,11 @@ func (h *Handler) AddUserAddress(c *gin.Context) {
 			return
 		}
 
+		if errors.Is(err, errs.ErrShopNotFound) {
+			response.Error(c, http.StatusNotFound, code.SHOP_NOT_REGISTERED, err.Error())
+			return
+		}
+
 		response.Error(c, http.StatusInternalServerError, code.INTERNAL_SERVER_ERROR, errs.ErrInternalServerError.Error())
 		return
 	}
@@ -48,7 +53,7 @@ func (h *Handler) AddUserAddress(c *gin.Context) {
 func (h *Handler) GetAllUserAddress(c *gin.Context) {
 	userId := c.GetInt("userId")
 
-	addresses, err := h.userAddressService.GetAllUserAddress(userId)
+	addresses, err := h.addressService.GetAllUserAddress(userId)
 	if err != nil {
 		response.Error(c, http.StatusInternalServerError, code.INTERNAL_SERVER_ERROR, errs.ErrInternalServerError.Error())
 		return
@@ -69,9 +74,9 @@ func (h *Handler) UpdateUserAddress(c *gin.Context) {
 	addressIdInt, _ := strconv.Atoi(addressId)
 	updateAddress.ID = addressIdInt
 	updateAddress.UserID = userId
-	updateAddress.ValidateId()
+	updateAddress.Validate()
 
-	address, err := h.userAddressService.UpdateUserAddress(&updateAddress)
+	address, err := h.addressService.UpdateUserAddress(&updateAddress)
 	if err != nil {
 		if errors.Is(err, errs.ErrProvinceNotFound) ||
 			errors.Is(err, errs.ErrSubdistrictNotFound) ||
@@ -87,6 +92,16 @@ func (h *Handler) UpdateUserAddress(c *gin.Context) {
 			return
 		}
 
+		if errors.Is(err, errs.ErrShopNotFound) {
+			response.Error(c, http.StatusNotFound, code.SHOP_NOT_REGISTERED, err.Error())
+			return
+		}
+
+		if errors.Is(err, errs.ErrMustHaveAtLeastOnePickupAddress) {
+			response.Error(c, http.StatusConflict, code.MUST_HAVE_AT_LEAST_ONE_PICKUP_ADDRESS, err.Error())
+			return
+		}
+
 		response.Error(c, http.StatusInternalServerError, code.INTERNAL_SERVER_ERROR, errs.ErrInternalServerError.Error())
 		return
 	}
@@ -99,8 +114,9 @@ func (h *Handler) DeleteUserAddress(c *gin.Context) {
 	addressId := c.Param("addressId")
 	addressIdInt, _ := strconv.Atoi(addressId)
 
-	err := h.userAddressService.DeleteUserAddress(addressIdInt, userId)
+	err := h.addressService.DeleteUserAddress(addressIdInt, userId)
 	if err != nil {
+
 		if errors.Is(err, errs.ErrAddressNotFound) {
 			response.Error(c, http.StatusNotFound, code.NOT_FOUND, err.Error())
 			return
@@ -108,6 +124,11 @@ func (h *Handler) DeleteUserAddress(c *gin.Context) {
 
 		if errors.Is(err, errs.ErrMustHaveAtLeastOneDefaultAddress) {
 			response.Error(c, http.StatusConflict, code.MUST_HAVE_AT_LEAST_ONE_DEFAULT_ADDRESS, err.Error())
+			return
+		}
+
+		if errors.Is(err, errs.ErrMustHaveAtLeastOnePickupAddress) {
+			response.Error(c, http.StatusConflict, code.MUST_HAVE_AT_LEAST_ONE_PICKUP_ADDRESS, err.Error())
 			return
 		}
 
