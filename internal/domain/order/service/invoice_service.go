@@ -4,8 +4,8 @@ import (
 	"kedai/backend/be-kedai/internal/domain/order/dto"
 	"kedai/backend/be-kedai/internal/domain/order/repository"
 
+	locationService "kedai/backend/be-kedai/internal/domain/location/service"
 	shopService "kedai/backend/be-kedai/internal/domain/shop/service"
-	userService "kedai/backend/be-kedai/internal/domain/user/service"
 )
 
 type InvoiceService interface {
@@ -13,16 +13,16 @@ type InvoiceService interface {
 }
 
 type invoiceServiceImpl struct {
-	invoiceRepo        repository.InvoiceRepository
-	userAddressService userService.UserAddressService
+	invoiceRepo    repository.InvoiceRepository
+	AddressService locationService.AddressService
 
 	shopService        shopService.ShopService
 	shopVoucherService shopService.ShopVoucherService
 }
 
 type InvoiceSConfig struct {
-	InvoiceRepo        repository.InvoiceRepository
-	UserAddressService userService.UserAddressService
+	InvoiceRepo    repository.InvoiceRepository
+	AddressService locationService.AddressService
 
 	ShopService        shopService.ShopService
 	ShopVoucherService shopService.ShopVoucherService
