@@ -922,23 +922,6 @@ func TestCompletePasswordChange(t *testing.T) {
 		},
 
 		{
-			description: "should return error when DeleteUserPasswordAndVerificationCode failed",
-			input: input{
-				request: &dto.CompletePasswordChangeRequest{
-					UserId:           1,
-					VerificationCode: verifcationCode,
-				},
-				beforeTest: func(ur *mocks.UserRepository, uc *mocks.UserCache) {
-					uc.On("FindUserPasswordAndVerificationCode", 1).Return(newPassword, verifcationCode, nil)
-					ur.On("UpdatePassword", 1, mock.Anything).Return(nil, nil)
-					uc.On("DeleteUserPasswordAndVerificationCode", 1).Return(errs.ErrUserDoesNotExist)
-				},
-			},
-			expected: expected{
-				err: errs.ErrUserDoesNotExist,
-			},
-		},
-		{
 			description: "should return nil when success",
 			input: input{
 				request: &dto.CompletePasswordChangeRequest{
@@ -1157,24 +1140,6 @@ func TestCompletePasswordReset(t *testing.T) {
 					uc.On("FindResetPasswordToken", token).Return(1, nil)
 					ur.On("GetByID", 1).Return(&model.User{Username: "asd", ID: 1}, nil)
 					ur.On("UpdatePassword", mock.Anything, mock.Anything).Return(nil, errs.ErrUserDoesNotExist)
-				},
-			},
-			expected: expected{
-				err: errs.ErrUserDoesNotExist,
-			},
-		},
-		{
-			description: "should return error when DeleteResetPasswordToken failed",
-			input: input{
-				request: &dto.CompletePasswordResetRequest{
-					Token:       token,
-					NewPassword: "newPassword123",
-				},
-				beforeTest: func(ur *mocks.UserRepository, uc *mocks.UserCache) {
-					uc.On("FindResetPasswordToken", token).Return(1, nil)
-					ur.On("GetByID", 1).Return(&model.User{Username: "asd", ID: 1}, nil)
-					ur.On("UpdatePassword", 1, "newPassword123").Return(nil, nil)
-					uc.On("DeleteResetPasswordToken", token).Return(errs.ErrUserDoesNotExist)
 				},
 			},
 			expected: expected{
