@@ -1,12 +1,13 @@
 package service
 
 import (
+	"kedai/backend/be-kedai/internal/domain/shop/dto"
 	"kedai/backend/be-kedai/internal/domain/shop/model"
 	"kedai/backend/be-kedai/internal/domain/shop/repository"
 )
 
 type CourierService interface {
-	GetAllCouriers() ([]*model.Courier, error)
+	GetShipmentList(shopId int) ([]*dto.ShipmentCourierResponse, error)
 	GetCouriersByShopID(shopID int) ([]*model.Courier, error)
 	GetCouriersByProductID(productID int) ([]*model.Courier, error)
 }
@@ -28,8 +29,8 @@ func NewCourierService(cfg *CourierSConfig) CourierService {
 	}
 }
 
-func (s *courierServiceImpl) GetAllCouriers() ([]*model.Courier, error) {
-	return s.courierRepository.GetAll()
+func (s *courierServiceImpl) GetShipmentList(shopId int) ([]*dto.ShipmentCourierResponse, error) {
+	return s.courierRepository.GetShipmentList(shopId)
 }
 
 func (s *courierServiceImpl) GetCouriersByShopID(shopID int) ([]*model.Courier, error) {
