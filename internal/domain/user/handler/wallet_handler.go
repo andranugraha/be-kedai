@@ -72,3 +72,31 @@ func (h *Handler) TopUp(c *gin.Context) {
 
 	response.Success(c, http.StatusOK, code.OK, "success", result)
 }
+
+func (h *Handler) RequestWalletPinChange(c *gin.Context) {
+	var request dto.ChangePinRequest
+	err := c.ShouldBindJSON(&request)
+	if err != nil {
+		response.ErrorValidator(c, http.StatusBadRequest, err)
+		return
+	}
+
+	userID := c.GetInt("userId")
+	err = h.walletService.RequestPinChange(userID, &request)
+	if err != nil {
+		if errors.Is(err, errs.ErrWalletDoesNotExist) {
+			response.Error(c, http.StatusNotFound, code.NOT_FOUND, err.Error())
+			return
+		}
+
+		if errors.Is(err, errs.ErrPinMismatch) {
+			response.Error(c, http.StatusBadRequest, code.WRONG_PIN, err.Error())
+			return
+		}
+
+		response.Error(c, http.StatusInternalServerError, code.INTERNAL_SERVER_ERROR, errs.ErrInternalServerError.Error())
+		return
+	}
+
+	response.Success(c, http.StatusOK, code.OK, "ok", nil)
+}
