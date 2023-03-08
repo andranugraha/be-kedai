@@ -13,6 +13,7 @@ import (
 
 type TransactionReviewService interface {
 	Create(req dto.TransactionReviewRequest) (*model.TransactionReview, error)
+	GetReviewByTransactionID(transactionID int) (*model.TransactionReview, error)
 	GetReviews(req productDto.GetReviewRequest) (*commonDto.PaginationResponse, error)
 	GetReviewStats(productCode string) (*productDto.GetReviewStatsResponse, error)
 }
@@ -66,6 +67,10 @@ func (s *transactionReviewServiceImpl) Create(req dto.TransactionReviewRequest) 
 	}
 
 	return review, nil
+}
+
+func (s *transactionReviewServiceImpl) GetReviewByTransactionID(transactionID int) (*model.TransactionReview, error) {
+	return s.transactionReviewRepo.GetByTransactionID(transactionID)
 }
 
 func (s *transactionReviewServiceImpl) GetReviews(req productDto.GetReviewRequest) (*commonDto.PaginationResponse, error) {

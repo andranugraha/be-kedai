@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"errors"
 	"kedai/backend/be-kedai/internal/common/code"
 	errs "kedai/backend/be-kedai/internal/common/error"
 	"kedai/backend/be-kedai/internal/domain/order/dto"
@@ -29,4 +30,21 @@ func (h *Handler) GetInvoicePerShopsByUserID(c *gin.Context) {
 	}
 
 	response.Success(c, http.StatusOK, code.OK, "success", res)
+}
+
+func (h *Handler) GetInvoiceByCode(c *gin.Context) {
+	userID := c.GetInt("userId")
+	invoiceCode := c.Param("code")
+
+	invoice, err := h.invoicePerShopService.GetInvoicesByUserIDAndCode(userID, invoiceCode)
+	if err != nil {
+		if errors.Is(err, errs.ErrInvoiceNotFound) {
+			response.Error(c, http.StatusNotFound, code.INVOICE_NOT_FOUND, errs.ErrInvoiceNotFound.Error())
+			return
+		}
+		response.Error(c, http.StatusInternalServerError, code.INTERNAL_SERVER_ERROR, errs.ErrInternalServerError.Error())
+		return
+	}
+
+	response.Success(c, http.StatusOK, code.OK, "success", invoice)
 }
