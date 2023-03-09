@@ -9,6 +9,7 @@ import (
 type CourierService interface {
 	GetShipmentList(userId int) ([]*dto.ShipmentCourierResponse, error)
 	GetCouriersByShopID(shopID int) ([]*model.Courier, error)
+	GetCourierByServiceIDAndShopID(courierID, shopID int) (*model.Courier, error)
 	GetCouriersByProductID(productID int) ([]*model.Courier, error)
 }
 
@@ -40,6 +41,15 @@ func (s *courierServiceImpl) GetShipmentList(userId int) ([]*dto.ShipmentCourier
 
 func (s *courierServiceImpl) GetCouriersByShopID(shopID int) ([]*model.Courier, error) {
 	return s.courierRepository.GetByShopID(shopID)
+}
+
+func (s *courierServiceImpl) GetCourierByServiceIDAndShopID(courierID, shopID int) (*model.Courier, error) {
+	courier, err := s.courierRepository.GetByServiceIDAndShopID(courierID, shopID)
+	if err != nil {
+		return nil, err
+	}
+
+	return courier, nil
 }
 
 func (s *courierServiceImpl) GetCouriersByProductID(productID int) ([]*model.Courier, error) {

@@ -8,7 +8,7 @@ import (
 	locationRepoPackage "kedai/backend/be-kedai/internal/domain/location/repository"
 	locationServicePackage "kedai/backend/be-kedai/internal/domain/location/service"
 
-	userCachePackage "kedai/backend/be-kedai/internal/domain/user/cache"
+	userRedisCache "kedai/backend/be-kedai/internal/domain/user/cache"
 	userHandlerPackage "kedai/backend/be-kedai/internal/domain/user/handler"
 	userRepoPackage "kedai/backend/be-kedai/internal/domain/user/repository"
 	userServicePackage "kedai/backend/be-kedai/internal/domain/user/service"
@@ -37,6 +37,13 @@ import (
 func createRouter() *gin.Engine {
 	db := connection.GetDB()
 	redis := connection.GetCache()
+
+	userCache := userRedisCache.NewUserCache(&userRedisCache.UserCConfig{
+		RDC: redis,
+	})
+	walletCache := userRedisCache.NewWalletCache(&userRedisCache.WalletCConfig{
+		RDC: redis,
+	})
 
 	userVoucherRepo := userRepoPackage.NewUserVoucherRepository(&userRepoPackage.UserVoucherRConfig{
 		DB: db,
@@ -153,9 +160,6 @@ func createRouter() *gin.Engine {
 		CourierService:     courierService,
 	})
 
-	userCache := userCachePackage.NewUserCache(&userCachePackage.UserCConfig{
-		RDC: redis,
-	})
 	userProfileRepo := userRepoPackage.NewUserProfileRepository(&userRepoPackage.UserProfileRConfig{
 		DB: db,
 	})
@@ -177,16 +181,13 @@ func createRouter() *gin.Engine {
 		Repository: userProfileRepo,
 	})
 
-	walletCache := userCachePackage.NewWalletCache(&userCachePackage.WalletCConfig{
-		RDC: redis,
-	})
-
 	walletService := userServicePackage.NewWalletService(&userServicePackage.WalletSConfig{
 		WalletRepo:  walletRepo,
+		UserCache:   userCache,
+		WalletCache: walletCache,
 		UserService: userService,
 		MailUtils:   mailUtils,
 		RandomUtils: randomUtils,
-		WalletCache: walletCache,
 	})
 
 	walletHistoryService := userServicePackage.NewWalletHistoryService(&userServicePackage.WalletHistorySConfig{
@@ -286,7 +287,31 @@ func createRouter() *gin.Engine {
 		TransactionReviewService: transactionReviewService,
 	})
 
+	invoiceStatusRepo := orderRepoPackage.NewInvoiceStatusRepository(&orderRepoPackage.InvoiceStatusRConfig{
+		DB: db,
+	})
+	invoiceRepo := orderRepoPackage.NewInvoiceRepository(&orderRepoPackage.InvoiceRConfig{
+		DB:                db,
+		UserCartItemRepo:  userCartItemRepo,
+		SkuRepo:           skuRepo,
+		UserWalletRepo:    walletRepo,
+		InvoiceStatusRepo: invoiceStatusRepo,
+		Redis:             userCache,
+	})
+	invoiceService := orderServicePackage.NewInvoiceService(&orderServicePackage.InvoiceSConfig{
+		InvoiceRepo:               invoiceRepo,
+		AddressService:            addressService,
+		ShopService:               shopService,
+		ShopVoucherService:        shopVoucherService,
+		CartItemService:           userCartItemService,
+		ShopCourierService:        courierService,
+		MarketplaceVoucherService: marketplaceVoucherService,
+		SealabsPayService:         sealabsPayService,
+		WalletService:             walletService,
+	})
+
 	orderHandler := orderHandlerPackage.New(&orderHandlerPackage.Config{
+		InvoiceService:           invoiceService,
 		TransactionReviewService: transactionReviewService,
 		InvoicePerShopService:    invoicePerShopService,
 	})

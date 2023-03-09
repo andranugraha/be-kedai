@@ -9,6 +9,7 @@ import (
 	"kedai/backend/be-kedai/internal/domain/user/model"
 	"kedai/backend/be-kedai/internal/domain/user/repository"
 	"kedai/backend/be-kedai/internal/utils/hash"
+	jwttoken "kedai/backend/be-kedai/internal/utils/jwtToken"
 	"kedai/backend/be-kedai/internal/utils/mail"
 	"kedai/backend/be-kedai/internal/utils/random"
 )
@@ -21,6 +22,8 @@ type WalletService interface {
 	RegisterWallet(userID int, pin string) (*model.Wallet, error)
 	GetWalletByUserID(userID int) (*model.Wallet, error)
 	TopUp(userId int, req dto.TopUpRequest) (*model.WalletHistory, error)
+	StepUp(userId int, req dto.StepUpRequest) (*dto.Token, error)
+	CheckIsWalletBlocked(userID int) error
 	RequestPinChange(userID int, request *dto.ChangePinRequest) error
 	CompletePinChange(userID int, request *dto.CompleteChangePinRequest) error
 	RequestPinReset(userID int) error
@@ -30,6 +33,7 @@ type WalletService interface {
 type walletServiceImpl struct {
 	userService UserService
 	walletRepo  repository.WalletRepository
+	userCache   cache.UserCache
 	walletCache cache.WalletCache
 	randomUtils random.RandomUtils
 	mailUtils   mail.MailUtils
@@ -38,6 +42,7 @@ type walletServiceImpl struct {
 type WalletSConfig struct {
 	UserService UserService
 	WalletRepo  repository.WalletRepository
+	UserCache   cache.UserCache
 	WalletCache cache.WalletCache
 	RandomUtils random.RandomUtils
 	MailUtils   mail.MailUtils
@@ -46,6 +51,7 @@ type WalletSConfig struct {
 func NewWalletService(cfg *WalletSConfig) WalletService {
 	return &walletServiceImpl{
 		walletRepo:  cfg.WalletRepo,
+		userCache:   cfg.UserCache,
 		walletCache: cfg.WalletCache,
 		userService: cfg.UserService,
 		randomUtils: cfg.RandomUtils,
@@ -91,6 +97,77 @@ func (s *walletServiceImpl) TopUp(userId int, req dto.TopUpRequest) (*model.Wall
 	history.Reference = req.TxnId
 
 	return s.walletRepo.TopUp(&history, wallet)
+}
+
+func (s *walletServiceImpl) StepUp(userId int, req dto.StepUpRequest) (*dto.Token, error) {
+	wallet, err := s.walletRepo.GetByUserID(userId)
+	if err != nil {
+		return nil, err
+	}
+
+	err = s.walletCache.CheckIsWalletBlocked(wallet.ID)
+	if err != nil {
+		return nil, err
+	}
+
+	if !hash.ComparePassword(wallet.Pin, req.Pin) {
+		errorCount, err := s.walletCache.FindWalletStepUpErrorCount(wallet.ID)
+		if err != nil {
+			return nil, err
+		}
+
+		const maxErrorCount = 3
+		if errorCount != nil && *errorCount+1 >= maxErrorCount {
+			err = s.walletCache.DeleteErrorCount(wallet.ID)
+			if err != nil {
+				return nil, err
+			}
+
+			return nil, s.walletCache.BlockWallet(wallet.ID)
+		}
+
+		err = s.walletCache.StoreOrIncrementWalletStepUpErrorCount(wallet.ID)
+		if err != nil {
+			return nil, err
+		}
+
+		return nil, errs.ErrWrongPin
+	}
+
+	err = s.walletCache.DeleteErrorCount(wallet.ID)
+	if err != nil {
+		return nil, err
+	}
+
+	var (
+		user = &model.User{
+			ID: userId,
+		}
+		stepUpLevel = 1
+	)
+	accessToken, _ := jwttoken.GenerateAccessToken(user, stepUpLevel)
+	refreshToken, _ := jwttoken.GenerateRefreshToken(user, stepUpLevel)
+
+	token := &dto.Token{
+		AccessToken:  accessToken,
+		RefreshToken: refreshToken,
+	}
+
+	err = s.userCache.StoreToken(userId, accessToken, refreshToken)
+	if err != nil {
+		return nil, err
+	}
+
+	return token, nil
+}
+
+func (s *walletServiceImpl) CheckIsWalletBlocked(userID int) error {
+	wallet, err := s.walletRepo.GetByUserID(userID)
+	if err != nil {
+		return err
+	}
+
+	return s.walletCache.CheckIsWalletBlocked(wallet.ID)
 }
 
 func (s *walletServiceImpl) RequestPinChange(userID int, request *dto.ChangePinRequest) error {

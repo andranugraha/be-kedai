@@ -47,6 +47,7 @@ func JWTAuthorization(c *gin.Context) {
 	}
 
 	c.Set("userId", parsedToken.UserId)
+	c.Set("level", parsedToken.Level)
 }
 
 func JWTValidateRefreshToken(c *gin.Context) {

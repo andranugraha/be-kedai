@@ -120,8 +120,10 @@ func (s *userServiceImpl) SignUpWithGoogle(userReg *dto.UserRegistrationWithGoog
 		return nil, err
 	}
 
-	accessToken, _ := jwttoken.GenerateAccessToken(result)
-	refreshToken, _ := jwttoken.GenerateRefreshToken(result)
+	defaultLevel := 0
+
+	accessToken, _ := jwttoken.GenerateAccessToken(result, defaultLevel)
+	refreshToken, _ := jwttoken.GenerateRefreshToken(result, defaultLevel)
 
 	token := &dto.Token{
 		AccessToken:  accessToken,
@@ -148,8 +150,9 @@ func (s *userServiceImpl) SignIn(userLogin *dto.UserLogin, inputPw string) (*dto
 
 	isValid := hash.ComparePassword(result.Password, inputPw)
 	if isValid {
-		accessToken, _ := jwttoken.GenerateAccessToken(result)
-		refreshToken, _ := jwttoken.GenerateRefreshToken(result)
+		defaultLevel := 0
+		accessToken, _ := jwttoken.GenerateAccessToken(result, defaultLevel)
+		refreshToken, _ := jwttoken.GenerateRefreshToken(result, defaultLevel)
 
 		token := &dto.Token{
 			AccessToken:  accessToken,
@@ -178,8 +181,9 @@ func (s *userServiceImpl) SignInWithGoogle(userLogin *dto.UserLoginWithGoogleReq
 		return nil, err
 	}
 
-	accessToken, _ := jwttoken.GenerateAccessToken(result)
-	refreshToken, _ := jwttoken.GenerateRefreshToken(result)
+	defaultLevel := 0
+	accessToken, _ := jwttoken.GenerateAccessToken(result, defaultLevel)
+	refreshToken, _ := jwttoken.GenerateRefreshToken(result, defaultLevel)
 
 	token := &dto.Token{
 		AccessToken:  accessToken,
@@ -212,8 +216,9 @@ func (s *userServiceImpl) RenewToken(userId int, refreshToken string) (*dto.Toke
 		return nil, err
 	}
 
-	newAccessToken, _ := jwttoken.GenerateAccessToken(&model.User{ID: userId})
-	newRefreshToken, _ := jwttoken.GenerateRefreshToken(&model.User{ID: userId})
+	defaultLevel := 0
+	newAccessToken, _ := jwttoken.GenerateAccessToken(&model.User{ID: userId}, defaultLevel)
+	newRefreshToken, _ := jwttoken.GenerateRefreshToken(&model.User{ID: userId}, defaultLevel)
 
 	err = s.redis.StoreToken(userId, newAccessToken, newRefreshToken)
 	if err != nil {
