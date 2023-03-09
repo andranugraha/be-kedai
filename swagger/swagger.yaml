@@ -1864,10 +1864,17 @@ paths:
         - BearerAuth: []
       tags:
         - User
-      summary: Delete user cart item
+      summary: Delete user cart items
       description: Delete cart item from cart with cart item id
-      requestBody:
-        $ref: '#/components/requestBodies/DeleteCartBody'
+      parameters:
+      - name: cartItemId
+        in: query
+        description: Can receive multiple cart item ids to delete
+        required: true
+        schema:
+          type: array
+          items:
+            type: integer
       responses:
         '200':
           description: successful operation
@@ -5323,20 +5330,6 @@ components:
                 items:
                   oneOf:
                     - $ref: '#/components/requestBodies/ReviewMediaBody'
-    DeleteCartBody:
-      required: true
-      content:
-         application/json:
-          schema:
-            type: object
-            required:
-              - cartItemIds
-            properties:
-              cartItemIds:
-                type: array
-                items:
-                  type: integer
-                  example: [1, 1]
     RegisterSeaLabsPayBody:
       required: true
       content:
