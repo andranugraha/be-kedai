@@ -23,6 +23,36 @@ func (ProductDetail) TableName() string {
 	return "products"
 }
 
+type SellerProduct struct {
+	model.Product
+	ImageURL string `json:"imageUrl,omitempty"`
+}
+
+func (SellerProduct) TableName() string {
+	return "products"
+}
+
+type SellerProductFilterRequest struct {
+	Limit  int    `form:"limit"`
+	Page   int    `form:"page"`
+	Sales  int    `form:"sales"`
+	Stock  int    `form:"stock"`
+	Sort   string `form:"sort"`
+	Status string `form:"status"`
+	Sku    string `form:"sku"`
+	Name   string `form:"name"`
+}
+
+func (r *SellerProductFilterRequest) Validate() {
+	if r.Limit < 1 {
+		r.Limit = 20
+	}
+
+	if r.Page < 1 {
+		r.Page = 1
+	}
+}
+
 type ProductResponse struct {
 	ID           int     `json:"id"`
 	Code         string  `json:"code"`
