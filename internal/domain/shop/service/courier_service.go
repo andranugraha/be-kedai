@@ -7,7 +7,7 @@ import (
 )
 
 type CourierService interface {
-	GetShipmentList(shopId int) ([]*dto.ShipmentCourierResponse, error)
+	GetShipmentList(userId int) ([]*dto.ShipmentCourierResponse, error)
 	GetCouriersByShopID(shopID int) ([]*model.Courier, error)
 	GetCouriersByProductID(productID int) ([]*model.Courier, error)
 }
@@ -29,8 +29,13 @@ func NewCourierService(cfg *CourierSConfig) CourierService {
 	}
 }
 
-func (s *courierServiceImpl) GetShipmentList(shopId int) ([]*dto.ShipmentCourierResponse, error) {
-	return s.courierRepository.GetShipmentList(shopId)
+func (s *courierServiceImpl) GetShipmentList(userId int) ([]*dto.ShipmentCourierResponse, error) {
+	shop, err := s.shopService.FindShopByUserId(userId)
+	if err != nil {
+		return nil, err
+	}
+
+	return s.courierRepository.GetShipmentList(shop.ID)
 }
 
 func (s *courierServiceImpl) GetCouriersByShopID(shopID int) ([]*model.Courier, error) {
