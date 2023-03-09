@@ -139,3 +139,58 @@ func TestGetShipmentList(t *testing.T) {
 		})
 	}
 }
+
+func TestGetAllCouriers(t *testing.T) {
+	type input struct {
+		mockData []*model.Courier
+		mockErr  error
+	}
+	type expected struct {
+		data []*model.Courier
+		err  error
+	}
+
+	tests := []struct {
+		description string
+		input
+		expected
+	}{
+		{
+			description: "should return error when failed to get couriers",
+			input: input{
+				mockData: nil,
+				mockErr:  errors.New("failed to get couriers"),
+			},
+			expected: expected{
+				data: nil,
+				err:  errors.New("failed to get couriers"),
+			},
+		},
+		{
+			description: "should return courier list when succeed to get couriers",
+			input: input{
+				mockData: []*model.Courier{},
+				mockErr:  nil,
+			},
+			expected: expected{
+				data: []*model.Courier{},
+				err:  nil,
+			},
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.description, func(t *testing.T) {
+			courierRepo := mocks.NewCourierRepository(t)
+			courierRepo.On("GetAll").Return(tc.input.mockData, tc.input.mockErr)
+			courierService := service.NewCourierService(&service.CourierSConfig{
+				CourierRepository: courierRepo,
+			})
+
+			data, err := courierService.GetAllCouriers()
+
+			assert.Equal(t, tc.expected.data, data)
+			assert.Equal(t, tc.expected.err, err)
+		})
+	}
+}

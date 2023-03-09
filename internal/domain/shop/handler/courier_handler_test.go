@@ -2,6 +2,7 @@ package handler_test
 
 import (
 	"encoding/json"
+	"errors"
 	"kedai/backend/be-kedai/internal/common/code"
 	errs "kedai/backend/be-kedai/internal/common/error"
 	"kedai/backend/be-kedai/internal/domain/shop/dto"
@@ -94,6 +95,72 @@ func TestGetShipmentList(t *testing.T) {
 
 			assert.Equal(t, tc.expected.statusCode, rec.Code)
 			assert.Equal(t, string(expectedBody), rec.Body.String())
+		})
+	}
+}
+
+func TestGetAllCouriers(t *testing.T) {
+	type input struct {
+		mockData []*model.Courier
+		mockErr  error
+	}
+	type expected struct {
+		statusCode int
+		response   response.Response
+	}
+
+	tests := []struct {
+		description string
+		input
+		expected
+	}{
+		{
+			description: "should return error with status code 500 when failed to get couriers",
+			input: input{
+				mockData: nil,
+				mockErr:  errors.New("failed to get couriers"),
+			},
+			expected: expected{
+				statusCode: http.StatusInternalServerError,
+				response: response.Response{
+					Code:    code.INTERNAL_SERVER_ERROR,
+					Message: errs.ErrInternalServerError.Error(),
+				},
+			},
+		},
+		{
+			description: "should return couriers with status code 200 when succeed to get couriers",
+			input: input{
+				mockData: []*model.Courier{},
+				mockErr:  nil,
+			},
+			expected: expected{
+				statusCode: http.StatusOK,
+				response: response.Response{
+					Code:    code.OK,
+					Message: "success",
+					Data:    []*model.Courier{},
+				},
+			},
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.description, func(t *testing.T) {
+			courierService := mocks.NewCourierService(t)
+			courierService.On("GetAllCouriers").Return(tc.input.mockData, tc.input.mockErr)
+			expectedRes, _ := json.Marshal(tc.expected.response)
+			rec := httptest.NewRecorder()
+			c, _ := gin.CreateTestContext(rec)
+			handler := handler.New(&handler.HandlerConfig{
+				CourierService: courierService,
+			})
+			c.Request, _ = http.NewRequest(http.MethodGet, "/couriers", nil)
+
+			handler.GetAllCouriers(c)
+
+			assert.Equal(t, tc.expected.statusCode, rec.Code)
+			assert.Equal(t, string(expectedRes), rec.Body.String())
 		})
 	}
 }
