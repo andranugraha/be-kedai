@@ -7,6 +7,7 @@ type Handler struct {
 	provinceService    service.ProvinceService
 	districtService    service.DistrictService
 	subdistrictService service.SubdistrictService
+	addressService     service.AddressService
 }
 
 type Config struct {
@@ -14,6 +15,7 @@ type Config struct {
 	ProvinceService    service.ProvinceService
 	DistrictService    service.DistrictService
 	SubdistrictService service.SubdistrictService
+	AddressService     service.AddressService
 }
 
 func New(cfg *Config) *Handler {
@@ -22,5 +24,6 @@ func New(cfg *Config) *Handler {
 		provinceService:    cfg.ProvinceService,
 		districtService:    cfg.DistrictService,
 		subdistrictService: cfg.SubdistrictService,
+		addressService:     cfg.AddressService,
 	}
 }
