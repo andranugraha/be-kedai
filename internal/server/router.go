@@ -103,6 +103,17 @@ func NewRouter(cfg *RouterConfig) *gin.Engine {
 			}
 		}
 
+		seller := v1.Group("/sellers")
+		{
+			sellerAuthenticated := seller.Group("", middleware.JWTAuthorization, cfg.UserHandler.GetSession)
+			{
+				product := sellerAuthenticated.Group("")
+				{
+					product.GET("/products", cfg.ProductHandler.GetSellerProducts)
+				}
+			}
+		}
+
 		location := v1.Group("/locations")
 		{
 			location.GET("/cities", cfg.LocationHandler.GetCities)
