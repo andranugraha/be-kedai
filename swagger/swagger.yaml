@@ -4373,6 +4373,10 @@ paths:
                                           example: image.png
                                     - type: object
                                       properties:
+                                        bulk:
+                                          $ref: '#/components/schemas/ProductBulkPrice'
+                                    - type: object
+                                      properties:
                                         skus:
                                           type: array
                                           items:
