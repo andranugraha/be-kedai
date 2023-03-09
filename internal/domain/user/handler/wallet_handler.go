@@ -77,6 +77,39 @@ func (h *Handler) TopUp(c *gin.Context) {
 	response.Success(c, http.StatusOK, code.OK, "success", result)
 }
 
+func (h *Handler) StepUp(c *gin.Context) {
+	var req dto.StepUpRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.ErrorValidator(c, http.StatusBadRequest, err)
+		return
+	}
+
+	userId := c.GetInt("userId")
+
+	wallet, err := h.walletService.StepUp(userId, req)
+	if err != nil {
+		if errors.Is(err, errs.ErrWalletDoesNotExist) {
+			response.Error(c, http.StatusNotFound, code.WALLET_DOES_NOT_EXIST, err.Error())
+			return
+		}
+
+		if errors.Is(err, errs.ErrWrongPin) {
+			response.Error(c, http.StatusBadRequest, code.INVALID_PIN, err.Error())
+			return
+		}
+
+		if errors.Is(err, errs.ErrWalletTemporarilyBlocked) {
+			response.Error(c, http.StatusForbidden, code.TEMPORARILY_BLOCKED, err.Error())
+			return
+		}
+
+		response.Error(c, http.StatusInternalServerError, code.INTERNAL_SERVER_ERROR, errs.ErrInternalServerError.Error())
+		return
+	}
+
+	response.Success(c, http.StatusOK, code.OK, "success", wallet)
+}
+
 func (h *Handler) RequestWalletPinChange(c *gin.Context) {
 	var request dto.ChangePinRequest
 	err := c.ShouldBindJSON(&request)

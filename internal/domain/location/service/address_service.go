@@ -17,6 +17,7 @@ type AddressService interface {
 	GetAllUserAddress(userId int) ([]*model.UserAddress, error)
 	PreCheckAddress(*dto.AddressRequest) (*model.UserAddress, error)
 	DeleteUserAddress(addressId int, userId int) error
+	GetUserAddressByIdAndUserId(addressId int, userId int) (*model.UserAddress, error)
 }
 
 type addressService struct {
@@ -190,4 +191,13 @@ func (s *addressService) DeleteUserAddress(addressId int, userId int) error {
 	}
 
 	return nil
+}
+
+func (s *addressService) GetUserAddressByIdAndUserId(addressId int, userId int) (*model.UserAddress, error) {
+	address, err := s.addressRepo.GetUserAddressByIdAndUserId(addressId, userId)
+	if err != nil {
+		return nil, err
+	}
+
+	return address, nil
 }

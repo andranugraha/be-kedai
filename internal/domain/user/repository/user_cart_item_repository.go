@@ -16,6 +16,8 @@ type UserCartItemRepository interface {
 	GetAllCartItem(*dto.GetCartItemsRequest) (cartItems []*model.CartItem, totalRows int64, totalPages int, err error)
 	GetCartItemByUserIdAndSkuId(userId int, skuId int) (*model.CartItem, error)
 	UpdateCartItem(cartItem *model.CartItem) (*model.CartItem, error)
+	GetCartItemByIdAndUserId(id, userId int) (*model.CartItem, error)
+	DeleteCartItemBySkuIdsAndUserId(tx *gorm.DB, skuIds []int, userIds int) error
 	DeleteCartItem(*dto.DeleteCartItemRequest) error
 }
 
@@ -115,6 +117,33 @@ func (r *userCartItemRepository) GetAllCartItem(req *dto.GetCartItemsRequest) (c
 	}
 
 	return
+}
+
+func (r *userCartItemRepository) GetCartItemByIdAndUserId(id, userId int) (*model.CartItem, error) {
+	var cartItem model.CartItem
+
+	err := r.db.Where("cart_items.id = ? AND cart_items.user_id = ?", id, userId).
+		Joins("join skus s on cart_items.sku_id = s.id").
+		Joins("join products p on s.product_id = p.id").
+		Where("p.is_active = ?", true).
+		Preload("Sku.Product.Bulk").Preload("Sku.Promotion").First(&cartItem).Error
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, errs.ErrCartItemNotFound
+		}
+		return nil, err
+	}
+
+	return &cartItem, nil
+}
+
+func (r *userCartItemRepository) DeleteCartItemBySkuIdsAndUserId(tx *gorm.DB, skuIds []int, userId int) error {
+	err := tx.Unscoped().Where("sku_id IN ?", skuIds).Where("user_id = ?", userId).Delete(&model.CartItem{}).Error
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (r *userCartItemRepository) DeleteCartItem(req *dto.DeleteCartItemRequest) error {

@@ -5,6 +5,7 @@ var (
 	SecretKey    = GetEnv("SECRET_KEY", "secret_key")
 	HashKey      = GetEnv("HASH_KEY", "secret_key")
 	MerchantCode = GetEnv("MERCHANT_CODE", "code")
+	PlatformFee  = GetEnv("PLATFORM_FEE", "0")
 	DB           = DBConfig{
 		Host:     GetEnv("DB_HOST", "localhost"),
 		Port:     GetEnv("DB_PORT", "5432"),

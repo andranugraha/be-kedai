@@ -1,6 +1,7 @@
 package constant
 
 const (
+	TransactionStatusWaitingForPayment  = "WAITING_FOR_PAYMENT"
 	TransactionStatusCreated            = "CREATED"
 	TransactionStatusSent               = "SENT"
 	TransactionStatusReceived           = "RECEIVED"
