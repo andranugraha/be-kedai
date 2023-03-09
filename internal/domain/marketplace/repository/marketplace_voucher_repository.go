@@ -66,9 +66,7 @@ func (r *marketplaceVoucherRepositoryImpl) GetValidByUserID(req *dto.GetMarketpl
 	}
 
 	for _, voucher := range userVoucher {
-		if voucher.MarketplaceVoucherId != nil {
-			invalidVoucherID = append(invalidVoucherID, *voucher.MarketplaceVoucherId)
-		}
+		invalidVoucherID = append(invalidVoucherID, *voucher.MarketplaceVoucherId)
 	}
 
 	db := r.db
@@ -107,9 +105,7 @@ func (r *marketplaceVoucherRepositoryImpl) GetValid(id, userID, PaymentMethodID 
 	}
 
 	for _, voucher := range userVoucher {
-		if voucher.MarketplaceVoucherId != nil {
-			invalidVoucherID = append(invalidVoucherID, *voucher.MarketplaceVoucherId)
-		}
+		invalidVoucherID = append(invalidVoucherID, *voucher.MarketplaceVoucherId)
 	}
 
 	db := r.db
