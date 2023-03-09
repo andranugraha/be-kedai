@@ -15,4 +15,5 @@ var (
 	ErrTransactionReviewNotFound = errors.New("transaction review not found")
 	ErrInvoiceCodeInvalid        = errors.New("invalid invoice code")
 	ErrPaymentRequired           = errors.New("payment required")
+	ErrPaymentMethodNotMatch     = errors.New("payment method not match")
 )

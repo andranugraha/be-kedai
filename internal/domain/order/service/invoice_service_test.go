@@ -39,7 +39,7 @@ func TestCheckout(t *testing.T) {
 		}
 		req = dto.CheckoutRequest{
 			AddressID:       1,
-			TotalPrice:      10000,
+			TotalPrice:      5000,
 			VoucherID:       &one,
 			UserID:          1,
 			PaymentMethodID: 2,
@@ -473,8 +473,9 @@ func TestPayInvoice(t *testing.T) {
 	var (
 		token = "token"
 		req   = dto.PayInvoiceRequest{
-			InvoiceID: 1,
-			UserID:    1,
+			InvoiceID:       1,
+			UserID:          1,
+			PaymentMethodID: constant.PaymentMethodWallet,
 		}
 		res = &userDto.Token{
 			AccessToken:  token,
@@ -487,15 +488,16 @@ func TestPayInvoice(t *testing.T) {
 		req        dto.PayInvoiceRequest
 		want       *userDto.Token
 		wantErr    error
-		beforeTest func(invoiceRepo *mocks.InvoiceRepository)
+		beforeTest func(invoiceRepo *mocks.InvoiceRepository, walletService *mocks.WalletService, sealabsPayService *mocks.SealabsPayService)
 	}{
 		{
 			name:    "should return token when pay invoice success",
 			req:     req,
 			want:    res,
 			wantErr: nil,
-			beforeTest: func(invoiceRepo *mocks.InvoiceRepository) {
+			beforeTest: func(invoiceRepo *mocks.InvoiceRepository, walletService *mocks.WalletService, sealabsPayService *mocks.SealabsPayService) {
 				invoiceRepo.On("GetByIDAndUserID", req.InvoiceID, req.UserID).Return(&model.Invoice{
+					PaymentMethodID: constant.PaymentMethodWallet,
 					InvoicePerShops: []*model.InvoicePerShop{
 						{
 							Status: constant.TransactionStatusWaitingForPayment,
@@ -507,6 +509,7 @@ func TestPayInvoice(t *testing.T) {
 						},
 					},
 				}, nil)
+				walletService.On("CheckIsWalletBlocked", req.UserID).Return(nil)
 				invoiceRepo.On("Pay", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(res, nil)
 			},
 		},
@@ -515,28 +518,42 @@ func TestPayInvoice(t *testing.T) {
 			req:     req,
 			want:    nil,
 			wantErr: errs.ErrInvoiceNotFound,
-			beforeTest: func(invoiceRepo *mocks.InvoiceRepository) {
+			beforeTest: func(invoiceRepo *mocks.InvoiceRepository, walletService *mocks.WalletService, sealabsPayService *mocks.SealabsPayService) {
 				invoiceRepo.On("GetByIDAndUserID", req.InvoiceID, req.UserID).Return(nil, errs.ErrInvoiceNotFound)
 			},
 		},
 		{
-			name:    "should return error when sealabs pay transaction id is empty on request and invoice payment method is using sealabs pay",
-			req:     req,
+			name: "should return error when sealabs pay transaction id is empty on request and invoice payment method is using sealabs pay",
+			req: dto.PayInvoiceRequest{
+				InvoiceID:       1,
+				PaymentMethodID: constant.PaymentMethodSeaLabsPay,
+				Amount:          10000,
+				UserID:          1,
+			},
 			want:    nil,
 			wantErr: errs.ErrSealabsPayTransactionID,
-			beforeTest: func(invoiceRepo *mocks.InvoiceRepository) {
+			beforeTest: func(invoiceRepo *mocks.InvoiceRepository, walletService *mocks.WalletService, sealabsPayService *mocks.SealabsPayService) {
 				invoiceRepo.On("GetByIDAndUserID", req.InvoiceID, req.UserID).Return(&model.Invoice{
+					Total:           10000,
 					PaymentMethodID: constant.PaymentMethodSeaLabsPay,
 				}, nil)
 			},
 		},
 		{
-			name:    "should return error when shop invoice status is not waiting for payment",
-			req:     req,
+			name: "should return error when shop invoice status is not waiting for payment",
+			req: dto.PayInvoiceRequest{
+				InvoiceID:       1,
+				PaymentMethodID: constant.PaymentMethodSeaLabsPay,
+				TxnID:           "txn_id",
+				CardNumber:      "card_number",
+				Signature:       "signature",
+				UserID:          1,
+			},
 			want:    nil,
 			wantErr: errs.ErrInvoiceAlreadyPaid,
-			beforeTest: func(invoiceRepo *mocks.InvoiceRepository) {
+			beforeTest: func(invoiceRepo *mocks.InvoiceRepository, walletService *mocks.WalletService, sealabsPayService *mocks.SealabsPayService) {
 				invoiceRepo.On("GetByIDAndUserID", req.InvoiceID, req.UserID).Return(&model.Invoice{
+					PaymentMethodID: constant.PaymentMethodSeaLabsPay,
 					InvoicePerShops: []*model.InvoicePerShop{
 						{
 							Status: constant.TransactionStatusCreated,
@@ -548,6 +565,7 @@ func TestPayInvoice(t *testing.T) {
 						},
 					},
 				}, nil)
+				sealabsPayService.On("GetValidSealabsPayByCardNumberAndUserID", mock.Anything, mock.Anything).Return(nil, nil)
 			},
 		},
 		{
@@ -555,8 +573,9 @@ func TestPayInvoice(t *testing.T) {
 			req:     req,
 			want:    nil,
 			wantErr: errs.ErrInternalServerError,
-			beforeTest: func(invoiceRepo *mocks.InvoiceRepository) {
+			beforeTest: func(invoiceRepo *mocks.InvoiceRepository, walletService *mocks.WalletService, sealabsPayService *mocks.SealabsPayService) {
 				invoiceRepo.On("GetByIDAndUserID", req.InvoiceID, req.UserID).Return(&model.Invoice{
+					PaymentMethodID: constant.PaymentMethodWallet,
 					InvoicePerShops: []*model.InvoicePerShop{
 						{
 							Status: constant.TransactionStatusWaitingForPayment,
@@ -568,6 +587,7 @@ func TestPayInvoice(t *testing.T) {
 						},
 					},
 				}, nil)
+				walletService.On("CheckIsWalletBlocked", req.UserID).Return(nil)
 				invoiceRepo.On("Pay", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil, errs.ErrInternalServerError)
 			},
 		},
@@ -576,9 +596,13 @@ func TestPayInvoice(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			mockInvoiceRepo := new(mocks.InvoiceRepository)
-			test.beforeTest(mockInvoiceRepo)
+			mockWalletService := new(mocks.WalletService)
+			mockSealabsPayService := new(mocks.SealabsPayService)
+			test.beforeTest(mockInvoiceRepo, mockWalletService, mockSealabsPayService)
 			service := service.NewInvoiceService(&service.InvoiceSConfig{
-				InvoiceRepo: mockInvoiceRepo,
+				InvoiceRepo:       mockInvoiceRepo,
+				WalletService:     mockWalletService,
+				SealabsPayService: mockSealabsPayService,
 			})
 
 			got, err := service.PayInvoice(test.req, token)

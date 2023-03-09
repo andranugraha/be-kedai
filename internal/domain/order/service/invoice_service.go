@@ -34,6 +34,7 @@ type invoiceServiceImpl struct {
 	shopCourierService        shopService.CourierService
 	marketplaceVoucherService marketplaceService.MarketplaceVoucherService
 	sealabsPayService         userService.SealabsPayService
+	walletService             userService.WalletService
 }
 
 type InvoiceSConfig struct {
@@ -45,6 +46,7 @@ type InvoiceSConfig struct {
 	ShopCourierService        shopService.CourierService
 	MarketplaceVoucherService marketplaceService.MarketplaceVoucherService
 	SealabsPayService         userService.SealabsPayService
+	WalletService             userService.WalletService
 }
 
 func NewInvoiceService(cfg *InvoiceSConfig) InvoiceService {
@@ -57,6 +59,7 @@ func NewInvoiceService(cfg *InvoiceSConfig) InvoiceService {
 		shopCourierService:        cfg.ShopCourierService,
 		marketplaceVoucherService: cfg.MarketplaceVoucherService,
 		sealabsPayService:         cfg.SealabsPayService,
+		walletService:             cfg.WalletService,
 	}
 }
 
@@ -297,6 +300,14 @@ func (s *invoiceServiceImpl) PayInvoice(req dto.PayInvoiceRequest, token string)
 		return nil, err
 	}
 
+	if invoice.PaymentMethodID != req.PaymentMethodID {
+		return nil, commonError.ErrPaymentMethodNotMatch
+	}
+
+	if invoice.Total != req.Amount {
+		return nil, commonError.ErrTotalPriceNotMatch
+	}
+
 	if req.TxnID == "" {
 		if invoice.PaymentMethodID == constant.PaymentMethodSeaLabsPay {
 			return nil, commonError.ErrSealabsPayTransactionID
@@ -309,9 +320,11 @@ func (s *invoiceServiceImpl) PayInvoice(req dto.PayInvoiceRequest, token string)
 
 	if invoice.PaymentMethodID == constant.PaymentMethodSeaLabsPay {
 		_, err = s.sealabsPayService.GetValidSealabsPayByCardNumberAndUserID(req.CardNumber, req.UserID)
-		if err != nil {
-			return nil, err
-		}
+	} else {
+		err = s.walletService.CheckIsWalletBlocked(req.UserID)
+	}
+	if err != nil {
+		return nil, err
 	}
 
 	var (

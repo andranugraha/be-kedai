@@ -10,4 +10,5 @@ var (
 	ErrInsufficientBalance       = errors.New("insufficient balance")
 	ErrWalletHistoryDoesNotExist = errors.New("wallet transaction history not exist")
 	ErrInvalidSignature          = errors.New("invalid signature")
+	ErrWalletTemporarilyBlocked  = errors.New("your wallet is temporarily blocked. please use another payment method")
 )

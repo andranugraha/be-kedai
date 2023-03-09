@@ -97,6 +97,11 @@ func (h *Handler) PayInvoice(c *gin.Context) {
 			return
 		}
 
+		if errors.Is(err, commonErr.ErrWalletTemporarilyBlocked) {
+			response.Error(c, http.StatusForbidden, code.TEMPORARILY_BLOCKED, err.Error())
+			return
+		}
+
 		response.Error(c, http.StatusInternalServerError, code.INTERNAL_SERVER_ERROR, commonErr.ErrInternalServerError.Error())
 		return
 	}

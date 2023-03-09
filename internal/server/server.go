@@ -8,7 +8,7 @@ import (
 	locationRepoPackage "kedai/backend/be-kedai/internal/domain/location/repository"
 	locationServicePackage "kedai/backend/be-kedai/internal/domain/location/service"
 
-	userCache "kedai/backend/be-kedai/internal/domain/user/cache"
+	userRedisCache "kedai/backend/be-kedai/internal/domain/user/cache"
 	userHandlerPackage "kedai/backend/be-kedai/internal/domain/user/handler"
 	userRepoPackage "kedai/backend/be-kedai/internal/domain/user/repository"
 	userServicePackage "kedai/backend/be-kedai/internal/domain/user/service"
@@ -38,7 +38,10 @@ func createRouter() *gin.Engine {
 	db := connection.GetDB()
 	redis := connection.GetCache()
 
-	userCache := userCache.NewUserCache(&userCache.UserCConfig{
+	userCache := userRedisCache.NewUserCache(&userRedisCache.UserCConfig{
+		RDC: redis,
+	})
+	walletCache := userRedisCache.NewWalletCache(&userRedisCache.WalletCConfig{
 		RDC: redis,
 	})
 
@@ -101,8 +104,9 @@ func createRouter() *gin.Engine {
 	})
 
 	walletService := userServicePackage.NewWalletService(&userServicePackage.WalletSConfig{
-		WalletRepo: walletRepo,
-		Redis:      userCache,
+		WalletRepo:  walletRepo,
+		UserCache:   userCache,
+		WalletCache: walletCache,
 	})
 
 	walletHistoryService := userServicePackage.NewWalletHistoryService(&userServicePackage.WalletHistorySConfig{
@@ -293,6 +297,7 @@ func createRouter() *gin.Engine {
 		ShopCourierService:        courierService,
 		MarketplaceVoucherService: marketplaceVoucherService,
 		SealabsPayService:         sealabsPayService,
+		WalletService:             walletService,
 	})
 
 	orderHandler := orderHandlerPackage.New(&orderHandlerPackage.Config{

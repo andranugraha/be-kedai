@@ -21,22 +21,26 @@ type WalletService interface {
 	GetWalletByUserID(userID int) (*model.Wallet, error)
 	TopUp(userId int, req dto.TopUpRequest) (*model.WalletHistory, error)
 	StepUp(userId int, req dto.StepUpRequest) (*dto.Token, error)
+	CheckIsWalletBlocked(userID int) error
 }
 
 type walletServiceImpl struct {
-	walletRepo repository.WalletRepository
-	redis      cache.UserCache
+	walletRepo  repository.WalletRepository
+	userCache   cache.UserCache
+	walletCache cache.WalletCache
 }
 
 type WalletSConfig struct {
-	WalletRepo repository.WalletRepository
-	Redis      cache.UserCache
+	WalletRepo  repository.WalletRepository
+	UserCache   cache.UserCache
+	WalletCache cache.WalletCache
 }
 
 func NewWalletService(cfg *WalletSConfig) WalletService {
 	return &walletServiceImpl{
-		walletRepo: cfg.WalletRepo,
-		redis:      cfg.Redis,
+		walletRepo:  cfg.WalletRepo,
+		userCache:   cfg.UserCache,
+		walletCache: cfg.WalletCache,
 	}
 }
 
@@ -86,8 +90,38 @@ func (s *walletServiceImpl) StepUp(userId int, req dto.StepUpRequest) (*dto.Toke
 		return nil, err
 	}
 
+	err = s.walletCache.CheckIsWalletBlocked(wallet.ID)
+	if err != nil {
+		return nil, err
+	}
+
 	if !hash.ComparePassword(wallet.Pin, req.Pin) {
+		errorCount, err := s.walletCache.FindWalletStepUpErrorCount(wallet.ID)
+		if err != nil {
+			return nil, err
+		}
+
+		const maxErrorCount = 3
+		if errorCount != nil && *errorCount+1 >= maxErrorCount {
+			err = s.walletCache.DeleteErrorCount(wallet.ID)
+			if err != nil {
+				return nil, err
+			}
+
+			return nil, s.walletCache.BlockWallet(wallet.ID)
+		}
+
+		err = s.walletCache.StoreOrIncrementWalletStepUpErrorCount(wallet.ID)
+		if err != nil {
+			return nil, err
+		}
+
 		return nil, errs.ErrWrongPin
+	}
+
+	err = s.walletCache.DeleteErrorCount(wallet.ID)
+	if err != nil {
+		return nil, err
 	}
 
 	var (
@@ -104,10 +138,19 @@ func (s *walletServiceImpl) StepUp(userId int, req dto.StepUpRequest) (*dto.Toke
 		RefreshToken: refreshToken,
 	}
 
-	err = s.redis.StoreToken(userId, accessToken, refreshToken)
+	err = s.userCache.StoreToken(userId, accessToken, refreshToken)
 	if err != nil {
 		return nil, err
 	}
 
 	return token, nil
+}
+
+func (s *walletServiceImpl) CheckIsWalletBlocked(userID int) error {
+	wallet, err := s.walletRepo.GetByUserID(userID)
+	if err != nil {
+		return err
+	}
+
+	return s.walletCache.CheckIsWalletBlocked(wallet.ID)
 }
