@@ -86,8 +86,7 @@ func createRouter() *gin.Engine {
 		GoogleMaps: maps,
 	})
 	addressService := locationServicePackage.NewAddressService(&locationServicePackage.AddressSConfig{
-		AddressRepo:        addressRepo,
-		SubdistrictService: subdistrictService,
+		AddressRepo: addressRepo,
 	})
 
 	locHandler := locationHandlerPackage.New(&locationHandlerPackage.Config{

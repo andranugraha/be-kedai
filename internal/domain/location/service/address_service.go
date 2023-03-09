@@ -10,19 +10,16 @@ type AddressService interface {
 }
 
 type addressServiceImpl struct {
-	addressRepo        repository.AddressRepository
-	subdistrictService SubdistrictService
+	addressRepo repository.AddressRepository
 }
 
 type AddressSConfig struct {
-	AddressRepo        repository.AddressRepository
-	SubdistrictService SubdistrictService
+	AddressRepo repository.AddressRepository
 }
 
 func NewAddressService(cfg *AddressSConfig) AddressService {
 	return &addressServiceImpl{
-		addressRepo:        cfg.AddressRepo,
-		subdistrictService: cfg.SubdistrictService,
+		addressRepo: cfg.AddressRepo,
 	}
 }
 
