@@ -44,7 +44,7 @@ func (h *Handler) GetInvoicePerShopsByShopId(c *gin.Context) {
 
 	userId := c.GetInt("userId")
 
-	result, err := h.invoicePerShopService.GetInvoicesByUserID(userId, &req)
+	result, err := h.invoicePerShopService.GetInvoicesByShopId(userId, &req)
 	if err != nil {
 		if errors.Is(err, errs.ErrShopNotFound) {
 			response.Error(c, http.StatusNotFound, code.SHOP_NOT_REGISTERED, err.Error())
