@@ -10,6 +10,8 @@ import (
 	"kedai/backend/be-kedai/mocks"
 	"testing"
 
+	shopModel "kedai/backend/be-kedai/internal/domain/shop/model"
+
 	commonErr "kedai/backend/be-kedai/internal/common/error"
 
 	"github.com/stretchr/testify/assert"
@@ -207,6 +209,100 @@ func TestGetInvoicesByUserIDAndCode(t *testing.T) {
 
 			assert.Equal(t, tc.expected.data, actualData)
 			assert.Equal(t, tc.expected.err, actualErr)
+		})
+	}
+}
+
+func TestGetInvoicesByShopId(t *testing.T) {
+	var (
+		shop = &shopModel.Shop{
+			ID: 1,
+		}
+		userId     = 1
+		invoice    = []*dto.InvoicePerShopDetail{}
+		req        = &dto.InvoicePerShopFilterRequest{}
+		pagination = &commonDto.PaginationResponse{
+			Data: invoice,
+		}
+	)
+	type input struct {
+		userId     int
+		req        *dto.InvoicePerShopFilterRequest
+		err        error
+		beforeTest func(*mocks.ShopService, *mocks.InvoicePerShopRepository)
+	}
+	type expected struct {
+		result *commonDto.PaginationResponse
+		err    error
+	}
+	type cases struct {
+		description string
+		input
+		expected
+	}
+
+	for _, tc := range []cases{
+		{
+			description: "should return list of shop invoices when success",
+			input: input{
+				userId: userId,
+				req:    req,
+				err:    nil,
+				beforeTest: func(ss *mocks.ShopService, ipsr *mocks.InvoicePerShopRepository) {
+					ss.On("FindShopByUserId", userId).Return(shop, nil)
+					ipsr.On("GetByShopId", shop.ID, req).Return(invoice, int64(0), 0, nil)
+				},
+			},
+			expected: expected{
+				result: pagination,
+				err:    nil,
+			},
+		},
+		{
+			description: "should return error when user shop not found",
+			input: input{
+				userId: userId,
+				req:    req,
+				err:    commonErr.ErrShopNotFound,
+				beforeTest: func(ss *mocks.ShopService, ipsr *mocks.InvoicePerShopRepository) {
+					ss.On("FindShopByUserId", userId).Return(nil, commonErr.ErrShopNotFound)
+				},
+			},
+			expected: expected{
+				result: nil,
+				err:    commonErr.ErrShopNotFound,
+			},
+		},
+		{
+			description: "should return error when internal server error",
+			input: input{
+				userId: userId,
+				req:    req,
+				err:    commonErr.ErrInternalServerError,
+				beforeTest: func(ss *mocks.ShopService, ipsr *mocks.InvoicePerShopRepository) {
+					ss.On("FindShopByUserId", userId).Return(shop, nil)
+					ipsr.On("GetByShopId", shop.ID, req).Return(nil, int64(0), 0, commonErr.ErrInternalServerError)
+				},
+			},
+			expected: expected{
+				result: nil,
+				err:    commonErr.ErrInternalServerError,
+			},
+		},
+	} {
+		t.Run(tc.description, func(t *testing.T) {
+			invoicePerShopRepo := mocks.NewInvoicePerShopRepository(t)
+			shopService := mocks.NewShopService(t)
+			tc.beforeTest(shopService, invoicePerShopRepo)
+			invoicePerShopService := service.NewInvoicePerShopService(&service.InvoicePerShopSConfig{
+				InvoicePerShopRepo: invoicePerShopRepo,
+				ShopService:        shopService,
+			})
+
+			result, err := invoicePerShopService.GetInvoicesByShopId(tc.input.userId, tc.input.req)
+
+			assert.Equal(t, tc.expected.result, result)
+			assert.Equal(t, tc.expected.err, err)
 		})
 	}
 }
