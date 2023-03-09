@@ -3810,13 +3810,6 @@ paths:
         - BearerAuth: []
       tags:
         - Seller
-      parameters:
-        - in: query
-          name: shopId
-          required: true
-          schema:
-            type: integer
-            example: 1
       summary: Get all couriers
       description: Get all available couriers
       responses:
