@@ -19,5 +19,10 @@ func main() {
 
 	connection.ConnectMailer()
 
+	err = connection.ConnectGoogleMaps()
+	if err != nil {
+		log.Fatal("couldn't connect to Google Maps:", err.Error())
+	}
+
 	server.Init()
 }

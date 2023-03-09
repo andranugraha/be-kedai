@@ -2037,6 +2037,48 @@ paths:
                   message:
                     type: string
                     example: "error message"                              
+  /v1/locations/addresses:
+    get:
+      tags:
+        - Location
+      summary: Search address on google maps
+      description: Get list of addresses which match the keyword given
+      parameters:
+        - in: query
+          name: keyword
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Response'
+                  - type: object
+                    properties:
+                      code:
+                        example: 'OK'
+                      message:
+                        example: 'success'
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/SearchAddressResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "INTERNAL_SERVER_ERROR"
+                  message:
+                    type: string
+                    example: "error message"                              
   /v1/users/carts:
     get:
       security:
@@ -5837,6 +5879,13 @@ components:
         skuId:
           type: integer
           example: 1
+    SearchAddressResponse:
+      type: object
+      properties:
+        placeId:
+          type: string
+        description:
+          type: string
   requestBodies:
     WalletBody:
       required: true
