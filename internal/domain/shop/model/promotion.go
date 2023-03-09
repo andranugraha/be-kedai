@@ -17,3 +17,8 @@ type ShopPromotion struct {
 
 	gorm.Model `json:"-"`
 }
+
+const (
+	PromotionTypePercent = "percent"
+	PromotionTypeNominal = "nominal"
+)

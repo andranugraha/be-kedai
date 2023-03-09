@@ -33,8 +33,8 @@ type GetCartItemsRequest struct {
 }
 
 type DeleteCartItemRequest struct {
-	UserId     int
-	CartItemId int
+	UserId      int
+	CartItemIds []int `form:"cartItemId" binding:"required,min=1"`
 }
 
 type CartItemShopResponse struct {

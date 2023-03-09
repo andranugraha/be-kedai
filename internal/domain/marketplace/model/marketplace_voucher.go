@@ -22,3 +22,9 @@ type MarketplaceVoucher struct {
 
 	gorm.Model `json:"-"`
 }
+
+const (
+	VoucherTypePercent  = "percent"
+	VoucherTypeNominal  = "nominal"
+	VoucherTypeShipping = "shipping"
+)

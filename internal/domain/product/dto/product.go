@@ -152,3 +152,14 @@ func (p *ShopProductFilterRequest) Validate() {
 func (p *ShopProductFilterRequest) Offset() int {
 	return (p.Page - 1) * p.Limit
 }
+
+type ProductSearchAutocomplete struct {
+	Keyword string `form:"keyword"`
+	Limit   int    `form:"limit"`
+}
+
+func (p *ProductSearchAutocomplete) Validate() {
+	if p.Limit == 0 {
+		p.Limit = 10
+	}
+}

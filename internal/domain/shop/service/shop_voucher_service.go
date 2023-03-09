@@ -6,6 +6,7 @@ import (
 )
 
 type ShopVoucherService interface {
+	GetValidShopVoucherByIdAndUserId(id, userId int) (*model.ShopVoucher, error)
 	GetShopVoucher(slug string) ([]*model.ShopVoucher, error)
 	GetValidShopVoucherByUserIDAndSlug(userID int, slug string) ([]*model.ShopVoucher, error)
 }
@@ -25,6 +26,10 @@ func NewShopVoucherService(cfg *ShopVoucherSConfig) ShopVoucherService {
 		shopVoucherRepository: cfg.ShopVoucherRepository,
 		shopService:           cfg.ShopService,
 	}
+}
+
+func (s *shopVoucherServiceImpl) GetValidShopVoucherByIdAndUserId(id, userId int) (*model.ShopVoucher, error) {
+	return s.shopVoucherRepository.GetValidByIdAndUserId(id, userId)
 }
 
 func (s *shopVoucherServiceImpl) GetShopVoucher(slug string) ([]*model.ShopVoucher, error) {

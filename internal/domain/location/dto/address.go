@@ -3,6 +3,8 @@ package dto
 import (
 	"kedai/backend/be-kedai/internal/domain/location/model"
 
+	"sort"
+
 	"gorm.io/gorm"
 )
 
@@ -15,9 +17,10 @@ type AddressRequest struct {
 	Details       string `json:"details" binding:"max=30"`
 	SubdistrictID int    `json:"subdistrictId" binding:"required,numeric,min=1"`
 	IsDefault     *bool  `json:"isDefault" binding:"required"`
+	IsPickup      *bool  `json:"isPickup" binding:"required"`
 }
 
-func (r *AddressRequest) ValidateId() {
+func (r *AddressRequest) Validate() {
 	if r.ID <= 0 {
 		r.ID = 0
 	}
@@ -30,6 +33,11 @@ func (r *AddressRequest) ToUserAddress() *model.UserAddress {
 		*r.IsDefault = false
 	}
 
+	if r.IsPickup == nil {
+		r.IsPickup = new(bool)
+		*r.IsPickup = false
+	}
+
 	return &model.UserAddress{
 		ID:            r.ID,
 		UserID:        r.UserID,
@@ -38,32 +46,45 @@ func (r *AddressRequest) ToUserAddress() *model.UserAddress {
 		Street:        r.Street,
 		Details:       r.Details,
 		SubdistrictID: r.SubdistrictID,
-		IsDefault:     *r.IsDefault,
+		IsDefault:     r.IsDefault,
+		IsPickup:      r.IsPickup,
 	}
 }
 
-func ToAddressList(addresses []*model.UserAddress, defaultAddressId *int) []*model.UserAddress {
-	if len(addresses) == 0 || defaultAddressId == nil {
+func ToAddressList(addresses []*model.UserAddress, defaultAddressId *int, pickupAddressId *int) []*model.UserAddress {
+	if len(addresses) == 0 || (defaultAddressId == nil && pickupAddressId == nil) {
 		return addresses
 	}
 
-	newAddresses := []*model.UserAddress{}
-	defaultAddressIdx := -1
+	trueValue := true
+	falseValue := false
 
-	for i, address := range addresses {
+	for _, address := range addresses {
 		if address.ID == *defaultAddressId {
-			address.IsDefault = true
-			defaultAddressIdx = i
+			address.IsDefault = &trueValue
 		} else {
-			newAddresses = append(newAddresses, address)
+			address.IsDefault = &falseValue
 		}
+
+		if address.ID == *pickupAddressId {
+			address.IsPickup = &trueValue
+		} else {
+			address.IsPickup = &falseValue
+		}
+
 	}
 
-	if defaultAddressIdx != -1 {
-		newAddresses = append([]*model.UserAddress{addresses[defaultAddressIdx]}, newAddresses...)
-	}
+	sort.Slice(addresses, func(i, j int) bool {
+		if *addresses[i].IsDefault && !*addresses[j].IsDefault {
+			return true
+		} else if !*addresses[i].IsDefault && *addresses[j].IsDefault {
+			return false
+		} else {
+			return *addresses[i].IsPickup && !*addresses[j].IsPickup
+		}
+	})
 
-	return newAddresses
+	return addresses
 }
 
 type SearchAddressRequest struct {

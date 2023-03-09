@@ -15,6 +15,7 @@ type ProductService interface {
 	GetProductsByShopSlug(slug string, request *dto.ShopProductFilterRequest) (*commonDto.PaginationResponse, error)
 	GetRecommendationByCategory(productId int, categoryId int) ([]*dto.ProductResponse, error)
 	ProductSearchFiltering(req dto.ProductSearchFilterRequest) (*commonDto.PaginationResponse, error)
+	SearchAutocomplete(req dto.ProductSearchAutocomplete) ([]*dto.ProductResponse, error)
 }
 
 type productServiceImpl struct {
@@ -126,4 +127,8 @@ func (s *productServiceImpl) GetProductsByShopSlug(slug string, request *dto.Sho
 	}
 
 	return &response, nil
+}
+
+func (s *productServiceImpl) SearchAutocomplete(req dto.ProductSearchAutocomplete) ([]*dto.ProductResponse, error) {
+	return s.productRepository.SearchAutocomplete(req)
 }

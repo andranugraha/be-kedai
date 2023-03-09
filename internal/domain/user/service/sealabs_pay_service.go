@@ -10,6 +10,7 @@ import (
 type SealabsPayService interface {
 	GetSealabsPaysByUserID(userID int) ([]*model.SealabsPay, error)
 	RegisterSealabsPay(*dto.CreateSealabsPayRequest) (*model.SealabsPay, error)
+	GetValidSealabsPayByCardNumberAndUserID(cardNumber string, userID int) (*model.SealabsPay, error)
 }
 
 type sealabsPayServiceImpl struct {
@@ -47,4 +48,8 @@ func (s *sealabsPayServiceImpl) RegisterSealabsPay(req *dto.CreateSealabsPayRequ
 	}
 
 	return sealabsPay, nil
+}
+
+func (s *sealabsPayServiceImpl) GetValidSealabsPayByCardNumberAndUserID(cardNumber string, userID int) (*model.SealabsPay, error) {
+	return s.sealabsPayRepo.GetValidByCardNumberAndUserID(cardNumber, userID)
 }
