@@ -1891,6 +1891,19 @@ paths:
                       message:
                         type: string
                         example: "delete cart item succesful"
+        '400':
+          description: bad request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "BAD_REQUEST"
+                  message:
+                    type: string
+                    example: "cartItemIds is required"                
         '404':
           description: not found
           content:
