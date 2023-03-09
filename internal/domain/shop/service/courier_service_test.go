@@ -2,7 +2,7 @@ package service_test
 
 import (
 	"errors"
-	errs	"kedai/backend/be-kedai/internal/common/error"
+	errs "kedai/backend/be-kedai/internal/common/error"
 	"kedai/backend/be-kedai/internal/domain/shop/dto"
 	"kedai/backend/be-kedai/internal/domain/shop/model"
 	"kedai/backend/be-kedai/internal/domain/shop/service"
@@ -71,15 +71,15 @@ func TestGetCouriersByProductID(t *testing.T) {
 }
 
 func TestGetShipmentList(t *testing.T) {
-	var(
+	var (
 		shop = &model.Shop{
 			ID: 1,
 		}
 		list = []*dto.ShipmentCourierResponse{}
 	)
 	type input struct {
-		shopId int
-		err    error
+		shopId     int
+		err        error
 		beforeTest func(*mocks.CourierRepository, *mocks.ShopService)
 	}
 	type expected struct {
@@ -129,7 +129,7 @@ func TestGetShipmentList(t *testing.T) {
 			tc.beforeTest(courierRepo, shopService)
 			courierService := service.NewCourierService(&service.CourierSConfig{
 				CourierRepository: courierRepo,
-				ShopService: shopService,
+				ShopService:       shopService,
 			})
 
 			result, err := courierService.GetShipmentList(tc.shopId)
