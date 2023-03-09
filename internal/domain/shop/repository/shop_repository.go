@@ -87,7 +87,8 @@ func (r *shopRepositoryImpl) FindShopByKeyword(req dto.FindShopRequest) ([]*dto.
 		Joins("left join products p on shops.id = p.shop_id and p.is_active = ?", isActive).
 		Group("shops.id").Where("shops.name ILIKE ?", "%"+req.Keyword+"%")
 
-	db.Model(&model.Shop{}).Count(&totalRows)
+	countQuery := db.Session(&gorm.Session{})
+	countQuery.Model(&model.Shop{}).Distinct("shops.id").Count(&totalRows)
 	totalPage = int(math.Ceil(float64(totalRows) / float64(req.Limit)))
 
 	err := db.Order("rating desc").Limit(req.Limit).Offset(req.Offset()).Find(&shopList).Error

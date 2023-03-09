@@ -170,7 +170,8 @@ func (r *invoicePerShopRepositoryImpl) GetByShopId(shopId int, req *dto.InvoiceP
 		db = db.Where("invoices.payment_date BETWEEN ? AND ?", start, end)
 	}
 
-	db.Model(&model.InvoicePerShop{}).Count(&totalRows)
+	countQuery := db.Session(&gorm.Session{})
+	countQuery.Model(&model.InvoicePerShop{}).Distinct("invoice_per_shops.id").Count(&totalRows)
 	totalPages = int(math.Ceil(float64(totalRows) / float64(req.Limit)))
 
 	db = db.Preload("TransactionItems", func(query *gorm.DB) *gorm.DB {
