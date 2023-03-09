@@ -4315,7 +4315,57 @@ paths:
                     example: "INTERNAL_SERVER_ERROR"
                   message:
                     type: string
-                    example: "error message"                                
+                    example: "error message"
+  /v1/sellers/finances/incomes/overview:
+    get:
+      security:
+        - BearerAuth: []
+      tags:
+        - Seller
+      summary: Get finance income overview
+      description: Get finance income overview data. Consists of amount of money which have been and have not been withdrawn.
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Response'
+                  - type: object
+                    properties:
+                      code:
+                        example: "OK"
+                      message:
+                        example: "ok"
+                      data:
+                        $ref: '#/components/schemas/SellerFinanceIncomeOverview'
+        '404':
+          description: shop not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "SHOP_NOT_REGISTERED"
+                  message:
+                    type: string
+                    example: "error message"               
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "INTERNAL_SERVER_ERROR"
+                  message:
+                    type: string
+                    example: "error message"                  
   /v1/orders/invoices:
     post:
       security:
@@ -5619,6 +5669,32 @@ components:
         invoicePerShopId:
           type: integer
           example: 1
+    SellerFinanceIncomeOverview:
+      type: object
+      properties:
+        toRelease:
+          type: number
+          format: float64
+          example: 50000000
+          description: amount which haven't been withdrawn
+        released:
+          type: object
+          properties:
+            week:
+              type: number
+              format: float64
+              example: 50000000
+              description: amount which have been withdrawn this week
+            month:
+              type: number
+              format: float64
+              example: 50000000
+              description: amount which have been withdrawn this month
+            total:
+              type: number
+              format: float64
+              example: 50000000
+              description: amount which have been withdrawn all time  
     UserReviewResponse:
       type: object
       properties:
