@@ -53,6 +53,8 @@ func (c *subdistrictRepositoryImpl) GetAll(req dto.GetSubdistrictsRequest) (subd
 	if err != nil {
 		return
 	}
+
+	return
 }
 
 func (c *subdistrictRepositoryImpl) GetDetailByName(subdistrictName string) (subdistrict *model.Subdistrict, err error) {

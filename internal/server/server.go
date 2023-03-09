@@ -57,13 +57,6 @@ func createRouter() *gin.Engine {
 	randomUtils := random.NewRandomUtils(&random.RandomUtilsConfig{})
 	maps := google.NewGoogleMaps()
 
-	productRepo := productRepoPackage.NewProductRepository(&productRepoPackage.ProductRConfig{
-		DB: db,
-	})
-	productService := productServicePackage.NewProductService(&productServicePackage.ProductSConfig{
-		ProductRepository: productRepo,
-	})
-
 	districtRepo := locationRepoPackage.NewDistrictRepository(&locationRepoPackage.DistrictRConfig{
 		DB: db,
 	})
