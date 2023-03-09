@@ -1,19 +1,24 @@
 package handler
 
 import (
+	"errors"
 	"kedai/backend/be-kedai/internal/common/code"
+	errs "kedai/backend/be-kedai/internal/common/error"
 	"kedai/backend/be-kedai/internal/utils/response"
 	"net/http"
-	"strconv"
 
 	"github.com/gin-gonic/gin"
 )
 
-func (h *Handler) GetAllCouriers(c *gin.Context) {
-	shopId, _ := strconv.Atoi(c.Query("shopId"))
+func (h *Handler) GetShipmentList(c *gin.Context) {
+	userId := c.GetInt("userId")
 
-	result, err := h.courierService.GetShipmentList(shopId)
+	result, err := h.courierService.GetShipmentList(userId)
 	if err != nil {
+		if errors.Is(err, errs.ErrShopNotFound) {
+			response.Error(c, http.StatusNotFound, code.SHOP_NOT_REGISTERED, err.Error())
+			return
+		}
 		response.Error(c, http.StatusInternalServerError, code.INTERNAL_SERVER_ERROR, err.Error())
 		return
 	}
