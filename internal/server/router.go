@@ -172,7 +172,10 @@ func NewRouter(cfg *RouterConfig) *gin.Engine {
 
 		seller := v1.Group("/sellers")
 		{
-			seller.GET("/couriers", cfg.ShopHandler.GetAllCouriers)
+			authenticated := seller.Group("", middleware.JWTAuthorization, cfg.UserHandler.GetSession)
+			{
+				authenticated.GET("/couriers", cfg.ShopHandler.GetShipmentList)
+			}
 		}
 	}
 
