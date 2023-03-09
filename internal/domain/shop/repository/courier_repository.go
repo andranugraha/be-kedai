@@ -10,6 +10,7 @@ import (
 )
 
 type CourierRepository interface {
+	GetAll() ([]*model.Courier, error)
 	GetShipmentList(shopId int) ([]*dto.ShipmentCourierResponse, error)
 	GetByShopID(shopID int) ([]*model.Courier, error)
 	GetByServiceIDAndShopID(courierID, shopID int) (*model.Courier, error)
@@ -28,6 +29,17 @@ func NewCourierRepository(cfg *CourierRConfig) CourierRepository {
 	return &courierRepositoryImpl{
 		db: cfg.DB,
 	}
+}
+
+func (r *courierRepositoryImpl) GetAll() ([]*model.Courier, error) {
+	var couriers []*model.Courier
+
+	err := r.db.Preload("Services").Find(&couriers).Error
+	if err != nil {
+		return nil, err
+	}
+
+	return couriers, nil
 }
 
 func (r *courierRepositoryImpl) GetShipmentList(shopId int) ([]*dto.ShipmentCourierResponse, error) {
