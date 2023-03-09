@@ -17,7 +17,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestGetAllCouriers(t *testing.T) {
+func TestGetShipmentList(t *testing.T) {
 	var shopId = 1
 	type input struct {
 		result []*dto.ShipmentCourierResponse
@@ -50,6 +50,20 @@ func TestGetAllCouriers(t *testing.T) {
 			},
 		},
 		{
+			description: "should return error with code 404 when shop not found",
+			input: input{
+				result: nil,
+				err:    errs.ErrShopNotFound,
+			},
+			expected: expected{
+				statusCode: http.StatusNotFound,
+				response: response.Response{
+					Code:    code.SHOP_NOT_REGISTERED,
+					Message: errs.ErrShopNotFound.Error(),
+				},
+			},
+		},
+		{
 			description: "should return error with code 500 when internal server error",
 			input: input{
 				result: nil,
@@ -68,6 +82,7 @@ func TestGetAllCouriers(t *testing.T) {
 			expectedBody, _ := json.Marshal(tc.expected.response)
 			rec := httptest.NewRecorder()
 			c, _ := gin.CreateTestContext(rec)
+			c.Set("userId", 1)
 			mockService := new(mocks.CourierService)
 			mockService.On("GetShipmentList", shopId).Return(tc.input.result, tc.input.err)
 			handler := handler.New(&handler.HandlerConfig{
@@ -75,7 +90,7 @@ func TestGetAllCouriers(t *testing.T) {
 			})
 			c.Request, _ = http.NewRequest("GET", "/sellers/couriers?shopId=1", nil)
 
-			handler.GetAllCouriers(c)
+			handler.GetShipmentList(c)
 
 			assert.Equal(t, tc.expected.statusCode, rec.Code)
 			assert.Equal(t, string(expectedBody), rec.Body.String())
