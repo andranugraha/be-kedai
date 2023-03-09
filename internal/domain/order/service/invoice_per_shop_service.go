@@ -29,7 +29,7 @@ type InvoicePerShopSConfig struct {
 func NewInvoicePerShopService(cfg *InvoicePerShopSConfig) InvoicePerShopService {
 	return &invoicePerShopServiceImpl{
 		invoicePerShopRepo: cfg.InvoicePerShopRepo,
-		shopService: cfg.ShopService,
+		shopService:        cfg.ShopService,
 	}
 }
 

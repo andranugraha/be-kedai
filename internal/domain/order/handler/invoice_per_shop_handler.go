@@ -49,7 +49,7 @@ func (h *Handler) GetInvoicePerShopsByShopId(c *gin.Context) {
 		if errors.Is(err, errs.ErrShopNotFound) {
 			response.Error(c, http.StatusNotFound, code.SHOP_NOT_REGISTERED, err.Error())
 			return
-		}	
+		}
 		response.Error(c, http.StatusInternalServerError, code.INTERNAL_SERVER_ERROR, errs.ErrInternalServerError.Error())
 		return
 	}
