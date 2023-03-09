@@ -24,7 +24,7 @@ func TestAddUserAddress(t *testing.T) {
 	)
 	type input struct {
 		data        *dto.AddressRequest
-		beforeTests func(mockUserAddressService *mocks.UserAddressService)
+		beforeTests func(mockAddressService *mocks.AddressService)
 	}
 	type expected struct {
 		data       *response.Response
@@ -45,9 +45,10 @@ func TestAddUserAddress(t *testing.T) {
 					Street:        "asd",
 					Name:          "asd",
 					IsDefault:     &trueValue,
+					IsPickup:      &trueValue,
 				},
-				beforeTests: func(mockUserAddressService *mocks.UserAddressService) {
-					mockUserAddressService.On("AddUserAddress", &dto.AddressRequest{
+				beforeTests: func(mockAddressService *mocks.AddressService) {
+					mockAddressService.On("AddUserAddress", &dto.AddressRequest{
 						PhoneNumber: "asd",
 					}).Return(nil, nil)
 				},
@@ -70,15 +71,17 @@ func TestAddUserAddress(t *testing.T) {
 					Name:          "asd",
 					UserID:        1,
 					IsDefault:     &trueValue,
+					IsPickup:      &trueValue,
 				},
-				beforeTests: func(mockUserAddressService *mocks.UserAddressService) {
-					mockUserAddressService.On("AddUserAddress", &dto.AddressRequest{
+				beforeTests: func(mockAddressService *mocks.AddressService) {
+					mockAddressService.On("AddUserAddress", &dto.AddressRequest{
 						PhoneNumber:   "123456789123",
 						SubdistrictID: 1,
 						Street:        "asd",
 						Name:          "asd",
 						UserID:        1,
 						IsDefault:     &trueValue,
+						IsPickup:      &trueValue,
 					}).Return(nil, errs.ErrProvinceNotFound)
 				},
 			},
@@ -91,7 +94,7 @@ func TestAddUserAddress(t *testing.T) {
 			},
 		},
 		{
-			description: "response status conflic when error is ErrMaxAddress",
+			description: "response status conflict when error is ErrMaxAddress",
 			input: input{
 				data: &dto.AddressRequest{
 					PhoneNumber:   "123456789123",
@@ -100,15 +103,17 @@ func TestAddUserAddress(t *testing.T) {
 					Name:          "asd",
 					UserID:        1,
 					IsDefault:     &trueValue,
+					IsPickup:      &trueValue,
 				},
-				beforeTests: func(mockUserAddressService *mocks.UserAddressService) {
-					mockUserAddressService.On("AddUserAddress", &dto.AddressRequest{
+				beforeTests: func(mockAddressService *mocks.AddressService) {
+					mockAddressService.On("AddUserAddress", &dto.AddressRequest{
 						PhoneNumber:   "123456789123",
 						SubdistrictID: 1,
 						Street:        "asd",
 						Name:          "asd",
 						UserID:        1,
 						IsDefault:     &trueValue,
+						IsPickup:      &trueValue,
 					}).Return(nil, errs.ErrMaxAddress)
 				},
 			},
@@ -121,7 +126,7 @@ func TestAddUserAddress(t *testing.T) {
 			},
 		},
 		{
-			description: "response status Internal Server Error when error is not ErrProvinceNotFound or ErrCityNotFound or ErrSubdistrictNotFound or ErrDistrictNotFound",
+			description: "response status not found when error is ErrShopNotFound",
 			input: input{
 				data: &dto.AddressRequest{
 					PhoneNumber:   "123456789123",
@@ -130,15 +135,49 @@ func TestAddUserAddress(t *testing.T) {
 					Name:          "asd",
 					UserID:        1,
 					IsDefault:     &trueValue,
+					IsPickup:      &trueValue,
 				},
-				beforeTests: func(mockUserAddressService *mocks.UserAddressService) {
-					mockUserAddressService.On("AddUserAddress", &dto.AddressRequest{
+				beforeTests: func(mockAddressService *mocks.AddressService) {
+					mockAddressService.On("AddUserAddress", &dto.AddressRequest{
 						PhoneNumber:   "123456789123",
 						SubdistrictID: 1,
 						Street:        "asd",
 						Name:          "asd",
 						UserID:        1,
 						IsDefault:     &trueValue,
+						IsPickup:      &trueValue,
+					}).Return(nil, errs.ErrShopNotFound)
+				},
+			},
+			expected: expected{
+				data: &response.Response{
+					Code:    code.SHOP_NOT_REGISTERED,
+					Message: errs.ErrShopNotFound.Error(),
+				},
+				statusCode: http.StatusNotFound,
+			},
+		},
+		{
+			description: "response status Internal Server Error",
+			input: input{
+				data: &dto.AddressRequest{
+					PhoneNumber:   "123456789123",
+					SubdistrictID: 1,
+					Street:        "asd",
+					Name:          "asd",
+					UserID:        1,
+					IsDefault:     &trueValue,
+					IsPickup:      &trueValue,
+				},
+				beforeTests: func(mockAddressService *mocks.AddressService) {
+					mockAddressService.On("AddUserAddress", &dto.AddressRequest{
+						PhoneNumber:   "123456789123",
+						SubdistrictID: 1,
+						Street:        "asd",
+						Name:          "asd",
+						UserID:        1,
+						IsDefault:     &trueValue,
+						IsPickup:      &trueValue,
 					}).Return(nil, errs.ErrInternalServerError)
 				},
 			},
@@ -160,15 +199,17 @@ func TestAddUserAddress(t *testing.T) {
 					Name:          "asd",
 					UserID:        1,
 					IsDefault:     &trueValue,
+					IsPickup:      &trueValue,
 				},
-				beforeTests: func(mockUserAddressService *mocks.UserAddressService) {
-					mockUserAddressService.On("AddUserAddress", &dto.AddressRequest{
+				beforeTests: func(mockAddressService *mocks.AddressService) {
+					mockAddressService.On("AddUserAddress", &dto.AddressRequest{
 						PhoneNumber:   "123456789123",
 						SubdistrictID: 1,
 						Street:        "asd",
 						Name:          "asd",
 						UserID:        1,
 						IsDefault:     &trueValue,
+						IsPickup:      &trueValue,
 					}).Return(&model.UserAddress{
 						PhoneNumber:   "123456789123",
 						SubdistrictID: 1,
@@ -204,11 +245,11 @@ func TestAddUserAddress(t *testing.T) {
 			payload := test.MakeRequestBody(tc.input.data)
 			c.Request, _ = http.NewRequest(http.MethodGet, "/users/addresses", payload)
 
-			mockUserAddressService := new(mocks.UserAddressService)
-			tc.input.beforeTests(mockUserAddressService)
+			mockAddressService := new(mocks.AddressService)
+			tc.input.beforeTests(mockAddressService)
 
 			handler := handler.New(&handler.HandlerConfig{
-				UserAddressService: mockUserAddressService,
+				AddressService: mockAddressService,
 			})
 			handler.AddUserAddress(c)
 
@@ -222,8 +263,9 @@ func TestAddUserAddress(t *testing.T) {
 }
 
 func TestGetAllUserAddress(t *testing.T) {
+	var falseValue = false
 	type input struct {
-		beforeTests func(mockUserAddressService *mocks.UserAddressService)
+		beforeTests func(mockAddressService *mocks.AddressService)
 	}
 	type expected struct {
 		data       *response.Response
@@ -238,8 +280,8 @@ func TestGetAllUserAddress(t *testing.T) {
 		{
 			description: "response status Internal Server Error when server error",
 			input: input{
-				beforeTests: func(mockUserAddressService *mocks.UserAddressService) {
-					mockUserAddressService.On("GetAllUserAddress", 1).Return(nil, errs.ErrInternalServerError)
+				beforeTests: func(mockAddressService *mocks.AddressService) {
+					mockAddressService.On("GetAllUserAddress", 1).Return(nil, errs.ErrInternalServerError)
 				},
 			},
 			expected: expected{
@@ -253,15 +295,15 @@ func TestGetAllUserAddress(t *testing.T) {
 		{
 			description: "response status OK when request is valid",
 			input: input{
-				beforeTests: func(mockUserAddressService *mocks.UserAddressService) {
-					mockUserAddressService.On("GetAllUserAddress", 1).Return([]*model.UserAddress{
+				beforeTests: func(mockAddressService *mocks.AddressService) {
+					mockAddressService.On("GetAllUserAddress", 1).Return([]*model.UserAddress{
 						{
 							ID:          1,
 							PhoneNumber: "123456789123",
 							Street:      "asd",
 							Name:        "asd",
 							UserID:      1,
-							IsDefault:   false,
+							IsDefault:   &falseValue,
 						},
 					}, nil)
 				},
@@ -277,7 +319,7 @@ func TestGetAllUserAddress(t *testing.T) {
 							Street:      "asd",
 							Name:        "asd",
 							UserID:      1,
-							IsDefault:   false,
+							IsDefault:   &falseValue,
 						},
 					},
 				},
@@ -294,11 +336,11 @@ func TestGetAllUserAddress(t *testing.T) {
 
 			c.Request, _ = http.NewRequest(http.MethodGet, "/users/addresses", nil)
 
-			mockUserAddressService := new(mocks.UserAddressService)
-			tc.input.beforeTests(mockUserAddressService)
+			mockAddressService := new(mocks.AddressService)
+			tc.input.beforeTests(mockAddressService)
 
 			handler := handler.New(&handler.HandlerConfig{
-				UserAddressService: mockUserAddressService,
+				AddressService: mockAddressService,
 			})
 			handler.GetAllUserAddress(c)
 
@@ -316,7 +358,7 @@ func TestUpdateUserAddress(t *testing.T) {
 	)
 	type input struct {
 		data        *dto.AddressRequest
-		beforeTests func(mockUserAddressService *mocks.UserAddressService)
+		beforeTests func(mockAddressService *mocks.AddressService)
 	}
 	type expected struct {
 		data       *response.Response
@@ -338,8 +380,9 @@ func TestUpdateUserAddress(t *testing.T) {
 					Name:          "", // invalid
 					UserID:        1,
 					IsDefault:     &trueValue,
+					IsPickup:      &trueValue,
 				},
-				beforeTests: func(mockUserAddressService *mocks.UserAddressService) {
+				beforeTests: func(mockAddressService *mocks.AddressService) {
 				},
 			},
 			expected: expected{
@@ -359,9 +402,10 @@ func TestUpdateUserAddress(t *testing.T) {
 					Street:        "asd",
 					Name:          "asd",
 					IsDefault:     &trueValue,
+					IsPickup:      &trueValue,
 				},
-				beforeTests: func(mockUserAddressService *mocks.UserAddressService) {
-					mockUserAddressService.On("UpdateUserAddress", &dto.AddressRequest{
+				beforeTests: func(mockAddressService *mocks.AddressService) {
+					mockAddressService.On("UpdateUserAddress", &dto.AddressRequest{
 						Name:          "asd",
 						PhoneNumber:   "123456789123",
 						Street:        "asd",
@@ -369,6 +413,7 @@ func TestUpdateUserAddress(t *testing.T) {
 						UserID:        1,
 						IsDefault:     &trueValue,
 						ID:            1,
+						IsPickup:      &trueValue,
 					}).Return(nil, errs.ErrInternalServerError)
 				},
 			},
@@ -389,15 +434,17 @@ func TestUpdateUserAddress(t *testing.T) {
 					Street:        "asd",
 					Name:          "asd",
 					IsDefault:     &trueValue,
+					IsPickup:      &trueValue,
 				},
-				beforeTests: func(mockUserAddressService *mocks.UserAddressService) {
-					mockUserAddressService.On("UpdateUserAddress", &dto.AddressRequest{
+				beforeTests: func(mockAddressService *mocks.AddressService) {
+					mockAddressService.On("UpdateUserAddress", &dto.AddressRequest{
 						Name:          "asd",
 						PhoneNumber:   "123456789123",
 						Street:        "asd",
 						SubdistrictID: 1,
 						UserID:        1,
 						IsDefault:     &trueValue,
+						IsPickup:      &trueValue,
 						ID:            1,
 					}).Return(nil, errs.ErrAddressNotFound)
 				},
@@ -419,15 +466,17 @@ func TestUpdateUserAddress(t *testing.T) {
 					Street:        "asd",
 					Name:          "asd",
 					IsDefault:     &trueValue,
+					IsPickup:      &trueValue,
 				},
-				beforeTests: func(mockUserAddressService *mocks.UserAddressService) {
-					mockUserAddressService.On("UpdateUserAddress", &dto.AddressRequest{
+				beforeTests: func(mockAddressService *mocks.AddressService) {
+					mockAddressService.On("UpdateUserAddress", &dto.AddressRequest{
 						Name:          "asd",
 						PhoneNumber:   "123456789123",
 						Street:        "asd",
 						SubdistrictID: 1,
 						UserID:        1,
 						IsDefault:     &trueValue,
+						IsPickup:      &trueValue,
 						ID:            1,
 					}).Return(nil, errs.ErrMustHaveAtLeastOneDefaultAddress)
 				},
@@ -449,15 +498,17 @@ func TestUpdateUserAddress(t *testing.T) {
 					Street:        "asd",
 					Name:          "asd",
 					IsDefault:     &trueValue,
+					IsPickup:      &trueValue,
 				},
-				beforeTests: func(mockUserAddressService *mocks.UserAddressService) {
-					mockUserAddressService.On("UpdateUserAddress", &dto.AddressRequest{
+				beforeTests: func(mockAddressService *mocks.AddressService) {
+					mockAddressService.On("UpdateUserAddress", &dto.AddressRequest{
 						Name:          "asd",
 						PhoneNumber:   "123456789123",
 						Street:        "asd",
 						SubdistrictID: 1,
 						UserID:        1,
 						IsDefault:     &trueValue,
+						IsPickup:      &trueValue,
 						ID:            1,
 					}).Return(nil, errs.ErrInternalServerError)
 				},
@@ -470,7 +521,70 @@ func TestUpdateUserAddress(t *testing.T) {
 				statusCode: http.StatusInternalServerError,
 			},
 		},
-		// response status OK when update address success
+		{
+			description: "response status Not Found when UpdateUserAddress return ErrShopNotFound",
+			input: input{
+				data: &dto.AddressRequest{
+					PhoneNumber:   "123456789123",
+					SubdistrictID: 1,
+					Street:        "asd",
+					Name:          "asd",
+					IsDefault:     &trueValue,
+					IsPickup:      &trueValue,
+				},
+				beforeTests: func(mockAddressService *mocks.AddressService) {
+					mockAddressService.On("UpdateUserAddress", &dto.AddressRequest{
+						Name:          "asd",
+						PhoneNumber:   "123456789123",
+						Street:        "asd",
+						SubdistrictID: 1,
+						UserID:        1,
+						IsDefault:     &trueValue,
+						IsPickup:      &trueValue,
+						ID:            1,
+					}).Return(nil, errs.ErrShopNotFound)
+				},
+			},
+			expected: expected{
+				data: &response.Response{
+					Code:    code.SHOP_NOT_REGISTERED,
+					Message: errs.ErrShopNotFound.Error(),
+				},
+				statusCode: http.StatusNotFound,
+			},
+		},
+		{
+			description: "response status Conflict when UpdateUserAddress return ErrMustHaveAtLeastOnePickupAddress",
+			input: input{
+				data: &dto.AddressRequest{
+					PhoneNumber:   "123456789123",
+					SubdistrictID: 1,
+					Street:        "asd",
+					Name:          "asd",
+					IsDefault:     &trueValue,
+					IsPickup:      &trueValue,
+				},
+				beforeTests: func(mockAddressService *mocks.AddressService) {
+					mockAddressService.On("UpdateUserAddress", &dto.AddressRequest{
+						Name:          "asd",
+						PhoneNumber:   "123456789123",
+						Street:        "asd",
+						SubdistrictID: 1,
+						UserID:        1,
+						IsDefault:     &trueValue,
+						IsPickup:      &trueValue,
+						ID:            1,
+					}).Return(nil, errs.ErrMustHaveAtLeastOnePickupAddress)
+				},
+			},
+			expected: expected{
+				data: &response.Response{
+					Code:    code.MUST_HAVE_AT_LEAST_ONE_PICKUP_ADDRESS,
+					Message: errs.ErrMustHaveAtLeastOnePickupAddress.Error(),
+				},
+				statusCode: http.StatusConflict,
+			},
+		},
 		{
 			description: "response status OK when update address success",
 			input: input{
@@ -480,15 +594,17 @@ func TestUpdateUserAddress(t *testing.T) {
 					Street:        "asd",
 					Name:          "asd",
 					IsDefault:     &trueValue,
+					IsPickup:      &trueValue,
 				},
-				beforeTests: func(mockUserAddressService *mocks.UserAddressService) {
-					mockUserAddressService.On("UpdateUserAddress", &dto.AddressRequest{
+				beforeTests: func(mockAddressService *mocks.AddressService) {
+					mockAddressService.On("UpdateUserAddress", &dto.AddressRequest{
 						Name:          "asd",
 						PhoneNumber:   "123456789123",
 						Street:        "asd",
 						SubdistrictID: 1,
 						UserID:        1,
 						IsDefault:     &trueValue,
+						IsPickup:      &trueValue,
 						ID:            1,
 					}).Return(&model.UserAddress{
 						ID:            1,
@@ -497,7 +613,8 @@ func TestUpdateUserAddress(t *testing.T) {
 						PhoneNumber:   "123456789123",
 						Street:        "asd",
 						SubdistrictID: 1,
-						IsDefault:     trueValue,
+						IsDefault:     &trueValue,
+						IsPickup:      &trueValue,
 					}, nil)
 
 				},
@@ -513,7 +630,8 @@ func TestUpdateUserAddress(t *testing.T) {
 						PhoneNumber:   "123456789123",
 						Street:        "asd",
 						SubdistrictID: 1,
-						IsDefault:     trueValue,
+						IsDefault:     &trueValue,
+						IsPickup:      &trueValue,
 					},
 				},
 				statusCode: http.StatusOK,
@@ -536,11 +654,11 @@ func TestUpdateUserAddress(t *testing.T) {
 			payload := test.MakeRequestBody(tc.input.data)
 			c.Request, _ = http.NewRequest(http.MethodPut, "/users/addresses", payload)
 
-			mockUserAddressService := new(mocks.UserAddressService)
-			tc.input.beforeTests(mockUserAddressService)
+			mockAddressService := new(mocks.AddressService)
+			tc.input.beforeTests(mockAddressService)
 
 			handler := handler.New(&handler.HandlerConfig{
-				UserAddressService: mockUserAddressService,
+				AddressService: mockAddressService,
 			})
 			handler.UpdateUserAddress(c)
 
@@ -554,7 +672,7 @@ func TestUpdateUserAddress(t *testing.T) {
 
 func TestDeleteUserAddress(t *testing.T) {
 	type input struct {
-		beforeTests func(mockUserAddressService *mocks.UserAddressService)
+		beforeTests func(mockAddressService *mocks.AddressService)
 	}
 
 	type expected struct {
@@ -572,8 +690,8 @@ func TestDeleteUserAddress(t *testing.T) {
 		{
 			description: "response status not found when error ErrAddressNotFound when delete address",
 			input: input{
-				beforeTests: func(mockUserAddressService *mocks.UserAddressService) {
-					mockUserAddressService.On("DeleteUserAddress", 1, 1).Return(errs.ErrAddressNotFound)
+				beforeTests: func(mockAddressService *mocks.AddressService) {
+					mockAddressService.On("DeleteUserAddress", 1, 1).Return(errs.ErrAddressNotFound)
 				},
 			},
 			expected: expected{
@@ -587,8 +705,8 @@ func TestDeleteUserAddress(t *testing.T) {
 		{
 			description: "response status conflict when error ErrMustHaveAtLeastOneDefaultAddress when delete address",
 			input: input{
-				beforeTests: func(mockUserAddressService *mocks.UserAddressService) {
-					mockUserAddressService.On("DeleteUserAddress", 1, 1).Return(errs.ErrMustHaveAtLeastOneDefaultAddress)
+				beforeTests: func(mockAddressService *mocks.AddressService) {
+					mockAddressService.On("DeleteUserAddress", 1, 1).Return(errs.ErrMustHaveAtLeastOneDefaultAddress)
 				},
 			},
 			expected: expected{
@@ -600,10 +718,25 @@ func TestDeleteUserAddress(t *testing.T) {
 			},
 		},
 		{
+			description: "response status conflict when error ErrMustHaveAtLeastOnePickupAddress when delete address",
+			input: input{
+				beforeTests: func(mockAddressService *mocks.AddressService) {
+					mockAddressService.On("DeleteUserAddress", 1, 1).Return(errs.ErrMustHaveAtLeastOnePickupAddress)
+				},
+			},
+			expected: expected{
+				data: &response.Response{
+					Code:    code.MUST_HAVE_AT_LEAST_ONE_PICKUP_ADDRESS,
+					Message: errs.ErrMustHaveAtLeastOnePickupAddress.Error(),
+				},
+				statusCode: http.StatusConflict,
+			},
+		},
+		{
 			description: "response status Internal Server Error when DeleteUserAddress return other error",
 			input: input{
-				beforeTests: func(mockUserAddressService *mocks.UserAddressService) {
-					mockUserAddressService.On("DeleteUserAddress", 1, 1).Return(errs.ErrInternalServerError)
+				beforeTests: func(mockAddressService *mocks.AddressService) {
+					mockAddressService.On("DeleteUserAddress", 1, 1).Return(errs.ErrInternalServerError)
 				},
 			},
 			expected: expected{
@@ -614,12 +747,11 @@ func TestDeleteUserAddress(t *testing.T) {
 				statusCode: http.StatusInternalServerError,
 			},
 		},
-		// response status OK when delete address success
 		{
 			description: "response status OK when delete address success",
 			input: input{
-				beforeTests: func(mockUserAddressService *mocks.UserAddressService) {
-					mockUserAddressService.On("DeleteUserAddress", 1, 1).Return(nil)
+				beforeTests: func(mockAddressService *mocks.AddressService) {
+					mockAddressService.On("DeleteUserAddress", 1, 1).Return(nil)
 				},
 			},
 			expected: expected{
@@ -646,11 +778,11 @@ func TestDeleteUserAddress(t *testing.T) {
 
 			c.Request, _ = http.NewRequest(http.MethodDelete, "/users/addresses", nil)
 
-			mockUserAddressService := new(mocks.UserAddressService)
-			tc.input.beforeTests(mockUserAddressService)
+			mockAddressService := new(mocks.AddressService)
+			tc.input.beforeTests(mockAddressService)
 
 			handler := handler.New(&handler.HandlerConfig{
-				UserAddressService: mockUserAddressService,
+				AddressService: mockAddressService,
 			})
 			handler.DeleteUserAddress(c)
 

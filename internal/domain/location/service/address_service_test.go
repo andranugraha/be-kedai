@@ -4,8 +4,9 @@ import (
 	errs "kedai/backend/be-kedai/internal/common/error"
 	"kedai/backend/be-kedai/internal/domain/location/dto"
 	"kedai/backend/be-kedai/internal/domain/location/model"
+	"kedai/backend/be-kedai/internal/domain/location/service"
+	shopModel "kedai/backend/be-kedai/internal/domain/shop/model"
 	userModel "kedai/backend/be-kedai/internal/domain/user/model"
-	"kedai/backend/be-kedai/internal/domain/user/service"
 	"kedai/backend/be-kedai/mocks"
 	"testing"
 
@@ -13,10 +14,13 @@ import (
 )
 
 func TestAddUserAddress(t *testing.T) {
+	var (
+		falseValue = false
+	)
 	type input struct {
 		data        *dto.AddressRequest
 		err         error
-		beforeTests func(mockSubdistrictService *mocks.SubdistrictService, mockDistrictService *mocks.DistrictService, mockCityService *mocks.CityService, mockProvinceService *mocks.ProvinceService, mockUserAddressRepo *mocks.UserAddressRepository)
+		beforeTests func(mockSubdistrictService *mocks.SubdistrictService, mockDistrictService *mocks.DistrictService, mockCityService *mocks.CityService, mockProvinceService *mocks.ProvinceService, mockAddressRepo *mocks.AddressRepository)
 	}
 	type expected struct {
 		data *model.UserAddress
@@ -35,7 +39,7 @@ func TestAddUserAddress(t *testing.T) {
 					SubdistrictID: 1,
 				},
 				err: nil,
-				beforeTests: func(mockSubdistrictService *mocks.SubdistrictService, mockDistrictService *mocks.DistrictService, mockCityService *mocks.CityService, mockProvinceService *mocks.ProvinceService, mockUserAddressRepo *mocks.UserAddressRepository) {
+				beforeTests: func(mockSubdistrictService *mocks.SubdistrictService, mockDistrictService *mocks.DistrictService, mockCityService *mocks.CityService, mockProvinceService *mocks.ProvinceService, mockAddressRepo *mocks.AddressRepository) {
 					mockSubdistrictService.On("GetSubdistrictByID", 1).Return(nil, errs.ErrSubdistrictNotFound)
 				},
 			},
@@ -51,7 +55,7 @@ func TestAddUserAddress(t *testing.T) {
 					SubdistrictID: 1,
 				},
 				err: errs.ErrDistrictNotFound,
-				beforeTests: func(mockSubdistrictService *mocks.SubdistrictService, mockDistrictService *mocks.DistrictService, mockCityService *mocks.CityService, mockProvinceService *mocks.ProvinceService, mockUserAddressRepo *mocks.UserAddressRepository) {
+				beforeTests: func(mockSubdistrictService *mocks.SubdistrictService, mockDistrictService *mocks.DistrictService, mockCityService *mocks.CityService, mockProvinceService *mocks.ProvinceService, mockAddressRepo *mocks.AddressRepository) {
 					mockSubdistrictService.On("GetSubdistrictByID", 1).Return(&model.Subdistrict{
 						ID:         1,
 						DistrictID: 1,
@@ -71,7 +75,7 @@ func TestAddUserAddress(t *testing.T) {
 					SubdistrictID: 1,
 				},
 				err: errs.ErrCityNotFound,
-				beforeTests: func(mockSubdistrictService *mocks.SubdistrictService, mockDistrictService *mocks.DistrictService, mockCityService *mocks.CityService, mockProvinceService *mocks.ProvinceService, mockUserAddressRepo *mocks.UserAddressRepository) {
+				beforeTests: func(mockSubdistrictService *mocks.SubdistrictService, mockDistrictService *mocks.DistrictService, mockCityService *mocks.CityService, mockProvinceService *mocks.ProvinceService, mockAddressRepo *mocks.AddressRepository) {
 					mockSubdistrictService.On("GetSubdistrictByID", 1).Return(&model.Subdistrict{
 						ID:         1,
 						DistrictID: 1,
@@ -95,7 +99,7 @@ func TestAddUserAddress(t *testing.T) {
 					SubdistrictID: 1,
 				},
 				err: errs.ErrProvinceNotFound,
-				beforeTests: func(mockSubdistrictService *mocks.SubdistrictService, mockDistrictService *mocks.DistrictService, mockCityService *mocks.CityService, mockProvinceService *mocks.ProvinceService, mockUserAddressRepo *mocks.UserAddressRepository) {
+				beforeTests: func(mockSubdistrictService *mocks.SubdistrictService, mockDistrictService *mocks.DistrictService, mockCityService *mocks.CityService, mockProvinceService *mocks.ProvinceService, mockAddressRepo *mocks.AddressRepository) {
 					mockSubdistrictService.On("GetSubdistrictByID", 1).Return(&model.Subdistrict{
 						ID:         1,
 						DistrictID: 1,
@@ -123,7 +127,7 @@ func TestAddUserAddress(t *testing.T) {
 					SubdistrictID: 1,
 				},
 				err: errs.ErrInternalServerError,
-				beforeTests: func(mockSubdistrictService *mocks.SubdistrictService, mockDistrictService *mocks.DistrictService, mockCityService *mocks.CityService, mockProvinceService *mocks.ProvinceService, mockUserAddressRepo *mocks.UserAddressRepository) {
+				beforeTests: func(mockSubdistrictService *mocks.SubdistrictService, mockDistrictService *mocks.DistrictService, mockCityService *mocks.CityService, mockProvinceService *mocks.ProvinceService, mockAddressRepo *mocks.AddressRepository) {
 					mockSubdistrictService.On("GetSubdistrictByID", 1).Return(&model.Subdistrict{
 						ID:         1,
 						DistrictID: 1,
@@ -139,11 +143,13 @@ func TestAddUserAddress(t *testing.T) {
 					mockProvinceService.On("GetProvinceByID", 1).Return(&model.Province{
 						ID: 1,
 					}, nil)
-					mockUserAddressRepo.On("AddUserAddress", &model.UserAddress{
+					mockAddressRepo.On("AddUserAddress", &model.UserAddress{
 						SubdistrictID: 1,
 						DistrictID:    1,
 						CityID:        1,
 						ProvinceID:    1,
+						IsDefault:     &falseValue,
+						IsPickup:      &falseValue,
 					}).Return(nil, errs.ErrInternalServerError)
 				},
 			},
@@ -159,7 +165,7 @@ func TestAddUserAddress(t *testing.T) {
 					SubdistrictID: 1,
 				},
 				err: nil,
-				beforeTests: func(mockSubdistrictService *mocks.SubdistrictService, mockDistrictService *mocks.DistrictService, mockCityService *mocks.CityService, mockProvinceService *mocks.ProvinceService, mockUserAddressRepo *mocks.UserAddressRepository) {
+				beforeTests: func(mockSubdistrictService *mocks.SubdistrictService, mockDistrictService *mocks.DistrictService, mockCityService *mocks.CityService, mockProvinceService *mocks.ProvinceService, mockAddressRepo *mocks.AddressRepository) {
 					mockSubdistrictService.On("GetSubdistrictByID", 1).Return(&model.Subdistrict{
 						ID:         1,
 						DistrictID: 1,
@@ -175,16 +181,20 @@ func TestAddUserAddress(t *testing.T) {
 					mockProvinceService.On("GetProvinceByID", 1).Return(&model.Province{
 						ID: 1,
 					}, nil)
-					mockUserAddressRepo.On("AddUserAddress", &model.UserAddress{
+					mockAddressRepo.On("AddUserAddress", &model.UserAddress{
 						SubdistrictID: 1,
 						DistrictID:    1,
 						CityID:        1,
 						ProvinceID:    1,
+						IsDefault:     &falseValue,
+						IsPickup:      &falseValue,
 					}).Return(&model.UserAddress{
 						SubdistrictID: 1,
 						DistrictID:    1,
 						CityID:        1,
 						ProvinceID:    1,
+						IsPickup:      &falseValue,
+						IsDefault:     &falseValue,
 					}, nil)
 				},
 			},
@@ -194,6 +204,8 @@ func TestAddUserAddress(t *testing.T) {
 					DistrictID:    1,
 					CityID:        1,
 					ProvinceID:    1,
+					IsDefault:     &falseValue,
+					IsPickup:      &falseValue,
 				},
 				err: nil,
 			},
@@ -206,15 +218,15 @@ func TestAddUserAddress(t *testing.T) {
 			mockDistrictService := mocks.NewDistrictService(t)
 			mockCityService := mocks.NewCityService(t)
 			mockProvinceService := mocks.NewProvinceService(t)
-			mockUserAddressRepo := mocks.NewUserAddressRepository(t)
-			c.beforeTests(mockSubdistrictService, mockDistrictService, mockCityService, mockProvinceService, mockUserAddressRepo)
+			mockAddressRepo := mocks.NewAddressRepository(t)
+			c.beforeTests(mockSubdistrictService, mockDistrictService, mockCityService, mockProvinceService, mockAddressRepo)
 
-			userAddressService := service.NewUserAddressService(&service.UserAddressSConfig{
+			userAddressService := service.NewAddressService(&service.AddressSConfig{
 				SubdistrictService: mockSubdistrictService,
 				DistrictService:    mockDistrictService,
 				CityService:        mockCityService,
 				ProvinceService:    mockProvinceService,
-				UserAddressRepo:    mockUserAddressRepo,
+				AddressRepo:        mockAddressRepo,
 			})
 
 			got, err := userAddressService.AddUserAddress(c.input.data)
@@ -227,10 +239,14 @@ func TestAddUserAddress(t *testing.T) {
 }
 
 func TestGetAllUserAddress(t *testing.T) {
+	var defaultAddressId int = 1
+	var falseValue bool = false
+	var trueValue bool = true
+
 	type input struct {
 		userId      int
 		err         error
-		beforeTests func(mockUserAddressRepo *mocks.UserAddressRepository, mockUserProfileService *mocks.UserProfileService)
+		beforeTests func(mockAddressRepo *mocks.AddressRepository, mockUserProfileService *mocks.UserProfileService, mockShopService *mocks.ShopService)
 	}
 	type expected struct {
 		data []*model.UserAddress
@@ -247,8 +263,25 @@ func TestGetAllUserAddress(t *testing.T) {
 			input: input{
 				userId: 1,
 				err:    errs.ErrInternalServerError,
-				beforeTests: func(mockUserAddressRepo *mocks.UserAddressRepository, mockUserProfileService *mocks.UserProfileService) {
+				beforeTests: func(mockAddressRepo *mocks.AddressRepository, mockUserProfileService *mocks.UserProfileService, mockShopService *mocks.ShopService) {
 					mockUserProfileService.On("GetProfile", 1).Return(nil, errs.ErrInternalServerError)
+				},
+			},
+			expected: expected{
+				data: nil,
+				err:  errs.ErrInternalServerError,
+			},
+		},
+		{
+			description: "should return error when FindShopByUserId return error",
+			input: input{
+				userId: 1,
+				err:    errs.ErrInternalServerError,
+				beforeTests: func(mockAddressRepo *mocks.AddressRepository, mockUserProfileService *mocks.UserProfileService, mockShopService *mocks.ShopService) {
+					mockUserProfileService.On("GetProfile", 1).Return(&userModel.UserProfile{
+						UserID: 1,
+					}, nil)
+					mockShopService.On("FindShopByUserId", 1).Return(nil, errs.ErrInternalServerError)
 				},
 			},
 			expected: expected{
@@ -261,11 +294,12 @@ func TestGetAllUserAddress(t *testing.T) {
 			input: input{
 				userId: 1,
 				err:    errs.ErrInternalServerError,
-				beforeTests: func(mockUserAddressRepo *mocks.UserAddressRepository, mockUserProfileService *mocks.UserProfileService) {
+				beforeTests: func(mockAddressRepo *mocks.AddressRepository, mockUserProfileService *mocks.UserProfileService, mockShopService *mocks.ShopService) {
 					mockUserProfileService.On("GetProfile", 1).Return(&userModel.UserProfile{
 						UserID: 1,
 					}, nil)
-					mockUserAddressRepo.On("GetAllUserAddress", 1).Return(nil, errs.ErrInternalServerError)
+					mockShopService.On("FindShopByUserId", 1).Return(nil, nil)
+					mockAddressRepo.On("GetAllUserAddress", 1).Return(nil, errs.ErrInternalServerError)
 				},
 			},
 			expected: expected{
@@ -278,12 +312,15 @@ func TestGetAllUserAddress(t *testing.T) {
 			input: input{
 				userId: 1,
 				err:    nil,
-				beforeTests: func(mockUserAddressRepo *mocks.UserAddressRepository, mockUserProfileService *mocks.UserProfileService) {
+				beforeTests: func(mockAddressRepo *mocks.AddressRepository, mockUserProfileService *mocks.UserProfileService, mockShopService *mocks.ShopService) {
 					mockUserProfileService.On("GetProfile", 1).Return(&userModel.UserProfile{
-						UserID: 1,
+						UserID:           1,
+						DefaultAddressID: &defaultAddressId,
 					}, nil)
-					mockUserAddressRepo.On("GetAllUserAddress", 1).Return([]*model.UserAddress{
+					mockShopService.On("FindShopByUserId", 1).Return(nil, nil)
+					mockAddressRepo.On("GetAllUserAddress", 1).Return([]*model.UserAddress{
 						{
+							ID:            1,
 							SubdistrictID: 1,
 							DistrictID:    1,
 							CityID:        1,
@@ -295,10 +332,13 @@ func TestGetAllUserAddress(t *testing.T) {
 			expected: expected{
 				data: []*model.UserAddress{
 					{
+						ID:            1,
 						SubdistrictID: 1,
 						DistrictID:    1,
 						CityID:        1,
 						ProvinceID:    1,
+						IsDefault:     &trueValue,
+						IsPickup:      &falseValue,
 					},
 				},
 				err: nil,
@@ -308,13 +348,15 @@ func TestGetAllUserAddress(t *testing.T) {
 
 	for _, c := range cases {
 		t.Run(c.description, func(t *testing.T) {
-			mockUserAddressRepo := mocks.NewUserAddressRepository(t)
+			mockAddressRepo := mocks.NewAddressRepository(t)
 			mockUserProfileService := mocks.NewUserProfileService(t)
-			c.beforeTests(mockUserAddressRepo, mockUserProfileService)
+			mockShopService := mocks.NewShopService(t)
+			c.beforeTests(mockAddressRepo, mockUserProfileService, mockShopService)
 
-			userAddressService := service.NewUserAddressService(&service.UserAddressSConfig{
-				UserAddressRepo:    mockUserAddressRepo,
+			userAddressService := service.NewAddressService(&service.AddressSConfig{
+				AddressRepo:        mockAddressRepo,
 				UserProfileService: mockUserProfileService,
+				ShopService:        mockShopService,
 			})
 
 			got, err := userAddressService.GetAllUserAddress(c.input.userId)
@@ -333,7 +375,7 @@ func TestUpdateUserAddress(t *testing.T) {
 		addressId   int
 		data        *dto.AddressRequest
 		err         error
-		beforeTests func(mockUserAddressRepo *mocks.UserAddressRepository, mockSubdistrictService *mocks.SubdistrictService, mockDistrictService *mocks.DistrictService, mockCityService *mocks.CityService, mockProvinceService *mocks.ProvinceService, mockUserProfileService *mocks.UserProfileService)
+		beforeTests func(mockAddressRepo *mocks.AddressRepository, mockSubdistrictService *mocks.SubdistrictService, mockDistrictService *mocks.DistrictService, mockCityService *mocks.CityService, mockProvinceService *mocks.ProvinceService, mockUserProfileService *mocks.UserProfileService, mockShopService *mocks.ShopService)
 	}
 	type expected struct {
 		data *model.UserAddress
@@ -355,8 +397,8 @@ func TestUpdateUserAddress(t *testing.T) {
 					UserID:        1,
 				},
 				err: errs.ErrInternalServerError,
-				beforeTests: func(mockUserAddressRepo *mocks.UserAddressRepository, mockSubdistrictService *mocks.SubdistrictService, mockDistrictService *mocks.DistrictService, mockCityService *mocks.CityService, mockProvinceService *mocks.ProvinceService, mockUserProfileService *mocks.UserProfileService) {
-					mockUserAddressRepo.On("GetUserAddressByIdAndUserId", 1, 1).Return(nil, errs.ErrInternalServerError)
+				beforeTests: func(mockAddressRepo *mocks.AddressRepository, mockSubdistrictService *mocks.SubdistrictService, mockDistrictService *mocks.DistrictService, mockCityService *mocks.CityService, mockProvinceService *mocks.ProvinceService, mockUserProfileService *mocks.UserProfileService, mockShopService *mocks.ShopService) {
+					mockAddressRepo.On("GetUserAddressByIdAndUserId", 1, 1).Return(nil, errs.ErrInternalServerError)
 				},
 			},
 			expected: expected{
@@ -372,10 +414,11 @@ func TestUpdateUserAddress(t *testing.T) {
 					SubdistrictID: 1,
 					ID:            1,
 					UserID:        1,
+					IsDefault:     &falseValue,
 				},
 				err: errs.ErrInternalServerError,
-				beforeTests: func(mockUserAddressRepo *mocks.UserAddressRepository, mockSubdistrictService *mocks.SubdistrictService, mockDistrictService *mocks.DistrictService, mockCityService *mocks.CityService, mockProvinceService *mocks.ProvinceService, mockUserProfileService *mocks.UserProfileService) {
-					mockUserAddressRepo.On("GetUserAddressByIdAndUserId", 1, 1).Return(&model.UserAddress{
+				beforeTests: func(mockAddressRepo *mocks.AddressRepository, mockSubdistrictService *mocks.SubdistrictService, mockDistrictService *mocks.DistrictService, mockCityService *mocks.CityService, mockProvinceService *mocks.ProvinceService, mockUserProfileService *mocks.UserProfileService, mockShopService *mocks.ShopService) {
+					mockAddressRepo.On("GetUserAddressByIdAndUserId", 1, 1).Return(&model.UserAddress{
 						ID:            1,
 						UserID:        1,
 						SubdistrictID: 1,
@@ -399,8 +442,8 @@ func TestUpdateUserAddress(t *testing.T) {
 					IsDefault:     &falseValue,
 				},
 				err: errs.ErrMustHaveAtLeastOneDefaultAddress,
-				beforeTests: func(mockUserAddressRepo *mocks.UserAddressRepository, mockSubdistrictService *mocks.SubdistrictService, mockDistrictService *mocks.DistrictService, mockCityService *mocks.CityService, mockProvinceService *mocks.ProvinceService, mockUserProfileService *mocks.UserProfileService) {
-					mockUserAddressRepo.On("GetUserAddressByIdAndUserId", 1, 1).Return(&model.UserAddress{
+				beforeTests: func(mockAddressRepo *mocks.AddressRepository, mockSubdistrictService *mocks.SubdistrictService, mockDistrictService *mocks.DistrictService, mockCityService *mocks.CityService, mockProvinceService *mocks.ProvinceService, mockUserProfileService *mocks.UserProfileService, mockShopService *mocks.ShopService) {
+					mockAddressRepo.On("GetUserAddressByIdAndUserId", 1, 1).Return(&model.UserAddress{
 						ID:            1,
 						UserID:        1,
 						SubdistrictID: 1,
@@ -416,6 +459,66 @@ func TestUpdateUserAddress(t *testing.T) {
 			},
 		},
 		{
+			description: "should return error when FindShopByUserId return error",
+			input: input{
+				addressId: 1,
+				data: &dto.AddressRequest{
+					SubdistrictID: 1,
+					ID:            1,
+					UserID:        1,
+					IsDefault:     &falseValue,
+					IsPickup:      &falseValue,
+				},
+				err: errs.ErrInternalServerError,
+				beforeTests: func(mockAddressRepo *mocks.AddressRepository, mockSubdistrictService *mocks.SubdistrictService, mockDistrictService *mocks.DistrictService, mockCityService *mocks.CityService, mockProvinceService *mocks.ProvinceService, mockUserProfileService *mocks.UserProfileService, mockShopService *mocks.ShopService) {
+					mockAddressRepo.On("GetUserAddressByIdAndUserId", 1, 1).Return(&model.UserAddress{
+						ID:            1,
+						UserID:        1,
+						SubdistrictID: 1,
+					}, nil)
+					mockUserProfileService.On("GetProfile", 1).Return(&userModel.UserProfile{
+						DefaultAddressID: nil,
+					}, nil)
+					mockShopService.On("FindShopByUserId", 1).Return(nil, errs.ErrInternalServerError)
+				},
+			},
+			expected: expected{
+				data: nil,
+				err:  errs.ErrInternalServerError,
+			},
+		},
+		{
+			description: "should return error ErrMustHaveAtLeastOnePickupAddress when shop pickup address is not nil and shop pickup address is equal to address id",
+			input: input{
+				addressId: 1,
+				data: &dto.AddressRequest{
+					SubdistrictID: 1,
+					ID:            1,
+					UserID:        1,
+					IsDefault:     &falseValue,
+					IsPickup:      &falseValue,
+				},
+				err: errs.ErrMustHaveAtLeastOnePickupAddress,
+				beforeTests: func(mockAddressRepo *mocks.AddressRepository, mockSubdistrictService *mocks.SubdistrictService, mockDistrictService *mocks.DistrictService, mockCityService *mocks.CityService, mockProvinceService *mocks.ProvinceService, mockUserProfileService *mocks.UserProfileService, mockShopService *mocks.ShopService) {
+					mockAddressRepo.On("GetUserAddressByIdAndUserId", 1, 1).Return(&model.UserAddress{
+						ID:            1,
+						UserID:        1,
+						SubdistrictID: 1,
+					}, nil)
+					mockUserProfileService.On("GetProfile", 1).Return(&userModel.UserProfile{
+						DefaultAddressID: nil,
+					}, nil)
+					mockShopService.On("FindShopByUserId", 1).Return(&shopModel.Shop{
+						AddressID: 1,
+					}, nil)
+				},
+			},
+			expected: expected{
+				data: nil,
+				err:  errs.ErrMustHaveAtLeastOnePickupAddress,
+			},
+		},
+		{
 			description: "should return error when GetSubdistrictById return error",
 			input: input{
 				addressId: 1,
@@ -423,16 +526,21 @@ func TestUpdateUserAddress(t *testing.T) {
 					SubdistrictID: 1,
 					ID:            1,
 					UserID:        1,
+					IsDefault:     &falseValue,
+					IsPickup:      &falseValue,
 				},
 				err: errs.ErrInternalServerError,
-				beforeTests: func(mockUserAddressRepo *mocks.UserAddressRepository, mockSubdistrictService *mocks.SubdistrictService, mockDistrictService *mocks.DistrictService, mockCityService *mocks.CityService, mockProvinceService *mocks.ProvinceService, mockUserProfileService *mocks.UserProfileService) {
-					mockUserAddressRepo.On("GetUserAddressByIdAndUserId", 1, 1).Return(&model.UserAddress{
+				beforeTests: func(mockAddressRepo *mocks.AddressRepository, mockSubdistrictService *mocks.SubdistrictService, mockDistrictService *mocks.DistrictService, mockCityService *mocks.CityService, mockProvinceService *mocks.ProvinceService, mockUserProfileService *mocks.UserProfileService, mockShopService *mocks.ShopService) {
+					mockAddressRepo.On("GetUserAddressByIdAndUserId", 1, 1).Return(&model.UserAddress{
 						ID:            1,
 						UserID:        1,
 						SubdistrictID: 1,
 					}, nil)
 					mockUserProfileService.On("GetProfile", 1).Return(&userModel.UserProfile{
 						DefaultAddressID: nil,
+					}, nil)
+					mockShopService.On("FindShopByUserId", 1).Return(&shopModel.Shop{
+						AddressID: 2,
 					}, nil)
 					mockSubdistrictService.On("GetSubdistrictByID", 1).Return(nil, errs.ErrInternalServerError)
 				},
@@ -450,16 +558,21 @@ func TestUpdateUserAddress(t *testing.T) {
 					SubdistrictID: 1,
 					ID:            1,
 					UserID:        1,
+					IsDefault:     &falseValue,
+					IsPickup:      &falseValue,
 				},
 				err: errs.ErrInternalServerError,
-				beforeTests: func(mockUserAddressRepo *mocks.UserAddressRepository, mockSubdistrictService *mocks.SubdistrictService, mockDistrictService *mocks.DistrictService, mockCityService *mocks.CityService, mockProvinceService *mocks.ProvinceService, mockUserProfileService *mocks.UserProfileService) {
-					mockUserAddressRepo.On("GetUserAddressByIdAndUserId", 1, 1).Return(&model.UserAddress{
+				beforeTests: func(mockAddressRepo *mocks.AddressRepository, mockSubdistrictService *mocks.SubdistrictService, mockDistrictService *mocks.DistrictService, mockCityService *mocks.CityService, mockProvinceService *mocks.ProvinceService, mockUserProfileService *mocks.UserProfileService, mockShopService *mocks.ShopService) {
+					mockAddressRepo.On("GetUserAddressByIdAndUserId", 1, 1).Return(&model.UserAddress{
 						ID:            1,
 						UserID:        1,
 						SubdistrictID: 1,
 					}, nil)
 					mockUserProfileService.On("GetProfile", 1).Return(&userModel.UserProfile{
 						DefaultAddressID: nil,
+					}, nil)
+					mockShopService.On("FindShopByUserId", 1).Return(&shopModel.Shop{
+						AddressID: 2,
 					}, nil)
 					mockSubdistrictService.On("GetSubdistrictByID", 1).Return(&model.Subdistrict{
 						ID:         1,
@@ -481,16 +594,21 @@ func TestUpdateUserAddress(t *testing.T) {
 					SubdistrictID: 1,
 					ID:            1,
 					UserID:        1,
+					IsDefault:     &falseValue,
+					IsPickup:      &falseValue,
 				},
 				err: errs.ErrInternalServerError,
-				beforeTests: func(mockUserAddressRepo *mocks.UserAddressRepository, mockSubdistrictService *mocks.SubdistrictService, mockDistrictService *mocks.DistrictService, mockCityService *mocks.CityService, mockProvinceService *mocks.ProvinceService, mockUserProfileService *mocks.UserProfileService) {
-					mockUserAddressRepo.On("GetUserAddressByIdAndUserId", 1, 1).Return(&model.UserAddress{
+				beforeTests: func(mockAddressRepo *mocks.AddressRepository, mockSubdistrictService *mocks.SubdistrictService, mockDistrictService *mocks.DistrictService, mockCityService *mocks.CityService, mockProvinceService *mocks.ProvinceService, mockUserProfileService *mocks.UserProfileService, mockShopService *mocks.ShopService) {
+					mockAddressRepo.On("GetUserAddressByIdAndUserId", 1, 1).Return(&model.UserAddress{
 						ID:            1,
 						UserID:        1,
 						SubdistrictID: 1,
 					}, nil)
 					mockUserProfileService.On("GetProfile", 1).Return(&userModel.UserProfile{
 						DefaultAddressID: nil,
+					}, nil)
+					mockShopService.On("FindShopByUserId", 1).Return(&shopModel.Shop{
+						AddressID: 2,
 					}, nil)
 					mockSubdistrictService.On("GetSubdistrictByID", 1).Return(&model.Subdistrict{
 						ID:         1,
@@ -516,16 +634,21 @@ func TestUpdateUserAddress(t *testing.T) {
 					SubdistrictID: 1,
 					ID:            1,
 					UserID:        1,
+					IsDefault:     &falseValue,
+					IsPickup:      &falseValue,
 				},
 				err: errs.ErrInternalServerError,
-				beforeTests: func(mockUserAddressRepo *mocks.UserAddressRepository, mockSubdistrictService *mocks.SubdistrictService, mockDistrictService *mocks.DistrictService, mockCityService *mocks.CityService, mockProvinceService *mocks.ProvinceService, mockUserProfileService *mocks.UserProfileService) {
-					mockUserAddressRepo.On("GetUserAddressByIdAndUserId", 1, 1).Return(&model.UserAddress{
+				beforeTests: func(mockAddressRepo *mocks.AddressRepository, mockSubdistrictService *mocks.SubdistrictService, mockDistrictService *mocks.DistrictService, mockCityService *mocks.CityService, mockProvinceService *mocks.ProvinceService, mockUserProfileService *mocks.UserProfileService, mockShopService *mocks.ShopService) {
+					mockAddressRepo.On("GetUserAddressByIdAndUserId", 1, 1).Return(&model.UserAddress{
 						ID:            1,
 						UserID:        1,
 						SubdistrictID: 1,
 					}, nil)
 					mockUserProfileService.On("GetProfile", 1).Return(&userModel.UserProfile{
 						DefaultAddressID: nil,
+					}, nil)
+					mockShopService.On("FindShopByUserId", 1).Return(&shopModel.Shop{
+						AddressID: 2,
 					}, nil)
 					mockSubdistrictService.On("GetSubdistrictByID", 1).Return(&model.Subdistrict{
 						ID:         1,
@@ -555,16 +678,21 @@ func TestUpdateUserAddress(t *testing.T) {
 					SubdistrictID: 1,
 					ID:            1,
 					UserID:        1,
+					IsDefault:     &falseValue,
+					IsPickup:      &falseValue,
 				},
 				err: errs.ErrInternalServerError,
-				beforeTests: func(mockUserAddressRepo *mocks.UserAddressRepository, mockSubdistrictService *mocks.SubdistrictService, mockDistrictService *mocks.DistrictService, mockCityService *mocks.CityService, mockProvinceService *mocks.ProvinceService, mockUserProfileService *mocks.UserProfileService) {
-					mockUserAddressRepo.On("GetUserAddressByIdAndUserId", 1, 1).Return(&model.UserAddress{
+				beforeTests: func(mockAddressRepo *mocks.AddressRepository, mockSubdistrictService *mocks.SubdistrictService, mockDistrictService *mocks.DistrictService, mockCityService *mocks.CityService, mockProvinceService *mocks.ProvinceService, mockUserProfileService *mocks.UserProfileService, mockShopService *mocks.ShopService) {
+					mockAddressRepo.On("GetUserAddressByIdAndUserId", 1, 1).Return(&model.UserAddress{
 						ID:            1,
 						UserID:        1,
 						SubdistrictID: 1,
 					}, nil)
 					mockUserProfileService.On("GetProfile", 1).Return(&userModel.UserProfile{
 						DefaultAddressID: nil,
+					}, nil)
+					mockShopService.On("FindShopByUserId", 1).Return(&shopModel.Shop{
+						AddressID: 2,
 					}, nil)
 					mockSubdistrictService.On("GetSubdistrictByID", 1).Return(&model.Subdistrict{
 						ID:         1,
@@ -581,13 +709,15 @@ func TestUpdateUserAddress(t *testing.T) {
 					mockProvinceService.On("GetProvinceByID", 1).Return(&model.Province{
 						ID: 1,
 					}, nil)
-					mockUserAddressRepo.On("UpdateUserAddress", &model.UserAddress{
+					mockAddressRepo.On("UpdateUserAddress", &model.UserAddress{
 						ID:            1,
 						UserID:        1,
 						SubdistrictID: 1,
 						ProvinceID:    1,
 						CityID:        1,
 						DistrictID:    1,
+						IsDefault:     &falseValue,
+						IsPickup:      &falseValue,
 					}).Return(nil, errs.ErrInternalServerError)
 				},
 			},
@@ -604,16 +734,21 @@ func TestUpdateUserAddress(t *testing.T) {
 					SubdistrictID: 1,
 					ID:            1,
 					UserID:        1,
+					IsDefault:     &falseValue,
+					IsPickup:      &falseValue,
 				},
 				err: nil,
-				beforeTests: func(mockUserAddressRepo *mocks.UserAddressRepository, mockSubdistrictService *mocks.SubdistrictService, mockDistrictService *mocks.DistrictService, mockCityService *mocks.CityService, mockProvinceService *mocks.ProvinceService, mockUserProfileService *mocks.UserProfileService) {
-					mockUserAddressRepo.On("GetUserAddressByIdAndUserId", 1, 1).Return(&model.UserAddress{
+				beforeTests: func(mockAddressRepo *mocks.AddressRepository, mockSubdistrictService *mocks.SubdistrictService, mockDistrictService *mocks.DistrictService, mockCityService *mocks.CityService, mockProvinceService *mocks.ProvinceService, mockUserProfileService *mocks.UserProfileService, mockShopService *mocks.ShopService) {
+					mockAddressRepo.On("GetUserAddressByIdAndUserId", 1, 1).Return(&model.UserAddress{
 						ID:            1,
 						UserID:        1,
 						SubdistrictID: 1,
 					}, nil)
 					mockUserProfileService.On("GetProfile", 1).Return(&userModel.UserProfile{
 						DefaultAddressID: nil,
+					}, nil)
+					mockShopService.On("FindShopByUserId", 1).Return(&shopModel.Shop{
+						AddressID: 2,
 					}, nil)
 					mockSubdistrictService.On("GetSubdistrictByID", 1).Return(&model.Subdistrict{
 						ID:         1,
@@ -630,13 +765,15 @@ func TestUpdateUserAddress(t *testing.T) {
 					mockProvinceService.On("GetProvinceByID", 1).Return(&model.Province{
 						ID: 1,
 					}, nil)
-					mockUserAddressRepo.On("UpdateUserAddress", &model.UserAddress{
+					mockAddressRepo.On("UpdateUserAddress", &model.UserAddress{
 						ID:            1,
 						UserID:        1,
 						SubdistrictID: 1,
 						ProvinceID:    1,
 						CityID:        1,
 						DistrictID:    1,
+						IsDefault:     &falseValue,
+						IsPickup:      &falseValue,
 					}).Return(&model.UserAddress{
 						ID:            1,
 						UserID:        1,
@@ -663,21 +800,23 @@ func TestUpdateUserAddress(t *testing.T) {
 
 	for _, c := range cases {
 		t.Run(c.description, func(t *testing.T) {
-			mockUserAddressRepo := mocks.NewUserAddressRepository(t)
+			mockAddressRepo := mocks.NewAddressRepository(t)
 			mockSubdistrictService := mocks.NewSubdistrictService(t)
 			mockDistrictService := mocks.NewDistrictService(t)
 			mockCityService := mocks.NewCityService(t)
 			mockProvinceService := mocks.NewProvinceService(t)
 			mockUserProfileService := mocks.NewUserProfileService(t)
-			c.beforeTests(mockUserAddressRepo, mockSubdistrictService, mockDistrictService, mockCityService, mockProvinceService, mockUserProfileService)
+			mockShopService := mocks.NewShopService(t)
+			c.beforeTests(mockAddressRepo, mockSubdistrictService, mockDistrictService, mockCityService, mockProvinceService, mockUserProfileService, mockShopService)
 
-			userAddressService := service.NewUserAddressService(&service.UserAddressSConfig{
-				UserAddressRepo:    mockUserAddressRepo,
+			userAddressService := service.NewAddressService(&service.AddressSConfig{
+				AddressRepo:        mockAddressRepo,
 				SubdistrictService: mockSubdistrictService,
 				DistrictService:    mockDistrictService,
 				CityService:        mockCityService,
 				ProvinceService:    mockProvinceService,
 				UserProfileService: mockUserProfileService,
+				ShopService:        mockShopService,
 			})
 
 			got, err := userAddressService.UpdateUserAddress(c.input.data)
@@ -695,7 +834,7 @@ func TestDeleteUserAddress(t *testing.T) {
 		addressId   int
 		userId      int
 		err         error
-		beforeTests func(mockUserAddressRepo *mocks.UserAddressRepository, mockUserProfileService *mocks.UserProfileService)
+		beforeTests func(mockAddressRepo *mocks.AddressRepository, mockUserProfileService *mocks.UserProfileService, mockShopService *mocks.ShopService)
 	}
 	type expected struct {
 		err error
@@ -712,8 +851,8 @@ func TestDeleteUserAddress(t *testing.T) {
 				addressId: 1,
 				userId:    1,
 				err:       errs.ErrInternalServerError,
-				beforeTests: func(mockUserAddressRepo *mocks.UserAddressRepository, mockUserProfileService *mocks.UserProfileService) {
-					mockUserAddressRepo.On("GetUserAddressByIdAndUserId", 1, 1).Return(nil, errs.ErrInternalServerError)
+				beforeTests: func(mockAddressRepo *mocks.AddressRepository, mockUserProfileService *mocks.UserProfileService, mockShopService *mocks.ShopService) {
+					mockAddressRepo.On("GetUserAddressByIdAndUserId", 1, 1).Return(nil, errs.ErrInternalServerError)
 				},
 			},
 			expected: expected{
@@ -726,8 +865,8 @@ func TestDeleteUserAddress(t *testing.T) {
 				addressId: 1,
 				userId:    1,
 				err:       errs.ErrInternalServerError,
-				beforeTests: func(mockUserAddressRepo *mocks.UserAddressRepository, mockUserProfileService *mocks.UserProfileService) {
-					mockUserAddressRepo.On("GetUserAddressByIdAndUserId", 1, 1).Return(&model.UserAddress{
+				beforeTests: func(mockAddressRepo *mocks.AddressRepository, mockUserProfileService *mocks.UserProfileService, mockShopService *mocks.ShopService) {
+					mockAddressRepo.On("GetUserAddressByIdAndUserId", 1, 1).Return(&model.UserAddress{
 						ID:            1,
 						UserID:        1,
 						SubdistrictID: 1,
@@ -745,8 +884,8 @@ func TestDeleteUserAddress(t *testing.T) {
 				addressId: 1,
 				userId:    1,
 				err:       errs.ErrMustHaveAtLeastOneDefaultAddress,
-				beforeTests: func(mockUserAddressRepo *mocks.UserAddressRepository, mockUserProfileService *mocks.UserProfileService) {
-					mockUserAddressRepo.On("GetUserAddressByIdAndUserId", 1, 1).Return(&model.UserAddress{
+				beforeTests: func(mockAddressRepo *mocks.AddressRepository, mockUserProfileService *mocks.UserProfileService, mockShopService *mocks.ShopService) {
+					mockAddressRepo.On("GetUserAddressByIdAndUserId", 1, 1).Return(&model.UserAddress{
 						ID:            1,
 						UserID:        1,
 						SubdistrictID: 1,
@@ -761,13 +900,13 @@ func TestDeleteUserAddress(t *testing.T) {
 			},
 		},
 		{
-			description: "should return error when DeleteUserAddress return error",
+			description: "should return error when FindShopByUserId return error",
 			input: input{
 				addressId: 1,
 				userId:    1,
 				err:       errs.ErrInternalServerError,
-				beforeTests: func(mockUserAddressRepo *mocks.UserAddressRepository, mockUserProfileService *mocks.UserProfileService) {
-					mockUserAddressRepo.On("GetUserAddressByIdAndUserId", 1, 1).Return(&model.UserAddress{
+				beforeTests: func(mockAddressRepo *mocks.AddressRepository, mockUserProfileService *mocks.UserProfileService, mockShopService *mocks.ShopService) {
+					mockAddressRepo.On("GetUserAddressByIdAndUserId", 1, 1).Return(&model.UserAddress{
 						ID:            1,
 						UserID:        1,
 						SubdistrictID: 1,
@@ -775,7 +914,54 @@ func TestDeleteUserAddress(t *testing.T) {
 					mockUserProfileService.On("GetProfile", 1).Return(&userModel.UserProfile{
 						DefaultAddressID: nil,
 					}, nil)
-					mockUserAddressRepo.On("DeleteUserAddress", 1, 1).Return(errs.ErrInternalServerError)
+					mockShopService.On("FindShopByUserId", 1).Return(nil, errs.ErrInternalServerError)
+				},
+			},
+			expected: expected{
+				err: errs.ErrInternalServerError,
+			},
+		},
+		{
+			description: "should return error ErrMustHaveAtLeastOnePickupAddress when shop pickup address is equal to address id",
+			input: input{
+				addressId: 1,
+				userId:    1,
+				err:       errs.ErrMustHaveAtLeastOnePickupAddress,
+				beforeTests: func(mockAddressRepo *mocks.AddressRepository, mockUserProfileService *mocks.UserProfileService, mockShopService *mocks.ShopService) {
+					mockAddressRepo.On("GetUserAddressByIdAndUserId", 1, 1).Return(&model.UserAddress{
+						ID:            1,
+						UserID:        1,
+						SubdistrictID: 1,
+					}, nil)
+					mockUserProfileService.On("GetProfile", 1).Return(&userModel.UserProfile{
+						DefaultAddressID: nil,
+					}, nil)
+					mockShopService.On("FindShopByUserId", 1).Return(&shopModel.Shop{
+						AddressID: 1,
+					}, nil)
+				},
+			},
+			expected: expected{
+				err: errs.ErrMustHaveAtLeastOnePickupAddress,
+			},
+		},
+		{
+			description: "should return error when DeleteUserAddress return error",
+			input: input{
+				addressId: 1,
+				userId:    1,
+				err:       errs.ErrInternalServerError,
+				beforeTests: func(mockAddressRepo *mocks.AddressRepository, mockUserProfileService *mocks.UserProfileService, mockShopService *mocks.ShopService) {
+					mockAddressRepo.On("GetUserAddressByIdAndUserId", 1, 1).Return(&model.UserAddress{
+						ID:            1,
+						UserID:        1,
+						SubdistrictID: 1,
+					}, nil)
+					mockUserProfileService.On("GetProfile", 1).Return(&userModel.UserProfile{
+						DefaultAddressID: nil,
+					}, nil)
+					mockShopService.On("FindShopByUserId", 1).Return(nil, nil)
+					mockAddressRepo.On("DeleteUserAddress", 1, 1).Return(errs.ErrInternalServerError)
 				},
 			},
 			expected: expected{
@@ -788,8 +974,8 @@ func TestDeleteUserAddress(t *testing.T) {
 				addressId: 1,
 				userId:    1,
 				err:       nil,
-				beforeTests: func(mockUserAddressRepo *mocks.UserAddressRepository, mockUserProfileService *mocks.UserProfileService) {
-					mockUserAddressRepo.On("GetUserAddressByIdAndUserId", 1, 1).Return(&model.UserAddress{
+				beforeTests: func(mockAddressRepo *mocks.AddressRepository, mockUserProfileService *mocks.UserProfileService, mockShopService *mocks.ShopService) {
+					mockAddressRepo.On("GetUserAddressByIdAndUserId", 1, 1).Return(&model.UserAddress{
 						ID:            1,
 						UserID:        1,
 						SubdistrictID: 1,
@@ -797,7 +983,8 @@ func TestDeleteUserAddress(t *testing.T) {
 					mockUserProfileService.On("GetProfile", 1).Return(&userModel.UserProfile{
 						DefaultAddressID: nil,
 					}, nil)
-					mockUserAddressRepo.On("DeleteUserAddress", 1, 1).Return(nil)
+					mockShopService.On("FindShopByUserId", 1).Return(nil, nil)
+					mockAddressRepo.On("DeleteUserAddress", 1, 1).Return(nil)
 				},
 			},
 			expected: expected{
@@ -808,13 +995,15 @@ func TestDeleteUserAddress(t *testing.T) {
 
 	for _, c := range cases {
 		t.Run(c.description, func(t *testing.T) {
-			mockUserAddressRepo := mocks.NewUserAddressRepository(t)
+			mockAddressRepo := mocks.NewAddressRepository(t)
 			mockUserProfileService := mocks.NewUserProfileService(t)
-			c.beforeTests(mockUserAddressRepo, mockUserProfileService)
+			mockShopService := mocks.NewShopService(t)
+			c.beforeTests(mockAddressRepo, mockUserProfileService, mockShopService)
 
-			userAddressService := service.NewUserAddressService(&service.UserAddressSConfig{
-				UserAddressRepo:    mockUserAddressRepo,
+			userAddressService := service.NewAddressService(&service.AddressSConfig{
+				AddressRepo:        mockAddressRepo,
 				UserProfileService: mockUserProfileService,
+				ShopService:        mockShopService,
 			})
 
 			err := userAddressService.DeleteUserAddress(c.input.addressId, c.input.userId)

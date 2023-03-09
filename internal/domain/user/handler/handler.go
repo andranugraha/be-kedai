@@ -1,6 +1,9 @@
 package handler
 
-import "kedai/backend/be-kedai/internal/domain/user/service"
+import (
+	locationService "kedai/backend/be-kedai/internal/domain/location/service"
+	"kedai/backend/be-kedai/internal/domain/user/service"
+)
 
 type Handler struct {
 	userService          service.UserService
@@ -9,7 +12,7 @@ type Handler struct {
 	walletService        service.WalletService
 	walletHistoryService service.WalletHistoryService
 	sealabsPayService    service.SealabsPayService
-	userAddressService   service.UserAddressService
+	addressService       locationService.AddressService
 	userProfileService   service.UserProfileService
 }
 
@@ -20,7 +23,7 @@ type HandlerConfig struct {
 	WalletService        service.WalletService
 	WalletHistoryService service.WalletHistoryService
 	SealabsPayService    service.SealabsPayService
-	UserAddressService   service.UserAddressService
+	AddressService       locationService.AddressService
 	UserProfileService   service.UserProfileService
 }
 
@@ -32,7 +35,7 @@ func New(cfg *HandlerConfig) *Handler {
 		walletService:        cfg.WalletService,
 		walletHistoryService: cfg.WalletHistoryService,
 		sealabsPayService:    cfg.SealabsPayService,
-		userAddressService:   cfg.UserAddressService,
+		addressService:       cfg.AddressService,
 		userProfileService:   cfg.UserProfileService,
 	}
 }
