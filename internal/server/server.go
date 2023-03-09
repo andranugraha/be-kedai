@@ -7,7 +7,6 @@ import (
 	locationHandlerPackage "kedai/backend/be-kedai/internal/domain/location/handler"
 	locationRepoPackage "kedai/backend/be-kedai/internal/domain/location/repository"
 	locationServicePackage "kedai/backend/be-kedai/internal/domain/location/service"
-	"kedai/backend/be-kedai/internal/utils/google"
 
 	userCache "kedai/backend/be-kedai/internal/domain/user/cache"
 	userHandlerPackage "kedai/backend/be-kedai/internal/domain/user/handler"
@@ -55,7 +54,7 @@ func createRouter() *gin.Engine {
 	mailer := connection.GetMailer()
 	mailUtils := mail.NewMailUtils(&mail.MailUtilsConfig{Mailer: mailer})
 	randomUtils := random.NewRandomUtils(&random.RandomUtilsConfig{})
-	maps := google.NewGoogleMaps()
+	maps := connection.GetGoogleMaps()
 
 	districtRepo := locationRepoPackage.NewDistrictRepository(&locationRepoPackage.DistrictRConfig{
 		DB: db,

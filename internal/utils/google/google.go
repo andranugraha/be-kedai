@@ -7,13 +7,10 @@ import (
 	"io/ioutil"
 	"kedai/backend/be-kedai/config"
 	"kedai/backend/be-kedai/internal/domain/user/model"
-	"log"
 	"net/http"
-	"strconv"
 	"time"
 
 	"github.com/golang-jwt/jwt/v4"
-	"googlemaps.github.io/maps"
 )
 
 func getGooglePublicKey(keyID string) (string, error) {
@@ -78,14 +75,4 @@ func ValidateGoogleToken(tokenString string) (model.GoogleClaim, error) {
 	}
 
 	return *claims, nil
-}
-
-func NewGoogleMaps() (googleMaps *maps.Client) {
-	rateLimit, _ := strconv.Atoi(config.GetEnv("GOOGLE_RATE_LIMIT", "10"))
-	googleMaps, err := maps.NewClient(maps.WithAPIKey(config.GetEnv("GOOGLE_API_KEY", "")), maps.WithRateLimit(rateLimit))
-	if err != nil {
-		log.Fatal("Error when creating google maps client: ", err)
-	}
-
-	return
 }
