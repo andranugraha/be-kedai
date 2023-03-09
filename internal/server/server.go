@@ -8,7 +8,7 @@ import (
 	locationRepoPackage "kedai/backend/be-kedai/internal/domain/location/repository"
 	locationServicePackage "kedai/backend/be-kedai/internal/domain/location/service"
 
-	userCache "kedai/backend/be-kedai/internal/domain/user/cache"
+	userRedisCache "kedai/backend/be-kedai/internal/domain/user/cache"
 	userHandlerPackage "kedai/backend/be-kedai/internal/domain/user/handler"
 	userRepoPackage "kedai/backend/be-kedai/internal/domain/user/repository"
 	userServicePackage "kedai/backend/be-kedai/internal/domain/user/service"
@@ -37,6 +37,13 @@ import (
 func createRouter() *gin.Engine {
 	db := connection.GetDB()
 	redis := connection.GetCache()
+
+	userCache := userRedisCache.NewUserCache(&userRedisCache.UserCConfig{
+		RDC: redis,
+	})
+	walletCache := userRedisCache.NewWalletCache(&userRedisCache.WalletCConfig{
+		RDC: redis,
+	})
 
 	userVoucherRepo := userRepoPackage.NewUserVoucherRepository(&userRepoPackage.UserVoucherRConfig{
 		DB: db,
@@ -96,20 +103,8 @@ func createRouter() *gin.Engine {
 		WalletHistory: walletHistoryRepo,
 	})
 
-	walletService := userServicePackage.NewWalletService(&userServicePackage.WalletSConfig{
-		WalletRepo: walletRepo,
-	})
-
-	walletHistoryService := userServicePackage.NewWalletHistoryService(&userServicePackage.WalletHistorySConfig{
-		WalletHistoryRepository: walletHistoryRepo,
-		WalletService:           walletService,
-	})
-
 	courierRepo := shopRepoPackage.NewCourierRepository(&shopRepoPackage.CourierRConfig{
 		DB: db,
-	})
-	courierService := shopServicePackage.NewCourierService(&shopServicePackage.CourierSConfig{
-		CourierRepository: courierRepo,
 	})
 
 	shopRepo := shopRepoPackage.NewShopRepository(&shopRepoPackage.ShopRConfig{
@@ -118,6 +113,11 @@ func createRouter() *gin.Engine {
 
 	shopService := shopServicePackage.NewShopService(&shopServicePackage.ShopSConfig{
 		ShopRepository: shopRepo,
+	})
+
+	courierService := shopServicePackage.NewCourierService(&shopServicePackage.CourierSConfig{
+		CourierRepository: courierRepo,
+		ShopService:       shopService,
 	})
 
 	invoicePerShopRepo := orderRepoPackage.NewInvoicePerShopRepository(&orderRepoPackage.InvoicePerShopRConfig{
@@ -157,11 +157,9 @@ func createRouter() *gin.Engine {
 	shopHandler := shopHandlerPackage.New(&shopHandlerPackage.HandlerConfig{
 		ShopService:        shopService,
 		ShopVoucherService: shopVoucherService,
+		CourierService:     courierService,
 	})
 
-	userCache := userCache.NewUserCache(&userCache.UserCConfig{
-		RDC: redis,
-	})
 	userProfileRepo := userRepoPackage.NewUserProfileRepository(&userRepoPackage.UserProfileRConfig{
 		DB: db,
 	})
@@ -183,6 +181,20 @@ func createRouter() *gin.Engine {
 		Repository: userProfileRepo,
 	})
 
+	walletService := userServicePackage.NewWalletService(&userServicePackage.WalletSConfig{
+		WalletRepo:  walletRepo,
+		UserCache:   userCache,
+		WalletCache: walletCache,
+		UserService: userService,
+		MailUtils:   mailUtils,
+		RandomUtils: randomUtils,
+	})
+
+	walletHistoryService := userServicePackage.NewWalletHistoryService(&userServicePackage.WalletHistorySConfig{
+		WalletHistoryRepository: walletHistoryRepo,
+		WalletService:           walletService,
+	})
+
 	userWishlistRepo := userRepoPackage.NewUserWishlistRepository(&userRepoPackage.UserWishlistRConfig{
 		DB: db,
 	})
@@ -196,18 +208,21 @@ func createRouter() *gin.Engine {
 	userCartItemRepo := userRepoPackage.NewUserCartItemRepository(&userRepoPackage.UserCartItemRConfig{
 		DB: db,
 	})
-	userAddressRepo := userRepoPackage.NewUserAddressRepository(&userRepoPackage.UserAddressRConfig{
+
+	addressRepo := locationRepoPackage.NewAddressRepository(&locationRepoPackage.AddressRConfig{
 		DB:              db,
 		UserProfileRepo: userProfileRepo,
+		ShopRepo:        shopRepo,
 	})
 
-	userAddressService := userServicePackage.NewUserAddressService(&userServicePackage.UserAddressSConfig{
-		UserAddressRepo:    userAddressRepo,
+	addressService := locationServicePackage.NewAddressService(&locationServicePackage.AddressSConfig{
+		AddressRepo:        addressRepo,
 		ProvinceService:    provinceService,
 		DistrictService:    districtService,
 		SubdistrictService: subdistrictService,
 		CityService:        cityService,
 		UserProfileService: userProfileService,
+		ShopService:        shopService,
 	})
 
 	userCartItemService := userServicePackage.NewUserCartItemService(&userServicePackage.UserCartItemSConfig{
@@ -250,7 +265,7 @@ func createRouter() *gin.Engine {
 		UserWishlistService:  userWishlistService,
 		UserCartItemService:  userCartItemService,
 		SealabsPayService:    sealabsPayService,
-		UserAddressService:   userAddressService,
+		AddressService:       addressService,
 		UserProfileService:   userProfileService,
 	})
 	marketplaceHandler := marketplaceHandlerPackage.New(&marketplaceHandlerPackage.HandlerConfig{
@@ -272,7 +287,31 @@ func createRouter() *gin.Engine {
 		TransactionReviewService: transactionReviewService,
 	})
 
+	invoiceStatusRepo := orderRepoPackage.NewInvoiceStatusRepository(&orderRepoPackage.InvoiceStatusRConfig{
+		DB: db,
+	})
+	invoiceRepo := orderRepoPackage.NewInvoiceRepository(&orderRepoPackage.InvoiceRConfig{
+		DB:                db,
+		UserCartItemRepo:  userCartItemRepo,
+		SkuRepo:           skuRepo,
+		UserWalletRepo:    walletRepo,
+		InvoiceStatusRepo: invoiceStatusRepo,
+		Redis:             userCache,
+	})
+	invoiceService := orderServicePackage.NewInvoiceService(&orderServicePackage.InvoiceSConfig{
+		InvoiceRepo:               invoiceRepo,
+		AddressService:            addressService,
+		ShopService:               shopService,
+		ShopVoucherService:        shopVoucherService,
+		CartItemService:           userCartItemService,
+		ShopCourierService:        courierService,
+		MarketplaceVoucherService: marketplaceVoucherService,
+		SealabsPayService:         sealabsPayService,
+		WalletService:             walletService,
+	})
+
 	orderHandler := orderHandlerPackage.New(&orderHandlerPackage.Config{
+		InvoiceService:           invoiceService,
 		TransactionReviewService: transactionReviewService,
 		InvoicePerShopService:    invoicePerShopService,
 	})

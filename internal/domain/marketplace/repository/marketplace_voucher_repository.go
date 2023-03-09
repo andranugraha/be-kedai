@@ -1,10 +1,12 @@
 package repository
 
 import (
+	"errors"
 	"kedai/backend/be-kedai/internal/domain/marketplace/dto"
 	"kedai/backend/be-kedai/internal/domain/marketplace/model"
 	"time"
 
+	commonErr "kedai/backend/be-kedai/internal/common/error"
 	userRepo "kedai/backend/be-kedai/internal/domain/user/repository"
 
 	"gorm.io/gorm"
@@ -13,6 +15,7 @@ import (
 type MarketplaceVoucherRepository interface {
 	GetMarketplaceVoucher(req *dto.GetMarketplaceVoucherRequest) ([]*model.MarketplaceVoucher, error)
 	GetValidByUserID(req *dto.GetMarketplaceVoucherRequest) ([]*model.MarketplaceVoucher, error)
+	GetValid(id, userID, PaymentMethodID int) (*model.MarketplaceVoucher, error)
 }
 
 type marketplaceVoucherRepositoryImpl struct {
@@ -63,7 +66,7 @@ func (r *marketplaceVoucherRepositoryImpl) GetValidByUserID(req *dto.GetMarketpl
 	}
 
 	for _, voucher := range userVoucher {
-		invalidVoucherID = append(invalidVoucherID, voucher.MarketplaceVoucherId)
+		invalidVoucherID = append(invalidVoucherID, *voucher.MarketplaceVoucherId)
 	}
 
 	db := r.db
@@ -88,4 +91,43 @@ func (r *marketplaceVoucherRepositoryImpl) GetValidByUserID(req *dto.GetMarketpl
 	}
 
 	return marketplaceVoucher, nil
+}
+
+func (r *marketplaceVoucherRepositoryImpl) GetValid(id, userID, PaymentMethodID int) (*model.MarketplaceVoucher, error) {
+	var (
+		marketplaceVoucher model.MarketplaceVoucher
+		invalidVoucherID   []int
+	)
+
+	userVoucher, err := r.userVoucherRepository.GetUsedMarketplaceByUserID(userID)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, voucher := range userVoucher {
+		invalidVoucherID = append(invalidVoucherID, *voucher.MarketplaceVoucherId)
+	}
+
+	db := r.db
+
+	if PaymentMethodID != 0 {
+		db = db.Where("payment_method_id = ?", PaymentMethodID).Or("payment_method_id is null")
+	}
+
+	if len(invalidVoucherID) > 0 {
+		db = db.Not("id IN (?)", invalidVoucherID)
+	}
+
+	err = db.Where("id = ?", id).
+		Where("expired_at > ?", time.Now()).
+		First(&marketplaceVoucher).Error
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, commonErr.ErrInvalidVoucher
+		}
+
+		return nil, err
+	}
+
+	return &marketplaceVoucher, nil
 }

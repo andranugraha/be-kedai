@@ -18,6 +18,7 @@ tags:
   - name: Shop
   - name: Marketplace
   - name: Order
+  - name: Seller
 paths:
   /v1/orders/transactions/reviews:
     post:
@@ -229,6 +230,360 @@ paths:
                   message:
                     type: string
                     example: "error message"
+  /v1/users/wallets/step-up:
+    post:
+      security:
+        - BearerAuth: []
+      tags:
+        - User
+      summary: Step up verification
+      description: Verify user wallet's pin for payment purpose. Return new token with stepped up level claim
+      requestBody:
+        $ref: '#/components/requestBodies/StepUpBody'
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Response'
+                  - type: object
+                    properties:
+                      code:
+                        example: 'OK'
+                      message:
+                        example: 'success'
+                      data:
+                        $ref: '#/components/schemas/Token'
+        '400':
+          description: Invalid pin
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "INVALID_PIN"
+                  message:
+                    type: string
+                    example: "wrong pin"
+        '401':
+          description: unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "UNAUTHORIZED"
+                  message:
+                    type: string
+                    example: "invalid credential"
+        '404':
+          description: Wallet not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "NOT_FOUND"
+                  message:
+                    type: string
+                    example: "wallet not found"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "INTERNAL_SERVER_ERROR"
+                  message:
+                    type: string
+                    example: "error message"
+  /v1/users/wallets/pins/change-requests:
+    post:
+      security:
+        - BearerAuth: []
+      tags:
+        - User
+      summary: Create request to change wallet pin
+      description: Generate a token to change wallet pin
+      requestBody:
+        $ref: '#/components/requestBodies/ChangePinRequestBody'
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: OK
+                  message:
+                    type: string
+                    example: success
+        '400':
+          description: bad request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "BAD_REQUEST"
+                  message:
+                    type: string
+                    example: "error message"
+        '401':
+          description: unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "UNAUTHORIZED"
+                  message:
+                    type: string
+                    example: "invalid credential"
+        '404':
+          description: not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: NOT_FOUND
+                  message:
+                    type: string
+                    example: error message
+        '500':
+          description: internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: INTERNAL_SERVER_ERROR
+                  message:
+                    type: string
+                    example: error message
+  /v1/users/wallets/pins/change-confirmations:
+    post:
+      security:
+        - BearerAuth: []
+      tags:
+        - User
+      summary: Complete change wallet pin request
+      description: Confirm change wallet pin request so that change pin takes effect
+      requestBody:
+        $ref: '#/components/requestBodies/CompleteChangePinRequestBody'
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: OK
+                  message:
+                    type: string
+                    example: success
+        '400':
+          description: bad request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "BAD_REQUEST"
+                  message:
+                    type: string
+                    example: "error message"
+        '401':
+          description: unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "UNAUTHORIZED"
+                  message:
+                    type: string
+                    example: "invalid credential"
+        '404':
+          description: not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: NOT_FOUND
+                  message:
+                    type: string
+                    example: error message
+        '500':
+          description: internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: INTERNAL_SERVER_ERROR
+                  message:
+                    type: string
+                    example: error message
+  /v1/users/wallets/pins/reset-requests:
+    post:
+      security:
+        - BearerAuth: []
+      tags:
+        - User
+      summary: Create request to reset wallet pin
+      description: Generate a token to reset wallet pin
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: OK
+                  message:
+                    type: string
+                    example: success
+        '401':
+          description: unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "UNAUTHORIZED"
+                  message:
+                    type: string
+                    example: "invalid credential"
+        '500':
+          description: internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: INTERNAL_SERVER_ERROR
+                  message:
+                    type: string
+                    example: error message
+  /v1/users/wallets/pins/reset-confirmations:
+    post:
+      security:
+        - BearerAuth: []
+      tags:
+        - User
+      summary: Complete rese wallet pin request
+      description: Complete reset wallet pin request
+      requestBody:
+        $ref: '#/components/requestBodies/CompleteResetPinRequestBody'
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: OK
+                  message:
+                    type: string
+                    example: success
+        '400':
+          description: bad request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "BAD_REQUEST"
+                  message:
+                    type: string
+                    example: "error message"
+        '401':
+          description: unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "UNAUTHORIZED"
+                  message:
+                    type: string
+                    example: "invalid credential"
+        '404':
+          description: not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: NOT_FOUND
+                  message:
+                    type: string
+                    example: error message
+        '500':
+          description: internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: INTERNAL_SERVER_ERROR
+                  message:
+                    type: string
+                    example: error message
   /v1/users/wallets/{ref}:
     get:
       security:
@@ -1859,6 +2214,77 @@ paths:
                   message:
                     type: string
                     example: "error message"
+    delete:
+      security:
+        - BearerAuth: []
+      tags:
+        - User
+      summary: Delete user cart items
+      description: Delete cart item from cart with cart item id
+      parameters:
+      - name: cartItemId
+        in: query
+        description: Can receive multiple cart item ids to delete
+        required: true
+        schema:
+          type: array
+          items:
+            type: integer
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Response'
+                  - type: object
+                    properties:
+                      code:
+                        type: string
+                        example: "DELETED"
+                      message:
+                        type: string
+                        example: "delete cart item succesful"
+        '400':
+          description: bad request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "BAD_REQUEST"
+                  message:
+                    type: string
+                    example: "cartItemIds is required"                
+        '404':
+          description: not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "NOT_FOUND"
+                  message:
+                    type: string
+                    example: "cart item not found"
+        '500':
+          description: internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "INTERNAL_SERVER_ERROR"
+                  message:
+                    type: string
+                    example: "error message"                
   /v1/users/carts/{skuId}:
     put:
       security:
@@ -1961,65 +2387,7 @@ paths:
                   message:
                     type: string
                     example: "error message"
-  /v1/users/carts/{cartItemId}:
-    put:
-      security:
-        - BearerAuth: []
-      tags:
-        - User
-      summary: Delete user cart item
-      description: Delete cart item from cart with cart item id
-      parameters:
-        - in: path
-          name: cartItemId
-          required: true
-          description: cart item id, must be an integer and greater than or equal 1
-          schema:
-            type: integer
-            example: 1
-            minimum: 1
-      responses:
-        '200':
-          description: successful operation
-          content:
-            application/json:
-              schema:
-                allOf:
-                  - $ref: '#/components/schemas/Response'
-                  - type: object
-                    properties:
-                      code:
-                        type: string
-                        example: "DELETED"
-                      message:
-                        type: string
-                        example: "delete cart item succesful"
-        '404':
-          description: not found
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  code:
-                    type: string
-                    example: "NOT_FOUND"
-                  message:
-                    type: string
-                    example: "cart item not found"
-        '500':
-          description: internal server error
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  code:
-                    type: string
-                    example: "INTERNAL_SERVER_ERROR"
-                  message:
-                    type: string
-                    example: "error message"                  
+                      
   /v1/users/addresses:
     get:
       security:
@@ -2027,7 +2395,7 @@ paths:
       tags:
         - User
       summary: Get User Addresses
-      description: Get all user addresses
+      description: Get all user addresses (sorted by default address first, then pickup address, then add date)
       responses:
         '200':
           description: successful fetch
@@ -2267,7 +2635,7 @@ paths:
       tags:
         - User
       summary: Delete existing user address
-      description: Delete user address using address id
+      description: Delete user address using address id. Cannot delete default address or pickup address.
       parameters:
         - in: path
           name: addressId
@@ -3082,6 +3450,53 @@ paths:
                   message:
                     type: string
                     example: "error message"
+  /v1/products/autocompletes:
+    get:
+      tags:
+        - Product
+      summary: Get product name by keyword
+      description: Get list of matched product name with keyword
+      parameters:
+        - in: query
+          name: keyword
+          schema:
+            type: string
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            default: 10
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                  allOf:
+                    - $ref: '#/components/schemas/Response'
+                    - type: object
+                      properties:
+                        code:
+                          example: 'OK'
+                        message:
+                          example: 'success'
+                        data:
+                          type: array
+                          items:
+                            $ref: '#/components/schemas/Product'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "INTERNAL_SERVER_ERROR"
+                  message:
+                    type: string
+                    example: "error message"          
   /v1/products/categories:
     get:
       tags:
@@ -3807,8 +4222,136 @@ paths:
                     example: "INTERNAL_SERVER_ERROR"
                   message:
                     type: string
-                    example: "error message"                            
+                    example: "error message"       
+  /v1/sellers/couriers:
+    get:
+      security:
+        - BearerAuth: []
+      tags:
+        - Seller
+      summary: Get all couriers
+      description: Get all available couriers
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Response'
+                  - type: object
+                    properties:
+                      code:
+                        example: "OK"
+                      message:
+                        example: "ok"
+                      data:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            id:
+                              type: integer
+                              example: 1
+                            name:
+                              type: string
+                              example: "JNE"
+                            code:
+                              type: string
+                              example: "jne"
+                            isActive:
+                              type: boolean
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "INTERNAL_SERVER_ERROR"
+                  message:
+                    type: string
+                    example: "error message"                                
   /v1/orders/invoices:
+    post:
+      security:
+        - BearerAuth: []
+      tags:
+        - Order
+      summary: Pay invoice
+      description: Pay invoice with status 'WAITING_FOR_PAYMENT' using SeaLabs Pay or user wallet
+      requestBody:
+        $ref: '#/components/requestBodies/PayInvoiceBody'
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Response'
+                  - type: object
+                    properties:
+                      code:
+                        example: 'CREATED'
+                      message:
+                        example: 'invoice created successfully'
+                      data:
+                        $ref: '#/components/schemas/Token'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "BAD_REQUEST"
+                  message:
+                    type: string
+                    example: "error message"
+        '401':
+          description: unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "UNAUTHORIZED"
+                  message:
+                    type: string
+                    example: "invalid credential"
+        '402':
+          description: payment required. returned when payment method is using sealabs pay but signature doesn't match
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "PAYMENT_REQUIRED"
+                  message:
+                    type: string
+                    example: "payment required"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "INTERNAL_SERVER_ERROR"
+                  message:
+                    type: string
+                    example: "error message"
     get:
       security:
         - BearerAuth: []
@@ -3939,6 +4482,19 @@ paths:
                   message:
                     type: string
                     example: "error message"
+        '401':
+          description: unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "UNAUTHORIZED"
+                  message:
+                    type: string
+                    example: "invalid credential"
         '500':
           description: Internal server error
           content:
@@ -4002,6 +4558,19 @@ paths:
                   message:
                     type: string
                     example: "error message"
+        '401':
+          description: unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "UNAUTHORIZED"
+                  message:
+                    type: string
+                    example: "invalid credential"
         '404':
           description: not found
           content:
@@ -4141,6 +4710,19 @@ paths:
                   message:
                     type: string
                     example: "error message"
+        '401':
+          description: unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "UNAUTHORIZED"
+                  message:
+                    type: string
+                    example: "invalid credential"
         '500':
           description: Internal server error
           content:
@@ -4153,7 +4735,131 @@ paths:
                     example: "INTERNAL_SERVER_ERROR"
                   message:
                     type: string
-                    example: "error message"                                  
+                    example: "error message"    
+  /v1/orders:
+    post:
+      tags:
+        - Order
+      security:
+        - BearerAuth: []
+      summary: Checkout
+      description: Create order to be paid later by user
+      requestBody:
+        $ref: '#/components/requestBodies/CheckoutBody'
+      responses:
+        '201':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Response'
+                  - type: object
+                    properties:
+                      code:
+                        type: string
+                        example: CREATED
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                        example: checkout success
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          id:
+                            type: integer
+        '400':
+          description: invalid input
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "BAD_REQUEST"
+                  message:
+                    type: string
+                    example: "error message"
+        '404':
+          description: not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "NOT_FOUND"
+                  message:
+                    type: string
+                    example: "error message"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "INTERNAL_SERVER_ERROR"
+                  message:
+                    type: string
+                    example: "error message"
+  /v1/orders/invoices/cancel:
+    post:
+      tags:
+        - Order
+      security:
+        - BearerAuth: []
+      summary: Cancel checkout
+      description: Cancel checkout to remove pre-inserted order when user failed to pay, update their order, or cancel their order
+      requestBody:
+        $ref: '#/components/requestBodies/CancelCheckoutBody'
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: OK
+                  message:
+                    type: string
+                    example: cancel checkout success
+        '400':
+          description: invalid input
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "BAD_REQUEST"
+                  message:
+                    type: string
+                    example: "error message"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "INTERNAL_SERVER_ERROR"
+                  message:
+                    type: string
+                    example: "error message"                   
 components:
   schemas:
     User:
@@ -4822,7 +5528,7 @@ components:
           format: float
           example: 1000
         trackingNumber:
-          type: integer
+          type: string
           example: 123
         voucherAmount:
           type: number
@@ -5271,6 +5977,7 @@ components:
               - street
               - subdistrictId
               - isDefault
+              - isPickup
             properties:
               name:
                 type: string
@@ -5292,6 +5999,9 @@ components:
                 type: integer
                 example: 28
               isDefault:
+                type: boolean
+                example: true
+              isPickup:
                 type: boolean
                 example: true
     ReviewMediaBody:
@@ -5359,6 +6069,168 @@ components:
                 type: string
                 pattern: '^(0[1-9]|1[0-2])\/[0-9]{2}$'
                 example: '12/24'
+    CheckoutBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - addressId
+              - totalPrice
+              - paymentMethodId
+              - items
+            properties:
+              addressId:
+                type: integer
+              totalPrice:
+                type: number
+                format: float
+              voucherId:
+                type: integer
+              paymentMethodId:
+                type: integer
+              items:
+                type: array
+                items:
+                  type: object
+                  required:
+                    - shopId
+                    - courierServiceId
+                    - shippingCost
+                    - products
+                  properties:
+                    shopId:
+                      type: integer
+                    voucherId:
+                      type: integer
+                    courierServiceId:
+                      type: integer
+                    shippingCost:
+                      type: number
+                      format: float
+                    products:
+                      type: array
+                      items:
+                        type: object
+                        required:
+                          - cartItemId
+                          - quantity
+                        properties:
+                          cartItemId:
+                            type: integer
+                          quantity:
+                            type: integer
+    PayInvoiceBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - invoiceId
+              - paymentMethodId
+            properties:
+              invoiceId:
+                type: integer
+              paymentMethodId:
+                type: integer
+              cardNumber:
+                type: string
+                format: numeric
+              Signature:
+                type: string
+                format: alphanumeric
+              Amount:
+                type: number
+                format: float
+              TxnID:
+                type: string
+                format: alphanumeric
+    CancelCheckoutBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - invoiceId
+            properties:
+              invoiceId:
+                type: integer
+    StepUpBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - pin
+            properties:
+              pin:
+                type: string
+                format: numeric
+                minLength: 6
+                maxLength: 6
+    ChangePinRequestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - currentPin
+              - newPin
+            properties:
+              currentPin:
+                type: string
+                format: numeric
+                minLength: 6
+                maxLength: 6
+                example: "123456"
+              newPin:
+                type: string
+                format: numeric
+                minLength: 6
+                maxLength: 6
+                example: "123456"
+    CompleteChangePinRequestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - verificationCode
+            properties:
+              verificationCode:
+                type: string
+                format: alphanumeric
+                minLength: 6
+                maxLength: 6
+                example: "1a3c5e"
+    CompleteResetPinRequestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - token
+              - newPin
+            properties:
+              token:
+                type: string
+                format: alphanumeric
+                minLength: 6
+                maxLength: 6
+                example: "1a3c5e"
+              newPin:
+                type: string
+                format: numeric
+                minLength: 6
+                maxLength: 6
+                example: "123456"
   securitySchemes:
     BearerAuth:
       type: http

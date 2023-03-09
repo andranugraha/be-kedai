@@ -438,6 +438,49 @@ func TestGetProductsByShopSlug(t *testing.T) {
 	}
 }
 
+func TestSearchAutocomplete(t *testing.T) {
+	type input struct {
+		req dto.ProductSearchAutocomplete
+		err error
+	}
+	type expected struct {
+		result []*dto.ProductResponse
+		err    error
+	}
+	type cases struct {
+		description string
+		input
+		expected
+	}
+
+	for _, tc := range []cases{
+		{
+			description: "should return result and error when called",
+			input: input{
+				req: dto.ProductSearchAutocomplete{},
+				err: errorResponse.ErrInternalServerError,
+			},
+			expected: expected{
+				result: []*dto.ProductResponse{},
+				err:    errorResponse.ErrInternalServerError,
+			},
+		},
+	} {
+		t.Run(tc.description, func(t *testing.T) {
+			mockProduct := new(mocks.ProductRepository)
+			service := service.NewProductService(&service.ProductSConfig{
+				ProductRepository: mockProduct,
+			})
+			mockProduct.On("SearchAutocomplete", tc.input.req).Return(tc.expected.result, tc.input.err)
+
+			result, err := service.SearchAutocomplete(tc.input.req)
+
+			assert.Equal(t, tc.expected.result, result)
+			assert.Equal(t, tc.expected.err, err)
+		})
+	}
+}
+
 func TestGetSellerProduct(t *testing.T) {
 	type input struct {
 		userID  int

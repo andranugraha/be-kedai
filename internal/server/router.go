@@ -20,8 +20,8 @@ type RouterConfig struct {
 	LocationHandler    *locationHandler.Handler
 	ProductHandler     *productHandler.Handler
 	ShopHandler        *shopHandler.Handler
-	MarketplaceHandler *marketplaceHandler.Handler
 	OrderHandler       *orderHandler.Handler
+	MarketplaceHandler *marketplaceHandler.Handler
 }
 
 func NewRouter(cfg *RouterConfig) *gin.Engine {
@@ -73,6 +73,11 @@ func NewRouter(cfg *RouterConfig) *gin.Engine {
 					wallet.POST("/top-up", cfg.UserHandler.TopUp)
 					wallet.GET("/histories/:ref", cfg.UserHandler.GetDetail)
 					wallet.GET("/histories", cfg.UserHandler.GetWalletHistory)
+					wallet.POST("/step-up", cfg.UserHandler.StepUp)
+					wallet.POST("/pins/change-requests", cfg.UserHandler.RequestWalletPinChange)
+					wallet.POST("/pins/change-confirmations", cfg.UserHandler.CompleteChangeWalletPin)
+					wallet.POST("/pins/reset-requests", cfg.UserHandler.RequestWalletPinReset)
+					wallet.POST("/pins/reset-confirmations", cfg.UserHandler.CompleteResetWalletPin)
 				}
 				wishlists := userAuthenticated.Group("/wishlists")
 				{
@@ -86,7 +91,7 @@ func NewRouter(cfg *RouterConfig) *gin.Engine {
 					carts.POST("", cfg.UserHandler.CreateCartItem)
 					carts.GET("", cfg.UserHandler.GetAllCartItem)
 					carts.PUT("/:skuId", cfg.UserHandler.UpdateCartItem)
-					carts.DELETE("/:cartItemId", cfg.UserHandler.DeleteCartItem)
+					carts.DELETE("", cfg.UserHandler.DeleteCartItem)
 				}
 				addresses := userAuthenticated.Group("/addresses")
 				{
@@ -129,6 +134,7 @@ func NewRouter(cfg *RouterConfig) *gin.Engine {
 			product.GET("/:code/reviews", cfg.ProductHandler.GetProductReviews)
 			product.GET("/:code/reviews/stats", cfg.ProductHandler.GetProductReviewStats)
 			product.GET("/recommendations/categories", cfg.ProductHandler.GetRecommendationByCategory)
+			product.GET("/autocompletes", cfg.ProductHandler.SearchAutocomplete)
 			category := product.Group("/categories")
 			{
 				category.GET("", cfg.ProductHandler.GetCategories)
@@ -164,8 +170,11 @@ func NewRouter(cfg *RouterConfig) *gin.Engine {
 		{
 			authenticated := order.Group("", middleware.JWTAuthorization, cfg.UserHandler.GetSession)
 			{
+				authenticated.POST("", cfg.OrderHandler.Checkout)
 				invoice := authenticated.Group("/invoices")
 				{
+					invoice.POST("", cfg.OrderHandler.PayInvoice)
+					invoice.POST("/cancel", cfg.OrderHandler.CancelCheckout)
 					invoice.GET("", cfg.OrderHandler.GetInvoicePerShopsByUserID)
 					invoice.GET("/:code", cfg.OrderHandler.GetInvoiceByCode)
 				}
@@ -178,6 +187,14 @@ func NewRouter(cfg *RouterConfig) *gin.Engine {
 						review.POST("", cfg.OrderHandler.AddTransactionReview)
 					}
 				}
+			}
+		}
+
+		seller := v1.Group("/sellers")
+		{
+			authenticated := seller.Group("", middleware.JWTAuthorization, cfg.UserHandler.GetSession)
+			{
+				authenticated.GET("/couriers", cfg.ShopHandler.GetShipmentList)
 			}
 		}
 	}
