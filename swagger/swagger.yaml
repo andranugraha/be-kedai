@@ -2079,6 +2079,47 @@ paths:
                   message:
                     type: string
                     example: "error message"                              
+  /v1/locations/addresses/{placeId}:
+    get:
+      tags:
+        - Location
+      summary: Get search address detail from google maps
+      description: Get address detail from google maps including its parent location detail
+      parameters:
+        - in: path
+          required: true
+          name: placeId
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Response'
+                  - type: object
+                    properties:
+                      code:
+                        example: 'OK'
+                      message:
+                        example: 'success'
+                      data:
+                        $ref: '#/components/schemas/SearchAddressDetailResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "INTERNAL_SERVER_ERROR"
+                  message:
+                    type: string
+                    example: "error message"                              
   /v1/users/carts:
     get:
       security:
@@ -5723,6 +5764,29 @@ components:
           type: string
         description:
           type: string
+    SearchAddressDetailResponse:
+      type: object
+      properties:
+        placeId:
+          type: string
+        latitude:
+          type: number
+          format: float
+        longitude:
+          type: number
+          format: float
+        street:
+          type: string
+        postalCode:
+          type: string
+        subdistrict:
+          $ref: '#/components/schemas/Subdistrict'
+        district:
+          $ref: '#/components/schemas/District'
+        city:
+          $ref: '#/components/schemas/City'
+        province:
+          $ref: '#/components/schemas/Province'
   requestBodies:
     WalletBody:
       required: true
