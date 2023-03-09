@@ -1859,6 +1859,57 @@ paths:
                   message:
                     type: string
                     example: "error message"
+    delete:
+      security:
+        - BearerAuth: []
+      tags:
+        - User
+      summary: Delete user cart item
+      description: Delete cart item from cart with cart item id
+      requestBody:
+        $ref: '#/components/requestBodies/DeleteCartBody'
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Response'
+                  - type: object
+                    properties:
+                      code:
+                        type: string
+                        example: "DELETED"
+                      message:
+                        type: string
+                        example: "delete cart item succesful"
+        '404':
+          description: not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "NOT_FOUND"
+                  message:
+                    type: string
+                    example: "cart item not found"
+        '500':
+          description: internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "INTERNAL_SERVER_ERROR"
+                  message:
+                    type: string
+                    example: "error message"                
   /v1/users/carts/{skuId}:
     put:
       security:
@@ -1961,58 +2012,7 @@ paths:
                   message:
                     type: string
                     example: "error message"
-  /v1/users/carts:
-    delete:
-      security:
-        - BearerAuth: []
-      tags:
-        - User
-      summary: Delete user cart item
-      description: Delete cart item from cart with cart item id
-      requestBody:
-        $ref: '#/components/requestBodies/DeleteCartBody'
-      responses:
-        '200':
-          description: successful operation
-          content:
-            application/json:
-              schema:
-                allOf:
-                  - $ref: '#/components/schemas/Response'
-                  - type: object
-                    properties:
-                      code:
-                        type: string
-                        example: "DELETED"
-                      message:
-                        type: string
-                        example: "delete cart item succesful"
-        '404':
-          description: not found
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  code:
-                    type: string
-                    example: "NOT_FOUND"
-                  message:
-                    type: string
-                    example: "cart item not found"
-        '500':
-          description: internal server error
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  code:
-                    type: string
-                    example: "INTERNAL_SERVER_ERROR"
-                  message:
-                    type: string
-                    example: "error message"                  
+                      
   /v1/users/addresses:
     get:
       security:
@@ -5323,6 +5323,20 @@ components:
                 items:
                   oneOf:
                     - $ref: '#/components/requestBodies/ReviewMediaBody'
+    DeleteCartBody:
+      required: true
+      content:
+         application/json:
+          schema:
+            type: object
+            required:
+              - cartItemIds
+            properties:
+              cartItemIds:
+                type: array
+                items:
+                  type: integer
+                  example: [1, 1]
     RegisterSeaLabsPayBody:
       required: true
       content:
