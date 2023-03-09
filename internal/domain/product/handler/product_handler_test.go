@@ -415,3 +415,77 @@ func TestGetProductsByShopSlug(t *testing.T) {
 		})
 	}
 }
+
+func TestSearchAutocomplete(t *testing.T) {
+	var (
+		req = dto.ProductSearchAutocomplete{
+			Limit: 10,
+		}
+		res = []*dto.ProductResponse{}
+	)
+	type input struct {
+		req dto.ProductSearchAutocomplete
+		res []*dto.ProductResponse
+		err error
+	}
+	type expected struct {
+		statusCode int
+		response   response.Response
+	}
+	type cases struct {
+		description string
+		input
+		expected
+	}
+
+	for _, tc := range []cases{
+		{
+			description: "should return list of matched product with code 200 when success",
+			input: input{
+				req: req,
+				res: res,
+				err: nil,
+			},
+			expected: expected{
+				statusCode: http.StatusOK,
+				response: response.Response{
+					Code:    code.OK,
+					Message: "ok",
+					Data:    res,
+				},
+			},
+		},
+		{
+			description: "should return error with code 500 when internal server error",
+			input: input{
+				req: req,
+				res: nil,
+				err: errs.ErrInternalServerError,
+			},
+			expected: expected{
+				statusCode: http.StatusInternalServerError,
+				response: response.Response{
+					Code:    code.INTERNAL_SERVER_ERROR,
+					Message: errs.ErrInternalServerError.Error(),
+				},
+			},
+		},
+	} {
+		t.Run(tc.description, func(t *testing.T) {
+			expectedRes, _ := json.Marshal(tc.expected.response)
+			mockService := new(mocks.ProductService)
+			mockService.On("SearchAutocomplete", tc.input.req).Return(tc.input.res, tc.input.err)
+			rec := httptest.NewRecorder()
+			c, _ := gin.CreateTestContext(rec)
+			h := handler.New(&handler.Config{
+				ProductService: mockService,
+			})
+			c.Request = httptest.NewRequest("GET", "/products/autocompletes", nil)
+
+			h.SearchAutocomplete(c)
+
+			assert.Equal(t, tc.expected.statusCode, rec.Code)
+			assert.Equal(t, string(expectedRes), rec.Body.String())
+		})
+	}
+}

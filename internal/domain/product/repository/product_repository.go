@@ -18,6 +18,7 @@ type ProductRepository interface {
 	GetByShopID(shopID int, request *dto.ShopProductFilterRequest) ([]*dto.ProductDetail, int64, int, error)
 	GetRecommendationByCategory(productId int, categoryId int) ([]*dto.ProductResponse, error)
 	ProductSearchFiltering(req dto.ProductSearchFilterRequest, shopId int) ([]*dto.ProductResponse, int64, int, error)
+	SearchAutocomplete(req dto.ProductSearchAutocomplete) ([]*dto.ProductResponse, error)
 }
 
 type productRepositoryImpl struct {
@@ -234,4 +235,22 @@ func (r *productRepositoryImpl) ProductSearchFiltering(req dto.ProductSearchFilt
 	}
 
 	return productList, totalRows, totalPages, nil
+}
+
+func (r *productRepositoryImpl) SearchAutocomplete(req dto.ProductSearchAutocomplete) ([]*dto.ProductResponse, error) {
+	var (
+		products []*dto.ProductResponse
+		active   = true
+	)
+
+	db := r.db.Select(`products.*, (select url from product_medias pm where products.id = pm.product_id limit 1) as image_url`)
+
+	db = db.Where("products.is_active = ?", active).Where("products.name ILIKE ?", "%"+req.Keyword+"%").Order("products.rating desc")
+
+	err := db.Limit(req.Limit).Find(&products).Error
+	if err != nil {
+		return nil, err
+	}
+
+	return products, nil
 }
