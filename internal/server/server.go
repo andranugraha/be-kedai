@@ -235,6 +235,7 @@ func createRouter() *gin.Engine {
 		TransactionReviewRepo: transactionReviewRepo,
 		TransactionService:    transactionService,
 		InvoicePerShopService: invoicePerShopService,
+		ProductService:        productService,
 	})
 
 	sealabsPayRepo := userRepoPackage.NewSealabsPayRepository(&userRepoPackage.SealabsPayRConfig{

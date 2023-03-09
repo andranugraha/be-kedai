@@ -2836,6 +2836,11 @@ paths:
           schema:
             type: integer
             default: 1    
+        - in: query
+          name: filter
+          schema:
+            type: string
+            enum: [5_star, 4_star, 3_star, 2_star, 1_star, with_picture, with_comment]    
       responses:
         '200':
           description: operation successful
