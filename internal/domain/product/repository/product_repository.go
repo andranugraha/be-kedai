@@ -59,7 +59,9 @@ func (r *productRepositoryImpl) GetByCode(code string) (*dto.ProductDetail, erro
 		Joins("left join product_promotions pp on pp.sku_id = s.id and (select count(id) from shop_promotions sp where pp.promotion_id = sp.id and now() between sp.start_period and sp.end_period) > 0").
 		Group("products.id")
 
-	err := query.Where("code = ?", code).Preload("SKU").Preload("VariantGroup.Variant").Preload("Media").Preload("Bulk").Preload("Shop.Address.Subdistrict").First(&product).Error
+	err := query.Where("code = ?", code).Preload("SKU", func(query *gorm.DB) *gorm.DB {
+		return query.Select("skus.id, skus.price, skus.stock, skus.product_id")
+	}).Preload("VariantGroup.Variant").Preload("Media").Preload("Bulk").Preload("Shop.Address.Subdistrict").First(&product).Error
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, errs.ErrProductDoesNotExist
