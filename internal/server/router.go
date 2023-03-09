@@ -115,6 +115,7 @@ func NewRouter(cfg *RouterConfig) *gin.Engine {
 			location.GET("/districts", cfg.LocationHandler.GetDistricts)
 			location.GET("/subdistricts", cfg.LocationHandler.GetSubdistricts)
 			location.GET("/addresses", cfg.LocationHandler.SearchAddress)
+			location.GET("/addresses/:placeId", cfg.LocationHandler.SearchAddressDetail)
 		}
 
 		product := v1.Group("/products")
