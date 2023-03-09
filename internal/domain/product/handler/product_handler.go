@@ -89,3 +89,25 @@ func (h *Handler) GetProductsByShopSlug(c *gin.Context) {
 
 	response.Success(c, http.StatusOK, code.OK, "success", res)
 }
+
+func (h *Handler) GetSellerProducts(c *gin.Context) {
+	var request dto.SellerProductFilterRequest
+	_ = c.ShouldBindQuery(&request)
+
+	request.Validate()
+
+	userID := c.GetInt("userId")
+
+	res, err := h.productService.GetSellerProducts(userID, &request)
+	if err != nil {
+		if errors.Is(err, errs.ErrShopNotFound) {
+			response.Error(c, http.StatusNotFound, code.SHOP_NOT_REGISTERED, err.Error())
+			return
+		}
+
+		response.Error(c, http.StatusInternalServerError, code.INTERNAL_SERVER_ERROR, errs.ErrInternalServerError.Error())
+		return
+	}
+
+	response.Success(c, http.StatusOK, code.OK, "success", res)
+}
