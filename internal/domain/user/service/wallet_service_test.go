@@ -249,3 +249,38 @@ func TestTopUp(t *testing.T) {
 		})
 	}
 }
+
+func TestCheckIsWalletBloced(t *testing.T) {
+	tests := []struct {
+		name       string
+		wantErr    error
+		beforeTest func(mockWalletRepo *mocks.WalletRepository, walletCache *mocks.WalletCache)
+	}{
+		{
+			name:    "should return error when wallet is blocked",
+			wantErr: errRes.ErrWalletTemporarilyBlocked,
+			beforeTest: func(mockWalletRepo *mocks.WalletRepository, walletCache *mocks.WalletCache) {
+				mockWalletRepo.On("GetByUserID", 1).Return(&model.Wallet{
+					ID: 1,
+				}, nil)
+				walletCache.On("CheckIsWalletBlocked", 1).Return(errRes.ErrWalletTemporarilyBlocked)
+			},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			mockWalletRepo := mocks.NewWalletRepository(t)
+			mockWalletCache := mocks.NewWalletCache(t)
+			test.beforeTest(mockWalletRepo, mockWalletCache)
+			walletService := service.NewWalletService(&service.WalletSConfig{
+				WalletRepo:  mockWalletRepo,
+				WalletCache: mockWalletCache,
+			})
+
+			err := walletService.CheckIsWalletBlocked(1)
+
+			assert.Equal(t, test.wantErr, err)
+		})
+	}
+}
