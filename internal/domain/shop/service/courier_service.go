@@ -1,11 +1,13 @@
 package service
 
 import (
+	"kedai/backend/be-kedai/internal/domain/shop/dto"
 	"kedai/backend/be-kedai/internal/domain/shop/model"
 	"kedai/backend/be-kedai/internal/domain/shop/repository"
 )
 
 type CourierService interface {
+	GetShipmentList(userId int) ([]*dto.ShipmentCourierResponse, error)
 	GetCouriersByShopID(shopID int) ([]*model.Courier, error)
 	GetCouriersByProductID(productID int) ([]*model.Courier, error)
 }
@@ -25,6 +27,15 @@ func NewCourierService(cfg *CourierSConfig) CourierService {
 		courierRepository: cfg.CourierRepository,
 		shopService:       cfg.ShopService,
 	}
+}
+
+func (s *courierServiceImpl) GetShipmentList(userId int) ([]*dto.ShipmentCourierResponse, error) {
+	shop, err := s.shopService.FindShopByUserId(userId)
+	if err != nil {
+		return nil, err
+	}
+
+	return s.courierRepository.GetShipmentList(shop.ID)
 }
 
 func (s *courierServiceImpl) GetCouriersByShopID(shopID int) ([]*model.Courier, error) {

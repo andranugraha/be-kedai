@@ -99,9 +99,6 @@ func createRouter() *gin.Engine {
 	courierRepo := shopRepoPackage.NewCourierRepository(&shopRepoPackage.CourierRConfig{
 		DB: db,
 	})
-	courierService := shopServicePackage.NewCourierService(&shopServicePackage.CourierSConfig{
-		CourierRepository: courierRepo,
-	})
 
 	shopRepo := shopRepoPackage.NewShopRepository(&shopRepoPackage.ShopRConfig{
 		DB: db,
@@ -109,6 +106,11 @@ func createRouter() *gin.Engine {
 
 	shopService := shopServicePackage.NewShopService(&shopServicePackage.ShopSConfig{
 		ShopRepository: shopRepo,
+	})
+
+	courierService := shopServicePackage.NewCourierService(&shopServicePackage.CourierSConfig{
+		CourierRepository: courierRepo,
+		ShopService:       shopService,
 	})
 
 	invoicePerShopRepo := orderRepoPackage.NewInvoicePerShopRepository(&orderRepoPackage.InvoicePerShopRConfig{
@@ -148,6 +150,7 @@ func createRouter() *gin.Engine {
 	shopHandler := shopHandlerPackage.New(&shopHandlerPackage.HandlerConfig{
 		ShopService:        shopService,
 		ShopVoucherService: shopVoucherService,
+		CourierService:     courierService,
 	})
 
 	userCache := userCachePackage.NewUserCache(&userCachePackage.UserCConfig{

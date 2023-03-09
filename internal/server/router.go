@@ -174,6 +174,14 @@ func NewRouter(cfg *RouterConfig) *gin.Engine {
 				}
 			}
 		}
+
+		seller := v1.Group("/sellers")
+		{
+			authenticated := seller.Group("", middleware.JWTAuthorization, cfg.UserHandler.GetSession)
+			{
+				authenticated.GET("/couriers", cfg.ShopHandler.GetShipmentList)
+			}
+		}
 	}
 
 	return r
