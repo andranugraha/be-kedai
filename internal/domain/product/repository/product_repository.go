@@ -131,7 +131,9 @@ func (r *productRepositoryImpl) GetByShopID(shopID int, request *dto.ShopProduct
 		query = query.Where("products.id != ?", request.ExceptionID)
 	}
 
-	err := query.Model(&model.Product{}).Count(&totalRows).Error
+	query = query.Session(&gorm.Session{})
+
+	err := query.Model(&model.Product{}).Distinct("products.id").Count(&totalRows).Error
 	if err != nil {
 		return nil, 0, 0, err
 	}
@@ -247,7 +249,7 @@ func (r *productRepositoryImpl) GetBySellerID(shopID int, request *dto.SellerPro
 		totalPages int
 	)
 
-	query := r.db.Distinct().
+	query := r.db.
 		Select(`products.*,
 		MIN(skus.price) AS min_price,
 		SUM(skus.stock) AS total_stock,
@@ -279,7 +281,9 @@ func (r *productRepositoryImpl) GetBySellerID(shopID int, request *dto.SellerPro
 		query = query.Where("skus.stock = 0")
 	}
 
-	err := query.Model(&model.Product{}).Count(&totalRows).Error
+	query = query.Session(&gorm.Session{})
+
+	err := query.Model(&model.Product{}).Distinct("products.id").Count(&totalRows).Error
 	if err != nil {
 		return nil, 0, 0, err
 	}
