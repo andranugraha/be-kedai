@@ -103,22 +103,8 @@ func createRouter() *gin.Engine {
 		WalletHistory: walletHistoryRepo,
 	})
 
-	walletService := userServicePackage.NewWalletService(&userServicePackage.WalletSConfig{
-		WalletRepo:  walletRepo,
-		UserCache:   userCache,
-		WalletCache: walletCache,
-	})
-
-	walletHistoryService := userServicePackage.NewWalletHistoryService(&userServicePackage.WalletHistorySConfig{
-		WalletHistoryRepository: walletHistoryRepo,
-		WalletService:           walletService,
-	})
-
 	courierRepo := shopRepoPackage.NewCourierRepository(&shopRepoPackage.CourierRConfig{
 		DB: db,
-	})
-	courierService := shopServicePackage.NewCourierService(&shopServicePackage.CourierSConfig{
-		CourierRepository: courierRepo,
 	})
 
 	shopRepo := shopRepoPackage.NewShopRepository(&shopRepoPackage.ShopRConfig{
@@ -127,6 +113,11 @@ func createRouter() *gin.Engine {
 
 	shopService := shopServicePackage.NewShopService(&shopServicePackage.ShopSConfig{
 		ShopRepository: shopRepo,
+	})
+
+	courierService := shopServicePackage.NewCourierService(&shopServicePackage.CourierSConfig{
+		CourierRepository: courierRepo,
+		ShopService:       shopService,
 	})
 
 	invoicePerShopRepo := orderRepoPackage.NewInvoicePerShopRepository(&orderRepoPackage.InvoicePerShopRConfig{
@@ -166,6 +157,7 @@ func createRouter() *gin.Engine {
 	shopHandler := shopHandlerPackage.New(&shopHandlerPackage.HandlerConfig{
 		ShopService:        shopService,
 		ShopVoucherService: shopVoucherService,
+		CourierService:     courierService,
 	})
 
 	userProfileRepo := userRepoPackage.NewUserProfileRepository(&userRepoPackage.UserProfileRConfig{
@@ -189,6 +181,20 @@ func createRouter() *gin.Engine {
 		Repository: userProfileRepo,
 	})
 
+	walletService := userServicePackage.NewWalletService(&userServicePackage.WalletSConfig{
+		WalletRepo:  walletRepo,
+		UserCache:   userCache,
+		WalletCache: walletCache,
+		UserService: userService,
+		MailUtils:   mailUtils,
+		RandomUtils: randomUtils,
+	})
+
+	walletHistoryService := userServicePackage.NewWalletHistoryService(&userServicePackage.WalletHistorySConfig{
+		WalletHistoryRepository: walletHistoryRepo,
+		WalletService:           walletService,
+	})
+
 	userWishlistRepo := userRepoPackage.NewUserWishlistRepository(&userRepoPackage.UserWishlistRConfig{
 		DB: db,
 	})
@@ -202,18 +208,21 @@ func createRouter() *gin.Engine {
 	userCartItemRepo := userRepoPackage.NewUserCartItemRepository(&userRepoPackage.UserCartItemRConfig{
 		DB: db,
 	})
-	userAddressRepo := userRepoPackage.NewUserAddressRepository(&userRepoPackage.UserAddressRConfig{
+
+	addressRepo := locationRepoPackage.NewAddressRepository(&locationRepoPackage.AddressRConfig{
 		DB:              db,
 		UserProfileRepo: userProfileRepo,
+		ShopRepo:        shopRepo,
 	})
 
-	userAddressService := userServicePackage.NewUserAddressService(&userServicePackage.UserAddressSConfig{
-		UserAddressRepo:    userAddressRepo,
+	addressService := locationServicePackage.NewAddressService(&locationServicePackage.AddressSConfig{
+		AddressRepo:        addressRepo,
 		ProvinceService:    provinceService,
 		DistrictService:    districtService,
 		SubdistrictService: subdistrictService,
 		CityService:        cityService,
 		UserProfileService: userProfileService,
+		ShopService:        shopService,
 	})
 
 	userCartItemService := userServicePackage.NewUserCartItemService(&userServicePackage.UserCartItemSConfig{
@@ -238,6 +247,7 @@ func createRouter() *gin.Engine {
 		TransactionReviewRepo: transactionReviewRepo,
 		TransactionService:    transactionService,
 		InvoicePerShopService: invoicePerShopService,
+		ProductService:        productService,
 	})
 
 	sealabsPayRepo := userRepoPackage.NewSealabsPayRepository(&userRepoPackage.SealabsPayRConfig{
@@ -255,7 +265,7 @@ func createRouter() *gin.Engine {
 		UserWishlistService:  userWishlistService,
 		UserCartItemService:  userCartItemService,
 		SealabsPayService:    sealabsPayService,
-		UserAddressService:   userAddressService,
+		AddressService:       addressService,
 		UserProfileService:   userProfileService,
 	})
 	marketplaceHandler := marketplaceHandlerPackage.New(&marketplaceHandlerPackage.HandlerConfig{

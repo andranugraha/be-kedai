@@ -17,6 +17,12 @@ type WalletCache interface {
 	DeleteErrorCount(walletId int) error
 	BlockWallet(walletId int) error
 	CheckIsWalletBlocked(walletId int) error
+	StorePinAndVerificationCode(userID int, pin string, verificationCode string) error
+	FindPinAndVerificationCode(userID int) (string, string, error)
+	DeletePinAndVerificationCode(userID int) error
+	StoreResetPinToken(userID int, token string) error
+	FindResetPinToken(token string) error
+	DeleteResetPinToken(token string) error
 }
 
 type walletCacheImpl struct {
@@ -64,9 +70,91 @@ func (r *walletCacheImpl) StoreOrIncrementWalletStepUpErrorCount(walletId int) e
 	return nil
 }
 
+func (c *walletCacheImpl) StorePinAndVerificationCode(userID int, pin string, verificationCode string) error {
+	expireTime := time.Minute * 5
+	key := fmt.Sprintf("user_%d-updatePin", userID)
+
+	err := c.rdc.HSet(context.Background(), key, "newPin", pin, "verificationCode", verificationCode).Err()
+	if err != nil {
+		return err
+	}
+
+	return c.rdc.Expire(context.Background(), key, expireTime).Err()
+}
+
+func (c *walletCacheImpl) FindPinAndVerificationCode(userID int) (string, string, error) {
+	key := fmt.Sprintf("user_%d-updatePin", userID)
+
+	pin, err := c.rdc.HGet(context.Background(), key, "newPin").Result()
+	if err != nil {
+		if err == redis.Nil {
+			err = errs.ErrVerificationCodeNotFound
+		}
+		return "", "", err
+	}
+
+	verificationCode, err := c.rdc.HGet(context.Background(), key, "verificationCode").Result()
+	if err != nil {
+		if err == redis.Nil {
+			err = errs.ErrVerificationCodeNotFound
+		}
+		return "", "", err
+	}
+
+	return pin, verificationCode, nil
+}
+
+func (c *walletCacheImpl) DeletePinAndVerificationCode(userID int) error {
+	key := fmt.Sprintf("user_%d-updatePin", userID)
+
+	err := c.rdc.Del(context.Background(), key).Err()
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (c *walletCacheImpl) StoreResetPinToken(userID int, token string) error {
+	expireTime := time.Minute * 5
+	key := fmt.Sprintf("resetPinToken:%s", token)
+
+	err := c.rdc.SetNX(context.Background(), key, userID, expireTime).Err()
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (c *walletCacheImpl) FindResetPinToken(token string) error {
+	key := fmt.Sprintf("resetPinToken:%s", token)
+
+	_, err := c.rdc.Get(context.Background(), key).Int()
+	if err != nil {
+		if err == redis.Nil {
+			err = errs.ErrResetPinTokenNotFound
+		}
+
+		return err
+	}
+
+	return nil
+}
+
 func (r *walletCacheImpl) DeleteErrorCount(walletId int) error {
 	key := fmt.Sprintf("wallet_%d:step_up_error_count", walletId)
 	err := r.rdc.Del(context.Background(), key).Err()
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (c *walletCacheImpl) DeleteResetPinToken(token string) error {
+	key := fmt.Sprintf("resetPinToken:%s", token)
+	err := c.rdc.Del(context.Background(), key).Err()
 	if err != nil {
 		return err
 	}

@@ -70,7 +70,7 @@ func (h *Handler) ProductSearchFiltering(c *gin.Context) {
 
 func (h *Handler) GetProductsByShopSlug(c *gin.Context) {
 	var request dto.ShopProductFilterRequest
-	c.ShouldBindQuery(&request)
+	_ = c.ShouldBindQuery(&request)
 
 	request.Validate()
 
@@ -88,4 +88,18 @@ func (h *Handler) GetProductsByShopSlug(c *gin.Context) {
 	}
 
 	response.Success(c, http.StatusOK, code.OK, "success", res)
+}
+
+func (h *Handler) SearchAutocomplete(c *gin.Context) {
+	var req dto.ProductSearchAutocomplete
+	_ = c.ShouldBindQuery(&req)
+	req.Validate()
+
+	result, err := h.productService.SearchAutocomplete(req)
+	if err != nil {
+		response.Error(c, http.StatusInternalServerError, code.INTERNAL_SERVER_ERROR, err.Error())
+		return
+	}
+
+	response.Success(c, http.StatusOK, code.OK, "ok", result)
 }

@@ -113,13 +113,15 @@ func (h *Handler) UpdateCartItem(c *gin.Context) {
 
 func (h *Handler) DeleteCartItem(c *gin.Context) {
 	var req dto.DeleteCartItemRequest
-	cartItemId := c.Param("cartItemId")
-	cartItemIdInt, _ := strconv.Atoi(cartItemId)
 
-	req.CartItemId = cartItemIdInt
+	err := c.ShouldBindQuery(&req)
+	if err != nil {
+		response.ErrorValidator(c, http.StatusBadRequest, err)
+		return
+	}
 	req.UserId = c.GetInt("userId")
 
-	err := h.userCartItemService.DeleteCartItem(&req)
+	err = h.userCartItemService.DeleteCartItem(&req)
 	if err != nil {
 		if errors.Is(err, errs.ErrCartItemNotFound) {
 			response.Error(c, http.StatusNotFound, code.CART_ITEM_NOT_FOUND, err.Error())

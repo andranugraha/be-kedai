@@ -147,7 +147,7 @@ func (r *userCartItemRepository) DeleteCartItemBySkuIdsAndUserId(tx *gorm.DB, sk
 }
 
 func (r *userCartItemRepository) DeleteCartItem(req *dto.DeleteCartItemRequest) error {
-	res := r.db.Unscoped().Where("id = ? and user_id = ?", req.CartItemId, req.UserId).Delete(&model.CartItem{})
+	res := r.db.Unscoped().Where("id in (?) and user_id = ?", req.CartItemIds, req.UserId).Delete(&model.CartItem{})
 	if err := res.Error; err != nil {
 		return err
 	}

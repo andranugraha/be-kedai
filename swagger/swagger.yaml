@@ -18,6 +18,7 @@ tags:
   - name: Shop
   - name: Marketplace
   - name: Order
+  - name: Seller
 paths:
   /v1/orders/transactions/reviews:
     post:
@@ -307,6 +308,282 @@ paths:
                   message:
                     type: string
                     example: "error message"
+  /v1/users/wallets/pins/change-requests:
+    post:
+      security:
+        - BearerAuth: []
+      tags:
+        - User
+      summary: Create request to change wallet pin
+      description: Generate a token to change wallet pin
+      requestBody:
+        $ref: '#/components/requestBodies/ChangePinRequestBody'
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: OK
+                  message:
+                    type: string
+                    example: success
+        '400':
+          description: bad request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "BAD_REQUEST"
+                  message:
+                    type: string
+                    example: "error message"
+        '401':
+          description: unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "UNAUTHORIZED"
+                  message:
+                    type: string
+                    example: "invalid credential"
+        '404':
+          description: not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: NOT_FOUND
+                  message:
+                    type: string
+                    example: error message
+        '500':
+          description: internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: INTERNAL_SERVER_ERROR
+                  message:
+                    type: string
+                    example: error message
+  /v1/users/wallets/pins/change-confirmations:
+    post:
+      security:
+        - BearerAuth: []
+      tags:
+        - User
+      summary: Complete change wallet pin request
+      description: Confirm change wallet pin request so that change pin takes effect
+      requestBody:
+        $ref: '#/components/requestBodies/CompleteChangePinRequestBody'
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: OK
+                  message:
+                    type: string
+                    example: success
+        '400':
+          description: bad request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "BAD_REQUEST"
+                  message:
+                    type: string
+                    example: "error message"
+        '401':
+          description: unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "UNAUTHORIZED"
+                  message:
+                    type: string
+                    example: "invalid credential"
+        '404':
+          description: not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: NOT_FOUND
+                  message:
+                    type: string
+                    example: error message
+        '500':
+          description: internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: INTERNAL_SERVER_ERROR
+                  message:
+                    type: string
+                    example: error message
+  /v1/users/wallets/pins/reset-requests:
+    post:
+      security:
+        - BearerAuth: []
+      tags:
+        - User
+      summary: Create request to reset wallet pin
+      description: Generate a token to reset wallet pin
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: OK
+                  message:
+                    type: string
+                    example: success
+        '401':
+          description: unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "UNAUTHORIZED"
+                  message:
+                    type: string
+                    example: "invalid credential"
+        '500':
+          description: internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: INTERNAL_SERVER_ERROR
+                  message:
+                    type: string
+                    example: error message
+  /v1/users/wallets/pins/reset-confirmations:
+    post:
+      security:
+        - BearerAuth: []
+      tags:
+        - User
+      summary: Complete rese wallet pin request
+      description: Complete reset wallet pin request
+      requestBody:
+        $ref: '#/components/requestBodies/CompleteResetPinRequestBody'
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: OK
+                  message:
+                    type: string
+                    example: success
+        '400':
+          description: bad request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "BAD_REQUEST"
+                  message:
+                    type: string
+                    example: "error message"
+        '401':
+          description: unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "UNAUTHORIZED"
+                  message:
+                    type: string
+                    example: "invalid credential"
+        '404':
+          description: not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: NOT_FOUND
+                  message:
+                    type: string
+                    example: error message
+        '500':
+          description: internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: INTERNAL_SERVER_ERROR
+                  message:
+                    type: string
+                    example: error message
   /v1/users/wallets/{ref}:
     get:
       security:
@@ -1937,6 +2214,77 @@ paths:
                   message:
                     type: string
                     example: "error message"
+    delete:
+      security:
+        - BearerAuth: []
+      tags:
+        - User
+      summary: Delete user cart items
+      description: Delete cart item from cart with cart item id
+      parameters:
+      - name: cartItemId
+        in: query
+        description: Can receive multiple cart item ids to delete
+        required: true
+        schema:
+          type: array
+          items:
+            type: integer
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Response'
+                  - type: object
+                    properties:
+                      code:
+                        type: string
+                        example: "DELETED"
+                      message:
+                        type: string
+                        example: "delete cart item succesful"
+        '400':
+          description: bad request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "BAD_REQUEST"
+                  message:
+                    type: string
+                    example: "cartItemIds is required"                
+        '404':
+          description: not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "NOT_FOUND"
+                  message:
+                    type: string
+                    example: "cart item not found"
+        '500':
+          description: internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "INTERNAL_SERVER_ERROR"
+                  message:
+                    type: string
+                    example: "error message"                
   /v1/users/carts/{skuId}:
     put:
       security:
@@ -2039,65 +2387,7 @@ paths:
                   message:
                     type: string
                     example: "error message"
-  /v1/users/carts/{cartItemId}:
-    put:
-      security:
-        - BearerAuth: []
-      tags:
-        - User
-      summary: Delete user cart item
-      description: Delete cart item from cart with cart item id
-      parameters:
-        - in: path
-          name: cartItemId
-          required: true
-          description: cart item id, must be an integer and greater than or equal 1
-          schema:
-            type: integer
-            example: 1
-            minimum: 1
-      responses:
-        '200':
-          description: successful operation
-          content:
-            application/json:
-              schema:
-                allOf:
-                  - $ref: '#/components/schemas/Response'
-                  - type: object
-                    properties:
-                      code:
-                        type: string
-                        example: "DELETED"
-                      message:
-                        type: string
-                        example: "delete cart item succesful"
-        '404':
-          description: not found
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  code:
-                    type: string
-                    example: "NOT_FOUND"
-                  message:
-                    type: string
-                    example: "cart item not found"
-        '500':
-          description: internal server error
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  code:
-                    type: string
-                    example: "INTERNAL_SERVER_ERROR"
-                  message:
-                    type: string
-                    example: "error message"                  
+                      
   /v1/users/addresses:
     get:
       security:
@@ -2105,7 +2395,7 @@ paths:
       tags:
         - User
       summary: Get User Addresses
-      description: Get all user addresses
+      description: Get all user addresses (sorted by default address first, then pickup address, then add date)
       responses:
         '200':
           description: successful fetch
@@ -2345,7 +2635,7 @@ paths:
       tags:
         - User
       summary: Delete existing user address
-      description: Delete user address using address id
+      description: Delete user address using address id. Cannot delete default address or pickup address.
       parameters:
         - in: path
           name: addressId
@@ -2913,6 +3203,11 @@ paths:
           schema:
             type: integer
             default: 1    
+        - in: query
+          name: filter
+          schema:
+            type: string
+            enum: [5_star, 4_star, 3_star, 2_star, 1_star, with_picture, with_comment]    
       responses:
         '200':
           description: operation successful
@@ -3155,6 +3450,53 @@ paths:
                   message:
                     type: string
                     example: "error message"
+  /v1/products/autocompletes:
+    get:
+      tags:
+        - Product
+      summary: Get product name by keyword
+      description: Get list of matched product name with keyword
+      parameters:
+        - in: query
+          name: keyword
+          schema:
+            type: string
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            default: 10
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                  allOf:
+                    - $ref: '#/components/schemas/Response'
+                    - type: object
+                      properties:
+                        code:
+                          example: 'OK'
+                        message:
+                          example: 'success'
+                        data:
+                          type: array
+                          items:
+                            $ref: '#/components/schemas/Product'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "INTERNAL_SERVER_ERROR"
+                  message:
+                    type: string
+                    example: "error message"          
   /v1/products/categories:
     get:
       tags:
@@ -3880,7 +4222,58 @@ paths:
                     example: "INTERNAL_SERVER_ERROR"
                   message:
                     type: string
-                    example: "error message"                            
+                    example: "error message"       
+  /v1/sellers/couriers:
+    get:
+      security:
+        - BearerAuth: []
+      tags:
+        - Seller
+      summary: Get all couriers
+      description: Get all available couriers
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Response'
+                  - type: object
+                    properties:
+                      code:
+                        example: "OK"
+                      message:
+                        example: "ok"
+                      data:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            id:
+                              type: integer
+                              example: 1
+                            name:
+                              type: string
+                              example: "JNE"
+                            code:
+                              type: string
+                              example: "jne"
+                            isActive:
+                              type: boolean
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "INTERNAL_SERVER_ERROR"
+                  message:
+                    type: string
+                    example: "error message"                                
   /v1/orders/invoices:
     post:
       security:
@@ -4089,6 +4482,19 @@ paths:
                   message:
                     type: string
                     example: "error message"
+        '401':
+          description: unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "UNAUTHORIZED"
+                  message:
+                    type: string
+                    example: "invalid credential"
         '500':
           description: Internal server error
           content:
@@ -4152,6 +4558,19 @@ paths:
                   message:
                     type: string
                     example: "error message"
+        '401':
+          description: unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "UNAUTHORIZED"
+                  message:
+                    type: string
+                    example: "invalid credential"
         '404':
           description: not found
           content:
@@ -4291,6 +4710,19 @@ paths:
                   message:
                     type: string
                     example: "error message"
+        '401':
+          description: unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "UNAUTHORIZED"
+                  message:
+                    type: string
+                    example: "invalid credential"
         '500':
           description: Internal server error
           content:
@@ -5545,6 +5977,7 @@ components:
               - street
               - subdistrictId
               - isDefault
+              - isPickup
             properties:
               name:
                 type: string
@@ -5566,6 +5999,9 @@ components:
                 type: integer
                 example: 28
               isDefault:
+                type: boolean
+                example: true
+              isPickup:
                 type: boolean
                 example: true
     ReviewMediaBody:
@@ -5736,6 +6172,65 @@ components:
                 format: numeric
                 minLength: 6
                 maxLength: 6
+    ChangePinRequestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - currentPin
+              - newPin
+            properties:
+              currentPin:
+                type: string
+                format: numeric
+                minLength: 6
+                maxLength: 6
+                example: "123456"
+              newPin:
+                type: string
+                format: numeric
+                minLength: 6
+                maxLength: 6
+                example: "123456"
+    CompleteChangePinRequestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - verificationCode
+            properties:
+              verificationCode:
+                type: string
+                format: alphanumeric
+                minLength: 6
+                maxLength: 6
+                example: "1a3c5e"
+    CompleteResetPinRequestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - token
+              - newPin
+            properties:
+              token:
+                type: string
+                format: alphanumeric
+                minLength: 6
+                maxLength: 6
+                example: "1a3c5e"
+              newPin:
+                type: string
+                format: numeric
+                minLength: 6
+                maxLength: 6
+                example: "123456"
   securitySchemes:
     BearerAuth:
       type: http

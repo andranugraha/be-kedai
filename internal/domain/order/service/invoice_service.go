@@ -4,6 +4,7 @@ import (
 	"kedai/backend/be-kedai/config"
 	"kedai/backend/be-kedai/internal/common/constant"
 	commonError "kedai/backend/be-kedai/internal/common/error"
+	locationService "kedai/backend/be-kedai/internal/domain/location/service"
 	marketplaceModel "kedai/backend/be-kedai/internal/domain/marketplace/model"
 	marketplaceService "kedai/backend/be-kedai/internal/domain/marketplace/service"
 	"kedai/backend/be-kedai/internal/domain/order/dto"
@@ -27,7 +28,7 @@ type InvoiceService interface {
 
 type invoiceServiceImpl struct {
 	invoiceRepo               repository.InvoiceRepository
-	userAddressService        userService.UserAddressService
+	AddressService            locationService.AddressService
 	shopService               shopService.ShopService
 	shopVoucherService        shopService.ShopVoucherService
 	cartItemService           userService.UserCartItemService
@@ -39,7 +40,7 @@ type invoiceServiceImpl struct {
 
 type InvoiceSConfig struct {
 	InvoiceRepo               repository.InvoiceRepository
-	UserAddressService        userService.UserAddressService
+	AddressService            locationService.AddressService
 	ShopService               shopService.ShopService
 	ShopVoucherService        shopService.ShopVoucherService
 	CartItemService           userService.UserCartItemService

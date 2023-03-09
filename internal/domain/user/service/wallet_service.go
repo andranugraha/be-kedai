@@ -10,6 +10,8 @@ import (
 	"kedai/backend/be-kedai/internal/domain/user/repository"
 	"kedai/backend/be-kedai/internal/utils/hash"
 	jwttoken "kedai/backend/be-kedai/internal/utils/jwtToken"
+	"kedai/backend/be-kedai/internal/utils/mail"
+	"kedai/backend/be-kedai/internal/utils/random"
 )
 
 const (
@@ -22,18 +24,28 @@ type WalletService interface {
 	TopUp(userId int, req dto.TopUpRequest) (*model.WalletHistory, error)
 	StepUp(userId int, req dto.StepUpRequest) (*dto.Token, error)
 	CheckIsWalletBlocked(userID int) error
+	RequestPinChange(userID int, request *dto.ChangePinRequest) error
+	CompletePinChange(userID int, request *dto.CompleteChangePinRequest) error
+	RequestPinReset(userID int) error
+	CompletePinReset(userID int, request *dto.CompleteResetPinRequest) error
 }
 
 type walletServiceImpl struct {
+	userService UserService
 	walletRepo  repository.WalletRepository
 	userCache   cache.UserCache
 	walletCache cache.WalletCache
+	randomUtils random.RandomUtils
+	mailUtils   mail.MailUtils
 }
 
 type WalletSConfig struct {
+	UserService UserService
 	WalletRepo  repository.WalletRepository
 	UserCache   cache.UserCache
 	WalletCache cache.WalletCache
+	RandomUtils random.RandomUtils
+	MailUtils   mail.MailUtils
 }
 
 func NewWalletService(cfg *WalletSConfig) WalletService {
@@ -41,6 +53,9 @@ func NewWalletService(cfg *WalletSConfig) WalletService {
 		walletRepo:  cfg.WalletRepo,
 		userCache:   cfg.UserCache,
 		walletCache: cfg.WalletCache,
+		userService: cfg.UserService,
+		randomUtils: cfg.RandomUtils,
+		mailUtils:   cfg.MailUtils,
 	}
 }
 
@@ -153,4 +168,85 @@ func (s *walletServiceImpl) CheckIsWalletBlocked(userID int) error {
 	}
 
 	return s.walletCache.CheckIsWalletBlocked(wallet.ID)
+}
+
+func (s *walletServiceImpl) RequestPinChange(userID int, request *dto.ChangePinRequest) error {
+	wallet, err := s.walletRepo.GetByUserID(userID)
+	if err != nil {
+		return err
+	}
+
+	if isPinValid := hash.ComparePassword(wallet.Pin, request.CurrentPin); !isPinValid {
+		return errs.ErrPinMismatch
+	}
+
+	codeLength := 6
+	verificationCode := s.randomUtils.GenerateAlphanumericString(codeLength)
+	newPin, _ := hash.HashAndSalt(request.NewPin)
+
+	err = s.walletCache.StorePinAndVerificationCode(userID, newPin, verificationCode)
+	if err != nil {
+		return err
+	}
+
+	user, err := s.userService.GetByID(userID)
+	if err != nil {
+		return err
+	}
+
+	return s.mailUtils.SendUpdatePinEmail(user.Email, verificationCode)
+}
+
+func (s *walletServiceImpl) CompletePinChange(userID int, request *dto.CompleteChangePinRequest) error {
+	newPin, verificationCode, err := s.walletCache.FindPinAndVerificationCode(userID)
+	if err != nil {
+		return err
+	}
+
+	if verificationCode != request.VerificationCode {
+		return errs.ErrIncorrectVerificationCode
+	}
+
+	err = s.walletRepo.ChangePin(userID, newPin)
+	if err != nil {
+		return err
+	}
+
+	_ = s.walletCache.DeletePinAndVerificationCode(userID)
+
+	return nil
+}
+
+func (s *walletServiceImpl) RequestPinReset(userID int) error {
+	user, err := s.userService.GetByID(userID)
+	if err != nil {
+		return err
+	}
+
+	codeLength := 6
+	verificationCode := s.randomUtils.GenerateAlphanumericString(codeLength)
+	err = s.walletCache.StoreResetPinToken(user.ID, verificationCode)
+	if err != nil {
+		return err
+	}
+
+	return s.mailUtils.SendResetPinEmail(user.Email, verificationCode)
+}
+
+func (s *walletServiceImpl) CompletePinReset(userID int, request *dto.CompleteResetPinRequest) error {
+	err := s.walletCache.FindResetPinToken(request.Token)
+	if err != nil {
+		return err
+	}
+
+	newPin, _ := hash.HashAndSalt(request.NewPin)
+
+	err = s.walletRepo.ChangePin(userID, newPin)
+	if err != nil {
+		return err
+	}
+
+	_ = s.walletCache.DeleteResetPinToken(request.Token)
+
+	return nil
 }
