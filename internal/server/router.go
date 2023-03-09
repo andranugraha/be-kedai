@@ -108,17 +108,6 @@ func NewRouter(cfg *RouterConfig) *gin.Engine {
 			}
 		}
 
-		seller := v1.Group("/sellers")
-		{
-			sellerAuthenticated := seller.Group("", middleware.JWTAuthorization, cfg.UserHandler.GetSession)
-			{
-				product := sellerAuthenticated.Group("")
-				{
-					product.GET("/products", cfg.ProductHandler.GetSellerProducts)
-				}
-			}
-		}
-
 		location := v1.Group("/locations")
 		{
 			location.GET("/cities", cfg.LocationHandler.GetCities)
@@ -194,7 +183,15 @@ func NewRouter(cfg *RouterConfig) *gin.Engine {
 		{
 			authenticated := seller.Group("", middleware.JWTAuthorization, cfg.UserHandler.GetSession)
 			{
-				authenticated.GET("/couriers", cfg.ShopHandler.GetShipmentList)
+				courier := authenticated.Group("/couriers")
+				{
+					courier.GET("", cfg.ShopHandler.GetShipmentList)
+				}
+
+				product := authenticated.Group("")
+				{
+					product.GET("/products", cfg.ProductHandler.GetSellerProducts)
+				}
 			}
 		}
 	}
