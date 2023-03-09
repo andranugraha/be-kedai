@@ -87,21 +87,6 @@ func createRouter() *gin.Engine {
 	provinceService := locationServicePackage.NewProvinceService(&locationServicePackage.ProvinceSConfig{
 		ProvinceRepo: provinceRepo,
 	})
-	addressRepo := locationRepoPackage.NewAddressRepository(&locationRepoPackage.AddressRConfig{
-		DB:         db,
-		GoogleMaps: maps,
-	})
-	addressService := locationServicePackage.NewAddressService(&locationServicePackage.AddressSConfig{
-		AddressRepo: addressRepo,
-	})
-
-	locHandler := locationHandlerPackage.New(&locationHandlerPackage.Config{
-		CityService:        cityService,
-		ProvinceService:    provinceService,
-		DistrictService:    districtService,
-		SubdistrictService: subdistrictService,
-		AddressService:     addressService,
-	})
 
 	walletHistoryRepo := userRepoPackage.NewWalletHistoryRepository(&userRepoPackage.WalletHistoryRConfig{
 		DB: connection.GetDB(),
@@ -220,6 +205,7 @@ func createRouter() *gin.Engine {
 
 	addressRepo := locationRepoPackage.NewAddressRepository(&locationRepoPackage.AddressRConfig{
 		DB:              db,
+		GoogleMaps:      maps,
 		UserProfileRepo: userProfileRepo,
 		ShopRepo:        shopRepo,
 	})
@@ -323,6 +309,14 @@ func createRouter() *gin.Engine {
 		InvoiceService:           invoiceService,
 		TransactionReviewService: transactionReviewService,
 		InvoicePerShopService:    invoicePerShopService,
+	})
+
+	locHandler := locationHandlerPackage.New(&locationHandlerPackage.Config{
+		CityService:        cityService,
+		ProvinceService:    provinceService,
+		DistrictService:    districtService,
+		SubdistrictService: subdistrictService,
+		AddressService:     addressService,
 	})
 
 	return NewRouter(&RouterConfig{
