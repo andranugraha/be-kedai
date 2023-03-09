@@ -3705,7 +3705,7 @@ paths:
                   message:
                     type: string
                     example: "error message"
-                  
+             
   /v1/shops/{slug}:
     get:
       tags:
@@ -4108,6 +4108,63 @@ paths:
                   message:
                     type: string
                     example: "sealabs pay already registered"            
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "INTERNAL_SERVER_ERROR"
+                  message:
+                    type: string
+                    example: "error message"
+  /v1/marketplaces/couriers:
+    get:
+      security:
+        - BearerAuth: []
+      tags:
+        - Marketplace
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: OK
+                  message:
+                    type: string
+                    example: success
+                  data:
+                    type: array
+                    items:
+                      allOf:
+                        - $ref: '#/components/schemas/Courier'
+                        - type: object
+                          properties:
+                            services:
+                              type: array
+                              items:
+                                $ref: '#/components/schemas/CourierService'
+        '401':
+          description: unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "UNAUTHORIZED"
+                  message:
+                    type: string
+                    example: "invalid credential"  
         '500':
           description: Internal server error
           content:
