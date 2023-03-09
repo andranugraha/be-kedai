@@ -4361,27 +4361,29 @@ paths:
                           - type: object
                             properties:
                               data:
-                                allOf:
-                                  - $ref: '#/components/schemas/Product'
-                                  - type: object
-                                    properties:
-                                      imageUrl:
-                                        type: string
-                                        format: url
-                                        example: image.png
-                                  - type: object
-                                    properties:
-                                      skus:
-                                        type: array
-                                        items:
-                                          allOf:
-                                            - $ref: '#/components/schemas/SKU'
-                                            - type: object
-                                              properties:
-                                                variants:
-                                                  type: array
-                                                  items:
-                                                    $ref: '#/components/schemas/Variant'
+                                type: array
+                                items:
+                                  allOf:
+                                    - $ref: '#/components/schemas/Product'
+                                    - type: object
+                                      properties:
+                                        imageUrl:
+                                          type: string
+                                          format: url
+                                          example: image.png
+                                    - type: object
+                                      properties:
+                                        skus:
+                                          type: array
+                                          items:
+                                            allOf:
+                                              - $ref: '#/components/schemas/SKU'
+                                              - type: object
+                                                properties:
+                                                  variants:
+                                                    type: array
+                                                    items:
+                                                      $ref: '#/components/schemas/Variant'
         '401':
           description: unauthorized
           content:
@@ -4395,6 +4397,19 @@ paths:
                   message:
                     type: string
                     example: "invalid credential"
+        '404':
+          description: not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "NOT_FOUND"
+                  message:
+                    type: string
+                    example: "error message"
         '500':
           description: Internal server error
           content:
