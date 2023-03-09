@@ -52,7 +52,7 @@ func TestCheckout(t *testing.T) {
 		req        dto.CheckoutRequest
 		want       *dto.CheckoutResponse
 		wantErr    error
-		beforeTest func(*mocks.UserAddressService, *mocks.MarketplaceVoucherService, *mocks.ShopService, *mocks.ShopVoucherService, *mocks.UserCartItemService, *mocks.CourierService, *mocks.InvoiceRepository)
+		beforeTest func(*mocks.AddressService, *mocks.MarketplaceVoucherService, *mocks.ShopService, *mocks.ShopVoucherService, *mocks.UserCartItemService, *mocks.CourierService, *mocks.InvoiceRepository)
 	}{
 		{
 			name: "should return success when checkout with valid request using both marketplace and shop voucher",
@@ -61,8 +61,8 @@ func TestCheckout(t *testing.T) {
 				ID: 1,
 			},
 			wantErr: nil,
-			beforeTest: func(userAddressService *mocks.UserAddressService, marketplaceVoucherService *mocks.MarketplaceVoucherService, shopService *mocks.ShopService, shopVoucherService *mocks.ShopVoucherService, cartItemService *mocks.UserCartItemService, courierService *mocks.CourierService, invoiceRepo *mocks.InvoiceRepository) {
-				userAddressService.On("GetUserAddressByIdAndUserId", req.AddressID, req.UserID).Return(&locationModel.UserAddress{}, nil)
+			beforeTest: func(AddressService *mocks.AddressService, marketplaceVoucherService *mocks.MarketplaceVoucherService, shopService *mocks.ShopService, shopVoucherService *mocks.ShopVoucherService, cartItemService *mocks.UserCartItemService, courierService *mocks.CourierService, invoiceRepo *mocks.InvoiceRepository) {
+				AddressService.On("GetUserAddressByIdAndUserId", req.AddressID, req.UserID).Return(&locationModel.UserAddress{}, nil)
 				marketplaceVoucherService.On("GetValidForCheckout", *req.VoucherID, req.UserID, req.PaymentMethodID).Return(&marketplaceModel.MarketplaceVoucher{
 					Type: marketplaceModel.VoucherTypePercent,
 				}, nil)
@@ -113,8 +113,8 @@ func TestCheckout(t *testing.T) {
 				ID: 1,
 			},
 			wantErr: nil,
-			beforeTest: func(userAddressService *mocks.UserAddressService, marketplaceVoucherService *mocks.MarketplaceVoucherService, shopService *mocks.ShopService, shopVoucherService *mocks.ShopVoucherService, cartItemService *mocks.UserCartItemService, courierService *mocks.CourierService, invoiceRepo *mocks.InvoiceRepository) {
-				userAddressService.On("GetUserAddressByIdAndUserId", req.AddressID, req.UserID).Return(&locationModel.UserAddress{}, nil)
+			beforeTest: func(AddressService *mocks.AddressService, marketplaceVoucherService *mocks.MarketplaceVoucherService, shopService *mocks.ShopService, shopVoucherService *mocks.ShopVoucherService, cartItemService *mocks.UserCartItemService, courierService *mocks.CourierService, invoiceRepo *mocks.InvoiceRepository) {
+				AddressService.On("GetUserAddressByIdAndUserId", req.AddressID, req.UserID).Return(&locationModel.UserAddress{}, nil)
 				marketplaceVoucherService.On("GetValidForCheckout", *req.VoucherID, req.UserID, req.PaymentMethodID).Return(&marketplaceModel.MarketplaceVoucher{
 					Type: marketplaceModel.VoucherTypeNominal,
 				}, nil)
@@ -158,8 +158,8 @@ func TestCheckout(t *testing.T) {
 				ID: 1,
 			},
 			wantErr: nil,
-			beforeTest: func(userAddressService *mocks.UserAddressService, marketplaceVoucherService *mocks.MarketplaceVoucherService, shopService *mocks.ShopService, shopVoucherService *mocks.ShopVoucherService, cartItemService *mocks.UserCartItemService, courierService *mocks.CourierService, invoiceRepo *mocks.InvoiceRepository) {
-				userAddressService.On("GetUserAddressByIdAndUserId", req.AddressID, req.UserID).Return(&locationModel.UserAddress{}, nil)
+			beforeTest: func(AddressService *mocks.AddressService, marketplaceVoucherService *mocks.MarketplaceVoucherService, shopService *mocks.ShopService, shopVoucherService *mocks.ShopVoucherService, cartItemService *mocks.UserCartItemService, courierService *mocks.CourierService, invoiceRepo *mocks.InvoiceRepository) {
+				AddressService.On("GetUserAddressByIdAndUserId", req.AddressID, req.UserID).Return(&locationModel.UserAddress{}, nil)
 				shopService.On("FindShopById", mock.Anything).Return(&shopModel.Shop{}, nil).Once()
 				courierService.On("GetCourierByServiceIDAndShopID", mock.Anything, mock.Anything).Return(&shopModel.Courier{}, nil).Once()
 				cartItemService.On("GetCartItemByIdAndUserId", mock.Anything, mock.Anything).Return(&userModel.CartItem{
@@ -186,8 +186,8 @@ func TestCheckout(t *testing.T) {
 			req:     req,
 			want:    nil,
 			wantErr: errs.ErrAddressNotFound,
-			beforeTest: func(userAddressService *mocks.UserAddressService, marketplaceVoucherService *mocks.MarketplaceVoucherService, shopService *mocks.ShopService, shopVoucherService *mocks.ShopVoucherService, cartItemService *mocks.UserCartItemService, courierService *mocks.CourierService, invoiceRepo *mocks.InvoiceRepository) {
-				userAddressService.On("GetUserAddressByIdAndUserId", req.AddressID, req.UserID).Return(nil, errs.ErrAddressNotFound)
+			beforeTest: func(AddressService *mocks.AddressService, marketplaceVoucherService *mocks.MarketplaceVoucherService, shopService *mocks.ShopService, shopVoucherService *mocks.ShopVoucherService, cartItemService *mocks.UserCartItemService, courierService *mocks.CourierService, invoiceRepo *mocks.InvoiceRepository) {
+				AddressService.On("GetUserAddressByIdAndUserId", req.AddressID, req.UserID).Return(nil, errs.ErrAddressNotFound)
 			},
 		},
 		{
@@ -195,8 +195,8 @@ func TestCheckout(t *testing.T) {
 			req:     req,
 			want:    nil,
 			wantErr: errs.ErrInvalidVoucher,
-			beforeTest: func(userAddressService *mocks.UserAddressService, marketplaceVoucherService *mocks.MarketplaceVoucherService, shopService *mocks.ShopService, shopVoucherService *mocks.ShopVoucherService, cartItemService *mocks.UserCartItemService, courierService *mocks.CourierService, invoiceRepo *mocks.InvoiceRepository) {
-				userAddressService.On("GetUserAddressByIdAndUserId", req.AddressID, req.UserID).Return(&locationModel.UserAddress{}, nil)
+			beforeTest: func(AddressService *mocks.AddressService, marketplaceVoucherService *mocks.MarketplaceVoucherService, shopService *mocks.ShopService, shopVoucherService *mocks.ShopVoucherService, cartItemService *mocks.UserCartItemService, courierService *mocks.CourierService, invoiceRepo *mocks.InvoiceRepository) {
+				AddressService.On("GetUserAddressByIdAndUserId", req.AddressID, req.UserID).Return(&locationModel.UserAddress{}, nil)
 				marketplaceVoucherService.On("GetValidForCheckout", *req.VoucherID, req.UserID, req.PaymentMethodID).Return(nil, errs.ErrInvalidVoucher)
 			},
 		},
@@ -205,8 +205,8 @@ func TestCheckout(t *testing.T) {
 			req:     req,
 			want:    nil,
 			wantErr: errs.ErrShopNotFound,
-			beforeTest: func(userAddressService *mocks.UserAddressService, marketplaceVoucherService *mocks.MarketplaceVoucherService, shopService *mocks.ShopService, shopVoucherService *mocks.ShopVoucherService, cartItemService *mocks.UserCartItemService, courierService *mocks.CourierService, invoiceRepo *mocks.InvoiceRepository) {
-				userAddressService.On("GetUserAddressByIdAndUserId", req.AddressID, req.UserID).Return(&locationModel.UserAddress{}, nil)
+			beforeTest: func(AddressService *mocks.AddressService, marketplaceVoucherService *mocks.MarketplaceVoucherService, shopService *mocks.ShopService, shopVoucherService *mocks.ShopVoucherService, cartItemService *mocks.UserCartItemService, courierService *mocks.CourierService, invoiceRepo *mocks.InvoiceRepository) {
+				AddressService.On("GetUserAddressByIdAndUserId", req.AddressID, req.UserID).Return(&locationModel.UserAddress{}, nil)
 				marketplaceVoucherService.On("GetValidForCheckout", *req.VoucherID, req.UserID, req.PaymentMethodID).Return(&marketplaceModel.MarketplaceVoucher{}, nil)
 				shopService.On("FindShopById", mock.Anything).Return(nil, errs.ErrShopNotFound).Once()
 			},
@@ -216,8 +216,8 @@ func TestCheckout(t *testing.T) {
 			req:     req,
 			want:    nil,
 			wantErr: errs.ErrCourierNotFound,
-			beforeTest: func(userAddressService *mocks.UserAddressService, marketplaceVoucherService *mocks.MarketplaceVoucherService, shopService *mocks.ShopService, shopVoucherService *mocks.ShopVoucherService, cartItemService *mocks.UserCartItemService, courierService *mocks.CourierService, invoiceRepo *mocks.InvoiceRepository) {
-				userAddressService.On("GetUserAddressByIdAndUserId", req.AddressID, req.UserID).Return(&locationModel.UserAddress{}, nil)
+			beforeTest: func(AddressService *mocks.AddressService, marketplaceVoucherService *mocks.MarketplaceVoucherService, shopService *mocks.ShopService, shopVoucherService *mocks.ShopVoucherService, cartItemService *mocks.UserCartItemService, courierService *mocks.CourierService, invoiceRepo *mocks.InvoiceRepository) {
+				AddressService.On("GetUserAddressByIdAndUserId", req.AddressID, req.UserID).Return(&locationModel.UserAddress{}, nil)
 				marketplaceVoucherService.On("GetValidForCheckout", *req.VoucherID, req.UserID, req.PaymentMethodID).Return(&marketplaceModel.MarketplaceVoucher{}, nil)
 				shopService.On("FindShopById", mock.Anything).Return(&shopModel.Shop{}, nil).Once()
 				courierService.On("GetCourierByServiceIDAndShopID", mock.Anything, mock.Anything).Return(nil, errs.ErrCourierNotFound).Once()
@@ -228,8 +228,8 @@ func TestCheckout(t *testing.T) {
 			req:     req,
 			want:    nil,
 			wantErr: errs.ErrCartItemNotFound,
-			beforeTest: func(userAddressService *mocks.UserAddressService, marketplaceVoucherService *mocks.MarketplaceVoucherService, shopService *mocks.ShopService, shopVoucherService *mocks.ShopVoucherService, cartItemService *mocks.UserCartItemService, courierService *mocks.CourierService, invoiceRepo *mocks.InvoiceRepository) {
-				userAddressService.On("GetUserAddressByIdAndUserId", req.AddressID, req.UserID).Return(&locationModel.UserAddress{}, nil)
+			beforeTest: func(AddressService *mocks.AddressService, marketplaceVoucherService *mocks.MarketplaceVoucherService, shopService *mocks.ShopService, shopVoucherService *mocks.ShopVoucherService, cartItemService *mocks.UserCartItemService, courierService *mocks.CourierService, invoiceRepo *mocks.InvoiceRepository) {
+				AddressService.On("GetUserAddressByIdAndUserId", req.AddressID, req.UserID).Return(&locationModel.UserAddress{}, nil)
 				marketplaceVoucherService.On("GetValidForCheckout", *req.VoucherID, req.UserID, req.PaymentMethodID).Return(&marketplaceModel.MarketplaceVoucher{}, nil)
 				shopService.On("FindShopById", mock.Anything).Return(&shopModel.Shop{}, nil).Once()
 				courierService.On("GetCourierByServiceIDAndShopID", mock.Anything, mock.Anything).Return(&shopModel.Courier{}, nil).Once()
@@ -241,8 +241,8 @@ func TestCheckout(t *testing.T) {
 			req:     req,
 			want:    nil,
 			wantErr: errs.ErrQuantityNotMatch,
-			beforeTest: func(userAddressService *mocks.UserAddressService, marketplaceVoucherService *mocks.MarketplaceVoucherService, shopService *mocks.ShopService, shopVoucherService *mocks.ShopVoucherService, cartItemService *mocks.UserCartItemService, courierService *mocks.CourierService, invoiceRepo *mocks.InvoiceRepository) {
-				userAddressService.On("GetUserAddressByIdAndUserId", req.AddressID, req.UserID).Return(&locationModel.UserAddress{}, nil)
+			beforeTest: func(AddressService *mocks.AddressService, marketplaceVoucherService *mocks.MarketplaceVoucherService, shopService *mocks.ShopService, shopVoucherService *mocks.ShopVoucherService, cartItemService *mocks.UserCartItemService, courierService *mocks.CourierService, invoiceRepo *mocks.InvoiceRepository) {
+				AddressService.On("GetUserAddressByIdAndUserId", req.AddressID, req.UserID).Return(&locationModel.UserAddress{}, nil)
 				marketplaceVoucherService.On("GetValidForCheckout", *req.VoucherID, req.UserID, req.PaymentMethodID).Return(&marketplaceModel.MarketplaceVoucher{}, nil)
 				shopService.On("FindShopById", mock.Anything).Return(&shopModel.Shop{}, nil).Once()
 				courierService.On("GetCourierByServiceIDAndShopID", mock.Anything, mock.Anything).Return(&shopModel.Courier{}, nil).Once()
@@ -254,8 +254,8 @@ func TestCheckout(t *testing.T) {
 			req:     req,
 			want:    nil,
 			wantErr: errs.ErrProductQuantityNotEnough,
-			beforeTest: func(userAddressService *mocks.UserAddressService, marketplaceVoucherService *mocks.MarketplaceVoucherService, shopService *mocks.ShopService, shopVoucherService *mocks.ShopVoucherService, cartItemService *mocks.UserCartItemService, courierService *mocks.CourierService, invoiceRepo *mocks.InvoiceRepository) {
-				userAddressService.On("GetUserAddressByIdAndUserId", req.AddressID, req.UserID).Return(&locationModel.UserAddress{}, nil)
+			beforeTest: func(AddressService *mocks.AddressService, marketplaceVoucherService *mocks.MarketplaceVoucherService, shopService *mocks.ShopService, shopVoucherService *mocks.ShopVoucherService, cartItemService *mocks.UserCartItemService, courierService *mocks.CourierService, invoiceRepo *mocks.InvoiceRepository) {
+				AddressService.On("GetUserAddressByIdAndUserId", req.AddressID, req.UserID).Return(&locationModel.UserAddress{}, nil)
 				marketplaceVoucherService.On("GetValidForCheckout", *req.VoucherID, req.UserID, req.PaymentMethodID).Return(&marketplaceModel.MarketplaceVoucher{}, nil)
 				shopService.On("FindShopById", mock.Anything).Return(&shopModel.Shop{}, nil).Once()
 				courierService.On("GetCourierByServiceIDAndShopID", mock.Anything, mock.Anything).Return(&shopModel.Courier{}, nil).Once()
@@ -272,8 +272,8 @@ func TestCheckout(t *testing.T) {
 			req:     req,
 			want:    nil,
 			wantErr: errs.ErrInvalidVoucher,
-			beforeTest: func(userAddressService *mocks.UserAddressService, marketplaceVoucherService *mocks.MarketplaceVoucherService, shopService *mocks.ShopService, shopVoucherService *mocks.ShopVoucherService, cartItemService *mocks.UserCartItemService, courierService *mocks.CourierService, invoiceRepo *mocks.InvoiceRepository) {
-				userAddressService.On("GetUserAddressByIdAndUserId", req.AddressID, req.UserID).Return(&locationModel.UserAddress{}, nil)
+			beforeTest: func(AddressService *mocks.AddressService, marketplaceVoucherService *mocks.MarketplaceVoucherService, shopService *mocks.ShopService, shopVoucherService *mocks.ShopVoucherService, cartItemService *mocks.UserCartItemService, courierService *mocks.CourierService, invoiceRepo *mocks.InvoiceRepository) {
+				AddressService.On("GetUserAddressByIdAndUserId", req.AddressID, req.UserID).Return(&locationModel.UserAddress{}, nil)
 				marketplaceVoucherService.On("GetValidForCheckout", *req.VoucherID, req.UserID, req.PaymentMethodID).Return(&marketplaceModel.MarketplaceVoucher{
 					CategoryID: &one,
 				}, nil)
@@ -295,8 +295,8 @@ func TestCheckout(t *testing.T) {
 			req:     req,
 			want:    nil,
 			wantErr: errs.ErrInvalidVoucher,
-			beforeTest: func(userAddressService *mocks.UserAddressService, marketplaceVoucherService *mocks.MarketplaceVoucherService, shopService *mocks.ShopService, shopVoucherService *mocks.ShopVoucherService, cartItemService *mocks.UserCartItemService, courierService *mocks.CourierService, invoiceRepo *mocks.InvoiceRepository) {
-				userAddressService.On("GetUserAddressByIdAndUserId", req.AddressID, req.UserID).Return(&locationModel.UserAddress{}, nil)
+			beforeTest: func(AddressService *mocks.AddressService, marketplaceVoucherService *mocks.MarketplaceVoucherService, shopService *mocks.ShopService, shopVoucherService *mocks.ShopVoucherService, cartItemService *mocks.UserCartItemService, courierService *mocks.CourierService, invoiceRepo *mocks.InvoiceRepository) {
+				AddressService.On("GetUserAddressByIdAndUserId", req.AddressID, req.UserID).Return(&locationModel.UserAddress{}, nil)
 				marketplaceVoucherService.On("GetValidForCheckout", *req.VoucherID, req.UserID, req.PaymentMethodID).Return(&marketplaceModel.MarketplaceVoucher{}, nil)
 				shopService.On("FindShopById", mock.Anything).Return(&shopModel.Shop{}, nil).Once()
 				courierService.On("GetCourierByServiceIDAndShopID", mock.Anything, mock.Anything).Return(&shopModel.Courier{}, nil).Once()
@@ -323,8 +323,8 @@ func TestCheckout(t *testing.T) {
 			req:     req,
 			want:    nil,
 			wantErr: errs.ErrTotalSpentBelowMinimumSpendingRequirement,
-			beforeTest: func(userAddressService *mocks.UserAddressService, marketplaceVoucherService *mocks.MarketplaceVoucherService, shopService *mocks.ShopService, shopVoucherService *mocks.ShopVoucherService, cartItemService *mocks.UserCartItemService, courierService *mocks.CourierService, invoiceRepo *mocks.InvoiceRepository) {
-				userAddressService.On("GetUserAddressByIdAndUserId", req.AddressID, req.UserID).Return(&locationModel.UserAddress{}, nil)
+			beforeTest: func(AddressService *mocks.AddressService, marketplaceVoucherService *mocks.MarketplaceVoucherService, shopService *mocks.ShopService, shopVoucherService *mocks.ShopVoucherService, cartItemService *mocks.UserCartItemService, courierService *mocks.CourierService, invoiceRepo *mocks.InvoiceRepository) {
+				AddressService.On("GetUserAddressByIdAndUserId", req.AddressID, req.UserID).Return(&locationModel.UserAddress{}, nil)
 				marketplaceVoucherService.On("GetValidForCheckout", *req.VoucherID, req.UserID, req.PaymentMethodID).Return(&marketplaceModel.MarketplaceVoucher{}, nil)
 				shopService.On("FindShopById", mock.Anything).Return(&shopModel.Shop{}, nil).Once()
 				courierService.On("GetCourierByServiceIDAndShopID", mock.Anything, mock.Anything).Return(&shopModel.Courier{}, nil).Once()
@@ -353,8 +353,8 @@ func TestCheckout(t *testing.T) {
 			req:     req,
 			want:    nil,
 			wantErr: errs.ErrTotalSpentBelowMinimumSpendingRequirement,
-			beforeTest: func(userAddressService *mocks.UserAddressService, marketplaceVoucherService *mocks.MarketplaceVoucherService, shopService *mocks.ShopService, shopVoucherService *mocks.ShopVoucherService, cartItemService *mocks.UserCartItemService, courierService *mocks.CourierService, invoiceRepo *mocks.InvoiceRepository) {
-				userAddressService.On("GetUserAddressByIdAndUserId", req.AddressID, req.UserID).Return(&locationModel.UserAddress{}, nil)
+			beforeTest: func(AddressService *mocks.AddressService, marketplaceVoucherService *mocks.MarketplaceVoucherService, shopService *mocks.ShopService, shopVoucherService *mocks.ShopVoucherService, cartItemService *mocks.UserCartItemService, courierService *mocks.CourierService, invoiceRepo *mocks.InvoiceRepository) {
+				AddressService.On("GetUserAddressByIdAndUserId", req.AddressID, req.UserID).Return(&locationModel.UserAddress{}, nil)
 				marketplaceVoucherService.On("GetValidForCheckout", *req.VoucherID, req.UserID, req.PaymentMethodID).Return(&marketplaceModel.MarketplaceVoucher{
 					MinimumSpend: 5000,
 				}, nil)
@@ -383,8 +383,8 @@ func TestCheckout(t *testing.T) {
 			req:     req,
 			want:    nil,
 			wantErr: errs.ErrTotalPriceNotMatch,
-			beforeTest: func(userAddressService *mocks.UserAddressService, marketplaceVoucherService *mocks.MarketplaceVoucherService, shopService *mocks.ShopService, shopVoucherService *mocks.ShopVoucherService, cartItemService *mocks.UserCartItemService, courierService *mocks.CourierService, invoiceRepo *mocks.InvoiceRepository) {
-				userAddressService.On("GetUserAddressByIdAndUserId", req.AddressID, req.UserID).Return(&locationModel.UserAddress{}, nil)
+			beforeTest: func(AddressService *mocks.AddressService, marketplaceVoucherService *mocks.MarketplaceVoucherService, shopService *mocks.ShopService, shopVoucherService *mocks.ShopVoucherService, cartItemService *mocks.UserCartItemService, courierService *mocks.CourierService, invoiceRepo *mocks.InvoiceRepository) {
+				AddressService.On("GetUserAddressByIdAndUserId", req.AddressID, req.UserID).Return(&locationModel.UserAddress{}, nil)
 				marketplaceVoucherService.On("GetValidForCheckout", *req.VoucherID, req.UserID, req.PaymentMethodID).Return(&marketplaceModel.MarketplaceVoucher{
 					Type: marketplaceModel.VoucherTypeShipping,
 				}, nil)
@@ -413,8 +413,8 @@ func TestCheckout(t *testing.T) {
 			req:     req,
 			want:    nil,
 			wantErr: errs.ErrInternalServerError,
-			beforeTest: func(userAddressService *mocks.UserAddressService, marketplaceVoucherService *mocks.MarketplaceVoucherService, shopService *mocks.ShopService, shopVoucherService *mocks.ShopVoucherService, cartItemService *mocks.UserCartItemService, courierService *mocks.CourierService, invoiceRepo *mocks.InvoiceRepository) {
-				userAddressService.On("GetUserAddressByIdAndUserId", req.AddressID, req.UserID).Return(&locationModel.UserAddress{}, nil)
+			beforeTest: func(AddressService *mocks.AddressService, marketplaceVoucherService *mocks.MarketplaceVoucherService, shopService *mocks.ShopService, shopVoucherService *mocks.ShopVoucherService, cartItemService *mocks.UserCartItemService, courierService *mocks.CourierService, invoiceRepo *mocks.InvoiceRepository) {
+				AddressService.On("GetUserAddressByIdAndUserId", req.AddressID, req.UserID).Return(&locationModel.UserAddress{}, nil)
 				marketplaceVoucherService.On("GetValidForCheckout", *req.VoucherID, req.UserID, req.PaymentMethodID).Return(&marketplaceModel.MarketplaceVoucher{}, nil)
 				shopService.On("FindShopById", mock.Anything).Return(&shopModel.Shop{}, nil).Once()
 				courierService.On("GetCourierByServiceIDAndShopID", mock.Anything, mock.Anything).Return(&shopModel.Courier{}, nil).Once()
@@ -441,7 +441,7 @@ func TestCheckout(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			mockUserAddressService := new(mocks.UserAddressService)
+			mockAddressService := new(mocks.AddressService)
 			mockMarketplaceVoucherService := new(mocks.MarketplaceVoucherService)
 			mockShopService := new(mocks.ShopService)
 			mockShopVoucherService := new(mocks.ShopVoucherService)
@@ -449,11 +449,11 @@ func TestCheckout(t *testing.T) {
 			mockCourierService := new(mocks.CourierService)
 			mockInvoiceRepo := new(mocks.InvoiceRepository)
 
-			test.beforeTest(mockUserAddressService, mockMarketplaceVoucherService, mockShopService, mockShopVoucherService, mockCartItemService, mockCourierService, mockInvoiceRepo)
+			test.beforeTest(mockAddressService, mockMarketplaceVoucherService, mockShopService, mockShopVoucherService, mockCartItemService, mockCourierService, mockInvoiceRepo)
 
 			service := service.NewInvoiceService(&service.InvoiceSConfig{
 				InvoiceRepo:               mockInvoiceRepo,
-				UserAddressService:        mockUserAddressService,
+				AddressService:            mockAddressService,
 				ShopService:               mockShopService,
 				ShopVoucherService:        mockShopVoucherService,
 				CartItemService:           mockCartItemService,

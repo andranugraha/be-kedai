@@ -300,7 +300,7 @@ func createRouter() *gin.Engine {
 	})
 	invoiceService := orderServicePackage.NewInvoiceService(&orderServicePackage.InvoiceSConfig{
 		InvoiceRepo:               invoiceRepo,
-		UserAddressService:        userAddressService,
+		AddressService:            addressService,
 		ShopService:               shopService,
 		ShopVoucherService:        shopVoucherService,
 		CartItemService:           userCartItemService,

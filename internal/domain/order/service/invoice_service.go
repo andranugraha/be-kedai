@@ -28,7 +28,7 @@ type InvoiceService interface {
 
 type invoiceServiceImpl struct {
 	invoiceRepo               repository.InvoiceRepository
-	AddressService            locationService.AddressService
+	addressService            locationService.AddressService
 	shopService               shopService.ShopService
 	shopVoucherService        shopService.ShopVoucherService
 	cartItemService           userService.UserCartItemService
@@ -53,7 +53,7 @@ type InvoiceSConfig struct {
 func NewInvoiceService(cfg *InvoiceSConfig) InvoiceService {
 	return &invoiceServiceImpl{
 		invoiceRepo:               cfg.InvoiceRepo,
-		userAddressService:        cfg.UserAddressService,
+		addressService:            cfg.AddressService,
 		shopService:               cfg.ShopService,
 		shopVoucherService:        cfg.ShopVoucherService,
 		cartItemService:           cfg.CartItemService,
@@ -65,7 +65,7 @@ func NewInvoiceService(cfg *InvoiceSConfig) InvoiceService {
 }
 
 func (s *invoiceServiceImpl) Checkout(req dto.CheckoutRequest) (*dto.CheckoutResponse, error) {
-	_, err := s.userAddressService.GetUserAddressByIdAndUserId(req.AddressID, req.UserID)
+	_, err := s.addressService.GetUserAddressByIdAndUserId(req.AddressID, req.UserID)
 	if err != nil {
 		return nil, err
 	}
