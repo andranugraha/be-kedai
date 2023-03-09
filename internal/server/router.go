@@ -5,6 +5,8 @@ import (
 	"kedai/backend/be-kedai/internal/server/middleware"
 
 	locationHandler "kedai/backend/be-kedai/internal/domain/location/handler"
+	marketplaceHandler "kedai/backend/be-kedai/internal/domain/marketplace/handler"
+	orderHandler "kedai/backend/be-kedai/internal/domain/order/handler"
 	productHandler "kedai/backend/be-kedai/internal/domain/product/handler"
 	shopHandler "kedai/backend/be-kedai/internal/domain/shop/handler"
 	userHandler "kedai/backend/be-kedai/internal/domain/user/handler"
@@ -14,10 +16,12 @@ import (
 )
 
 type RouterConfig struct {
-	UserHandler     *userHandler.Handler
-	LocationHandler *locationHandler.Handler
-	ProductHandler  *productHandler.Handler
-	ShopHandler     *shopHandler.Handler
+	UserHandler        *userHandler.Handler
+	LocationHandler    *locationHandler.Handler
+	ProductHandler     *productHandler.Handler
+	ShopHandler        *shopHandler.Handler
+	MarketplaceHandler *marketplaceHandler.Handler
+	OrderHandler       *orderHandler.Handler
 }
 
 func NewRouter(cfg *RouterConfig) *gin.Engine {
@@ -66,6 +70,9 @@ func NewRouter(cfg *RouterConfig) *gin.Engine {
 				{
 					wallet.GET("", cfg.UserHandler.GetWalletByUserID)
 					wallet.POST("", cfg.UserHandler.RegisterWallet)
+					wallet.POST("/top-up", cfg.UserHandler.TopUp)
+					wallet.GET("/histories/:ref", cfg.UserHandler.GetDetail)
+					wallet.GET("/histories", cfg.UserHandler.GetWalletHistory)
 				}
 				wishlists := userAuthenticated.Group("/wishlists")
 				{
@@ -79,6 +86,7 @@ func NewRouter(cfg *RouterConfig) *gin.Engine {
 					carts.POST("", cfg.UserHandler.CreateCartItem)
 					carts.GET("", cfg.UserHandler.GetAllCartItem)
 					carts.PUT("/:skuId", cfg.UserHandler.UpdateCartItem)
+					carts.DELETE("/:cartItemId", cfg.UserHandler.DeleteCartItem)
 				}
 				addresses := userAuthenticated.Group("/addresses")
 				{
@@ -108,6 +116,8 @@ func NewRouter(cfg *RouterConfig) *gin.Engine {
 		{
 			product.GET("", cfg.ProductHandler.ProductSearchFiltering)
 			product.GET("/:code", cfg.ProductHandler.GetProductByCode)
+			product.GET("/:code/reviews", cfg.ProductHandler.GetProductReviews)
+			product.GET("/:code/reviews/stats", cfg.ProductHandler.GetProductReviewStats)
 			product.GET("/recommendations/categories", cfg.ProductHandler.GetRecommendationByCategory)
 			category := product.Group("/categories")
 			{
@@ -117,12 +127,48 @@ func NewRouter(cfg *RouterConfig) *gin.Engine {
 			{
 				sku.GET("", cfg.ProductHandler.GetSKUByVariantIDs)
 			}
+
 		}
 
 		shop := v1.Group("/shops")
 		{
+			shop.GET("", cfg.ShopHandler.FindShopByKeyword)
 			shop.GET("/:slug", cfg.ShopHandler.FindShopBySlug)
+			shop.GET("/:slug/products", cfg.ProductHandler.GetProductsByShopSlug)
 			shop.GET("/:slug/vouchers", cfg.ShopHandler.GetShopVoucher)
+			authenticated := shop.Group("", middleware.JWTAuthorization, cfg.UserHandler.GetSession)
+			{
+				authenticated.GET("/:slug/vouchers/valid", cfg.ShopHandler.GetValidShopVoucher)
+			}
+		}
+		marketplace := v1.Group("/marketplaces")
+		{
+			marketplace.GET("/vouchers", cfg.MarketplaceHandler.GetMarketplaceVoucher)
+			authenticated := marketplace.Group("", middleware.JWTAuthorization, cfg.UserHandler.GetSession)
+			{
+				authenticated.GET("/vouchers/valid", cfg.MarketplaceHandler.GetValidMarketplaceVoucher)
+			}
+		}
+
+		order := v1.Group("/orders")
+		{
+			authenticated := order.Group("", middleware.JWTAuthorization, cfg.UserHandler.GetSession)
+			{
+				invoice := authenticated.Group("/invoices")
+				{
+					invoice.GET("", cfg.OrderHandler.GetInvoicePerShopsByUserID)
+					invoice.GET("/:code", cfg.OrderHandler.GetInvoiceByCode)
+				}
+
+				transaction := authenticated.Group("/transactions")
+				{
+					transaction.GET("/:transactionId/reviews", cfg.OrderHandler.GetReviewByTransactionID)
+					review := transaction.Group("/reviews")
+					{
+						review.POST("", cfg.OrderHandler.AddTransactionReview)
+					}
+				}
+			}
 		}
 	}
 

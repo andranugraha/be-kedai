@@ -11,9 +11,10 @@ import (
 type ProductDetail struct {
 	model.Product
 	Vouchers         []*shopModel.ShopVoucher `json:"vouchers,omitempty" gorm:"->:false"`
-	Couriers         []*shopModel.Courier     `json:"couriers" gorm:"->:false"`
+	Couriers         []*shopModel.Courier     `json:"couriers,omitempty" gorm:"->:false"`
 	MinPrice         float64                  `json:"minPrice"`
 	MaxPrice         float64                  `json:"maxPrice"`
+	ImageURL         string                   `json:"imageUrl,omitempty"`
 	TotalStock       int                      `json:"totalStock"`
 	PromotionPercent *float64                 `json:"promotionPercent,omitempty"`
 }
@@ -66,6 +67,7 @@ type ProductSearchFilterRequest struct {
 	MinRating  int     `form:"minRating"`
 	MinPrice   float64 `form:"minPrice"`
 	MaxPrice   float64 `form:"maxPrice"`
+	Shop       string  `form:"shop"`
 	CityIds    []int
 	Sort       string `form:"sort"`
 	Limit      int    `form:"limit"`
@@ -117,5 +119,36 @@ func (p *ProductSearchFilterRequest) Validate(strCityIds string) {
 }
 
 func (p *ProductSearchFilterRequest) Offset() int {
+	return (p.Page - 1) * p.Limit
+}
+
+type ShopProductFilterRequest struct {
+	ShopProductCategoryID int    `form:"shopProductCategoryID"`
+	ExceptionID           int    `form:"exceptionID"`
+	PriceSort             string `form:"priceSort"`
+	Sort                  string `form:"sort"`
+	Limit                 int    `form:"limit"`
+	Page                  int    `form:"page"`
+}
+
+func (p *ShopProductFilterRequest) Validate() {
+	if p.Limit < 1 {
+		p.Limit = 10
+	}
+
+	if p.Page < 1 {
+		p.Page = 1
+	}
+
+	if p.Sort != constant.SortByRecommended && p.Sort != constant.SortByLatest && p.Sort != constant.SortByTopSales {
+		p.Sort = constant.SortByRecommended
+	}
+
+	if p.PriceSort != constant.SortByPriceLow && p.PriceSort != constant.SortByPriceHigh {
+		p.PriceSort = constant.SortByPriceLow
+	}
+}
+
+func (p *ShopProductFilterRequest) Offset() int {
 	return (p.Page - 1) * p.Limit
 }

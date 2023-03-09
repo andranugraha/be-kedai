@@ -3,6 +3,7 @@ package service_test
 import (
 	"errors"
 	errRes "kedai/backend/be-kedai/internal/common/error"
+	"kedai/backend/be-kedai/internal/domain/user/dto"
 	"kedai/backend/be-kedai/internal/domain/user/model"
 	"kedai/backend/be-kedai/internal/domain/user/service"
 	"kedai/backend/be-kedai/mocks"
@@ -113,6 +114,138 @@ func TestGetWalletByUserID(t *testing.T) {
 
 			assert.Equal(t, tc.expected.wallet, actualWallet)
 			assert.Equal(t, tc.expected.err, actualErr)
+		})
+	}
+}
+
+func TestTopUp(t *testing.T) {
+	var (
+		userId  = 1
+		history = &model.WalletHistory{
+			ID:        0,
+			Type:      "Top-up",
+			Reference: "15602",
+			Amount:    50000,
+			WalletId:  1,
+		}
+		wallet = &model.Wallet{
+			ID: 1,
+		}
+		req = dto.TopUpRequest{
+			Amount:     50000,
+			TxnId:      "15602",
+			Signature:  "027e361f8776a9fb6f25961687e3cf0879af6fdfe00e03335fbb5764a3763d40",
+			CardNumber: "2793765051084376",
+		}
+		invalidReq = dto.TopUpRequest{
+			Amount:     50000,
+			TxnId:      "15602",
+			Signature:  "d714a01f755b9f5f2c6fdb1d41107cace0e220154b3edc8603c0800e32b479e0",
+			CardNumber: "2793765051084376",
+		}
+	)
+	type input struct {
+		userId      int
+		request     dto.TopUpRequest
+		history     *model.WalletHistory
+		wallet      *model.Wallet
+		err         error
+		beforeTests func(mockWalletRepo *mocks.WalletRepository)
+	}
+
+	type expected struct {
+		data *model.WalletHistory
+		err  error
+	}
+
+	type cases struct {
+		description string
+		input
+		expected
+	}
+
+	for _, tc := range []cases{
+		{
+			description: "should return wallet top-up history when success",
+			input: input{
+				userId:  userId,
+				request: req,
+				history: history,
+				wallet:  wallet,
+				err:     nil,
+				beforeTests: func(mockWalletRepo *mocks.WalletRepository) {
+					mockWalletRepo.On("GetByUserID", userId).Return(wallet, nil)
+					mockWalletRepo.On("TopUp", history, wallet).Return(history, nil)
+				},
+			},
+			expected: expected{
+				data: history,
+				err:  nil,
+			},
+		},
+		{
+			description: "should return error when user wallet does not exist",
+			input: input{
+				userId:  userId,
+				request: req,
+				history: history,
+				wallet:  nil,
+				err:     errRes.ErrWalletDoesNotExist,
+				beforeTests: func(mockWalletRepo *mocks.WalletRepository) {
+					mockWalletRepo.On("GetByUserID", userId).Return(nil, errRes.ErrWalletDoesNotExist)
+				},
+			},
+			expected: expected{
+				data: nil,
+				err:  errRes.ErrWalletDoesNotExist,
+			},
+		},
+		{
+			description: "should return error when signature is invalid",
+			input: input{
+				userId:  userId,
+				request: invalidReq,
+				history: nil,
+				wallet:  nil,
+				err:     errRes.ErrInvalidSignature,
+				beforeTests: func(mockWalletRepo *mocks.WalletRepository) {
+				},
+			},
+			expected: expected{
+				data: nil,
+				err:  errRes.ErrInvalidSignature,
+			},
+		},
+		{
+			description: "should return error when internal server error",
+			input: input{
+				userId:  1,
+				request: req,
+				history: history,
+				wallet:  wallet,
+				err:     errRes.ErrInternalServerError,
+				beforeTests: func(mockWalletRepo *mocks.WalletRepository) {
+					mockWalletRepo.On("GetByUserID", userId).Return(wallet, nil)
+					mockWalletRepo.On("TopUp", history, wallet).Return(nil, errRes.ErrInternalServerError)
+				},
+			},
+			expected: expected{
+				data: nil,
+				err:  errRes.ErrInternalServerError,
+			},
+		},
+	} {
+		t.Run(tc.description, func(t *testing.T) {
+			mockWalletRepo := mocks.NewWalletRepository(t)
+			tc.beforeTests(mockWalletRepo)
+			service := service.NewWalletService(&service.WalletSConfig{
+				WalletRepo: mockWalletRepo,
+			})
+
+			result, err := service.TopUp(tc.input.userId, tc.input.request)
+
+			assert.Equal(t, tc.expected.err, err)
+			assert.Equal(t, tc.expected.data, result)
 		})
 	}
 }

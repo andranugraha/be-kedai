@@ -1,14 +1,23 @@
 package service
 
 import (
+	"fmt"
+	"kedai/backend/be-kedai/config"
+	errs "kedai/backend/be-kedai/internal/common/error"
+	"kedai/backend/be-kedai/internal/domain/user/dto"
 	"kedai/backend/be-kedai/internal/domain/user/model"
 	"kedai/backend/be-kedai/internal/domain/user/repository"
 	"kedai/backend/be-kedai/internal/utils/hash"
 )
 
+const (
+	TopUp = "Top-up"
+)
+
 type WalletService interface {
 	RegisterWallet(userID int, pin string) (*model.Wallet, error)
 	GetWalletByUserID(userID int) (*model.Wallet, error)
+	TopUp(userId int, req dto.TopUpRequest) (*model.WalletHistory, error)
 }
 
 type walletServiceImpl struct {
@@ -39,4 +48,28 @@ func (s *walletServiceImpl) RegisterWallet(userID int, pin string) (*model.Walle
 
 func (s *walletServiceImpl) GetWalletByUserID(userID int) (*model.Wallet, error) {
 	return s.walletRepo.GetByUserID(userID)
+}
+
+func (s *walletServiceImpl) TopUp(userId int, req dto.TopUpRequest) (*model.WalletHistory, error) {
+	var history model.WalletHistory
+
+	signString := fmt.Sprintf("%s:%d:%s", req.CardNumber, int(req.Amount), config.MerchantCode)
+	hashedString := hash.HashSHA256(signString)
+
+	isValid := hash.CompareSignature(req.Signature, hashedString)
+	if !isValid {
+		return nil, errs.ErrInvalidSignature
+	}
+
+	wallet, err := s.walletRepo.GetByUserID(userId)
+	if err != nil {
+		return nil, err
+	}
+
+	history.WalletId = wallet.ID
+	history.Type = TopUp
+	history.Amount = req.Amount
+	history.Reference = req.TxnId
+
+	return s.walletRepo.TopUp(&history, wallet)
 }

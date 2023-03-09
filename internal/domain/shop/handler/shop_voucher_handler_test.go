@@ -55,6 +55,21 @@ func TestGetShopVoucher(t *testing.T) {
 			},
 		},
 		{
+			description: "should return error with code 404 when shop not found",
+			input: input{
+				slug:    slug,
+				voucher: nil,
+				err:     errs.ErrShopNotFound,
+			},
+			expected: expected{
+				statusCode: http.StatusNotFound,
+				response: response.Response{
+					Code:    code.SHOP_NOT_REGISTERED,
+					Message: errs.ErrShopNotFound.Error(),
+				},
+			},
+		},
+		{
 			description: "should return error with code 500 when internal server error",
 			input: input{
 				slug:    slug,
@@ -65,7 +80,7 @@ func TestGetShopVoucher(t *testing.T) {
 				statusCode: http.StatusInternalServerError,
 				response: response.Response{
 					Code:    code.INTERNAL_SERVER_ERROR,
-					Message: "something went wrong in the server",
+					Message: errs.ErrInternalServerError.Error(),
 				},
 			},
 		},
@@ -88,6 +103,100 @@ func TestGetShopVoucher(t *testing.T) {
 			c.Request, _ = http.NewRequest("GET", "/shops/:slug", nil)
 
 			handler.GetShopVoucher(c)
+
+			assert.Equal(t, tc.expected.statusCode, rec.Code)
+			assert.Equal(t, string(expectedBody), rec.Body.String())
+		})
+	}
+}
+
+func TestGetValidShopVoucher(t *testing.T) {
+	var (
+		slug    = "shop"
+		voucher = []*model.ShopVoucher{}
+	)
+	type input struct {
+		slug    string
+		voucher []*model.ShopVoucher
+		err     error
+	}
+	type expected struct {
+		statusCode int
+		response   response.Response
+	}
+
+	type cases struct {
+		description string
+		input
+		expected
+	}
+
+	for _, tc := range []cases{
+		{
+			description: "should return list of voucher with code 200 when successful",
+			input: input{
+				slug:    slug,
+				voucher: voucher,
+				err:     nil,
+			},
+			expected: expected{
+				statusCode: http.StatusOK,
+				response: response.Response{
+					Code:    code.OK,
+					Message: "ok",
+					Data:    voucher,
+				},
+			},
+		},
+		{
+			description: "should return error with code 404 when shop not found",
+			input: input{
+				slug:    slug,
+				voucher: nil,
+				err:     errs.ErrShopNotFound,
+			},
+			expected: expected{
+				statusCode: http.StatusNotFound,
+				response: response.Response{
+					Code:    code.SHOP_NOT_REGISTERED,
+					Message: errs.ErrShopNotFound.Error(),
+				},
+			},
+		},
+		{
+			description: "should return error with code 500 when internal server error",
+			input: input{
+				slug:    slug,
+				voucher: nil,
+				err:     errs.ErrInternalServerError,
+			},
+			expected: expected{
+				statusCode: http.StatusInternalServerError,
+				response: response.Response{
+					Code:    code.INTERNAL_SERVER_ERROR,
+					Message: errs.ErrInternalServerError.Error(),
+				},
+			},
+		},
+	} {
+		t.Run(tc.description, func(t *testing.T) {
+			expectedBody, _ := json.Marshal(tc.expected.response)
+			rec := httptest.NewRecorder()
+			c, _ := gin.CreateTestContext(rec)
+			c.Params = gin.Params{
+				{
+					Key:   "slug",
+					Value: slug,
+				},
+			}
+			mockService := new(mocks.ShopVoucherService)
+			mockService.On("GetValidShopVoucherByUserIDAndSlug", 0, slug).Return(tc.input.voucher, tc.input.err)
+			handler := handler.New(&handler.HandlerConfig{
+				ShopVoucherService: mockService,
+			})
+			c.Request, _ = http.NewRequest("GET", "/shops/:slug/vouchers/valid", nil)
+
+			handler.GetValidShopVoucher(c)
 
 			assert.Equal(t, tc.expected.statusCode, rec.Code)
 			assert.Equal(t, string(expectedBody), rec.Body.String())

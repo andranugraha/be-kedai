@@ -97,18 +97,20 @@ func TestGetByCode(t *testing.T) {
 					pr.On("GetByCode", "product_code").Return(
 						&dto.ProductDetail{
 							Product: model.Product{
+								ID:     1,
 								Code:   "product_code",
 								ShopID: 1,
 								Shop:   &shopModel.Shop{ID: 1, Slug: "test"},
 							},
 						}, nil)
 					svs.On("GetShopVoucher", "test").Return(nil, errors.New("failed to fetch vouchers"))
-					cs.On("GetCouriersByShopID", 1).Return(nil, errors.New("failed to fetch couriers"))
+					cs.On("GetCouriersByProductID", 1).Return(nil, errors.New("failed to fetch couriers"))
 				},
 			},
 			expected: expected{
 				data: &dto.ProductDetail{
 					Product: model.Product{
+						ID:     1,
 						Code:   "product_code",
 						ShopID: 1,
 						Shop:   &shopModel.Shop{ID: 1, Slug: "test"},
@@ -125,18 +127,20 @@ func TestGetByCode(t *testing.T) {
 					pr.On("GetByCode", "product_code").Return(
 						&dto.ProductDetail{
 							Product: model.Product{
+								ID:     1,
 								Code:   "product_code",
 								ShopID: 1,
 								Shop:   &shopModel.Shop{ID: 1, Slug: "test"},
 							},
 						}, nil)
 					svs.On("GetShopVoucher", "test").Return([]*shopModel.ShopVoucher{}, nil)
-					cs.On("GetCouriersByShopID", 1).Return([]*shopModel.Courier{}, nil)
+					cs.On("GetCouriersByProductID", 1).Return([]*shopModel.Courier{}, nil)
 				},
 			},
 			expected: expected{
 				data: &dto.ProductDetail{
 					Product: model.Product{
+						ID:     1,
 						Code:   "product_code",
 						ShopID: 1,
 						Shop:   &shopModel.Shop{ID: 1, Slug: "test"},
@@ -238,6 +242,7 @@ func TestProductSearchFiltering(t *testing.T) {
 	var (
 		validReq = dto.ProductSearchFilterRequest{
 			Keyword: "test",
+			Shop:    "shop",
 		}
 		invalidReq = dto.ProductSearchFilterRequest{
 			Keyword: "  ",
@@ -251,11 +256,15 @@ func TestProductSearchFiltering(t *testing.T) {
 		emptyRes = &commonDto.PaginationResponse{
 			Data: product,
 		}
+		shop = &shopModel.Shop{
+			ID: 1,
+		}
+		shopId = 1
 	)
 	type input struct {
 		dto        dto.ProductSearchFilterRequest
 		err        error
-		beforeTest func(*mocks.ProductRepository)
+		beforeTest func(*mocks.ProductRepository, *mocks.ShopService)
 	}
 	type expected struct {
 		result *commonDto.PaginationResponse
@@ -274,8 +283,9 @@ func TestProductSearchFiltering(t *testing.T) {
 			input: input{
 				dto: validReq,
 				err: nil,
-				beforeTest: func(pr *mocks.ProductRepository) {
-					pr.On("ProductSearchFiltering", validReq).Return(product, int64(1), 1, nil)
+				beforeTest: func(pr *mocks.ProductRepository, sr *mocks.ShopService) {
+					sr.On("FindShopBySlug", validReq.Shop).Return(shop, nil)
+					pr.On("ProductSearchFiltering", validReq, shopId).Return(product, int64(1), 1, nil)
 				},
 			},
 			expected: expected{
@@ -284,12 +294,27 @@ func TestProductSearchFiltering(t *testing.T) {
 			},
 		},
 		{
+			description: "should return error when shop not found",
+			input: input{
+				dto: validReq,
+				err: errorResponse.ErrShopNotFound,
+				beforeTest: func(pr *mocks.ProductRepository, sr *mocks.ShopService) {
+					sr.On("FindShopBySlug", validReq.Shop).Return(shop, errorResponse.ErrShopNotFound)
+				},
+			},
+			expected: expected{
+				result: nil,
+				err:    errorResponse.ErrShopNotFound,
+			},
+		},
+		{
 			description: "should return error when internal server error",
 			input: input{
 				dto: validReq,
 				err: nil,
-				beforeTest: func(pr *mocks.ProductRepository) {
-					pr.On("ProductSearchFiltering", validReq).Return(nil, int64(0), 0, errors.New("error"))
+				beforeTest: func(pr *mocks.ProductRepository, sr *mocks.ShopService) {
+					sr.On("FindShopBySlug", validReq.Shop).Return(shop, nil)
+					pr.On("ProductSearchFiltering", validReq, shopId).Return(nil, int64(0), 0, errors.New("error"))
 				},
 			},
 			expected: expected{
@@ -302,7 +327,7 @@ func TestProductSearchFiltering(t *testing.T) {
 			input: input{
 				dto:        invalidReq,
 				err:        nil,
-				beforeTest: func(pr *mocks.ProductRepository) {},
+				beforeTest: func(pr *mocks.ProductRepository, sr *mocks.ShopService) {},
 			},
 			expected: expected{
 				result: emptyRes,
@@ -311,16 +336,104 @@ func TestProductSearchFiltering(t *testing.T) {
 		},
 	} {
 		t.Run(tc.description, func(t *testing.T) {
-			mockRepo := new(mocks.ProductRepository)
-			tc.beforeTest(mockRepo)
+			mockProductRepo := new(mocks.ProductRepository)
+			mockShopService := new(mocks.ShopService)
+			tc.beforeTest(mockProductRepo, mockShopService)
 			service := service.NewProductService(&service.ProductSConfig{
-				ProductRepository: mockRepo,
+				ProductRepository: mockProductRepo,
+				ShopService:       mockShopService,
 			})
 
 			result, err := service.ProductSearchFiltering(tc.dto)
 
 			assert.Equal(t, tc.expected.result, result)
 			assert.Equal(t, tc.expected.err, err)
+		})
+	}
+}
+
+func TestGetProductsByShopSlug(t *testing.T) {
+	type input struct {
+		slug       string
+		request    *dto.ShopProductFilterRequest
+		beforeTest func(*mocks.ProductRepository, *mocks.ShopService)
+	}
+	type expected struct {
+		data *commonDto.PaginationResponse
+		err  error
+	}
+
+	tests := []struct {
+		description string
+		input
+		expected
+	}{
+		{
+			description: "should return error when failed to get shop",
+			input: input{
+				slug:    "shop-slug",
+				request: &dto.ShopProductFilterRequest{},
+				beforeTest: func(pr *mocks.ProductRepository, ss *mocks.ShopService) {
+					ss.On("FindShopBySlug", "shop-slug").Return(nil, errors.New("failed to get shop"))
+				},
+			},
+			expected: expected{
+				data: nil,
+				err:  errors.New("failed to get shop"),
+			},
+		},
+		{
+			description: "should return error when failed to get products",
+			input: input{
+				slug:    "shop-slug",
+				request: &dto.ShopProductFilterRequest{},
+				beforeTest: func(pr *mocks.ProductRepository, ss *mocks.ShopService) {
+					ss.On("FindShopBySlug", "shop-slug").Return(&shopModel.Shop{ID: 1, Slug: "shop-slug"}, nil)
+					pr.On("GetByShopID", 1, &dto.ShopProductFilterRequest{}).Return(nil, int64(0), 0, errors.New("failed to get products"))
+				},
+			},
+			expected: expected{
+				data: nil,
+				err:  errors.New("failed to get products"),
+			},
+		},
+		{
+			description: "should return products when successfully fecthing products",
+			input: input{
+				slug:    "shop-slug",
+				request: &dto.ShopProductFilterRequest{},
+				beforeTest: func(pr *mocks.ProductRepository, ss *mocks.ShopService) {
+					ss.On("FindShopBySlug", "shop-slug").Return(&shopModel.Shop{ID: 1, Slug: "shop-slug"}, nil)
+					pr.On("GetByShopID", 1, &dto.ShopProductFilterRequest{}).Return([]*dto.ProductDetail{}, int64(0), 0, nil)
+				},
+			},
+			expected: expected{
+				data: &commonDto.PaginationResponse{
+					TotalRows:  0,
+					TotalPages: 0,
+					Data:       []*dto.ProductDetail{},
+					Page:       0,
+					Limit:      0,
+				},
+				err: nil,
+			},
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.description, func(t *testing.T) {
+			shopService := mocks.NewShopService(t)
+			productRepository := mocks.NewProductRepository(t)
+			tc.beforeTest(productRepository, shopService)
+			productService := service.NewProductService(&service.ProductSConfig{
+				ProductRepository: productRepository,
+				ShopService:       shopService,
+			})
+
+			actualData, actualErr := productService.GetProductsByShopSlug(tc.input.slug, tc.input.request)
+
+			assert.Equal(t, tc.expected.data, actualData)
+			assert.Equal(t, tc.expected.err, actualErr)
 		})
 	}
 }

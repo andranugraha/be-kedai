@@ -16,6 +16,7 @@ type UserCartItemRepository interface {
 	GetAllCartItem(*dto.GetCartItemsRequest) (cartItems []*model.CartItem, totalRows int64, totalPages int, err error)
 	GetCartItemByUserIdAndSkuId(userId int, skuId int) (*model.CartItem, error)
 	UpdateCartItem(cartItem *model.CartItem) (*model.CartItem, error)
+	DeleteCartItem(*dto.DeleteCartItemRequest) error
 }
 
 type userCartItemRepository struct {
@@ -97,6 +98,7 @@ func (r *userCartItemRepository) GetAllCartItem(req *dto.GetCartItemsRequest) (c
 		Order("cart_items.created_at").
 		Preload("Sku.Product.Shop.Address.City").
 		Preload("Sku.Product.Shop.Address.Province").
+		Preload("Sku.Product.Shop.Address.Subdistrict").
 		Preload("Sku.Variants.Group").
 		Preload("Sku.Promotion")
 
@@ -113,4 +115,17 @@ func (r *userCartItemRepository) GetAllCartItem(req *dto.GetCartItemsRequest) (c
 	}
 
 	return
+}
+
+func (r *userCartItemRepository) DeleteCartItem(req *dto.DeleteCartItemRequest) error {
+	res := r.db.Unscoped().Where("id = ? and user_id = ?", req.CartItemId, req.UserId).Delete(&model.CartItem{})
+	if err := res.Error; err != nil {
+		return err
+	}
+
+	if res.RowsAffected < 1 {
+		return errs.ErrCartItemNotFound
+	}
+
+	return nil
 }

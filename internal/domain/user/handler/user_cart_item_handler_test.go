@@ -14,6 +14,7 @@ import (
 	"kedai/backend/be-kedai/mocks"
 	"net/http"
 	"net/http/httptest"
+	"strconv"
 	"testing"
 
 	"github.com/gin-gonic/gin"
@@ -512,6 +513,110 @@ func TestUpdateCartItem(t *testing.T) {
 			})
 
 			handler.UpdateCartItem(c)
+
+			assert.Equal(t, tc.expected.statusCode, rec.Code)
+			assert.Equal(t, string(expectedRes), rec.Body.String())
+		})
+	}
+}
+
+func TestDeleteCartItem(t *testing.T) {
+	type input struct {
+		req        *dto.DeleteCartItemRequest
+		beforeTest func(ucis *mocks.UserCartItemService)
+	}
+	type expected struct {
+		statusCode int
+		response   response.Response
+	}
+	tests := []struct {
+		description string
+		input       input
+		expected    expected
+	}{
+		{
+			description: "should return error with status code 400 when sku id is invalid",
+			input: input{
+				req: &dto.DeleteCartItemRequest{
+					UserId:     1,
+					CartItemId: 1,
+				},
+				beforeTest: func(ucis *mocks.UserCartItemService) {
+					ucis.On("DeleteCartItem", &dto.DeleteCartItemRequest{
+						UserId:     1,
+						CartItemId: 1,
+					}).Return(errs.ErrCartItemNotFound)
+				},
+			},
+			expected: expected{
+				statusCode: http.StatusNotFound,
+				response: response.Response{
+					Code:    code.CART_ITEM_NOT_FOUND,
+					Message: errs.ErrCartItemNotFound.Error(),
+				},
+			},
+		},
+		{
+			description: "should return error with status code 500 when failed to delete cart item",
+			input: input{
+				req: &dto.DeleteCartItemRequest{
+					UserId:     1,
+					CartItemId: 1,
+				},
+				beforeTest: func(ucis *mocks.UserCartItemService) {
+					ucis.On("DeleteCartItem", &dto.DeleteCartItemRequest{
+						UserId:     1,
+						CartItemId: 1,
+					}).Return(errs.ErrInternalServerError)
+				},
+			},
+			expected: expected{
+				statusCode: http.StatusInternalServerError,
+				response: response.Response{
+					Code:    code.INTERNAL_SERVER_ERROR,
+					Message: errs.ErrInternalServerError.Error(),
+				},
+			},
+		},
+		{
+			description: "should return error with status code 200 when delete cart item succeed",
+			input: input{
+				req: &dto.DeleteCartItemRequest{
+					UserId:     1,
+					CartItemId: 1,
+				},
+				beforeTest: func(ucis *mocks.UserCartItemService) {
+					ucis.On("DeleteCartItem", &dto.DeleteCartItemRequest{
+						UserId:     1,
+						CartItemId: 1,
+					}).Return(nil)
+				},
+			},
+			expected: expected{
+				statusCode: http.StatusOK,
+				response: response.Response{
+					Code:    code.DELETED,
+					Message: "delete cart item succesful",
+				},
+			},
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.description, func(t *testing.T) {
+			expectedRes, _ := json.Marshal(tc.expected.response)
+			cartItemService := mocks.NewUserCartItemService(t)
+			tc.input.beforeTest(cartItemService)
+			rec := httptest.NewRecorder()
+			c, _ := gin.CreateTestContext(rec)
+			c.Set("userId", tc.input.req.UserId)
+			c.AddParam("cartItemId", strconv.Itoa(tc.input.req.CartItemId))
+			c.Request, _ = http.NewRequest(http.MethodDelete, "v1/users/carts", nil)
+			handler := handler.New(&handler.HandlerConfig{
+				UserCartItemService: cartItemService,
+			})
+
+			handler.DeleteCartItem(c)
 
 			assert.Equal(t, tc.expected.statusCode, rec.Code)
 			assert.Equal(t, string(expectedRes), rec.Body.String())

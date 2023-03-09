@@ -51,7 +51,7 @@ func (h *Handler) UserRegistration(c *gin.Context) {
 			return
 		}
 
-		response.Error(c, http.StatusInternalServerError, code.INTERNAL_SERVER_ERROR, err.Error())
+		response.Error(c, http.StatusInternalServerError, code.INTERNAL_SERVER_ERROR, errs.ErrInternalServerError.Error())
 		return
 	}
 
@@ -73,7 +73,7 @@ func (h *Handler) UserLogin(c *gin.Context) {
 			return
 		}
 
-		response.Error(c, http.StatusInternalServerError, code.INTERNAL_SERVER_ERROR, err.Error())
+		response.Error(c, http.StatusInternalServerError, code.INTERNAL_SERVER_ERROR, errs.ErrInternalServerError.Error())
 		return
 	}
 
@@ -115,7 +115,7 @@ func (h *Handler) UserRegistrationWithGoogle(c *gin.Context) {
 			return
 		}
 
-		response.Error(c, http.StatusInternalServerError, code.INTERNAL_SERVER_ERROR, err.Error())
+		response.Error(c, http.StatusInternalServerError, code.INTERNAL_SERVER_ERROR, errs.ErrInternalServerError.Error())
 		return
 	}
 
@@ -142,7 +142,7 @@ func (h *Handler) UserLoginWithGoogle(c *gin.Context) {
 			return
 		}
 
-		response.Error(c, http.StatusInternalServerError, code.INTERNAL_SERVER_ERROR, err.Error())
+		response.Error(c, http.StatusInternalServerError, code.INTERNAL_SERVER_ERROR, errs.ErrInternalServerError.Error())
 		return
 	}
 

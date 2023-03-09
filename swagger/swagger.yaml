@@ -16,7 +16,83 @@ tags:
   - name: User
   - name: Product
   - name: Shop
+  - name: Marketplace
+  - name: Order
 paths:
+  /v1/orders/transactions/reviews:
+    post:
+      security:
+        - BearerAuth: []
+      tags:
+        - Order
+      summary: Post a transaction review
+      description: Add transaction review to a transaction
+      requestBody:
+        $ref: '#/components/requestBodies/TransactionReviewBody'
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Response'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/TransactionReview'
+        '401':
+          description: unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "UNAUTHORIZED"
+                  message:
+                    type: string
+                    example: "invalid credential"
+        '404':
+          description: data not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: NOT_FOUND
+                  message:
+                    type: string
+                    example: error message
+        '409':
+          description: Conflict
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: TRANSACTION_REVIEW_ALREADY_EXIST
+                  message:
+                    type: string
+                    example: error message            
+        '500':
+          description: internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: INTERNAL_SERVER_ERROR
+                  message:
+                    type: string
+                    example: error message    
   /v1/users/wallets:
     get:
       security:
@@ -153,6 +229,249 @@ paths:
                   message:
                     type: string
                     example: "error message"
+  /v1/users/wallets/{ref}:
+    get:
+      security:
+        - BearerAuth: []
+      tags:
+        - User
+      summary: Get wallet transaction information
+      description: Get user's wallet transaction information
+      parameters:
+        - in: path
+          name: ref
+          description: Reference code of chosen transaction detail
+          required: true
+          schema:
+            type: string
+            example: "129920"
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Response'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/WalletHistory'
+        '401':
+          description: unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "UNAUTHORIZED"
+                  message:
+                    type: string
+                    example: "invalid credential"
+        '404':
+          description: data not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: NOT_FOUND
+                  message:
+                    type: string
+                    example: error message
+        '500':
+          description: internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: INTERNAL_SERVER_ERROR
+                  message:
+                    type: string
+                    example: error message
+  /v1/users/wallets/histories:
+    get:
+      security:
+        - BearerAuth: []
+      tags:
+        - User
+      summary: User get wallet transaction histories
+      description: User get wallet transaction histories
+      parameters:
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            default: 10
+        - in: query
+          name: page
+          schema:
+            type: integer
+            default: 1
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Response'
+                  - type: object
+                    properties:
+                      data:
+                        allOf:
+                          - $ref: '#/components/schemas/PaginationResponse'
+                          - type: object
+                            properties:
+                              data:
+                                type: array
+                                items:
+                                  $ref: '#/components/schemas/WalletHistory'
+        '404':
+          description: wallet not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "NOT_FOUND"
+                  message:
+                    type: string
+                    example: "user wallet does not exist"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "INTERNAL_SERVER_ERROR"
+                  message:
+                    type: string
+                    example: "error message"
+          
+  /v1/users/wallets/top-up:
+    post:
+      security:
+        - BearerAuth: []
+      tags:
+        - User
+      summary: User wallet top-up
+      description: User wallet top-up
+      parameters:
+        - in: query
+          name: amount
+          required: true
+          schema:
+            type: integer
+            example: 50000
+        - in: query
+          name: txnId
+          required: true
+          schema:
+            type: string
+            example: 68102
+        - in: query
+          name: signature
+          required: true
+          schema:
+            type: string
+            example: "aisjd81923jikasd123324008123"
+        - in: query
+          name: cardNumber
+          required: true
+          schema:
+            type: string
+            example: "293774202332"
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Response'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/WalletHistory'
+        '400':
+          description: invalid amount
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "BAD_REQUEST"
+                  message:
+                    type: string
+                    example: "amount must be greater than 10000"
+        '422':
+          description: invalid signature pattern
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "INVALID_SIGNATURE"
+                  message:
+                    type: string
+                    example: "invalid signature"
+        '404':
+          description: wallet not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "NOT_FOUND"
+                  message:
+                    type: string
+                    example: "user wallet does not exist"
+        '401':
+          description: unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "UNAUTHORIZED"
+                  message:
+                    type: string
+                    example: "invalid credential"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "INTERNAL_SERVER_ERROR"
+                  message:
+                    type: string
+                    example: "error message"
+        
   /v1/users:
     get:
       security:
@@ -1409,56 +1728,11 @@ paths:
                                     - type: object
                                       properties:
                                         shop:
-                                          $ref: '#/components/schemas/Shop'
+                                          $ref: '#/components/schemas/CartItemShopResponse'
                                     - type: object
                                       properties:
                                         cartItems:
-                                          type: array
-                                          items:
-                                            type: object
-                                            properties:
-                                              id:
-                                                type: integer
-                                                example: 1
-                                              skuId:
-                                                type: integer
-                                                example: 5
-                                              name:
-                                                type: string
-                                                example: Shoes
-                                              quantity:
-                                                type: integer
-                                                example: 29
-                                              stock:
-                                                type: integer
-                                                example: 2012
-                                              notes:
-                                                type: string
-                                                example: "notest test"
-                                              originalPrice:
-                                                type: number
-                                                format: float
-                                                example: 30000000
-                                              promotionType:
-                                                type: string
-                                                example: percent
-                                              promotionAmount:
-                                                type: number
-                                                format: float
-                                                example: 0.1
-                                              discountedPrice:
-                                                type: integer
-                                                format: float
-                                                example: 27000000
-                                              variants:
-                                                type: array
-                                                items:
-                                                  allOf:
-                                                    - $ref: '#/components/schemas/Variant'
-                                                    - type: object
-                                                      properties:
-                                                        group:
-                                                          $ref: '#/components/schemas/GroupVariant'
+                                          $ref: '#/components/schemas/CartItemResponse'
 
         '401':
           description: unauthorized
@@ -1687,6 +1961,65 @@ paths:
                   message:
                     type: string
                     example: "error message"
+  /v1/users/carts/{cartItemId}:
+    put:
+      security:
+        - BearerAuth: []
+      tags:
+        - User
+      summary: Delete user cart item
+      description: Delete cart item from cart with cart item id
+      parameters:
+        - in: path
+          name: cartItemId
+          required: true
+          description: cart item id, must be an integer and greater than or equal 1
+          schema:
+            type: integer
+            example: 1
+            minimum: 1
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Response'
+                  - type: object
+                    properties:
+                      code:
+                        type: string
+                        example: "DELETED"
+                      message:
+                        type: string
+                        example: "delete cart item succesful"
+        '404':
+          description: not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "NOT_FOUND"
+                  message:
+                    type: string
+                    example: "cart item not found"
+        '500':
+          description: internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "INTERNAL_SERVER_ERROR"
+                  message:
+                    type: string
+                    example: "error message"                  
   /v1/users/addresses:
     get:
       security:
@@ -2411,23 +2744,19 @@ paths:
                           - $ref: '#/components/schemas/Product'
                           - type: object
                             properties:
+                              bulk:
+                                $ref: '#/components/schemas/ProductBulkPrice'
+                          - type: object
+                            properties:
                               totalStock:
                                 type: integer
                                 example: 100
-                          - type: object
-                            properties:
-                              bulk:
-                                $ref: '#/components/schemas/ProductBulkPrice'
                           - type: object
                             properties:
                               vouchers:
                                 type: array
                                 items:
                                   $ref: '#/components/schemas/ShopVoucher'
-                          - type: object
-                            properties:
-                              media:
-                                $ref: '#/components/schemas/ProductMedia'
                           - type: object
                             properties:
                               couriers:
@@ -2450,17 +2779,7 @@ paths:
                           - type: object
                             properties:
                               shop:
-                                allOf:
-                                  - $ref: '#/components/schemas/Shop'
-                                  - type: object
-                                    properties:
-                                      address:
-                                        allOf:
-                                          - $ref: '#/components/schemas/UserAddress'
-                                          - type: object
-                                            properties:
-                                              subdistrict:
-                                                $ref: '#/components/schemas/Subdistrict'
+                                $ref: '#/components/schemas/Shop'
                           - type: object
                             properties:
                               sku:
@@ -2490,21 +2809,37 @@ paths:
                     example: "INTERNAL_SERVER_ERROR"
                   message:
                     type: string
-                    example: "error message"                
-  /v1/products/skus:
+                    example: "error message"
+  /v1/products/{code}/reviews:
     get:
       tags:
         - Product
-      summary: Get product SKU
-      description: Get product SKU by using combination of product variant IDs
+      summary: Get product reviews by code
+      description: Get product reviews by product code
       parameters:
-        - in: query
-          name: variantId
+        - in: path
+          name: code
           required: true
-          description: list of product variant IDs to combine, separated by comma. Each variant ID must be an integer greater than or equal 1. There should be at least 1 variant ID. If there are more than 2, only the first two will be used
           schema:
             type: string
-            example: 1,3
+            example: product_code
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            default: 6
+            maximum: 50
+          description: Set to 6 by default and the maximum limit is 50.
+        - in: query
+          name: page
+          schema:
+            type: integer
+            default: 1    
+        - in: query
+          name: filter
+          schema:
+            type: string
+            enum: [5_star, 4_star, 3_star, 2_star, 1_star, with_picture, with_comment]    
       responses:
         '200':
           description: operation successful
@@ -2515,23 +2850,28 @@ paths:
                   - $ref: '#/components/schemas/Response'
                   - type: object
                     properties:
+                      code:
+                        example: 'OK'
+                      message:
+                        example: "ok"
                       data:
-                        $ref: '#/components/schemas/SKU'
-        '400':
-          description: bad request
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  code:
-                    type: string
-                    example: "BAD_REQUEST"
-                  message:
-                    type: string
-                    example: "error message"
+                        allOf:
+                        - $ref: '#/components/schemas/PaginationResponse'
+                        - type: object
+                          properties:
+                            totalRows:
+                              example: 1
+                            totalPages:
+                              example: 1
+                            limit:
+                              example: 10
+                            data:
+                              type: array
+                              items:
+                                allOf:
+                                  - $ref: '#/components/schemas/ReviewResponse'
         '404':
-          description: Not found
+          description: product not found
           content:
             application/json:
               schema:
@@ -2539,20 +2879,7 @@ paths:
                 properties:
                   code:
                     type: string
-                    example: "NOT_FOUND"
-                  message:
-                    type: string
-                    example: "error message"
-        '422':
-          description: Invalid variant
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  code:
-                    type: string
-                    example: "INVALID_VARIANT"
+                    example: "PRODUCT_NOT_EXIST"
                   message:
                     type: string
                     example: "error message"
@@ -2569,6 +2896,65 @@ paths:
                   message:
                     type: string
                     example: "error message"
+  /v1/products/{code}/reviews/stats:
+    get:
+      tags:
+        - Product
+      summary: Get product review stats by code
+      description: Get product review stats by product code. The stats consists of average rating, total review count, five star count, four star count, three star count, two star count, one star count, with picture and with comment.
+      parameters:
+        - in: path
+          name: code
+          required: true
+          schema:
+            type: string
+            example: product_code
+      responses:
+        '200':
+          description: operation successful
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Response'
+                  - type: object
+                    properties:
+                      code:
+                        example: 'OK'
+                      message:
+                        example: "ok"
+                      data:
+                        allOf:
+                        - type: object
+                          properties:
+                            data:
+                              $ref: '#/components/schemas/GetReviewStatsReponse'
+        '404':
+          description: product not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "PRODUCT_NOT_EXIST"
+                  message:
+                    type: string
+                    example: "error message"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "INTERNAL_SERVER_ERROR"
+                  message:
+                    type: string
+                    example: "error message"                    
   /v1/products:
     get:
       tags:
@@ -2581,6 +2967,11 @@ paths:
           schema:
             type: string
             example: "rtx"
+        - in: query
+          name: shop
+          schema:
+            type: string
+            example: "shop"
         - in: query
           name: limit
           schema:
@@ -2665,6 +3056,19 @@ paths:
                                     properties:
                                       imageUrl:
                                         type: string
+        '404':
+          description: shop not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "SHOP_NOT_FOUND"
+                  message:
+                    type: string
+                    example: "error message"
         '500':
           description: Internal server error
           content:
@@ -2811,7 +3215,82 @@ paths:
                   message:
                     type: string
                     example: "error message"
-          
+  /v1/shops:
+    get:
+      tags:
+        - Shop
+      summary: Find shop by keyword
+      description: Find shop that match with the given keyword with pagination
+      parameters:
+        - in: query
+          name: keyword
+          schema:
+            type: string
+            example: "rtx"
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            default: 10
+          description: Set to 10 by default
+        - in: query
+          name: page
+          schema:
+            type: integer
+            default: 1
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Response'
+                  - type: object
+                    properties:
+                      code:
+                        example: 'OK'
+                      message:
+                        example: 'success'
+                      data:
+                        allOf:
+                          - $ref: '#/components/schemas/PaginationResponse'
+                          - type: object
+                            properties:
+                              data:
+                                type: array
+                                items:
+                                  type: object
+                                  properties:
+                                    slug:
+                                      type: string
+                                      example: "slug"
+                                    name:
+                                      type: string
+                                      example: "shop"
+                                    productCount:
+                                      type: number
+                                      example: 2
+                                    rating:
+                                      type: number
+                                      format: float
+                                      example: 2.5
+                                    photoUrl:
+                                      type: string
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "INTERNAL_SERVER_ERROR"
+                  message:
+                    type: string
+                    example: "error message"
+                  
   /v1/shops/{slug}:
     get:
       tags:
@@ -2868,6 +3347,122 @@ paths:
                   message:
                     type: string
                     example: "error message"
+  /v1/shops/{slug}/products:
+    get:
+      tags:
+        - Shop
+      summary: Get shop product list
+      description: Get all active products from given shop
+      parameters:
+        - in: path
+          name: slug
+          description: slug code for given shop
+          required: true
+          schema:
+            type: string
+            example: shop-slug
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            default: 10
+            example: 5
+        - in: query
+          name: page
+          schema:
+            type: integer
+            default: 1
+            example: 1
+        - in: query
+          name: sort
+          description: shop product list sort method
+          schema:
+            type: string
+            default: recommended
+            enum: [recommended, latest, top_sales]
+            example: recommended
+        - in: query
+          name: priceSort
+          description: shop product list price sort method
+          schema:
+            type: string
+            default: price_low
+            enum: [price_low, price_high]
+            example: price_low
+        - in: query
+          name: shopProductCategoryID
+          description: shop category ID. If not defined then will get products from all categories
+          schema:
+            type: integer
+            default: 0
+            example: 0
+        - in: query
+          name: exceptionID
+          description: product ID to hide from this list. If given, will get all product from given shop except product which has this ID
+          schema:
+            type: integer
+            example: 1
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - type: object
+                    properties:
+                      code:
+                        type: string
+                        example: OK
+                      message:
+                        type: string
+                        example: success
+                      data:
+                        allOf:
+                          - $ref: '#/components/schemas/PaginationResponse'
+                          - type: object
+                            properties:
+                              data:
+                                type: array
+                                items:
+                                  allOf:
+                                    - $ref: '#/components/schemas/Product'
+                                    - type: object
+                                      properties:
+                                        imageUrl:
+                                          type: string
+                                          example: http://example/image.png
+                                    - type: object
+                                      properties:
+                                        totalStock:
+                                          type: integer
+                                          example: 100
+        '404':
+          description: shop not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "SHOP_NOT_REGISTERED"
+                  message:
+                    type: string
+                    example: "error message"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "INTERNAL_SERVER_ERROR"
+                  message:
+                    type: string
+                    example: "error message"
   /v1/shops/{slug}/vouchers:
     get:
       tags:
@@ -2900,6 +3495,19 @@ paths:
                         type: array
                         items:
                           $ref: '#/components/schemas/ShopVoucher'
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "SHOP_NOT_REGISTERED"
+                  message:
+                    type: string
+                    example: "shop not found"                      
         '500':
           description: Internal server error
           content:
@@ -2913,6 +3521,66 @@ paths:
                   message:
                     type: string
                     example: "error message"
+  /v1/shops/{slug}/vouchers/valid:
+    get:
+      security:
+        - BearerAuth: []
+      tags:
+        - Shop
+      summary: Get valid shop voucher
+      description: Get shop list of valid user shop vouchers
+      parameters:
+        - in: path
+          name: slug
+          description: Slug code of chosen shop
+          required: true
+          schema:
+            type: string
+            example: "shop"
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Response'
+                  - type: object
+                    properties:
+                      code:
+                        example: "OK"
+                      message:
+                        example: "ok"
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/ShopVoucher'
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "SHOP_NOT_REGISTERED"
+                  message:
+                    type: string
+                    example: "shop not found"                     
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "INTERNAL_SERVER_ERROR"
+                  message:
+                    type: string
+                    example: "error message"                  
   /v1/users/sealabs-pays:
     get:
       security:
@@ -3038,6 +3706,454 @@ paths:
                   message:
                     type: string
                     example: "error message"
+  /v1/marketplaces/vouchers:
+    get:
+      tags:
+        - Marketplace
+      parameters:
+        - in: query
+          name: categoryId
+          schema:
+            type: integer
+            default: 0
+          description: No default category, will get all if not specified
+        - in: query
+          name: paymentMethodId
+          schema:
+            type: integer
+            default: 0
+          description: No default payment method, will get all if not specified
+      summary: Get marketplace vouchers
+      description: Get list of available marketplace vouchers
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Response'
+                  - type: object
+                    properties:
+                      code:
+                        example: "OK"
+                      message:
+                        example: "ok"
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/MarketplaceVoucher'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "INTERNAL_SERVER_ERROR"
+                  message:
+                    type: string
+                    example: "error message"
+  /v1/marketplaces/vouchers/valid:
+    get:
+      security:
+        - BearerAuth: []
+      tags:
+        - Marketplace
+      parameters:
+        - in: query
+          name: categoryId
+          schema:
+            type: integer
+            default: 0
+          description: No default category, will get all if not specified
+        - in: query
+          name: paymentMethodId
+          schema:
+            type: integer
+            default: 0
+          description: No default payment method, will get all if not specified  
+      summary: Get valid user marketplace vouchers
+      description: Get list of valid user marketplace vouchers
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Response'
+                  - type: object
+                    properties:
+                      code:
+                        example: "OK"
+                      message:
+                        example: "ok"
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/MarketplaceVoucher'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "INTERNAL_SERVER_ERROR"
+                  message:
+                    type: string
+                    example: "error message"                            
+  /v1/orders/invoices:
+    get:
+      security:
+        - BearerAuth: []
+      tags:
+        - Order
+      summary: Get user invoice per shop histories
+      description: Get user invoice per shop histories
+      parameters:
+        - in: query
+          name: page
+          schema:
+            type: integer
+            default: 1
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            default: 10
+        - in: query
+          name: status
+          description: invoice status. Any other value than those defined below will be set `''` (all)
+          schema:
+            type: string
+            default: ''
+            enum: ['', 'COMPLETED', 'CREATED', 'SENT', 'RECEIVED', 'COMPLAINED', 'COMPLAINT_CONFIRMED', 'COMPLAINT_REJECTED', 'CANCELLED']
+        - in: query
+          name: startDate
+          description: startDate format is YYYY-MM-DD. If startDate is stated in the request, endDate should be stated as well
+          schema:
+            type: string
+            format: date
+            example: 2006-01-02
+        - in: query
+          name: endDate
+          description: endDate format is YYYY-MM-DD. If endDate is stated in the request, startDate should be stated as well
+          schema:
+            type: string
+            format: date
+            example: 2006-01-02
+        - in: query
+          name: s
+          description: search query (can be either shop name, product name, or invoice code)
+          schema:
+            type: string
+            example: INV/
+      responses:
+        '200':
+          description: operation successful
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Response'
+                  - type: object
+                    properties:
+                      data:
+                        allOf:
+                          - $ref: '#/components/schemas/PaginationResponse'
+                          - type: object
+                            properties:
+                              data:
+                                type: array
+                                items:
+                                  allOf:
+                                    - $ref: '#/components/schemas/InvoicePerShop'
+                                    - type: object
+                                      properties:
+                                        shop:
+                                          $ref: '#/components/schemas/Shop'
+                                    - type: object
+                                      properties:
+                                        marketplaceVoucherAmount:
+                                          type: number
+                                          nullable: true
+                                          format: float
+                                          example: 0.1
+                                    - type: object
+                                      properties:
+                                        marketplaceVoucherType:
+                                          type: string
+                                          nullable: true
+                                          example: percent
+                                    - type: object
+                                      properties:
+                                        paymentDate:
+                                          type: string
+                                          format: datetime
+                                          example: "2006-01-02T00:00:00:000Z"
+                                    - type: object
+                                      properties:
+                                        transactionItems:
+                                          type: array
+                                          items:
+                                            allOf:
+                                              - $ref: '#/components/schemas/Transaction'
+                                              - type: object
+                                                properties:
+                                                  productName:
+                                                    type: string
+                                                    example: "product name"
+                                              - type: object
+                                                properties:
+                                                  imageUrl:
+                                                    type: string
+                                                    format: url
+                                                    example: http://example.image/test.png
+                                              - type: object
+                                                properties:
+                                                  sku:
+                                                    allOf:
+                                                      - $ref: '#/components/schemas/SKU'
+                                                      - type: object
+                                                        properties:
+                                                          variants:
+                                                            type: array
+                                                            items:
+                                                              $ref: '#/components/schemas/Variant'
+        '400':
+          description: bad request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "BAD_REQUEST"
+                  message:
+                    type: string
+                    example: "error message"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "INTERNAL_SERVER_ERROR"
+                  message:
+                    type: string
+                    example: "error message"                          
+  /v1/orders/transactions/{transactionId}/reviews:
+    get:
+      tags:
+        - Order
+      security:
+        - BearerAuth: []
+      summary: Get transaction review by transaction ID
+      description: Get user transaction review by transaction ID
+      parameters:
+        - in: path
+          name: transactionId
+          required: true
+          schema:
+            type: integer
+            example: 1
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Response'
+                  - type: object
+                    properties:
+                      code:
+                        type: string
+                        example: OK
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                        example: success
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/TransactionReview'
+        '400':
+          description: invalid transaction id
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "BAD_REQUEST"
+                  message:
+                    type: string
+                    example: "error message"
+        '404':
+          description: not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "NOT_FOUND"
+                  message:
+                    type: string
+                    example: "error message"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "INTERNAL_SERVER_ERROR"
+                  message:
+                    type: string
+                    example: "error message"
+  /v1/orders/invoices/{code}:
+    get:
+      tags:
+        - Order
+      security:
+        - BearerAuth: []
+      summary: Get user shop invoice by invoice code
+      description: Get user shop invoice using invoice code
+      parameters:
+        - in: path
+          name: code
+          required: true
+          description: all slash (`/`) in invoice code should be encoded to hypen (`-`)
+          schema:
+            type: string
+            example: INV-XX-X
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Response'
+                  - type: object
+                    properties:
+                      data:
+                        allOf:
+                          - $ref: '#/components/schemas/InvoicePerShop'
+                          - type: object
+                            properties:
+                              shop:
+                                $ref: '#/components/schemas/Shop'
+                          - type: object
+                            properties:
+                              statusList:
+                                type: array
+                                items:
+                                  $ref: '#/components/schemas/InvoiceStatus'
+                          - type: object
+                            properties:
+                              marketplaceVoucherAmount:
+                                type: number
+                                nullable: true
+                                format: float
+                                example: 0.1
+                          - type: object
+                            properties:
+                              marketplaceVoucherType:
+                                type: string
+                                nullable: true
+                                example: percent
+                          - type: object
+                            properties:
+                              paymentDate:
+                                type: string
+                                format: datetime
+                                example: "2006-01-02T00:00:00:000Z"
+                          - type: object
+                            properties:
+                              address:
+                                $ref: '#/components/schemas/UserAddress'
+                          - type: object
+                            properties:
+                              transactionItems:
+                                type: array
+                                items:
+                                  allOf:
+                                    - $ref: '#/components/schemas/Transaction'
+                                    - type: object
+                                      properties:
+                                        productName:
+                                          type: string
+                                          example: "product name"
+                                    - type: object
+                                      properties:
+                                        imageUrl:
+                                          type: string
+                                          format: url
+                                          example: http://example.image/test.png
+                                    - type: object
+                                      properties:
+                                        sku:
+                                          allOf:
+                                            - $ref: '#/components/schemas/SKU'
+                                            - type: object
+                                              properties:
+                                                variants:
+                                                  type: array
+                                                  items:
+                                                    $ref: '#/components/schemas/Variant'
+                                    - type: object
+                                      properties:
+                                        courierService:
+                                          allOf:
+                                            - $ref: '#/components/schemas/CourierService'
+                                            - type: object
+                                              properties:
+                                                courier:
+                                                  $ref: '#/components/schemas/Courier'
+        '404':
+          description: not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "NOT_FOUND"
+                  message:
+                    type: string
+                    example: "error message"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "INTERNAL_SERVER_ERROR"
+                  message:
+                    type: string
+                    example: "error message"                                  
 components:
   schemas:
     User:
@@ -3096,13 +4212,6 @@ components:
           type: integer
           format: float
           example: 4.9
-        description:
-          type: string
-          example: shop description
-        photoUrl:
-          type: string
-          format: url
-          example: http://shop.photo/image.png
         joinedDate:
           type: string
           format: datetime
@@ -3132,6 +4241,9 @@ components:
     ShopVoucher:
       type: object
       properties:
+        id:
+          type: integer
+          example: 1
         name:
           type: string
           example: "voucher"
@@ -3162,6 +4274,45 @@ components:
         shopId:
           type: number
           example: 1
+    MarketplaceVoucher:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 2
+        code:
+          type: string
+          example: "code"
+        name:
+          type: string
+          example: "voucher"
+        amount:
+          type: number
+          format: float
+          example: 50000
+        type:
+          type: string
+          example: "nominal"
+        isHidden:
+          type: boolean
+          example: false
+        description:
+          type: string
+          example: "desc"
+        minimumSpend:
+          type: number
+          format: float
+          example: 100000
+        expiredAt:
+          type: string
+          format: dateTime
+          example: "2006-01-02T00:00:00Z"
+        categoryId:
+          type: integer
+          example: 1
+        paymentMethodId:
+          type: integer
+          example: 2
     Token:
       type: object
       properties:
@@ -3231,6 +4382,29 @@ components:
           example: 1
         balance:
           type: integer
+    WalletHistory:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        type:
+          type: string
+          example: "Top-up"
+        reference:
+          type: string
+          example: 192388482000
+        date:
+          type: string
+          format: datetime
+          example: 2006-02-01
+        amount:
+          type: number
+          format: float
+          example: 50000
+        walletId:
+          type: integer
+          example: 1
     Category:
       type: object
       properties:
@@ -3336,19 +4510,6 @@ components:
           type: integer
         categoryId:
           type: integer
-    ProductMedia:
-      type: object
-      properties:
-        id:
-          type: integer
-          example: 1
-        url:
-          type: string
-          format: url
-          example: http://example/image.png
-        productId:
-          type: integer
-          example: 1
     ProductBulkPrice:
       type: object
       properties:
@@ -3358,13 +4519,10 @@ components:
         minQuantity:
           type: integer
           example: 10
-        maxQuantity:
-          type: integer
-          example: 100
         price:
           type: number
           format: float
-          example: 300000
+          example: 1000
         productId:
           type: integer
           example: 1
@@ -3412,6 +4570,72 @@ components:
         skuId:
           type: integer
           example: 1
+    CartItemResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        quantity:
+          type: integer
+          example: 1   
+        notes:
+          type: string
+          example: this is note
+        skuId:
+          type: integer
+          example: 1
+        name:
+          type: string
+          example: Bakmi
+        stock:
+          type: integer
+          example: 29
+        variants:
+          type: array
+          items:
+            allOf:
+              - $ref: '#/components/schemas/Variant'
+              - type: object
+                properties:
+                  group:
+                    $ref: '#/components/schemas/GroupVariant'
+        originalPrice:
+          type: number
+          format: float64
+          example: 500000
+        promotionType:
+          type: string
+          example: nominal
+        promotionAmount:
+          type: number
+          format: float64
+          example: 5000
+    CartItemShopResponse:
+      type: object
+      properties: 
+        id:
+          type: integer
+          example: 1
+        name:
+          type: string
+          example: Bakmi Acong
+        rating:
+          type: integer
+          example: 5
+        joinedDate:
+          type: string
+          example: "2006-01-02T00:00:00Z"
+          format: datetime
+        address:
+          type: string
+          example: Pekanbaru, Riau
+        slug:
+          type: string
+          example: bakmi-acong
+        postalCode:
+          type: string
+          example: 28292
     Variant:
       type: object
       properties:
@@ -3445,6 +4669,9 @@ components:
         id:
           type: integer
           example: 1
+        sku:
+          type: string
+          example: product_sku
         price:
           type: number
           format: float
@@ -3467,6 +4694,21 @@ components:
         name:
           type: string
           example: courier name
+    CourierService:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        code:
+          type: string
+          example: service_code
+        name:
+          type: string
+          example: service name
+        courierId:
+          type: integer
+          example: 1
     UserAddress:
       type: object
       properties:
@@ -3511,9 +4753,37 @@ components:
         isDefault:
           type: boolean
           example: true
-          
-          
-        
+    TransactionReview:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        description:
+          type: string
+          example: Good!
+        rating:
+          example: 2
+          type: integer
+        transactionId:
+          type: integer
+          example: 1
+        reviewMedias:
+          type: array
+          items:
+            $ref: '#/components/schemas/ReviewMedia'
+    ReviewMedia:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        url:
+          type: string
+          example: image.jpg
+        reviewId:
+          type: integer
+          example: 1
     SealabsPay:
       type: object
       properties:
@@ -3530,6 +4800,174 @@ components:
         expiryDate:
           type: string
           example: '2024-12-31T00:00:00Z'
+    InvoicePerShop:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        code:
+          type: string
+          example: INV/XX/X
+        subtotal:
+          type: number
+          format: float
+          example: 10000
+        total:
+          type: number
+          format: float
+          example: 10000
+        shippingCost:
+          type: number
+          format: float
+          example: 1000
+        trackingNumber:
+          type: integer
+          example: 123
+        voucherAmount:
+          type: number
+          format: float
+          nullable: true
+          example: 1000
+        voucherType:
+          type: string
+          nullable: true
+          example: nominal
+        status:
+          type: string
+          example: COMPLETED
+        shopId:
+          type: integer
+          example: 1
+        userId:
+          type: integer
+          example: 1
+        voucherId:
+          type: integer
+          nullable: true
+          example: 1
+        addressId:
+          type: integer
+          example: 1
+        invoiceId:
+          type: integer
+          example: 1
+        courierServiceId:
+          type: integer
+          example: 1
+    InvoiceStatus:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        status:
+          type: string
+          example: COMPLETED
+        statusDate:
+          type: string
+          format: datetime
+          example: "2006-01-02T00:00:00.000Z"
+        invoicePerShopId:
+          type: integer
+          example: 1
+    UserReviewResponse:
+      type: object
+      properties:
+        username:
+          type: string
+          example: joe123
+        photoUrl:
+          type: string
+          example: test.jpg
+    TransactionReviewResponse:
+      type: object
+      properties:
+        description:
+          type: string
+          example: Good product!
+        rating:
+          type: integer
+          example: 4
+        reviewDate:
+          type: string
+          example: '2024-12-31T00:00:00Z'
+        reviewMedias:
+          type: array
+          items:
+            $ref: '#/components/schemas/ReviewMedia'
+    ReviewResponse:
+      type: object
+      properties:
+        user:
+          $ref: '#/components/schemas/UserReviewResponse'
+        transactionReview:
+          $ref: '#/components/schemas/TransactionReviewResponse'
+        variant:
+          type: array
+          items:
+            $ref: '#/components/schemas/Variant'
+    GetReviewStatsReponse:
+      type: object
+      properties:
+        averageRating:
+          type: number
+          format: float64
+          example: 4.8
+        totalReview:
+          type: integer
+          example: 542
+        fiveStar:
+          type: integer
+          example: 20
+        fourStar:
+          type: integer
+          example: 20
+        threeStar:
+          type: integer
+          example: 20
+        twoStar:
+          type: integer
+          example: 20
+        oneStar:
+          type: integer
+          example: 20  
+        withPicture:
+          type: integer
+          example: 10
+        withComment:
+          type: integer
+          example: 40
+    Transaction:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        price:
+          type: number
+          format: float
+          example: 1000000
+        totalPrice:
+          type: number
+          format: float
+          example: 4000000
+        quantity:
+          type: integer
+          example: 4
+        note:
+          type: string
+          nullable: true
+          example: "purchase note"
+        invoiceId:
+          type: integer
+          example: 1
+        userId:
+          type: integer
+          example: 1
+        skuId:
+          type: integer
+          example: 1
   requestBodies:
     WalletBody:
       required: true
@@ -3856,7 +5294,47 @@ components:
               isDefault:
                 type: boolean
                 example: true
-                
+    ReviewMediaBody:
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - url
+            properties:
+              url:
+                type: string
+                example: https://image.com/image.jpg            
+    TransactionReviewBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - rating
+              - transactionId
+            properties:
+              rating:
+                type: integer
+                example: 5
+                minimum: 1
+                maximum: 5
+                description: rate the transaction
+              transactionId:
+                type: integer
+                example: 1
+                minimum: 1
+                description: id of the transaction to be rated
+              description:
+                type: string
+                example: Very nice product!
+                maxLength: 500
+              reviewMedias:
+                type: array
+                items:
+                  oneOf:
+                    - $ref: '#/components/requestBodies/ReviewMediaBody'
     RegisterSeaLabsPayBody:
       required: true
       content:
