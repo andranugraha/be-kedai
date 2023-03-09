@@ -2,6 +2,7 @@ package service_test
 
 import (
 	"errors"
+	errs	"kedai/backend/be-kedai/internal/common/error"
 	"kedai/backend/be-kedai/internal/domain/shop/dto"
 	"kedai/backend/be-kedai/internal/domain/shop/model"
 	"kedai/backend/be-kedai/internal/domain/shop/service"
@@ -70,9 +71,16 @@ func TestGetCouriersByProductID(t *testing.T) {
 }
 
 func TestGetShipmentList(t *testing.T) {
+	var(
+		shop = &model.Shop{
+			ID: 1,
+		}
+		list = []*dto.ShipmentCourierResponse{}
+	)
 	type input struct {
 		shopId int
 		err    error
+		beforeTest func(*mocks.CourierRepository, *mocks.ShopService)
 	}
 	type expected struct {
 		result []*dto.ShipmentCourierResponse
@@ -86,22 +94,42 @@ func TestGetShipmentList(t *testing.T) {
 
 	for _, tc := range []cases{
 		{
-			description: "should return result and error when called",
+			description: "should return shipment list when success",
 			input: input{
 				shopId: 1,
 				err:    nil,
+				beforeTest: func(cr *mocks.CourierRepository, ss *mocks.ShopService) {
+					ss.On("FindShopByUserId", 1).Return(shop, nil)
+					cr.On("GetShipmentList", shop.ID).Return(list, nil)
+				},
 			},
 			expected: expected{
 				result: []*dto.ShipmentCourierResponse{},
 				err:    nil,
 			},
 		},
+		{
+			description: "should return error when user shop not found",
+			input: input{
+				shopId: 1,
+				err:    errs.ErrShopNotFound,
+				beforeTest: func(cr *mocks.CourierRepository, ss *mocks.ShopService) {
+					ss.On("FindShopByUserId", 1).Return(nil, errs.ErrShopNotFound)
+				},
+			},
+			expected: expected{
+				result: nil,
+				err:    errs.ErrShopNotFound,
+			},
+		},
 	} {
 		t.Run(tc.description, func(t *testing.T) {
 			courierRepo := mocks.NewCourierRepository(t)
-			courierRepo.On("GetShipmentList", tc.shopId).Return(tc.result, nil)
+			shopService := mocks.NewShopService(t)
+			tc.beforeTest(courierRepo, shopService)
 			courierService := service.NewCourierService(&service.CourierSConfig{
 				CourierRepository: courierRepo,
+				ShopService: shopService,
 			})
 
 			result, err := courierService.GetShipmentList(tc.shopId)
