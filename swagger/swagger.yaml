@@ -229,6 +229,282 @@ paths:
                   message:
                     type: string
                     example: "error message"
+  /v1/users/wallets/pins/change-requests:
+    post:
+      security:
+        - BearerAuth: []
+      tags:
+        - User
+      summary: Create request to change wallet pin
+      description: Generate a token to change wallet pin
+      requestBody:
+        $ref: '#/components/requestBodies/ChangePinRequestBody'
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: OK
+                  message:
+                    type: string
+                    example: success
+        '400':
+          description: bad request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "BAD_REQUEST"
+                  message:
+                    type: string
+                    example: "error message"
+        '401':
+          description: unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "UNAUTHORIZED"
+                  message:
+                    type: string
+                    example: "invalid credential"
+        '404':
+          description: not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: NOT_FOUND
+                  message:
+                    type: string
+                    example: error message
+        '500':
+          description: internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: INTERNAL_SERVER_ERROR
+                  message:
+                    type: string
+                    example: error message
+  /v1/users/wallets/pins/change-confirmations:
+    post:
+      security:
+        - BearerAuth: []
+      tags:
+        - User
+      summary: Complete change wallet pin request
+      description: Confirm change wallet pin request so that change pin takes effect
+      requestBody:
+        $ref: '#/components/requestBodies/CompleteChangePinRequestBody'
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: OK
+                  message:
+                    type: string
+                    example: success
+        '400':
+          description: bad request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "BAD_REQUEST"
+                  message:
+                    type: string
+                    example: "error message"
+        '401':
+          description: unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "UNAUTHORIZED"
+                  message:
+                    type: string
+                    example: "invalid credential"
+        '404':
+          description: not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: NOT_FOUND
+                  message:
+                    type: string
+                    example: error message
+        '500':
+          description: internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: INTERNAL_SERVER_ERROR
+                  message:
+                    type: string
+                    example: error message
+  /v1/users/wallets/pins/reset-requests:
+    post:
+      security:
+        - BearerAuth: []
+      tags:
+        - User
+      summary: Create request to reset wallet pin
+      description: Generate a token to reset wallet pin
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: OK
+                  message:
+                    type: string
+                    example: success
+        '401':
+          description: unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "UNAUTHORIZED"
+                  message:
+                    type: string
+                    example: "invalid credential"
+        '500':
+          description: internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: INTERNAL_SERVER_ERROR
+                  message:
+                    type: string
+                    example: error message
+  /v1/users/wallets/pins/reset-confirmations:
+    post:
+      security:
+        - BearerAuth: []
+      tags:
+        - User
+      summary: Complete rese wallet pin request
+      description: Complete reset wallet pin request
+      requestBody:
+        $ref: '#/components/requestBodies/CompleteResetPinRequestBody'
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: OK
+                  message:
+                    type: string
+                    example: success
+        '400':
+          description: bad request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "BAD_REQUEST"
+                  message:
+                    type: string
+                    example: "error message"
+        '401':
+          description: unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "UNAUTHORIZED"
+                  message:
+                    type: string
+                    example: "invalid credential"
+        '404':
+          description: not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: NOT_FOUND
+                  message:
+                    type: string
+                    example: error message
+        '500':
+          description: internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: INTERNAL_SERVER_ERROR
+                  message:
+                    type: string
+                    example: error message
   /v1/users/wallets/{ref}:
     get:
       security:
@@ -3952,6 +4228,19 @@ paths:
                   message:
                     type: string
                     example: "error message"
+        '401':
+          description: unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "UNAUTHORIZED"
+                  message:
+                    type: string
+                    example: "invalid credential"
         '500':
           description: Internal server error
           content:
@@ -4015,6 +4304,19 @@ paths:
                   message:
                     type: string
                     example: "error message"
+        '401':
+          description: unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "UNAUTHORIZED"
+                  message:
+                    type: string
+                    example: "invalid credential"
         '404':
           description: not found
           content:
@@ -4154,6 +4456,19 @@ paths:
                   message:
                     type: string
                     example: "error message"
+        '401':
+          description: unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "UNAUTHORIZED"
+                  message:
+                    type: string
+                    example: "invalid credential"
         '500':
           description: Internal server error
           content:
@@ -4835,8 +5150,8 @@ components:
           format: float
           example: 1000
         trackingNumber:
-          type: integer
-          example: 123
+          type: string
+          example: "123"
         voucherAmount:
           type: number
           format: float
@@ -5372,6 +5687,65 @@ components:
                 type: string
                 pattern: '^(0[1-9]|1[0-2])\/[0-9]{2}$'
                 example: '12/24'
+    ChangePinRequestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - currentPin
+              - newPin
+            properties:
+              currentPin:
+                type: string
+                format: numeric
+                minLength: 6
+                maxLength: 6
+                example: "123456"
+              newPin:
+                type: string
+                format: numeric
+                minLength: 6
+                maxLength: 6
+                example: "123456"
+    CompleteChangePinRequestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - verificationCode
+            properties:
+              verificationCode:
+                type: string
+                format: alphanumeric
+                minLength: 6
+                maxLength: 6
+                example: "1a3c5e"
+    CompleteResetPinRequestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - token
+              - newPin
+            properties:
+              token:
+                type: string
+                format: alphanumeric
+                minLength: 6
+                maxLength: 6
+                example: "1a3c5e"
+              newPin:
+                type: string
+                format: numeric
+                minLength: 6
+                maxLength: 6
+                example: "123456"
   securitySchemes:
     BearerAuth:
       type: http

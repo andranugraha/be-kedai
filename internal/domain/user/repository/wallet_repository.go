@@ -13,6 +13,7 @@ type WalletRepository interface {
 	Create(wallet *model.Wallet) (*model.Wallet, error)
 	GetByUserID(userID int) (*model.Wallet, error)
 	TopUp(history *model.WalletHistory, wallet *model.Wallet) (*model.WalletHistory, error)
+	ChangePin(userID int, pin string) error
 }
 
 type walletRepositoryImpl struct {
@@ -79,4 +80,8 @@ func (r *walletRepositoryImpl) TopUp(history *model.WalletHistory, wallet *model
 	}
 
 	return history, nil
+}
+
+func (r *walletRepositoryImpl) ChangePin(userID int, pin string) error {
+	return r.db.Model(&model.Wallet{}).Where("user_id = ?", userID).Update("pin", pin).Error
 }
