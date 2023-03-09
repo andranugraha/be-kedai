@@ -17,6 +17,7 @@ type InvoicePerShopRepository interface {
 	Create(tx *gorm.DB, invoicePerShop *model.InvoicePerShop) error
 	GetByID(id int) (*model.InvoicePerShop, error)
 	GetByUserIDAndCode(userID int, code string) (*dto.InvoicePerShopDetail, error)
+	GetByShopId(shopId int, req *dto.InvoicePerShopFilterRequest) ([]*dto.InvoicePerShopDetail, int64, int, error)
 }
 
 type invoicePerShopRepositoryImpl struct {
@@ -142,4 +143,50 @@ func (r *invoicePerShopRepositoryImpl) GetByUserIDAndCode(userID int, code strin
 	}
 
 	return &invoice, nil
+}
+
+func (r *invoicePerShopRepositoryImpl) GetByShopId(shopId int, req *dto.InvoicePerShopFilterRequest) ([]*dto.InvoicePerShopDetail, int64, int, error) {
+	var (
+		invoices    []*dto.InvoicePerShopDetail
+		totalRows   int64
+		totalPages  int
+		isCompleted = "COMPLETED"
+	)
+
+	db := r.db.
+		Distinct().
+		Select("invoice_per_shops.*, invoices.voucher_amount AS marketplace_voucher_amount, invoices.voucher_type AS marketplace_voucher_type, invoices.payment_date AS payment_date").
+		Joins("JOIN invoices ON invoices.id = invoice_per_shops.invoice_id").
+		Joins("JOIN transactions ON invoice_per_shops.id = transactions.invoice_id").
+		Joins("JOIN skus ON transactions.sku_id = skus.id").
+		Joins("JOIN products ON skus.product_id = products.id").
+		Joins("JOIN shops ON products.shop_id = shops.id").
+		Where("invoice_per_shops.shop_id = ? AND invoice_per_shops.status = ?", shopId, isCompleted).
+		Where("products.name ILIKE ? OR invoice_per_shops.code ILIKE ?", fmt.Sprintf("%%%s%%", req.S), fmt.Sprintf("%%%s%%", req.S))
+
+	if req.StartDate != "" && req.EndDate != "" {
+		start, _ := time.Parse("2006-01-02", req.StartDate)
+		end, _ := time.Parse("2006-01-02", req.EndDate)
+		db = db.Where("invoices.payment_date BETWEEN ? AND ?", start, end)
+	}
+
+	db.Model(&model.InvoicePerShop{}).Count(&totalRows)
+	totalPages = int(math.Ceil(float64(totalRows) / float64(req.Limit)))
+
+	db = db.Preload("TransactionItems", func(query *gorm.DB) *gorm.DB {
+		return query.Select(`
+			transactions.*,
+			(SELECT url FROM product_medias WHERE products.id = product_medias.product_id LIMIT 1) AS image_url,
+			products.name AS product_name
+		`).
+			Joins("JOIN skus ON skus.id = transactions.sku_id").
+			Joins("JOIN products ON skus.product_id = products.id")
+	}).Preload("TransactionItems.Sku.Variants")
+
+	err := db.Preload("Shop").Limit(req.Limit).Offset(req.Offset()).Order("invoices.payment_date DESC").Find(&invoices).Error
+	if err != nil {
+		return nil, 0, 0, err
+	}
+
+	return invoices, totalRows, totalPages, nil
 }
