@@ -65,7 +65,18 @@ func NewInvoiceService(cfg *InvoiceSConfig) InvoiceService {
 }
 
 func (s *invoiceServiceImpl) Checkout(req dto.CheckoutRequest) (*dto.CheckoutResponse, error) {
-	_, err := s.addressService.GetUserAddressByIdAndUserId(req.AddressID, req.UserID)
+	checkoutedId, err := s.invoiceRepo.GetAlreadyCheckoutedWithin15Minute(req.UserID, req.PaymentMethodID, req.TotalPrice)
+	if err != nil {
+		return nil, err
+	}
+
+	if checkoutedId != nil {
+		return &dto.CheckoutResponse{
+			ID: *checkoutedId,
+		}, nil
+	}
+
+	_, err = s.addressService.GetUserAddressByIdAndUserId(req.AddressID, req.UserID)
 	if err != nil {
 		return nil, err
 	}
@@ -349,7 +360,8 @@ func (s *invoiceServiceImpl) PayInvoice(req dto.PayInvoiceRequest, token string)
 		}
 	}
 
-	invoice.PaymentDate = time.Now()
+	now := time.Now()
+	invoice.PaymentDate = &now
 
 	newToken, err := s.invoiceRepo.Pay(invoice, skuIds, invoiceStatuses, req.TxnID, token)
 	if err != nil {
@@ -365,10 +377,8 @@ func (s *invoiceServiceImpl) CancelCheckout(req dto.CancelCheckoutRequest) error
 		return err
 	}
 
-	for _, shopInvoice := range invoice.InvoicePerShops {
-		if shopInvoice.Status != constant.TransactionStatusWaitingForPayment {
-			return commonError.ErrInvoiceAlreadyPaid
-		}
+	if invoice.PaymentDate != nil {
+		return commonError.ErrInvoiceAlreadyPaid
 	}
 
 	return s.invoiceRepo.Delete(invoice)

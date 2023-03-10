@@ -175,17 +175,13 @@ func (r *walletCacheImpl) BlockWallet(walletId int) error {
 
 func (r *walletCacheImpl) CheckIsWalletBlocked(walletId int) error {
 	key := fmt.Sprintf("wallet_%d:blocked", walletId)
-	wallet, err := r.rdc.Get(context.Background(), key).Int()
+	err := r.rdc.Get(context.Background(), key).Err()
 	if err != nil {
 		if err == redis.Nil {
 			return nil
 		}
 
 		return err
-	}
-
-	if wallet == 0 {
-		return nil
 	}
 
 	return errs.ErrWalletTemporarilyBlocked

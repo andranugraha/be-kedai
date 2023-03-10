@@ -120,7 +120,7 @@ func (h *Handler) CancelCheckout(c *gin.Context) {
 
 	err := h.invoiceService.CancelCheckout(req)
 	if err != nil {
-		if errors.Is(err, commonErr.ErrInvoiceNotFound) {
+		if errors.Is(err, commonErr.ErrInvoiceNotFound) || errors.Is(err, commonErr.ErrInvoiceAlreadyPaid) {
 			response.Error(c, http.StatusBadRequest, code.BAD_REQUEST, err.Error())
 			return
 		}
