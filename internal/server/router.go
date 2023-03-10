@@ -203,6 +203,11 @@ func NewRouter(cfg *RouterConfig) *gin.Engine {
 				{
 					product.GET("/products", cfg.ProductHandler.GetSellerProducts)
 				}
+
+				order := authenticated.Group("/orders")
+				{
+					order.GET("", cfg.OrderHandler.GetShopOrder)
+				}
 			}
 		}
 	}
