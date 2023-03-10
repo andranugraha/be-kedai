@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"kedai/backend/be-kedai/internal/common/code"
 	errs "kedai/backend/be-kedai/internal/common/error"
+	"kedai/backend/be-kedai/internal/domain/shop/dto"
 	"kedai/backend/be-kedai/internal/domain/shop/handler"
 	"kedai/backend/be-kedai/internal/domain/shop/model"
 	"kedai/backend/be-kedai/internal/utils/response"
@@ -190,7 +191,9 @@ func TestGetValidShopVoucher(t *testing.T) {
 				},
 			}
 			mockService := new(mocks.ShopVoucherService)
-			mockService.On("GetValidShopVoucherByUserIDAndSlug", 0, slug).Return(tc.input.voucher, tc.input.err)
+			mockService.On("GetValidShopVoucherByUserIDAndSlug", dto.GetValidShopVoucherRequest{
+				Slug: slug,
+			}).Return(tc.input.voucher, tc.input.err)
 			handler := handler.New(&handler.HandlerConfig{
 				ShopVoucherService: mockService,
 			})

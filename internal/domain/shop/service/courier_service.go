@@ -49,12 +49,7 @@ func (s *courierServiceImpl) GetCouriersByShopID(shopID int) ([]*model.Courier, 
 }
 
 func (s *courierServiceImpl) GetCourierByServiceIDAndShopID(courierID, shopID int) (*model.Courier, error) {
-	courier, err := s.courierRepository.GetByServiceIDAndShopID(courierID, shopID)
-	if err != nil {
-		return nil, err
-	}
-
-	return courier, nil
+	return s.courierRepository.GetByServiceIDAndShopID(courierID, shopID)
 }
 
 func (s *courierServiceImpl) GetCouriersByProductID(productID int) ([]*model.Courier, error) {
