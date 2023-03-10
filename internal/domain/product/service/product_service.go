@@ -174,9 +174,15 @@ func (s *productServiceImpl) GetSellerProductByCode(userID int, productCode stri
 		return nil, err
 	}
 
+	couriers, err := s.courierService.GetCouriersByProductID(product.ID)
+	if err != nil {
+		return nil, err
+	}
+
 	res := dto.SellerProductDetail{
 		Product:    *product,
 		Categories: categories,
+		Couriers:   couriers,
 	}
 
 	return &res, nil
