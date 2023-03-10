@@ -2,8 +2,9 @@ package dto
 
 type GetMarketplaceVoucherRequest struct {
 	UserId          int
-	CategoryId      int `form:"categoryId"`
-	PaymentMethodId int `form:"paymentMethodId"`
+	CategoryId      int    `form:"categoryId"`
+	PaymentMethodId int    `form:"paymentMethodId"`
+	Code            string `form:"code"`
 }
 
 func (r *GetMarketplaceVoucherRequest) Validate() {
