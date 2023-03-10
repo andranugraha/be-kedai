@@ -225,12 +225,12 @@ func (r *invoicePerShopRepositoryImpl) GetShopOrder(shopId int, req *dto.Invoice
 		totalPages int
 	)
 
-	db := r.db.Select("invoice_per_shops.*, invoices.payment_date AS payment_date").
-		Joins("invoices i ON i.id = invoice_per_shops.invoice_id").
-		Joins("transactions t ON t.invoice_id = invoice_per_shops.id").
-		Joins("skus s ON s.id = t.sku_id").
-		Joins("products p ON p.id = s.product_id").
-		Joins("users u ON u.id = invoice_per_shops.id").
+	db := r.db.Distinct().Select("invoice_per_shops.*, i.payment_date AS payment_date").
+		Joins("JOIN invoices i ON i.id = invoice_per_shops.invoice_id").
+		Joins("JOIN transactions t ON t.invoice_id = invoice_per_shops.id").
+		Joins("JOIN skus s ON s.id = t.sku_id").
+		Joins("JOIN products p ON p.id = s.product_id").
+		Joins("JOIN users u ON u.id = invoice_per_shops.id").
 		Where("invoice_per_shops.shop_id = ?", shopId)
 
 	if req.ProductName != "" {
@@ -252,7 +252,7 @@ func (r *invoicePerShopRepositoryImpl) GetShopOrder(shopId int, req *dto.Invoice
 	if req.StartDate != "" && req.EndDate != "" {
 		start, _ := time.Parse("2006-01-02", req.StartDate)
 		end, _ := time.Parse("2006-01-02", req.EndDate)
-		db = db.Where("invoices.payment_date BETWEEN ? AND ?", start, end)
+		db = db.Where("i.payment_date BETWEEN ? AND ?", start, end)
 	}
 
 	db = db.Preload("TransactionItems", func(db *gorm.DB) *gorm.DB {
@@ -266,10 +266,10 @@ func (r *invoicePerShopRepositoryImpl) GetShopOrder(shopId int, req *dto.Invoice
 	}).Preload("TransactionItems.Sku.Variants")
 
 	queryCount := db.Session(&gorm.Session{})
-	queryCount.Model(&model.InvoicePerShop{}).Distinct().Count(&totalRows)
+	queryCount.Model(&model.InvoicePerShop{}).Distinct("invoice_per_shops.id").Count(&totalRows)
 	totalPages = int(math.Ceil(float64(totalRows) / float64(req.Limit)))
 
-	err := db.Preload("User").Order("i.payment_date DESC").Find(&invoices).Error
+	err := db.Preload("User").Preload("CourierService.Courier").Order("i.payment_date DESC").Limit(req.Limit).Offset(req.Offset()).Find(&invoices).Error
 	if err != nil {
 		return nil, 0, 0, err
 	}
