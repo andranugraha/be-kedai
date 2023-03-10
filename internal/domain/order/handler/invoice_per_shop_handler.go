@@ -101,6 +101,8 @@ func (h *Handler) WithdrawFromInvoice(c *gin.Context) {
 			return
 		}
 
+		response.Error(c, http.StatusInternalServerError, code.INTERNAL_SERVER_ERROR, errs.ErrInternalServerError.Error())
+		return
 	}
 
 	response.Success(c, http.StatusOK, code.OK, "success", nil)
