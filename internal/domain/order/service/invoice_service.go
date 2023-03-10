@@ -65,7 +65,18 @@ func NewInvoiceService(cfg *InvoiceSConfig) InvoiceService {
 }
 
 func (s *invoiceServiceImpl) Checkout(req dto.CheckoutRequest) (*dto.CheckoutResponse, error) {
-	_, err := s.addressService.GetUserAddressByIdAndUserId(req.AddressID, req.UserID)
+	checkoutedId, err := s.invoiceRepo.GetAlreadyCheckoutedWithin15Minute(req.UserID, req.PaymentMethodID, req.TotalPrice)
+	if err != nil {
+		return nil, err
+	}
+
+	if checkoutedId != nil {
+		return &dto.CheckoutResponse{
+			ID: *checkoutedId,
+		}, nil
+	}
+
+	_, err = s.addressService.GetUserAddressByIdAndUserId(req.AddressID, req.UserID)
 	if err != nil {
 		return nil, err
 	}

@@ -11,12 +11,14 @@ import (
 	userModel "kedai/backend/be-kedai/internal/domain/user/model"
 	userRepo "kedai/backend/be-kedai/internal/domain/user/repository"
 	jwttoken "kedai/backend/be-kedai/internal/utils/jwtToken"
+	"time"
 
 	"gorm.io/gorm"
 )
 
 type InvoiceRepository interface {
 	Create(invoice *model.Invoice) (*model.Invoice, error)
+	GetAlreadyCheckoutedWithin15Minute(userID, paymentMethodID int, totalPrice float64) (*int, error)
 	GetByIDAndUserID(id, userID int) (*model.Invoice, error)
 	Pay(invoice *model.Invoice, skuIds []int, invoiceStatuses []*model.InvoiceStatus, txnID, token string) (*userDto.Token, error)
 	Delete(invoice *model.Invoice) error
@@ -198,4 +200,20 @@ func (r *invoiceRepositoryImpl) Delete(invoice *model.Invoice) error {
 	}
 
 	return nil
+}
+
+func (r *invoiceRepositoryImpl) GetAlreadyCheckoutedWithin15Minute(userID, paymentMethodID int, totalPrice float64) (*int, error) {
+	var invoice model.Invoice
+	const fifteenMinute = 15 * time.Minute
+	err := r.db.Select("id").Where("user_id = ? AND payment_method_id = ? AND total = ? AND created_at >= ? AND payment_date is null", userID, paymentMethodID, totalPrice, time.Now().Add(-fifteenMinute)).
+		First(&invoice).Error
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, nil
+		}
+
+		return nil, err
+	}
+
+	return &invoice.ID, nil
 }
