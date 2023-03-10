@@ -72,7 +72,7 @@ func (p *PayInvoiceRequest) Validate(level int) error {
 }
 
 func (p *PayInvoiceRequest) validateSealabsPay() error {
-	signaturePayload := fmt.Sprintf("%s:%v:%s", p.CardNumber, p.Amount, config.MerchantCode)
+	signaturePayload := fmt.Sprintf("%s:%v:%s", p.CardNumber, int(p.Amount), config.MerchantCode)
 	hashedPayload := hash.HashSHA256(signaturePayload)
 	if !hash.CompareSignature(hashedPayload, p.Signature) {
 		return commonError.ErrPaymentRequired
