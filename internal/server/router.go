@@ -193,6 +193,7 @@ func NewRouter(cfg *RouterConfig) *gin.Engine {
 					income := finance.Group("/incomes")
 					{
 						income.GET("", cfg.OrderHandler.GetInvoicePerShopsByShopId)
+						income.GET("/:orderId", cfg.OrderHandler.GetInvoiceByShopIdAndOrderId)
 						income.GET("/overview", cfg.ShopHandler.GetShopFinanceOverview)
 					}
 				}
