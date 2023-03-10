@@ -19,6 +19,7 @@ type AddressService interface {
 	DeleteUserAddress(addressId int, userId int) error
 	GetUserAddressByIdAndUserId(addressId int, userId int) (*model.UserAddress, error)
 	SearchAddress(req *dto.SearchAddressRequest) ([]*dto.SearchAddressResponse, error)
+	GetSearchAddressDetail(placeId string) (*dto.SearchAddressDetailResponse, error)
 }
 
 type addressServiceImpl struct {
@@ -205,4 +206,8 @@ func (s *addressServiceImpl) GetUserAddressByIdAndUserId(addressId int, userId i
 
 func (s *addressServiceImpl) SearchAddress(req *dto.SearchAddressRequest) ([]*dto.SearchAddressResponse, error) {
 	return s.addressRepo.SearchAddress(req)
+}
+
+func (s *addressServiceImpl) GetSearchAddressDetail(placeId string) (*dto.SearchAddressDetailResponse, error) {
+	return s.addressRepo.GetSearchAddressDetail(placeId)
 }

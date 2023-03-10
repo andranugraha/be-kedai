@@ -6,6 +6,7 @@ import (
 	"kedai/backend/be-kedai/internal/common/constant"
 	"kedai/backend/be-kedai/internal/domain/location/dto"
 	"kedai/backend/be-kedai/internal/domain/location/model"
+	"strings"
 
 	errs "kedai/backend/be-kedai/internal/common/error"
 	shopRepo "kedai/backend/be-kedai/internal/domain/shop/repository"
@@ -24,6 +25,7 @@ type AddressRepository interface {
 	PickupAddressTransaction(tx *gorm.DB, userId int, addressId int) error
 	UpdateUserAddress(*model.UserAddress) (*model.UserAddress, error)
 	DeleteUserAddress(addressId int, userId int) error
+	GetSearchAddressDetail(placeId string) (*dto.SearchAddressDetailResponse, error)
 }
 
 type addressRepositoryImpl struct {
@@ -31,6 +33,7 @@ type addressRepositoryImpl struct {
 	googleMaps      *maps.Client
 	userProfileRepo userRepo.UserProfileRepository
 	shopRepo        shopRepo.ShopRepository
+	subdistrictRepo SubdistrictRepository
 }
 
 type AddressRConfig struct {
@@ -38,6 +41,7 @@ type AddressRConfig struct {
 	GoogleMaps      *maps.Client
 	UserProfileRepo userRepo.UserProfileRepository
 	ShopRepo        shopRepo.ShopRepository
+	SubdistrictRepo SubdistrictRepository
 }
 
 func NewAddressRepository(cfg *AddressRConfig) AddressRepository {
@@ -46,6 +50,7 @@ func NewAddressRepository(cfg *AddressRConfig) AddressRepository {
 		googleMaps:      cfg.GoogleMaps,
 		userProfileRepo: cfg.UserProfileRepo,
 		shopRepo:        cfg.ShopRepo,
+		subdistrictRepo: cfg.SubdistrictRepo,
 	}
 }
 
@@ -216,4 +221,83 @@ func (r *addressRepositoryImpl) DeleteUserAddress(addressId int, userId int) err
 	}
 
 	return nil
+}
+
+func (c *addressRepositoryImpl) GetSearchAddressDetail(placeId string) (address *dto.SearchAddressDetailResponse, err error) {
+	ctx := context.Background()
+	defer ctx.Done()
+
+	placeDetailRequest := &maps.PlaceDetailsRequest{
+		PlaceID:  placeId,
+		Language: "id",
+		Fields: []maps.PlaceDetailsFieldMask{
+			maps.PlaceDetailsFieldMaskPlaceID,
+			maps.PlaceDetailsFieldMaskFormattedAddress,
+			maps.PlaceDetailsFieldMaskGeometry,
+			maps.PlaceDetailsFieldMaskAddressComponent,
+		},
+	}
+
+	placeDetail, err := c.googleMaps.PlaceDetails(ctx, placeDetailRequest)
+	if err != nil {
+		return
+	}
+
+	address = &dto.SearchAddressDetailResponse{
+		PlaceID:   placeDetail.PlaceID,
+		Street:    placeDetail.FormattedAddress,
+		Latitude:  placeDetail.Geometry.Location.Lat,
+		Longitude: placeDetail.Geometry.Location.Lng,
+	}
+
+	var (
+		districtName    string
+		subdistrictName string
+		postalCode      string
+	)
+	var subdistrict *model.Subdistrict
+	for i := len(placeDetail.AddressComponents) - 1; i >= 0; i-- {
+		addressComponent := placeDetail.AddressComponents[i]
+
+		for _, typeAddress := range addressComponent.Types {
+			switch typeAddress {
+			case "postal_code":
+				postalCode = addressComponent.ShortName
+			case "administrative_area_level_4":
+				subdistrictName = addressComponent.LongName
+			case "administrative_area_level_3":
+				districtName = strings.ReplaceAll(addressComponent.LongName, "Kecamatan ", "")
+			}
+
+			if subdistrictName != "" && postalCode != "" && districtName != "" {
+				break
+			}
+		}
+	}
+
+	if postalCode == "" {
+		subdistrict, err = c.subdistrictRepo.GetDetailByNameAndDistrictName(subdistrictName, districtName)
+		if err != nil {
+			return
+		}
+	} else {
+		subdistrict, err = c.subdistrictRepo.GetDetailByNameAndPostalCode(subdistrictName, postalCode)
+		if err != nil {
+			return
+		}
+	}
+
+	address.Province = subdistrict.District.City.Province
+	subdistrict.District.City.Province = nil
+
+	address.City = subdistrict.District.City
+	subdistrict.District.City = nil
+
+	address.District = subdistrict.District
+	subdistrict.District = nil
+
+	address.Subdistrict = subdistrict
+	address.PostalCode = subdistrict.PostalCode
+
+	return
 }
