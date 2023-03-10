@@ -4648,7 +4648,7 @@ paths:
                   message:
                     type: string
                     example: "error message"
-  /v1/sellers/finances/incomes/overview:
+  /v1/sellers/finances/incomes/overviews:
     get:
       security:
         - BearerAuth: []
