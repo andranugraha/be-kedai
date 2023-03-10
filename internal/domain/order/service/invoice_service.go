@@ -360,7 +360,8 @@ func (s *invoiceServiceImpl) PayInvoice(req dto.PayInvoiceRequest, token string)
 		}
 	}
 
-	invoice.PaymentDate = time.Now()
+	now := time.Now()
+	invoice.PaymentDate = &now
 
 	newToken, err := s.invoiceRepo.Pay(invoice, skuIds, invoiceStatuses, req.TxnID, token)
 	if err != nil {
@@ -376,10 +377,8 @@ func (s *invoiceServiceImpl) CancelCheckout(req dto.CancelCheckoutRequest) error
 		return err
 	}
 
-	for _, shopInvoice := range invoice.InvoicePerShops {
-		if shopInvoice.Status != constant.TransactionStatusWaitingForPayment {
-			return commonError.ErrInvoiceAlreadyPaid
-		}
+	if invoice.PaymentDate != nil {
+		return commonError.ErrInvoiceAlreadyPaid
 	}
 
 	return s.invoiceRepo.Delete(invoice)
