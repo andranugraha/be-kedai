@@ -347,7 +347,7 @@ func (r *productRepositoryImpl) GetSellerProductByCode(shopID int, productCode s
 
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, err
+			return nil, errs.ErrProductDoesNotExist
 		}
 
 		return nil, err
