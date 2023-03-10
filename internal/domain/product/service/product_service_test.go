@@ -577,3 +577,117 @@ func TestGetSellerProduct(t *testing.T) {
 		})
 	}
 }
+
+func TestGetSellerProductByCode(t *testing.T) {
+	type input struct {
+		productCode string
+		userID      int
+	}
+	type expected struct {
+		data *dto.SellerProductDetail
+		err  error
+	}
+
+	var (
+		userID      = 1
+		categoryID  = 1
+		shopID      = 1
+		productCode = "product-code"
+		product     = model.Product{
+			Code:       productCode,
+			CategoryID: categoryID,
+		}
+		categories = []*model.Category{}
+	)
+
+	tests := []struct {
+		description string
+		input
+		beforeTest func(*mocks.CategoryService, *mocks.ShopService, *mocks.ProductRepository)
+		expected
+	}{
+		{
+			description: "should return error when failed to get shop",
+			input: input{
+				userID:      userID,
+				productCode: productCode,
+			},
+			beforeTest: func(cs *mocks.CategoryService, ss *mocks.ShopService, pr *mocks.ProductRepository) {
+				ss.On("FindShopByUserId", userID).Return(nil, errors.New("failed to get shop"))
+			},
+			expected: expected{
+				data: nil,
+				err:  errors.New("failed to get shop"),
+			},
+		},
+		{
+			description: "should return error when failed to get product",
+			input: input{
+				userID:      userID,
+				productCode: productCode,
+			},
+			beforeTest: func(cs *mocks.CategoryService, ss *mocks.ShopService, pr *mocks.ProductRepository) {
+				ss.On("FindShopByUserId", userID).Return(&shopModel.Shop{ID: shopID, UserID: userID}, nil)
+				pr.On("GetSellerProductByCode", shopID, productCode).Return(nil, errors.New("failed to get product"))
+			},
+			expected: expected{
+				data: nil,
+				err:  errors.New("failed to get product"),
+			},
+		},
+		{
+			description: "should return error when failed to get categories",
+			input: input{
+				userID:      userID,
+				productCode: productCode,
+			},
+			beforeTest: func(cs *mocks.CategoryService, ss *mocks.ShopService, pr *mocks.ProductRepository) {
+				ss.On("FindShopByUserId", userID).Return(&shopModel.Shop{ID: shopID, UserID: userID}, nil)
+				pr.On("GetSellerProductByCode", shopID, productCode).Return(&product, nil)
+				cs.On("GetCategoryLineAgesFromBottom", categoryID).Return(nil, errors.New("failed to get categories"))
+			},
+			expected: expected{
+				data: nil,
+				err:  errors.New("failed to get categories"),
+			},
+		},
+		{
+			description: "should return dto when suceed to get both product and categories",
+			input: input{
+				userID:      userID,
+				productCode: productCode,
+			},
+			beforeTest: func(cs *mocks.CategoryService, ss *mocks.ShopService, pr *mocks.ProductRepository) {
+				ss.On("FindShopByUserId", userID).Return(&shopModel.Shop{ID: shopID, UserID: userID}, nil)
+				pr.On("GetSellerProductByCode", shopID, productCode).Return(&product, nil)
+				cs.On("GetCategoryLineAgesFromBottom", categoryID).Return(categories, nil)
+			},
+			expected: expected{
+				data: &dto.SellerProductDetail{
+					Product:    product,
+					Categories: categories,
+				},
+				err: nil,
+			},
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.description, func(t *testing.T) {
+			productRepo := mocks.NewProductRepository(t)
+			categoryService := mocks.NewCategoryService(t)
+			shopService := mocks.NewShopService(t)
+			tc.beforeTest(categoryService, shopService, productRepo)
+			productService := service.NewProductService(&service.ProductSConfig{
+				ProductRepository: productRepo,
+				ShopService:       shopService,
+				CategoryService:   categoryService,
+			})
+
+			data, err := productService.GetSellerProductByCode(tc.input.userID, tc.input.productCode)
+
+			assert.Equal(t, tc.expected.data, data)
+			assert.Equal(t, tc.expected.err, err)
+		})
+	}
+}
