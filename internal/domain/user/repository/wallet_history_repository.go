@@ -72,7 +72,7 @@ func (r *walletHistoryRepoImpl) GetWalletHistoryById(req dto.WalletHistoryReques
 
 func (r *walletHistoryRepoImpl) GetShopFinanceReleased(shopId int) (*shopDto.ShopFinanceReleased, error) {
 	var (
-		shopFinanceReleased *shopDto.ShopFinanceReleased
+		shopFinanceReleased = &shopDto.ShopFinanceReleased{}
 	)
 
 	query := r.db.
@@ -89,7 +89,7 @@ func (r *walletHistoryRepoImpl) GetShopFinanceReleased(shopId int) (*shopDto.Sho
 
 	err := query.Find(&shopFinanceReleased).Error
 	if err != nil {
-		return nil, err
+		return shopFinanceReleased, err
 	}
 
 	return shopFinanceReleased, nil
