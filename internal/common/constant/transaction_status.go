@@ -9,5 +9,6 @@ const (
 	TransactionStatusComplaintConfirmed = "COMPLAINT_CONFIRMED"
 	TransactionStatusComplaintRejected  = "COMPLAINT_REJECTED"
 	TransactionStatusCompleted          = "COMPLETED"
+	TransactionStatusRefunded           = "REFUNDED"
 	TransactionStatusCancelled          = "CANCELLED"
 )
