@@ -12,6 +12,7 @@ import (
 	"kedai/backend/be-kedai/mocks"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"testing"
 
 	"github.com/gin-gonic/gin"
@@ -163,4 +164,148 @@ func TestGetAllCouriers(t *testing.T) {
 			assert.Equal(t, string(expectedRes), rec.Body.String())
 		})
 	}
+}
+
+func TestGetMatchingCouriers(t *testing.T) {
+	type input struct {
+		req        dto.MatchingProductCourierRequest
+		beforeTest func(*mocks.CourierService)
+		param      *url.Values
+		slug       string
+	}
+	type expected struct {
+		statusCode int
+		response   response.Response
+	}
+
+	tests := []struct {
+		description string
+		input
+		expected
+	}{
+		{
+			description: "should return error with status code 400 when failed to bind request",
+			input: input{
+				req: dto.MatchingProductCourierRequest{},
+				beforeTest: func(courierService *mocks.CourierService) {
+				},
+				slug: "test-slug",
+				param: &url.Values{
+					"productId": []string{},
+				},
+			},
+			expected: expected{
+				statusCode: http.StatusBadRequest,
+				response: response.Response{
+					Code:    code.BAD_REQUEST,
+					Message: "ProductIDs is required",
+				},
+			},
+		},
+		{
+			description: "should return error with status code 404 when shop not found",
+			input: input{
+				req: dto.MatchingProductCourierRequest{
+					ProductIDs: []int{1},
+				},
+				beforeTest: func(courierService *mocks.CourierService) {
+					courierService.On("GetMatchingCouriersByShopIDAndProductIDs", &dto.MatchingProductCourierRequest{
+						ProductIDs: []int{1},
+						Slug:       "test-slug",
+					}).Return(nil, errs.ErrShopNotFound)
+				},
+				param: &url.Values{
+					"productId": []string{"1"},
+				},
+				slug: "test-slug",
+			},
+			expected: expected{
+				statusCode: http.StatusNotFound,
+				response: response.Response{
+					Code:    code.SHOP_NOT_REGISTERED,
+					Message: errs.ErrShopNotFound.Error(),
+				},
+			},
+		},
+		{
+			description: "should return error with status code 500 when failed to get matching couriers",
+			input: input{
+				req: dto.MatchingProductCourierRequest{
+					ProductIDs: []int{1},
+				},
+				beforeTest: func(courierService *mocks.CourierService) {
+					courierService.On("GetMatchingCouriersByShopIDAndProductIDs", &dto.MatchingProductCourierRequest{
+						ProductIDs: []int{1},
+						Slug:       "test-slug",
+					}).Return(nil, errs.ErrInternalServerError)
+				},
+				param: &url.Values{
+					"productId": []string{"1"},
+				},
+				slug: "test-slug",
+			},
+			expected: expected{
+				statusCode: http.StatusInternalServerError,
+				response: response.Response{
+					Code:    code.INTERNAL_SERVER_ERROR,
+					Message: errs.ErrInternalServerError.Error(),
+				},
+			},
+		},
+		{
+			description: "should return matching couriers with status code 200 when succeed to get matching couriers",
+			input: input{
+				req: dto.MatchingProductCourierRequest{
+					ProductIDs: []int{1},
+				},
+				beforeTest: func(courierService *mocks.CourierService) {
+					courierService.On("GetMatchingCouriersByShopIDAndProductIDs", &dto.MatchingProductCourierRequest{
+						ProductIDs: []int{1},
+						Slug:       "test-slug",
+					}).Return([]*model.Courier{}, nil)
+				},
+				param: &url.Values{
+					"productId": []string{"1"},
+				},
+				slug: "test-slug",
+			},
+			expected: expected{
+				statusCode: http.StatusOK,
+				response: response.Response{
+					Code:    code.OK,
+					Message: "success",
+					Data:    []*model.Courier{},
+				},
+			},
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.description, func(t *testing.T) {
+			courierService := mocks.NewCourierService(t)
+			tc.beforeTest(courierService)
+			expectedRes, _ := json.Marshal(tc.expected.response)
+			rec := httptest.NewRecorder()
+			c, _ := gin.CreateTestContext(rec)
+			handler := handler.New(&handler.HandlerConfig{
+				CourierService: courierService,
+			})
+
+			c.Params = gin.Params{
+				{
+					Key:   "slug",
+					Value: tc.input.slug,
+				},
+			}
+
+			c.Request, _ = http.NewRequest(http.MethodPost, "/shop/test-slug/couriers/", nil)
+			c.Request.URL.RawQuery = tc.input.param.Encode()
+
+			handler.GetMatchingCouriers(c)
+
+			assert.Equal(t, tc.expected.statusCode, rec.Code)
+			assert.Equal(t, string(expectedRes), rec.Body.String())
+		})
+	}
+
 }
