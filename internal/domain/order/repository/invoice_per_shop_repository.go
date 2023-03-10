@@ -248,7 +248,6 @@ func (r *invoicePerShopRepositoryImpl) WithdrawFromInvoice(invoicePerShopId int,
 		}
 
 		wh := userModel.WalletHistory{}
-		wh.BeforeCreate(trx)
 		wh.Type = userModel.WalletHistoryTypeWithdrawal
 		wh.Amount = invoicePerShop.Total
 		wh.WalletId = walletId
