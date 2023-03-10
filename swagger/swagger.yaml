@@ -4862,7 +4862,6 @@ paths:
                     type: string
                     example: "error message"
   /v1/sellers/finances/incomes/{orderId}:
-  /v1/sellers/stats:
     get:
       security:
         - BearerAuth: []
@@ -4877,8 +4876,6 @@ paths:
           schema:
             type: integer
             example: 1
-      summary: Get shop stats
-      description: Get shop orders' stats
       responses:
         '200':
           description: operation successful
@@ -4945,6 +4942,63 @@ paths:
                                                   items:
                                                     $ref: '#/components/schemas/Variant'
                                     
+        '404':
+          description: shop not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "NOT_FOUND"
+                  message:
+                    type: string
+                    example: "shop not found"
+        '401':
+          description: unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "UNAUTHORIZED"
+                  message:
+                    type: string
+                    example: "invalid credential"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "INTERNAL_SERVER_ERROR"
+                  message:
+                    type: string
+                    example: "error message"                  
+  /v1/sellers/stats:
+    get:
+      security:
+        - BearerAuth: []
+      tags:
+        - Seller
+      summary: Get shop stats
+      description: Get shop orders' stats
+      responses:
+        '200':
+          description: operation successful
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Response'
+                  - type: object
+                    properties:
                       code:
                         example: OK
                       message:
