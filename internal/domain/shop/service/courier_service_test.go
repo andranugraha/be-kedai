@@ -194,3 +194,73 @@ func TestGetAllCouriers(t *testing.T) {
 		})
 	}
 }
+
+func TestGetMatchingCouriersByShopIDAndProductIDs(t *testing.T) {
+	type input struct {
+		req        *dto.MatchingProductCourierRequest
+		beforeTest func(*mocks.CourierRepository, *mocks.ShopService)
+	}
+	type expected struct {
+		data []*model.Courier
+		err  error
+	}
+
+	tests := []struct {
+		description string
+		input
+		expected
+	}{
+		{
+			description: "should return error when failed to get couriers",
+			input: input{
+				req: &dto.MatchingProductCourierRequest{
+					Slug: "test",
+				},
+				beforeTest: func(cr *mocks.CourierRepository, ss *mocks.ShopService) {
+					ss.On("FindShopBySlug", "test").Return(nil, errors.New("failed to get shop"))
+				},
+			},
+			expected: expected{
+				data: nil,
+				err:  errors.New("failed to get shop"),
+			},
+		},
+		{
+			description: "should return error when failed to get product couriers",
+			input: input{
+				req: &dto.MatchingProductCourierRequest{
+					Slug: "test",
+				},
+				beforeTest: func(cr *mocks.CourierRepository, ss *mocks.ShopService) {
+					ss.On("FindShopBySlug", "test").Return(&model.Shop{ID: 1}, nil)
+					cr.On("GetMatchingCouriersByShopIDAndProductIDs", &dto.MatchingProductCourierRequest{
+						ShopID: 1,
+						Slug:   "test",
+					}).Return(nil, errors.New("failed to get product couriers"))
+				},
+			},
+			expected: expected{
+				data: nil,
+				err:  errors.New("failed to get product couriers"),
+			},
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.description, func(t *testing.T) {
+			courierRepo := mocks.NewCourierRepository(t)
+			shopService := mocks.NewShopService(t)
+			tc.beforeTest(courierRepo, shopService)
+			courierService := service.NewCourierService(&service.CourierSConfig{
+				CourierRepository: courierRepo,
+				ShopService:       shopService,
+			})
+
+			data, err := courierService.GetMatchingCouriersByShopIDAndProductIDs(tc.req)
+
+			assert.Equal(t, tc.expected.data, data)
+			assert.Equal(t, tc.expected.err, err)
+		})
+	}
+
+}
