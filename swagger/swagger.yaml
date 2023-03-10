@@ -4360,6 +4360,19 @@ paths:
                               example: "jne"
                             isActive:
                               type: boolean
+        '401':
+          description: unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "UNAUTHORIZED"
+                  message:
+                    type: string
+                    example: "invalid credential"
         '500':
           description: Internal server error
           content:
@@ -4373,6 +4386,146 @@ paths:
                   message:
                     type: string
                     example: "error message"                                
+  /v1/sellers/products:
+    get:
+      security:
+        - BearerAuth: []
+      tags:
+        - Seller
+      summary: Get seller's products
+      description: Get all seller's products
+      parameters:
+        - in: query
+          name: page
+          schema:
+            type: integer
+            default: 1
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            default: 20
+        - in: query
+          name: sales
+          description: minimum product sold. Only used if greater than 0
+          schema:
+            type: integer
+            example: 10
+        - in: query
+          name: stock
+          description: minimum product total stock. Only used if greater than 0
+          schema:
+            type: integer
+            example: 100
+        - in: query
+          name: sort
+          description: sort product. Any value (include not giving any value) other than listed below will use `latest`
+          schema:
+            type: string
+            default: latest
+            enum: [latest, top_sales, bottom_sales, stock_high, stock_low, price_high, price_low]
+            example: latest
+        - in: query
+          name: status
+          description: product status. Will return all products regardless of status when not given
+          schema:
+            type: string
+            enum: [live, sold_out, delisted]
+        - in: query
+          name: sku
+          schema:
+            type: string
+            example: product sku
+        - in: query
+          name: name
+          schema:
+            type: string
+            example: product name
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - type: object
+                    properties:
+                      code:
+                        example: "OK"
+                      message:
+                        example: "ok"
+                      data:
+                        allOf:
+                          - $ref: '#/components/schemas/PaginationResponse'
+                          - type: object
+                            properties:
+                              data:
+                                type: array
+                                items:
+                                  allOf:
+                                    - $ref: '#/components/schemas/Product'
+                                    - type: object
+                                      properties:
+                                        imageUrl:
+                                          type: string
+                                          format: url
+                                          example: image.png
+                                    - type: object
+                                      properties:
+                                        bulk:
+                                          $ref: '#/components/schemas/ProductBulkPrice'
+                                    - type: object
+                                      properties:
+                                        skus:
+                                          type: array
+                                          items:
+                                            allOf:
+                                              - $ref: '#/components/schemas/SKU'
+                                              - type: object
+                                                properties:
+                                                  variants:
+                                                    type: array
+                                                    items:
+                                                      $ref: '#/components/schemas/Variant'
+        '401':
+          description: unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "UNAUTHORIZED"
+                  message:
+                    type: string
+                    example: "invalid credential"
+        '404':
+          description: not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "NOT_FOUND"
+                  message:
+                    type: string
+                    example: "error message"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "INTERNAL_SERVER_ERROR"
+                  message:
+                    type: string
+                    example: "error message"
   /v1/orders/invoices:
     post:
       security:

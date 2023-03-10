@@ -4,7 +4,7 @@ import "gorm.io/gorm"
 
 type Sku struct {
 	ID        int     `json:"id"`
-	Sku       string  `json:"-"`
+	Sku       string  `json:"sku,omitempty"`
 	Price     float64 `json:"price"`
 	Stock     int     `json:"stock"`
 	ProductId int     `json:"productId"`

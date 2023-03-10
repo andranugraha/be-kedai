@@ -15,6 +15,7 @@ type ProductService interface {
 	GetProductsByShopSlug(slug string, request *dto.ShopProductFilterRequest) (*commonDto.PaginationResponse, error)
 	GetRecommendationByCategory(productId int, categoryId int) ([]*dto.ProductResponse, error)
 	ProductSearchFiltering(req dto.ProductSearchFilterRequest) (*commonDto.PaginationResponse, error)
+	GetSellerProducts(userID int, req *dto.SellerProductFilterRequest) (*commonDto.PaginationResponse, error)
 	SearchAutocomplete(req dto.ProductSearchAutocomplete) ([]*dto.ProductResponse, error)
 }
 
@@ -127,6 +128,26 @@ func (s *productServiceImpl) GetProductsByShopSlug(slug string, request *dto.Sho
 	}
 
 	return &response, nil
+}
+
+func (s *productServiceImpl) GetSellerProducts(userID int, req *dto.SellerProductFilterRequest) (*commonDto.PaginationResponse, error) {
+	shop, err := s.shopService.FindShopByUserId(userID)
+	if err != nil {
+		return nil, err
+	}
+
+	products, totalRows, totalPages, err := s.productRepository.GetBySellerID(shop.ID, req)
+	if err != nil {
+		return nil, err
+	}
+
+	return &commonDto.PaginationResponse{
+		TotalRows:  totalRows,
+		TotalPages: totalPages,
+		Page:       req.Page,
+		Limit:      req.Limit,
+		Data:       products,
+	}, nil
 }
 
 func (s *productServiceImpl) SearchAutocomplete(req dto.ProductSearchAutocomplete) ([]*dto.ProductResponse, error) {
