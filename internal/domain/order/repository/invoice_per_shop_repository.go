@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"kedai/backend/be-kedai/internal/common/constant"
 	commonErr "kedai/backend/be-kedai/internal/common/error"
+	marketplaceModel "kedai/backend/be-kedai/internal/domain/marketplace/model"
 	"kedai/backend/be-kedai/internal/domain/order/dto"
 	"kedai/backend/be-kedai/internal/domain/order/model"
 	"math"
@@ -222,8 +223,20 @@ func (r *invoicePerShopRepositoryImpl) GetByShopIdAndId(shopId int, id int) (*dt
 	var invoice dto.InvoicePerShopDetail
 
 	query := r.db.
-		Select("invoice_per_shops.*, invoices.voucher_amount AS marketplace_voucher_amount, invoices.voucher_type AS marketplace_voucher_type, invoices.payment_date AS payment_date").
-		Joins("JOIN invoices ON invoices.id = invoice_per_shops.invoice_id").
+		Select(`invoice_per_shops.*, case when invoices.voucher_type = ?
+		THEN ROUND(invoice_per_shops.shipping_cost  / (
+			select SUM(ips2.shipping_cost) from invoice_per_shops ips2 where ips2.invoice_id = invoice_per_shops.invoice_id 
+			group by ips2.invoice_id 
+		) * invoices.voucher_amount) when invoices.voucher_type = ?
+		THEN ROUND(invoice_per_shops.subtotal / (
+			select SUM(ips2.subtotal) from invoice_per_shops ips2 where ips2.invoice_id = invoice_per_shops.invoice_id 
+			group by ips2.invoice_id 
+		) * invoices.voucher_amount) 
+		ELSE invoices.voucher_amount 
+		END AS marketplace_voucher_amount, 
+		invoices.voucher_type AS marketplace_voucher_type, 
+		invoices.payment_date AS payment_date`).
+		Joins("JOIN invoices ON invoices.id = invoice_per_shops.invoice_id", marketplaceModel.VoucherTypeShipping, marketplaceModel.VoucherTypeNominal).
 		Where("invoice_per_shops.shop_id = ?", shopId).
 		Where("invoice_per_shops.id = ?", id)
 
