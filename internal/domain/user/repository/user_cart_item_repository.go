@@ -97,7 +97,7 @@ func (r *userCartItemRepository) GetAllCartItem(req *dto.GetCartItemsRequest) (c
 			JOIN cart_items ci on ci.sku_id = s.id 
 			WHERE ci.user_id = ?
 			ORDER BY sh.id LIMIT ? OFFSET ?)`, req.UserId, req.Limit, req.Offset()).
-		Order("cart_items.created_at").
+		Order("cart_items.created_at desc").
 		Preload("Sku.Product.Shop.Address.City").
 		Preload("Sku.Product.Shop.Address.Province").
 		Preload("Sku.Product.Shop.Address.Subdistrict").

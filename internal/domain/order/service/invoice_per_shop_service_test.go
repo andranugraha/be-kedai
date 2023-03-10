@@ -306,3 +306,84 @@ func TestGetInvoicesByShopId(t *testing.T) {
 		})
 	}
 }
+
+func TestGetInvoiceByUserIdAndId(t *testing.T) {
+	type input struct {
+		userID     int
+		id         int
+		beforeTest func(*mocks.InvoicePerShopRepository, *mocks.ShopService)
+	}
+	type expected struct {
+		data *dto.InvoicePerShopDetail
+		err  error
+	}
+
+	tests := []struct {
+		description string
+		input
+		expected
+	}{
+		{
+			description: "should return error when FindShopByUserId failed",
+			input: input{
+				userID: 1,
+				id:     1,
+				beforeTest: func(ipsr *mocks.InvoicePerShopRepository, ss *mocks.ShopService) {
+					ss.On("FindShopByUserId", 1).Return(nil, errors.New("failed to get shop"))
+				},
+			},
+			expected: expected{
+				data: nil,
+				err:  errors.New("failed to get shop"),
+			},
+		},
+		{
+			description: "should return error when GetByShopIdAndId failed",
+			input: input{
+				userID: 1,
+				id:     1,
+				beforeTest: func(ipsr *mocks.InvoicePerShopRepository, ss *mocks.ShopService) {
+					ss.On("FindShopByUserId", 1).Return(&shopModel.Shop{ID: 1}, nil)
+					ipsr.On("GetByShopIdAndId", 1, 1).Return(nil, errors.New("failed to get invoice"))
+				},
+			},
+			expected: expected{
+				data: nil,
+				err:  errors.New("failed to get invoice"),
+			},
+		},
+		{
+			description: "should return invoice detail and no error when success",
+			input: input{
+				userID: 1,
+				id:     1,
+				beforeTest: func(ipsr *mocks.InvoicePerShopRepository, ss *mocks.ShopService) {
+					ss.On("FindShopByUserId", 1).Return(&shopModel.Shop{ID: 1}, nil)
+					ipsr.On("GetByShopIdAndId", 1, 1).Return(&dto.InvoicePerShopDetail{}, nil)
+				},
+			},
+			expected: expected{
+				data: &dto.InvoicePerShopDetail{},
+				err:  nil,
+			},
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.description, func(t *testing.T) {
+			invoicePerShopRepo := mocks.NewInvoicePerShopRepository(t)
+			shopService := mocks.NewShopService(t)
+			tc.beforeTest(invoicePerShopRepo, shopService)
+			invoicePerShopService := service.NewInvoicePerShopService(&service.InvoicePerShopSConfig{
+				InvoicePerShopRepo: invoicePerShopRepo,
+				ShopService:        shopService,
+			})
+
+			data, err := invoicePerShopService.GetInvoiceByUserIdAndId(tc.input.userID, tc.input.id)
+
+			assert.Equal(t, tc.expected.data, data)
+			assert.Equal(t, tc.expected.err, err)
+		})
+	}
+
+}

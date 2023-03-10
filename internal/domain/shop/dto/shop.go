@@ -38,3 +38,11 @@ func (req *FindShopRequest) Validate() {
 func (req *FindShopRequest) Offset() int {
 	return (req.Page - 1) * req.Limit
 }
+
+type GetShopStatsResponse struct {
+	ToShip     int `json:"toShip"`
+	Shipping   int `json:"shipping"`
+	Completed  int `json:"completed"`
+	Refund     int `json:"refund"`
+	OutOfStock int `json:"outOfStock"`
+}

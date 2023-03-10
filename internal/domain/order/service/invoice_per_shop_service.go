@@ -16,6 +16,7 @@ type InvoicePerShopService interface {
 	GetByID(id int) (*model.InvoicePerShop, error)
 	GetInvoicesByUserIDAndCode(userID int, code string) (*dto.InvoicePerShopDetail, error)
 	WithdrawFromInvoice(invoicePerShopId int, userId int) error
+	GetInvoiceByUserIdAndId(userId int, id int) (*dto.InvoicePerShopDetail, error)
 }
 
 type invoicePerShopServiceImpl struct {
@@ -95,4 +96,13 @@ func (s *invoicePerShopServiceImpl) WithdrawFromInvoice(invoicePerShopId int, us
 	}
 
 	return s.invoicePerShopRepo.WithdrawFromInvoice(invoicePerShopId, shop.ID, wallet.ID)
+}
+
+func (s *invoicePerShopServiceImpl) GetInvoiceByUserIdAndId(userId int, id int) (*dto.InvoicePerShopDetail, error) {
+	shop, err := s.shopService.FindShopByUserId(userId)
+	if err != nil {
+		return nil, err
+	}
+
+	return s.invoicePerShopRepo.GetByShopIdAndId(shop.ID, id)
 }
