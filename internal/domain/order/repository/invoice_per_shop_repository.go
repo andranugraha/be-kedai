@@ -20,6 +20,7 @@ type InvoicePerShopRepository interface {
 	GetByUserIDAndCode(userID int, code string) (*dto.InvoicePerShopDetail, error)
 	GetShopFinanceToRelease(shopID int) (float64, error)
 	GetByShopId(shopId int, req *dto.InvoicePerShopFilterRequest) ([]*dto.InvoicePerShopDetail, int64, int, error)
+	GetByShopIdAndId(shopId int, id int) (*dto.InvoicePerShopDetail, error)
 }
 
 type invoicePerShopRepositoryImpl struct {
@@ -215,4 +216,37 @@ func (r *invoicePerShopRepositoryImpl) GetByShopId(shopId int, req *dto.InvoiceP
 	}
 
 	return invoices, totalRows, totalPages, nil
+}
+
+func (r *invoicePerShopRepositoryImpl) GetByShopIdAndId(shopId int, id int) (*dto.InvoicePerShopDetail, error) {
+	var invoice dto.InvoicePerShopDetail
+
+	query := r.db.
+		Select("invoice_per_shops.*, invoices.voucher_amount AS marketplace_voucher_amount, invoices.voucher_type AS marketplace_voucher_type, invoices.payment_date AS payment_date").
+		Joins("JOIN invoices ON invoices.id = invoice_per_shops.invoice_id").
+		Where("invoice_per_shops.shop_id = ?", shopId).
+		Where("invoice_per_shops.id = ?", id)
+
+	query = query.Preload("TransactionItems", func(query *gorm.DB) *gorm.DB {
+		return query.Select(`
+			transactions.*,
+			(SELECT url FROM product_medias WHERE products.id = product_medias.product_id LIMIT 1) AS image_url,
+			products.name AS product_name
+		`).
+			Joins("JOIN skus ON skus.id = transactions.sku_id").
+			Joins("JOIN products ON skus.product_id = products.id")
+	}).
+		Preload("TransactionItems.Sku.Variants").
+		Preload("Shop")
+
+	err := query.First(&invoice).Error
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, commonErr.ErrInvoiceNotFound
+		}
+
+		return nil, err
+	}
+
+	return &invoice, nil
 }
