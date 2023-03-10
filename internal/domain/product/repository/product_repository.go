@@ -20,6 +20,7 @@ type ProductRepository interface {
 	ProductSearchFiltering(req dto.ProductSearchFilterRequest, shopId int) ([]*dto.ProductResponse, int64, int, error)
 	GetBySellerID(shopID int, request *dto.SellerProductFilterRequest) ([]*dto.SellerProduct, int64, int, error)
 	SearchAutocomplete(req dto.ProductSearchAutocomplete) ([]*dto.ProductResponse, error)
+	GetSellerProductByCode(shopID int, productCode string) (*model.Product, error)
 }
 
 type productRepositoryImpl struct {
@@ -331,4 +332,26 @@ func (r *productRepositoryImpl) SearchAutocomplete(req dto.ProductSearchAutocomp
 	}
 
 	return products, nil
+}
+
+func (r *productRepositoryImpl) GetSellerProductByCode(shopID int, productCode string) (*model.Product, error) {
+	var product model.Product
+
+	err := r.db.
+		Where("shop_id = ?", shopID).Where("code = ?", productCode).
+		Preload("Bulk").
+		Preload("Media").
+		Preload("VariantGroup.Variant").
+		Preload("SKUs.Variant").
+		First(&product).Error
+
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, err
+		}
+
+		return nil, err
+	}
+
+	return &product, nil
 }
