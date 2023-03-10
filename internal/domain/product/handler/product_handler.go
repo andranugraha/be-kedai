@@ -132,7 +132,17 @@ func (h *Handler) GetSellerProductDetailByCode(c *gin.Context) {
 
 	product, err := h.productService.GetSellerProductByCode(userID, productCode)
 	if err != nil {
-		response.Error(c, http.StatusInternalServerError, code.INTERNAL_SERVER_ERROR, err.Error())
+		if errors.Is(err, errs.ErrShopNotFound) {
+			response.Error(c, http.StatusNotFound, code.SHOP_NOT_REGISTERED, err.Error())
+			return
+		}
+
+		if errors.Is(err, errs.ErrProductDoesNotExist) {
+			response.Error(c, http.StatusNotFound, code.PRODUCT_NOT_EXISTS, err.Error())
+			return
+		}
+
+		response.Error(c, http.StatusInternalServerError, code.INTERNAL_SERVER_ERROR, errs.ErrInternalServerError.Error())
 		return
 	}
 
