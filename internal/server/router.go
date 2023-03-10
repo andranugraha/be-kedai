@@ -114,6 +114,7 @@ func NewRouter(cfg *RouterConfig) *gin.Engine {
 			location.GET("/provinces", cfg.LocationHandler.GetProvinces)
 			location.GET("/districts", cfg.LocationHandler.GetDistricts)
 			location.GET("/subdistricts", cfg.LocationHandler.GetSubdistricts)
+			location.GET("/addresses", cfg.LocationHandler.SearchAddress)
 		}
 
 		product := v1.Group("/products")
@@ -152,6 +153,7 @@ func NewRouter(cfg *RouterConfig) *gin.Engine {
 			authenticated := marketplace.Group("", middleware.JWTAuthorization, cfg.UserHandler.GetSession)
 			{
 				authenticated.GET("/vouchers/valid", cfg.MarketplaceHandler.GetValidMarketplaceVoucher)
+				authenticated.GET("/couriers", cfg.ShopHandler.GetAllCouriers)
 			}
 		}
 

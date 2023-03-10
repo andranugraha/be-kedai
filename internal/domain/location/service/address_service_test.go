@@ -1012,3 +1012,36 @@ func TestDeleteUserAddress(t *testing.T) {
 		})
 	}
 }
+
+func TestSearchAddress(t *testing.T) {
+	tests := []struct {
+		name    string
+		req     *dto.SearchAddressRequest
+		want    []*dto.SearchAddressResponse
+		wantErr error
+	}{
+		{
+			name: "should return list of address when search address success",
+			req: &dto.SearchAddressRequest{
+				Keyword: "Jalan Puncak Pesanggrahan VI No. 5",
+			},
+			want:    []*dto.SearchAddressResponse{},
+			wantErr: nil,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			addressRepo := mocks.NewAddressRepository(t)
+			addressRepo.On("SearchAddress", test.req).Return(test.want, nil)
+			addressService := service.NewAddressService(&service.AddressSConfig{
+				AddressRepo: addressRepo,
+			})
+
+			got, err := addressService.SearchAddress(test.req)
+
+			assert.Equal(t, test.want, got)
+			assert.ErrorIs(t, err, test.wantErr)
+		})
+	}
+}

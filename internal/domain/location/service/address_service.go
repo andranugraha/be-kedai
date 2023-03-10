@@ -18,9 +18,10 @@ type AddressService interface {
 	PreCheckAddress(*dto.AddressRequest) (*model.UserAddress, error)
 	DeleteUserAddress(addressId int, userId int) error
 	GetUserAddressByIdAndUserId(addressId int, userId int) (*model.UserAddress, error)
+	SearchAddress(req *dto.SearchAddressRequest) ([]*dto.SearchAddressResponse, error)
 }
 
-type addressService struct {
+type addressServiceImpl struct {
 	addressRepo        repository.AddressRepository
 	provinceService    ProvinceService
 	districtService    DistrictService
@@ -41,7 +42,7 @@ type AddressSConfig struct {
 }
 
 func NewAddressService(cfg *AddressSConfig) AddressService {
-	return &addressService{
+	return &addressServiceImpl{
 		addressRepo:        cfg.AddressRepo,
 		provinceService:    cfg.ProvinceService,
 		districtService:    cfg.DistrictService,
@@ -52,7 +53,7 @@ func NewAddressService(cfg *AddressSConfig) AddressService {
 	}
 }
 
-func (s *addressService) AddUserAddress(newAddress *dto.AddressRequest) (*model.UserAddress, error) {
+func (s *addressServiceImpl) AddUserAddress(newAddress *dto.AddressRequest) (*model.UserAddress, error) {
 	address, err := s.PreCheckAddress(newAddress)
 	if err != nil {
 		return nil, err
@@ -66,7 +67,7 @@ func (s *addressService) AddUserAddress(newAddress *dto.AddressRequest) (*model.
 	return address, nil
 }
 
-func (s *addressService) GetAllUserAddress(userId int) ([]*model.UserAddress, error) {
+func (s *addressServiceImpl) GetAllUserAddress(userId int) ([]*model.UserAddress, error) {
 	profile, err := s.userProfileService.GetProfile(userId)
 	if err != nil {
 		return nil, err
@@ -89,7 +90,7 @@ func (s *addressService) GetAllUserAddress(userId int) ([]*model.UserAddress, er
 	return dto.ToAddressList(addresses, profile.DefaultAddressID, &shop.AddressID), nil
 }
 
-func (s *addressService) PreCheckAddress(newAddress *dto.AddressRequest) (*model.UserAddress, error) {
+func (s *addressServiceImpl) PreCheckAddress(newAddress *dto.AddressRequest) (*model.UserAddress, error) {
 	var address *model.UserAddress
 
 	subdistrict, err := s.subdistrictService.GetSubdistrictByID(newAddress.SubdistrictID)
@@ -120,7 +121,7 @@ func (s *addressService) PreCheckAddress(newAddress *dto.AddressRequest) (*model
 	return address, nil
 }
 
-func (s *addressService) UpdateUserAddress(updatedAddress *dto.AddressRequest) (*model.UserAddress, error) {
+func (s *addressServiceImpl) UpdateUserAddress(updatedAddress *dto.AddressRequest) (*model.UserAddress, error) {
 	address, err := s.addressRepo.GetUserAddressByIdAndUserId(updatedAddress.ID, updatedAddress.UserID)
 	if err != nil {
 		return nil, err
@@ -161,7 +162,7 @@ func (s *addressService) UpdateUserAddress(updatedAddress *dto.AddressRequest) (
 	return address, nil
 }
 
-func (s *addressService) DeleteUserAddress(addressId int, userId int) error {
+func (s *addressServiceImpl) DeleteUserAddress(addressId int, userId int) error {
 	address, err := s.addressRepo.GetUserAddressByIdAndUserId(addressId, userId)
 	if err != nil {
 		return err
@@ -193,11 +194,15 @@ func (s *addressService) DeleteUserAddress(addressId int, userId int) error {
 	return nil
 }
 
-func (s *addressService) GetUserAddressByIdAndUserId(addressId int, userId int) (*model.UserAddress, error) {
+func (s *addressServiceImpl) GetUserAddressByIdAndUserId(addressId int, userId int) (*model.UserAddress, error) {
 	address, err := s.addressRepo.GetUserAddressByIdAndUserId(addressId, userId)
 	if err != nil {
 		return nil, err
 	}
 
 	return address, nil
+}
+
+func (s *addressServiceImpl) SearchAddress(req *dto.SearchAddressRequest) ([]*dto.SearchAddressResponse, error) {
+	return s.addressRepo.SearchAddress(req)
 }
