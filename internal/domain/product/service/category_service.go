@@ -9,6 +9,7 @@ import (
 
 type CategoryService interface {
 	GetCategories(categoryDto.GetCategoriesRequest) (*dto.PaginationResponse, error)
+	GetCategoryLineAgesFromBottom(categoryID int) ([]*model.Category, error)
 }
 
 type categoryServiceImpl struct {
@@ -50,6 +51,10 @@ func (c *categoryServiceImpl) GetCategories(query categoryDto.GetCategoriesReque
 	}
 
 	return
+}
+
+func (c *categoryServiceImpl) GetCategoryLineAgesFromBottom(categoryID int) ([]*model.Category, error) {
+	return c.categoryRepo.GetLineageFromBottom(categoryID)
 }
 
 func removeChildren(category *model.Category, depth int) {
