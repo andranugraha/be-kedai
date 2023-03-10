@@ -9,7 +9,6 @@ import (
 type SubdistrictService interface {
 	GetSubdistrictByID(subdistrictID int) (*model.Subdistrict, error)
 	GetSubdistricts(req dto.GetSubdistrictsRequest) (subdistricts []*model.Subdistrict, err error)
-	GetDetailSubdistrictByName(subdistrictName string) (*model.Subdistrict, error)
 }
 
 type subdistrictServiceImpl struct {
@@ -32,8 +31,4 @@ func (s *subdistrictServiceImpl) GetSubdistrictByID(subdistrictID int) (*model.S
 
 func (s *subdistrictServiceImpl) GetSubdistricts(req dto.GetSubdistrictsRequest) (subdistricts []*model.Subdistrict, err error) {
 	return s.subdistrictRepo.GetAll(req)
-}
-
-func (s *subdistrictServiceImpl) GetDetailSubdistrictByName(subdistrictName string) (*model.Subdistrict, error) {
-	return s.subdistrictRepo.GetDetailByName(subdistrictName)
 }
