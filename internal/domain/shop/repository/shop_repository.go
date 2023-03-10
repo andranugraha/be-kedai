@@ -2,6 +2,7 @@ package repository
 
 import (
 	"errors"
+	"kedai/backend/be-kedai/internal/common/constant"
 	errs "kedai/backend/be-kedai/internal/common/error"
 	orderRepo "kedai/backend/be-kedai/internal/domain/order/repository"
 	"kedai/backend/be-kedai/internal/domain/shop/dto"
@@ -19,6 +20,7 @@ type ShopRepository interface {
 	FindShopByKeyword(req dto.FindShopRequest) ([]*dto.FindShopResponse, int64, int, error)
 	UpdateShopAddressIdByUserId(tx *gorm.DB, userId int, addressId int) error
 	GetShopFinanceOverview(shopId int) (*dto.ShopFinanceOverviewResponse, error)
+	GetShopStats(shopId int) (*dto.GetShopStatsResponse, error)
 }
 
 type shopRepositoryImpl struct {
@@ -138,4 +140,36 @@ func (r *shopRepositoryImpl) GetShopFinanceOverview(shopId int) (*dto.ShopFinanc
 		ToRelease: toRelease,
 		Released:  *released,
 	}, nil
+}
+
+func (r *shopRepositoryImpl) GetShopStats(shopId int) (*dto.GetShopStatsResponse, error) {
+	var shopStats dto.GetShopStatsResponse
+
+	err := r.db.Model(&model.Shop{}).
+		Joins("left join invoice_per_shops ips on shops.id = ips.shop_id").
+		Where("shops.id = ?", shopId).
+		Select(`
+				count(ips.id) filter (where ips.status = ?) as to_ship,
+				count(ips.id) filter (where ips.status = ?) as shipping,
+				count(ips.id) filter (where ips.status = ?) as completed,
+				count(ips.id) filter (where ips.status = ?) as refund,
+				(select count(p.id) from products p join skus s on p.id = s.product_id 
+				where p.shop_id = shops.id and p.is_active = true
+				group by p.id having sum(s.stock) = 0) as out_of_stock
+		`, constant.TransactionStatusCreated,
+			constant.TransactionStatusSent,
+			constant.TransactionStatusCompleted,
+			constant.TransactionStatusRefunded,
+		).
+		Group("shops.id").
+		First(&shopStats).Error
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, errs.ErrShopNotFound
+		}
+
+		return nil, err
+	}
+
+	return &shopStats, nil
 }

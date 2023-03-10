@@ -135,7 +135,7 @@ func TestTopUp(t *testing.T) {
 		req = dto.TopUpRequest{
 			Amount:     50000,
 			TxnId:      "15602",
-			Signature:  "027e361f8776a9fb6f25961687e3cf0879af6fdfe00e03335fbb5764a3763d40",
+			Signature:  "76d815d4e17d8345fbb01789febe940f8e9fba40965b925eb28c4b04d512c926",
 			CardNumber: "2793765051084376",
 		}
 		invalidReq = dto.TopUpRequest{

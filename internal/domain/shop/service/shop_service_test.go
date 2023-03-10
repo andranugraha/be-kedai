@@ -385,3 +385,86 @@ func TestGetShopFinanceOverview(t *testing.T) {
 		})
 	}
 }
+
+func TestGetShopStats(t *testing.T) {
+	var (
+		userId = 1
+		shopId = 1
+	)
+	type input struct {
+		userId     int
+		beforeTest func(*mocks.ShopRepository)
+	}
+
+	type expected struct {
+		result *dto.GetShopStatsResponse
+		err    error
+	}
+
+	type cases struct {
+		description string
+		input
+		expected
+	}
+
+	for _, tc := range []cases{
+		{
+			description: "should return error when shop not found",
+			input: input{
+				userId: userId,
+				beforeTest: func(sr *mocks.ShopRepository) {
+					sr.On("FindShopByUserId", userId).Return(nil, errs.ErrShopNotFound)
+				},
+			},
+			expected: expected{
+				result: nil,
+				err:    errs.ErrShopNotFound,
+			},
+		},
+		{
+			description: "should return error when GetShopStats return error",
+			input: input{
+				userId: userId,
+				beforeTest: func(sr *mocks.ShopRepository) {
+					sr.On("FindShopByUserId", userId).Return(&model.Shop{
+						ID: shopId,
+					}, nil)
+					sr.On("GetShopStats", shopId).Return(nil, errors.New("error"))
+				},
+			},
+			expected: expected{
+				result: nil,
+				err:    errors.New("error"),
+			},
+		},
+		{
+			description: "should return shop stats when success",
+			input: input{
+				userId: userId,
+				beforeTest: func(sr *mocks.ShopRepository) {
+					sr.On("FindShopByUserId", userId).Return(&model.Shop{
+						ID: shopId,
+					}, nil)
+					sr.On("GetShopStats", shopId).Return(&dto.GetShopStatsResponse{}, nil)
+				},
+			},
+			expected: expected{
+				result: &dto.GetShopStatsResponse{},
+				err:    nil,
+			},
+		},
+	} {
+		t.Run(tc.description, func(t *testing.T) {
+			mockRepo := new(mocks.ShopRepository)
+			tc.beforeTest(mockRepo)
+			service := service.NewShopService(&service.ShopSConfig{
+				ShopRepository: mockRepo,
+			})
+
+			result, err := service.GetShopStats(tc.input.userId)
+
+			assert.Equal(t, tc.expected.result, result)
+			assert.Equal(t, tc.expected.err, err)
+		})
+	}
+}

@@ -4,6 +4,7 @@ import (
 	"errors"
 	"kedai/backend/be-kedai/internal/common/code"
 	commonErr "kedai/backend/be-kedai/internal/common/error"
+	"kedai/backend/be-kedai/internal/domain/shop/dto"
 	"kedai/backend/be-kedai/internal/utils/response"
 	"net/http"
 
@@ -27,10 +28,13 @@ func (h *Handler) GetShopVoucher(c *gin.Context) {
 }
 
 func (h *Handler) GetValidShopVoucher(c *gin.Context) {
-	shopSlug := c.Param("slug")
-	userId := c.GetInt("userId")
+	req := dto.GetValidShopVoucherRequest{
+		Slug:   c.Param("slug"),
+		Code:   c.Query("code"),
+		UserID: c.GetInt("userId"),
+	}
 
-	voucher, err := h.shopVoucherService.GetValidShopVoucherByUserIDAndSlug(userId, shopSlug)
+	voucher, err := h.shopVoucherService.GetValidShopVoucherByUserIDAndSlug(req)
 	if err != nil {
 		if errors.Is(err, commonErr.ErrShopNotFound) {
 			response.Error(c, http.StatusNotFound, code.SHOP_NOT_REGISTERED, err.Error())
