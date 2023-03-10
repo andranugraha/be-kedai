@@ -121,6 +121,7 @@ func createRouter() *gin.Engine {
 
 	invoicePerShopService := orderServicePackage.NewInvoicePerShopService(&orderServicePackage.InvoicePerShopSConfig{
 		InvoicePerShopRepo: invoicePerShopRepo,
+		ShopService:        shopService,
 	})
 
 	shopVoucherRepo := shopRepoPackage.NewShopVoucherRepository(&shopRepoPackage.ShopVoucherRConfig{

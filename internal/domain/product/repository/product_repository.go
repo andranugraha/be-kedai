@@ -232,7 +232,8 @@ func (r *productRepositoryImpl) ProductSearchFiltering(req dto.ProductSearchFilt
 		db = db.Order("products.created_at desc")
 	}
 
-	db.Model(&model.Product{}).Count(&totalRows)
+	countQuery := db.Session(&gorm.Session{})
+	countQuery.Model(&model.Product{}).Distinct("products.id").Count(&totalRows)
 	totalPages = int(math.Ceil(float64(totalRows) / float64(req.Limit)))
 
 	err := db.Model(&model.Product{}).Limit(req.Limit).Offset(req.Offset()).Find(&productList).Error

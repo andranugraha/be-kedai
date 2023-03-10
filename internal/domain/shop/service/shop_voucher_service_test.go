@@ -2,6 +2,7 @@ package service_test
 
 import (
 	errs "kedai/backend/be-kedai/internal/common/error"
+	"kedai/backend/be-kedai/internal/domain/shop/dto"
 	"kedai/backend/be-kedai/internal/domain/shop/model"
 	"kedai/backend/be-kedai/internal/domain/shop/service"
 	"kedai/backend/be-kedai/mocks"
@@ -101,10 +102,13 @@ func TestGetValidShopVoucherByUserIDAndSlug(t *testing.T) {
 		userID  = 1
 		voucher = []*model.ShopVoucher{}
 		shop    = &model.Shop{}
+		req     = dto.GetValidShopVoucherRequest{
+			Slug:   slug,
+			UserID: userID,
+		}
 	)
 	type input struct {
-		slug       string
-		userID     int
+		req        dto.GetValidShopVoucherRequest
 		err        error
 		beforeTest func(*mocks.ShopService, *mocks.ShopVoucherRepository)
 	}
@@ -123,12 +127,14 @@ func TestGetValidShopVoucherByUserIDAndSlug(t *testing.T) {
 		{
 			description: "should return list of shop voucher when success",
 			input: input{
-				slug:   slug,
-				userID: userID,
-				err:    nil,
+				req: dto.GetValidShopVoucherRequest{
+					Slug:   slug,
+					UserID: userID,
+				},
+				err: nil,
 				beforeTest: func(ss *mocks.ShopService, svr *mocks.ShopVoucherRepository) {
 					ss.On("FindShopBySlug", slug).Return(shop, nil)
-					svr.On("GetValidByUserIDAndShopID", userID, shop.ID).Return(voucher, nil)
+					svr.On("GetValidByUserIDAndShopID", req, shop.ID).Return(voucher, nil)
 				},
 			},
 			expected: expected{
@@ -139,9 +145,11 @@ func TestGetValidShopVoucherByUserIDAndSlug(t *testing.T) {
 		{
 			description: "should return error when shop not found",
 			input: input{
-				slug:   slug,
-				userID: userID,
-				err:    nil,
+				req: dto.GetValidShopVoucherRequest{
+					Slug:   slug,
+					UserID: userID,
+				},
+				err: nil,
 				beforeTest: func(ss *mocks.ShopService, svr *mocks.ShopVoucherRepository) {
 					ss.On("FindShopBySlug", slug).Return(nil, errs.ErrShopNotFound)
 				},
@@ -154,12 +162,14 @@ func TestGetValidShopVoucherByUserIDAndSlug(t *testing.T) {
 		{
 			description: "should return error when internal server error",
 			input: input{
-				slug:   slug,
-				userID: userID,
-				err:    errs.ErrInternalServerError,
+				req: dto.GetValidShopVoucherRequest{
+					Slug:   slug,
+					UserID: userID,
+				},
+				err: errs.ErrInternalServerError,
 				beforeTest: func(ss *mocks.ShopService, svr *mocks.ShopVoucherRepository) {
 					ss.On("FindShopBySlug", slug).Return(shop, nil)
-					svr.On("GetValidByUserIDAndShopID", userID, shop.ID).Return(nil, errs.ErrInternalServerError)
+					svr.On("GetValidByUserIDAndShopID", req, shop.ID).Return(nil, errs.ErrInternalServerError)
 				},
 			},
 			expected: expected{
@@ -177,7 +187,79 @@ func TestGetValidShopVoucherByUserIDAndSlug(t *testing.T) {
 				ShopService:           mockService,
 			})
 
-			result, err := service.GetValidShopVoucherByUserIDAndSlug(int(tc.input.userID), tc.input.slug)
+			result, err := service.GetValidShopVoucherByUserIDAndSlug(tc.input.req)
+
+			assert.Equal(t, tc.expected.result, result)
+			assert.Equal(t, tc.expected.err, err)
+		})
+	}
+}
+
+func TestGetValidShopVoucherByIdAndUserId(t *testing.T) {
+	var (
+		id      = 1
+		userID  = 1
+		voucher = &model.ShopVoucher{
+			ID: 1,
+		}
+	)
+	type input struct {
+		id         int
+		userID     int
+		err        error
+		beforeTest func(*mocks.ShopVoucherRepository)
+	}
+	type expected struct {
+		result *model.ShopVoucher
+		err    error
+	}
+
+	type cases struct {
+		description string
+		input
+		expected
+	}
+
+	for _, tc := range []cases{
+		{
+			description: "should return shop voucher when success",
+			input: input{
+				id:     id,
+				userID: userID,
+				err:    nil,
+				beforeTest: func(svr *mocks.ShopVoucherRepository) {
+					svr.On("GetValidByIdAndUserId", id, userID).Return(voucher, nil)
+				},
+			},
+			expected: expected{
+				result: voucher,
+				err:    nil,
+			},
+		},
+		{
+			description: "should return error when internal server error",
+			input: input{
+				id:     id,
+				userID: userID,
+				err:    errs.ErrInternalServerError,
+				beforeTest: func(svr *mocks.ShopVoucherRepository) {
+					svr.On("GetValidByIdAndUserId", id, userID).Return(nil, errs.ErrInternalServerError)
+				},
+			},
+			expected: expected{
+				result: nil,
+				err:    errs.ErrInternalServerError,
+			},
+		},
+	} {
+		t.Run(tc.description, func(t *testing.T) {
+			mockRepo := new(mocks.ShopVoucherRepository)
+			tc.beforeTest(mockRepo)
+			service := service.NewShopVoucherService(&service.ShopVoucherSConfig{
+				ShopVoucherRepository: mockRepo,
+			})
+
+			result, err := service.GetValidShopVoucherByIdAndUserId(tc.input.id, tc.input.userID)
 
 			assert.Equal(t, tc.expected.result, result)
 			assert.Equal(t, tc.expected.err, err)

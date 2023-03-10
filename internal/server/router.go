@@ -146,6 +146,7 @@ func NewRouter(cfg *RouterConfig) *gin.Engine {
 			authenticated := shop.Group("", middleware.JWTAuthorization, cfg.UserHandler.GetSession)
 			{
 				authenticated.GET("/:slug/vouchers/valid", cfg.ShopHandler.GetValidShopVoucher)
+				authenticated.GET("/:slug/couriers", cfg.ShopHandler.GetMatchingCouriers)
 			}
 		}
 		marketplace := v1.Group("/marketplaces")
@@ -190,6 +191,7 @@ func NewRouter(cfg *RouterConfig) *gin.Engine {
 				{
 					income := finance.Group("/incomes")
 					{
+						income.GET("", cfg.OrderHandler.GetInvoicePerShopsByShopId)
 						income.GET("/overview", cfg.ShopHandler.GetShopFinanceOverview)
 					}
 				}

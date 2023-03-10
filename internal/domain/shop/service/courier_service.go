@@ -12,6 +12,7 @@ type CourierService interface {
 	GetCouriersByShopID(shopID int) ([]*model.Courier, error)
 	GetCourierByServiceIDAndShopID(courierID, shopID int) (*model.Courier, error)
 	GetCouriersByProductID(productID int) ([]*model.Courier, error)
+	GetMatchingCouriersByShopIDAndProductIDs(*dto.MatchingProductCourierRequest) ([]*model.Courier, error)
 }
 
 type courierServiceImpl struct {
@@ -49,14 +50,19 @@ func (s *courierServiceImpl) GetCouriersByShopID(shopID int) ([]*model.Courier, 
 }
 
 func (s *courierServiceImpl) GetCourierByServiceIDAndShopID(courierID, shopID int) (*model.Courier, error) {
-	courier, err := s.courierRepository.GetByServiceIDAndShopID(courierID, shopID)
-	if err != nil {
-		return nil, err
-	}
-
-	return courier, nil
+	return s.courierRepository.GetByServiceIDAndShopID(courierID, shopID)
 }
 
 func (s *courierServiceImpl) GetCouriersByProductID(productID int) ([]*model.Courier, error) {
 	return s.courierRepository.GetByProductID(productID)
+}
+
+func (s *courierServiceImpl) GetMatchingCouriersByShopIDAndProductIDs(req *dto.MatchingProductCourierRequest) ([]*model.Courier, error) {
+	shop, err := s.shopService.FindShopBySlug(req.Slug)
+	if err != nil {
+		return nil, err
+	}
+	req.ShopID = shop.ID
+
+	return s.courierRepository.GetMatchingCouriersByShopIDAndProductIDs(req)
 }
