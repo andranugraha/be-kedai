@@ -82,6 +82,7 @@ func (h *Handler) GetShopOrder(c *gin.Context) {
 		return
 	}
 
+	req.Validate()
 	userId := c.GetInt("userId")
 
 	result, err := h.invoicePerShopService.GetShopOrder(userId, &req)
