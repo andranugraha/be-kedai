@@ -125,3 +125,16 @@ func (h *Handler) SearchAutocomplete(c *gin.Context) {
 
 	response.Success(c, http.StatusOK, code.OK, "ok", result)
 }
+
+func (h *Handler) GetSellerProductDetailByCode(c *gin.Context) {
+	userID := c.GetInt("userId")
+	productCode := c.Param("code")
+
+	product, err := h.productService.GetSellerProductByCode(userID, productCode)
+	if err != nil {
+		response.Error(c, http.StatusInternalServerError, code.INTERNAL_SERVER_ERROR, err.Error())
+		return
+	}
+
+	response.Success(c, http.StatusOK, code.OK, "success", product)
+}
