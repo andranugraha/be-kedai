@@ -592,18 +592,21 @@ func TestGetSellerProductByCode(t *testing.T) {
 		userID      = 1
 		categoryID  = 1
 		shopID      = 1
+		productID   = 1
 		productCode = "product-code"
 		product     = model.Product{
+			ID:         productID,
 			Code:       productCode,
 			CategoryID: categoryID,
 		}
 		categories = []*model.Category{}
+		couriers   = []*shopModel.Courier{}
 	)
 
 	tests := []struct {
 		description string
 		input
-		beforeTest func(*mocks.CategoryService, *mocks.ShopService, *mocks.ProductRepository)
+		beforeTest func(*mocks.CategoryService, *mocks.ShopService, *mocks.ProductRepository, *mocks.CourierService)
 		expected
 	}{
 		{
@@ -612,7 +615,7 @@ func TestGetSellerProductByCode(t *testing.T) {
 				userID:      userID,
 				productCode: productCode,
 			},
-			beforeTest: func(cs *mocks.CategoryService, ss *mocks.ShopService, pr *mocks.ProductRepository) {
+			beforeTest: func(cs *mocks.CategoryService, ss *mocks.ShopService, pr *mocks.ProductRepository, crs *mocks.CourierService) {
 				ss.On("FindShopByUserId", userID).Return(nil, errors.New("failed to get shop"))
 			},
 			expected: expected{
@@ -626,7 +629,7 @@ func TestGetSellerProductByCode(t *testing.T) {
 				userID:      userID,
 				productCode: productCode,
 			},
-			beforeTest: func(cs *mocks.CategoryService, ss *mocks.ShopService, pr *mocks.ProductRepository) {
+			beforeTest: func(cs *mocks.CategoryService, ss *mocks.ShopService, pr *mocks.ProductRepository, crs *mocks.CourierService) {
 				ss.On("FindShopByUserId", userID).Return(&shopModel.Shop{ID: shopID, UserID: userID}, nil)
 				pr.On("GetSellerProductByCode", shopID, productCode).Return(nil, errors.New("failed to get product"))
 			},
@@ -641,7 +644,7 @@ func TestGetSellerProductByCode(t *testing.T) {
 				userID:      userID,
 				productCode: productCode,
 			},
-			beforeTest: func(cs *mocks.CategoryService, ss *mocks.ShopService, pr *mocks.ProductRepository) {
+			beforeTest: func(cs *mocks.CategoryService, ss *mocks.ShopService, pr *mocks.ProductRepository, crs *mocks.CourierService) {
 				ss.On("FindShopByUserId", userID).Return(&shopModel.Shop{ID: shopID, UserID: userID}, nil)
 				pr.On("GetSellerProductByCode", shopID, productCode).Return(&product, nil)
 				cs.On("GetCategoryLineAgesFromBottom", categoryID).Return(nil, errors.New("failed to get categories"))
@@ -652,20 +655,39 @@ func TestGetSellerProductByCode(t *testing.T) {
 			},
 		},
 		{
-			description: "should return dto when suceed to get both product and categories",
+			description: "should return error when failed to get couriers",
 			input: input{
 				userID:      userID,
 				productCode: productCode,
 			},
-			beforeTest: func(cs *mocks.CategoryService, ss *mocks.ShopService, pr *mocks.ProductRepository) {
+			beforeTest: func(cs *mocks.CategoryService, ss *mocks.ShopService, pr *mocks.ProductRepository, crs *mocks.CourierService) {
 				ss.On("FindShopByUserId", userID).Return(&shopModel.Shop{ID: shopID, UserID: userID}, nil)
 				pr.On("GetSellerProductByCode", shopID, productCode).Return(&product, nil)
 				cs.On("GetCategoryLineAgesFromBottom", categoryID).Return(categories, nil)
+				crs.On("GetCouriersByProductID", productID).Return(nil, errors.New("failed to get couriers"))
+			},
+			expected: expected{
+				data: nil,
+				err:  errors.New("failed to get couriers"),
+			},
+		},
+		{
+			description: "should return dto when succeed to get both product and categories",
+			input: input{
+				userID:      userID,
+				productCode: productCode,
+			},
+			beforeTest: func(cs *mocks.CategoryService, ss *mocks.ShopService, pr *mocks.ProductRepository, crs *mocks.CourierService) {
+				ss.On("FindShopByUserId", userID).Return(&shopModel.Shop{ID: shopID, UserID: userID}, nil)
+				pr.On("GetSellerProductByCode", shopID, productCode).Return(&product, nil)
+				cs.On("GetCategoryLineAgesFromBottom", categoryID).Return(categories, nil)
+				crs.On("GetCouriersByProductID", productID).Return(couriers, nil)
 			},
 			expected: expected{
 				data: &dto.SellerProductDetail{
 					Product:    product,
 					Categories: categories,
+					Couriers:   couriers,
 				},
 				err: nil,
 			},
@@ -677,11 +699,13 @@ func TestGetSellerProductByCode(t *testing.T) {
 			productRepo := mocks.NewProductRepository(t)
 			categoryService := mocks.NewCategoryService(t)
 			shopService := mocks.NewShopService(t)
-			tc.beforeTest(categoryService, shopService, productRepo)
+			courierService := mocks.NewCourierService(t)
+			tc.beforeTest(categoryService, shopService, productRepo, courierService)
 			productService := service.NewProductService(&service.ProductSConfig{
 				ProductRepository: productRepo,
 				ShopService:       shopService,
 				CategoryService:   categoryService,
+				CourierService:    courierService,
 			})
 
 			data, err := productService.GetSellerProductByCode(tc.input.userID, tc.input.productCode)
