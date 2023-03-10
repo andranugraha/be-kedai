@@ -63,7 +63,9 @@ func (r *invoicePerShopRepositoryImpl) GetByUserID(userID int, request *dto.Invo
 		query = query.Where("invoices.payment_date BETWEEN ? AND ?", start, end)
 	}
 
-	err := query.Model(&model.InvoicePerShop{}).Count(&totalRows).Error
+	query = query.Session(&gorm.Session{})
+
+	err := query.Model(&model.InvoicePerShop{}).Distinct("invoice_per_shops.id").Count(&totalRows).Error
 	if err != nil {
 		return nil, 0, 0, err
 	}

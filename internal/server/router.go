@@ -153,6 +153,7 @@ func NewRouter(cfg *RouterConfig) *gin.Engine {
 			authenticated := marketplace.Group("", middleware.JWTAuthorization, cfg.UserHandler.GetSession)
 			{
 				authenticated.GET("/vouchers/valid", cfg.MarketplaceHandler.GetValidMarketplaceVoucher)
+				authenticated.GET("/couriers", cfg.ShopHandler.GetAllCouriers)
 			}
 		}
 
@@ -192,6 +193,16 @@ func NewRouter(cfg *RouterConfig) *gin.Engine {
 					{
 						income.GET("/overview", cfg.ShopHandler.GetShopFinanceOverview)
 					}
+				}
+
+				courier := authenticated.Group("/couriers")
+				{
+					courier.GET("", cfg.ShopHandler.GetShipmentList)
+				}
+
+				product := authenticated.Group("")
+				{
+					product.GET("/products", cfg.ProductHandler.GetSellerProducts)
 				}
 			}
 		}

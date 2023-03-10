@@ -6,7 +6,6 @@ import (
 	errs "kedai/backend/be-kedai/internal/common/error"
 	"kedai/backend/be-kedai/internal/domain/shop/dto"
 	"kedai/backend/be-kedai/internal/utils/response"
-	"log"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -48,7 +47,6 @@ func (h *Handler) GetShopFinanceOverview(c *gin.Context) {
 
 	result, err := h.shopService.GetShopFinanceOverview(userId)
 	if err != nil {
-		log.Println(err)
 		if errors.Is(err, errs.ErrShopNotFound) {
 			response.Error(c, http.StatusNotFound, code.SHOP_NOT_REGISTERED, err.Error())
 			return

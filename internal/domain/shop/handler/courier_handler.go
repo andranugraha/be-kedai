@@ -25,3 +25,13 @@ func (h *Handler) GetShipmentList(c *gin.Context) {
 
 	response.Success(c, http.StatusOK, code.OK, "ok", result)
 }
+
+func (h *Handler) GetAllCouriers(c *gin.Context) {
+	couriers, err := h.courierService.GetAllCouriers()
+	if err != nil {
+		response.Error(c, http.StatusInternalServerError, code.INTERNAL_SERVER_ERROR, errs.ErrInternalServerError.Error())
+		return
+	}
+
+	response.Success(c, http.StatusOK, code.OK, "success", couriers)
+}
