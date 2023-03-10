@@ -342,7 +342,7 @@ func (r *productRepositoryImpl) GetSellerProductByCode(shopID int, productCode s
 		Preload("Bulk").
 		Preload("Media").
 		Preload("VariantGroup.Variant").
-		Preload("SKUs.Variant").
+		Preload("SKUs.Variants").
 		First(&product).Error
 
 	if err != nil {
