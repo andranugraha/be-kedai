@@ -17,6 +17,7 @@ type ProductService interface {
 	ProductSearchFiltering(req dto.ProductSearchFilterRequest) (*commonDto.PaginationResponse, error)
 	GetSellerProducts(userID int, req *dto.SellerProductFilterRequest) (*commonDto.PaginationResponse, error)
 	SearchAutocomplete(req dto.ProductSearchAutocomplete) ([]*dto.ProductResponse, error)
+	GetSellerProductByCode(userID int, productCode string) (*dto.SellerProductDetail, error)
 }
 
 type productServiceImpl struct {
@@ -24,6 +25,7 @@ type productServiceImpl struct {
 	shopService        service.ShopService
 	shopVoucherService service.ShopVoucherService
 	courierService     service.CourierService
+	categoryService    CategoryService
 }
 
 type ProductSConfig struct {
@@ -31,6 +33,7 @@ type ProductSConfig struct {
 	ShopService        service.ShopService
 	ShopVoucherService service.ShopVoucherService
 	CourierService     service.CourierService
+	CategoryService    CategoryService
 }
 
 func NewProductService(cfg *ProductSConfig) ProductService {
@@ -39,6 +42,7 @@ func NewProductService(cfg *ProductSConfig) ProductService {
 		shopVoucherService: cfg.ShopVoucherService,
 		courierService:     cfg.CourierService,
 		shopService:        cfg.ShopService,
+		categoryService:    cfg.CategoryService,
 	}
 }
 
@@ -152,4 +156,28 @@ func (s *productServiceImpl) GetSellerProducts(userID int, req *dto.SellerProduc
 
 func (s *productServiceImpl) SearchAutocomplete(req dto.ProductSearchAutocomplete) ([]*dto.ProductResponse, error) {
 	return s.productRepository.SearchAutocomplete(req)
+}
+
+func (s *productServiceImpl) GetSellerProductByCode(userID int, productCode string) (*dto.SellerProductDetail, error) {
+	shop, err := s.shopService.FindShopByUserId(userID)
+	if err != nil {
+		return nil, err
+	}
+
+	product, err := s.productRepository.GetSellerProductByCode(shop.ID, productCode)
+	if err != nil {
+		return nil, err
+	}
+
+	categories, err := s.categoryService.GetCategoryLineAgesFromBottom(product.CategoryID)
+	if err != nil {
+		return nil, err
+	}
+
+	res := dto.SellerProductDetail{
+		Product:    *product,
+		Categories: categories,
+	}
+
+	return &res, nil
 }
