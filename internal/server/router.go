@@ -186,6 +186,13 @@ func NewRouter(cfg *RouterConfig) *gin.Engine {
 		{
 			authenticated := seller.Group("", middleware.JWTAuthorization, cfg.UserHandler.GetSession)
 			{
+				finance := authenticated.Group("/finances")
+				{
+					income := finance.Group("/incomes")
+					{
+						income.GET("/overview", cfg.ShopHandler.GetShopFinanceOverview)
+					}
+				}
 				courier := authenticated.Group("/couriers")
 				{
 					courier.GET("", cfg.ShopHandler.GetShipmentList)

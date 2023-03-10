@@ -41,3 +41,19 @@ func (h *Handler) FindShopByKeyword(c *gin.Context) {
 
 	response.Success(c, http.StatusOK, code.OK, "ok", result)
 }
+
+func (h *Handler) GetShopFinanceOverview(c *gin.Context) {
+	userId := c.GetInt("userId")
+
+	result, err := h.shopService.GetShopFinanceOverview(userId)
+	if err != nil {
+		if errors.Is(err, errs.ErrShopNotFound) {
+			response.Error(c, http.StatusNotFound, code.SHOP_NOT_REGISTERED, err.Error())
+			return
+		}
+		response.Error(c, http.StatusInternalServerError, code.INTERNAL_SERVER_ERROR, errs.ErrInternalServerError.Error())
+		return
+	}
+
+	response.Success(c, http.StatusOK, code.OK, "ok", result)
+}

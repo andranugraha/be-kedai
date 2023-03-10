@@ -3,6 +3,7 @@ package repository
 import (
 	"errors"
 	"fmt"
+	"kedai/backend/be-kedai/internal/common/constant"
 	commonErr "kedai/backend/be-kedai/internal/common/error"
 	"kedai/backend/be-kedai/internal/domain/order/dto"
 	"kedai/backend/be-kedai/internal/domain/order/model"
@@ -17,6 +18,7 @@ type InvoicePerShopRepository interface {
 	Create(tx *gorm.DB, invoicePerShop *model.InvoicePerShop) error
 	GetByID(id int) (*model.InvoicePerShop, error)
 	GetByUserIDAndCode(userID int, code string) (*dto.InvoicePerShopDetail, error)
+	GetShopFinanceToRelease(shopID int) (float64, error)
 }
 
 type invoicePerShopRepositoryImpl struct {
@@ -144,4 +146,25 @@ func (r *invoicePerShopRepositoryImpl) GetByUserIDAndCode(userID int, code strin
 	}
 
 	return &invoice, nil
+}
+
+func (r *invoicePerShopRepositoryImpl) GetShopFinanceToRelease(shopID int) (float64, error) {
+
+	var (
+		toRelease float64 = 0
+	)
+
+	query := r.db.
+		Model(&model.InvoicePerShop{}).
+		Select(`
+			SUM(CASE WHEN is_released = true THEN total ELSE 0 END)`).
+		Where("shop_id = ?", shopID).
+		Where("status = ?", constant.TransactionStatusCompleted)
+
+	err := query.Find(&toRelease).Error
+	if err != nil {
+		return toRelease, err
+	}
+
+	return toRelease, nil
 }

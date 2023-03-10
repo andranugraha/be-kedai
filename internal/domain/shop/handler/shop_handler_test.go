@@ -193,3 +193,96 @@ func TestFindShopByKeyword(t *testing.T) {
 		})
 	}
 }
+
+func TestGetShopFinanceOverview(t *testing.T) {
+	var (
+		userId   = 1
+		overview = &dto.ShopFinanceOverviewResponse{}
+	)
+
+	type input struct {
+		shopID int
+		result *dto.ShopFinanceOverviewResponse
+		err    error
+	}
+
+	type expected struct {
+		statusCode int
+		response   response.Response
+	}
+
+	type cases struct {
+		description string
+		input
+		expected
+	}
+
+	for _, tc := range []cases{
+		{
+			description: "should return shop finance overview with code 200 when success",
+			input: input{
+				shopID: userId,
+				result: overview,
+				err:    nil,
+			},
+			expected: expected{
+				statusCode: http.StatusOK,
+				response: response.Response{
+					Code:    code.OK,
+					Message: "ok",
+					Data:    overview,
+				},
+			},
+		},
+		{
+			description: "should return error with code 404 when shop not found",
+			input: input{
+				shopID: userId,
+				result: nil,
+				err:    errs.ErrShopNotFound,
+			},
+			expected: expected{
+				statusCode: http.StatusNotFound,
+				response: response.Response{
+					Code:    code.SHOP_NOT_REGISTERED,
+					Message: errs.ErrShopNotFound.Error(),
+				},
+			},
+		},
+		{
+			description: "should return error with code 500 when internal server error",
+			input: input{
+				shopID: userId,
+				result: nil,
+				err:    errs.ErrInternalServerError,
+			},
+			expected: expected{
+				statusCode: http.StatusInternalServerError,
+				response: response.Response{
+					Code:    code.INTERNAL_SERVER_ERROR,
+					Message: errs.ErrInternalServerError.Error(),
+				},
+			},
+		},
+	} {
+		t.Run(tc.description, func(t *testing.T) {
+			expectedBody, _ := json.Marshal(tc.expected.response)
+			rec := httptest.NewRecorder()
+			c, _ := gin.CreateTestContext(rec)
+			mockService := new(mocks.ShopService)
+			mockService.On("GetShopFinanceOverview", tc.input.shopID).Return(tc.input.result, tc.input.err)
+			handler := handler.New(&handler.HandlerConfig{
+				ShopService: mockService,
+			})
+			c.Set("userId", 1)
+
+			c.Request, _ = http.NewRequest("GET", "/shops/1/finance/overview", nil)
+
+			handler.GetShopFinanceOverview(c)
+
+			assert.Equal(t, tc.expected.statusCode, rec.Code)
+			assert.Equal(t, string(expectedBody), rec.Body.String())
+		})
+	}
+
+}

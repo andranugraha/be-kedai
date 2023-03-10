@@ -13,6 +13,7 @@ type ShopService interface {
 	FindShopByUserId(userId int) (*model.Shop, error)
 	FindShopBySlug(slug string) (*model.Shop, error)
 	FindShopByKeyword(req dto.FindShopRequest) (*commonDto.PaginationResponse, error)
+	GetShopFinanceOverview(userId int) (*dto.ShopFinanceOverviewResponse, error)
 }
 
 type shopServiceImpl struct {
@@ -70,4 +71,18 @@ func (s *shopServiceImpl) FindShopByKeyword(req dto.FindShopRequest) (*commonDto
 		Limit:      req.Limit,
 		Page:       req.Page,
 	}, nil
+}
+
+func (s *shopServiceImpl) GetShopFinanceOverview(userId int) (*dto.ShopFinanceOverviewResponse, error) {
+	shop, err := s.shopRepository.FindShopByUserId(userId)
+	if err != nil {
+		return nil, err
+	}
+
+	shopFinanceOverview, err := s.shopRepository.GetShopFinanceOverview(shop.ID)
+	if err != nil {
+		return nil, err
+	}
+
+	return shopFinanceOverview, nil
 }
