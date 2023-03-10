@@ -1045,3 +1045,34 @@ func TestSearchAddress(t *testing.T) {
 		})
 	}
 }
+
+func TestSearchAddressDetail(t *testing.T) {
+	tests := []struct {
+		name    string
+		req     string
+		want    *dto.SearchAddressDetailResponse
+		wantErr error
+	}{
+		{
+			name:    "should return address detail when search address detail success",
+			req:     "placeId",
+			want:    &dto.SearchAddressDetailResponse{},
+			wantErr: nil,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			addressRepo := mocks.NewAddressRepository(t)
+			addressRepo.On("GetSearchAddressDetail", test.req).Return(test.want, nil)
+			addressService := service.NewAddressService(&service.AddressSConfig{
+				AddressRepo: addressRepo,
+			})
+
+			got, err := addressService.GetSearchAddressDetail(test.req)
+
+			assert.Equal(t, test.want, got)
+			assert.ErrorIs(t, err, test.wantErr)
+		})
+	}
+}

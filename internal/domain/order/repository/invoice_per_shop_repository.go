@@ -3,6 +3,7 @@ package repository
 import (
 	"errors"
 	"fmt"
+	"kedai/backend/be-kedai/internal/common/constant"
 	commonErr "kedai/backend/be-kedai/internal/common/error"
 	"kedai/backend/be-kedai/internal/domain/order/dto"
 	"kedai/backend/be-kedai/internal/domain/order/model"
@@ -17,6 +18,7 @@ type InvoicePerShopRepository interface {
 	Create(tx *gorm.DB, invoicePerShop *model.InvoicePerShop) error
 	GetByID(id int) (*model.InvoicePerShop, error)
 	GetByUserIDAndCode(userID int, code string) (*dto.InvoicePerShopDetail, error)
+	GetShopFinanceToRelease(shopID int) (float64, error)
 	GetByShopId(shopId int, req *dto.InvoicePerShopFilterRequest) ([]*dto.InvoicePerShopDetail, int64, int, error)
 }
 
@@ -62,7 +64,9 @@ func (r *invoicePerShopRepositoryImpl) GetByUserID(userID int, request *dto.Invo
 		query = query.Where("invoices.payment_date BETWEEN ? AND ?", start, end)
 	}
 
-	err := query.Model(&model.InvoicePerShop{}).Count(&totalRows).Error
+	query = query.Session(&gorm.Session{})
+
+	err := query.Model(&model.InvoicePerShop{}).Distinct("invoice_per_shops.id").Count(&totalRows).Error
 	if err != nil {
 		return nil, 0, 0, err
 	}
@@ -143,6 +147,27 @@ func (r *invoicePerShopRepositoryImpl) GetByUserIDAndCode(userID int, code strin
 	}
 
 	return &invoice, nil
+}
+
+func (r *invoicePerShopRepositoryImpl) GetShopFinanceToRelease(shopID int) (float64, error) {
+
+	var (
+		toRelease float64 = 0
+	)
+
+	query := r.db.
+		Model(&model.InvoicePerShop{}).
+		Select(`
+			SUM(CASE WHEN is_released = true THEN total ELSE 0 END)`).
+		Where("shop_id = ?", shopID).
+		Where("status = ?", constant.TransactionStatusCompleted)
+
+	err := query.Find(&toRelease).Error
+	if err != nil {
+		return toRelease, err
+	}
+
+	return toRelease, nil
 }
 
 func (r *invoicePerShopRepositoryImpl) GetByShopId(shopId int, req *dto.InvoicePerShopFilterRequest) ([]*dto.InvoicePerShopDetail, int64, int, error) {

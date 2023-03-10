@@ -14,6 +14,17 @@ type FindShopResponse struct {
 	PhotoUrl     string  `json:"photoUrl"`
 }
 
+type ShopFinanceOverviewResponse struct {
+	ToRelease float64             `json:"toRelease"`
+	Released  ShopFinanceReleased `json:"released"`
+}
+
+type ShopFinanceReleased struct {
+	Week  float64 `json:"week"`
+	Month float64 `json:"month"`
+	Total float64 `json:"total"`
+}
+
 func (req *FindShopRequest) Validate() {
 	if req.Page < 1 {
 		req.Page = 1

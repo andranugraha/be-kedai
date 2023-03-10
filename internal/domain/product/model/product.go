@@ -30,6 +30,7 @@ type Product struct {
 	VariantGroup []*VariantGroup   `json:"variantGroups,omitempty"`
 	Media        []*ProductMedia   `json:"media,omitempty"`
 	SKU          *Sku              `json:"sku,omitempty"`
+	SKUs         []*Sku            `json:"skus,omitempty"`
 
 	gorm.Model `json:"-"`
 }

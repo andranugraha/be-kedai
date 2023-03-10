@@ -480,3 +480,100 @@ func TestSearchAutocomplete(t *testing.T) {
 		})
 	}
 }
+
+func TestGetSellerProduct(t *testing.T) {
+	type input struct {
+		userID  int
+		request *dto.SellerProductFilterRequest
+	}
+	type expected struct {
+		data *commonDto.PaginationResponse
+		err  error
+	}
+
+	var (
+		userID     = 1
+		shopID     = 1
+		limit      = 20
+		page       = 1
+		request    = &dto.SellerProductFilterRequest{Limit: limit, Page: page}
+		products   = []*dto.SellerProduct{}
+		totalRows  = int64(0)
+		totalPages = 0
+	)
+
+	tests := []struct {
+		description string
+		input
+		beforeTest func(*mocks.ShopService, *mocks.ProductRepository)
+		expected
+	}{
+		{
+			description: "should return error when failed to get shop",
+			input: input{
+				userID:  userID,
+				request: request,
+			},
+			beforeTest: func(ss *mocks.ShopService, pr *mocks.ProductRepository) {
+				ss.On("FindShopByUserId", userID).Return(nil, errors.New("failed to get shop"))
+			},
+			expected: expected{
+				data: nil,
+				err:  errors.New("failed to get shop"),
+			},
+		},
+		{
+			description: "should return error when failed to get products",
+			input: input{
+				userID:  userID,
+				request: request,
+			},
+			beforeTest: func(ss *mocks.ShopService, pr *mocks.ProductRepository) {
+				ss.On("FindShopByUserId", userID).Return(&shopModel.Shop{UserID: userID, ID: shopID}, nil)
+				pr.On("GetBySellerID", shopID, request).Return(nil, int64(0), 0, errors.New("failed to get products"))
+			},
+			expected: expected{
+				data: nil,
+				err:  errors.New("failed to get products"),
+			},
+		},
+		{
+			description: "should return product data when succeed to get products",
+			input: input{
+				userID:  userID,
+				request: request,
+			},
+			beforeTest: func(ss *mocks.ShopService, pr *mocks.ProductRepository) {
+				ss.On("FindShopByUserId", userID).Return(&shopModel.Shop{UserID: userID, ID: shopID}, nil)
+				pr.On("GetBySellerID", shopID, request).Return(products, totalRows, totalPages, nil)
+			},
+			expected: expected{
+				data: &commonDto.PaginationResponse{
+					TotalRows:  totalRows,
+					TotalPages: totalPages,
+					Page:       page,
+					Limit:      limit,
+					Data:       products,
+				},
+				err: nil,
+			},
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.description, func(t *testing.T) {
+			shopService := mocks.NewShopService(t)
+			productRepository := mocks.NewProductRepository(t)
+			tc.beforeTest(shopService, productRepository)
+			productService := service.NewProductService(&service.ProductSConfig{
+				ShopService:       shopService,
+				ProductRepository: productRepository,
+			})
+
+			data, err := productService.GetSellerProducts(tc.input.userID, tc.input.request)
+
+			assert.Equal(t, tc.expected.data, data)
+			assert.Equal(t, tc.expected.err, err)
+		})
+	}
+}

@@ -6,6 +6,7 @@ import (
 	errs "kedai/backend/be-kedai/internal/common/error"
 	"kedai/backend/be-kedai/internal/domain/location/dto"
 	"kedai/backend/be-kedai/internal/domain/location/model"
+	"strings"
 
 	"gorm.io/gorm"
 )
@@ -13,7 +14,8 @@ import (
 type SubdistrictRepository interface {
 	GetByID(subdistrictID int) (*model.Subdistrict, error)
 	GetAll(req dto.GetSubdistrictsRequest) (subdistricts []*model.Subdistrict, err error)
-	GetDetailByName(subdistrictName string) (*model.Subdistrict, error)
+	GetDetailByNameAndPostalCode(subdistrictName string, postalCode string) (*model.Subdistrict, error)
+	GetDetailByNameAndDistrictName(subdistrictName string, districtName string) (*model.Subdistrict, error)
 }
 
 type subdistrictRepositoryImpl struct {
@@ -57,10 +59,24 @@ func (c *subdistrictRepositoryImpl) GetAll(req dto.GetSubdistrictsRequest) (subd
 	return
 }
 
-func (c *subdistrictRepositoryImpl) GetDetailByName(subdistrictName string) (subdistrict *model.Subdistrict, err error) {
-	err = c.db.Where("lower(name) ilike ?", fmt.Sprintf("%%%s%%", subdistrictName)).Preload("District.City.Province").First(&subdistrict).Error
+func (c *subdistrictRepositoryImpl) GetDetailByNameAndPostalCode(subdistrictName string, postalCode string) (subdistrict *model.Subdistrict, err error) {
+	err = c.db.Where("lower(name) ilike ? AND levenshtein(postal_code, ?) < 2", fmt.Sprintf("%%%s%%", strings.ToLower(subdistrictName)), postalCode).Preload("District.City.Province").First(&subdistrict).Error
 	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, errs.ErrSubdistrictNotFound
+		}
+		return
+	}
 
+	return
+}
+
+func (c *subdistrictRepositoryImpl) GetDetailByNameAndDistrictName(subdistrictName string, districtName string) (subdistrict *model.Subdistrict, err error) {
+	err = c.db.Where("lower(subdistricts.name) ilike ? AND lower(districts.name) ilike ?", fmt.Sprintf("%%%s%%", strings.ToLower(subdistrictName)), fmt.Sprintf("%%%s%%", strings.ToLower(districtName))).
+		Joins("JOIN districts ON districts.id = subdistricts.district_id").
+		Preload("District.City.Province").
+		First(&subdistrict).Error
+	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, errs.ErrSubdistrictNotFound
 		}

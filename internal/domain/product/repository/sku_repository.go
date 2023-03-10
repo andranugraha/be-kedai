@@ -50,11 +50,13 @@ func (r *skuRepositoryImpl) GetByVariantIDs(variantIDs []int) (*model.Sku, error
 
 	if len(variantIDs) < 2 {
 		err = r.db.
+			Select("skus.id, skus.price, skus.stock, skus.product_id").
 			Joins("JOIN product_variants pv1 ON skus.id = pv1.sku_id").
 			Where("pv1.variant_id = ?", variantIDs[0]).
 			First(&sku).Error
 	} else {
 		err = r.db.
+			Select("skus.id, skus.price, skus.stock, skus.product_id").
 			Joins("JOIN product_variants pv1 ON skus.id = pv1.sku_id").
 			Joins("JOIN product_variants pv2 ON pv1.sku_id = pv2.sku_id AND pv1.id != pv2.id").
 			Where("pv1.variant_id = ? AND pv2.variant_id = ?", variantIDs[0], variantIDs[1]).

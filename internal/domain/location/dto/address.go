@@ -96,8 +96,7 @@ type SearchAddressResponse struct {
 	Description string `json:"description"`
 }
 
-type GetAddressDetailResponse struct {
-	ID          int                `json:"id"`
+type SearchAddressDetailResponse struct {
 	PlaceID     string             `json:"placeId"`
 	Latitude    float64            `json:"latitude"`
 	Longitude   float64            `json:"longitude"`
