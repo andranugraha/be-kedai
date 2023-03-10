@@ -28,6 +28,7 @@ type WalletService interface {
 	CompletePinChange(userID int, request *dto.CompleteChangePinRequest) error
 	RequestPinReset(userID int) error
 	CompletePinReset(userID int, request *dto.CompleteResetPinRequest) error
+	GetWalletDetailByUserID(userID int) (*dto.GetWalletResponse, error)
 }
 
 type walletServiceImpl struct {
@@ -73,6 +74,20 @@ func (s *walletServiceImpl) RegisterWallet(userID int, pin string) (*model.Walle
 
 func (s *walletServiceImpl) GetWalletByUserID(userID int) (*model.Wallet, error) {
 	return s.walletRepo.GetByUserID(userID)
+}
+
+func (s *walletServiceImpl) GetWalletDetailByUserID(userID int) (*dto.GetWalletResponse, error) {
+	wallet, err := s.walletRepo.GetByUserID(userID)
+	if err != nil {
+		return nil, err
+	}
+
+	return &dto.GetWalletResponse{
+		ID:        wallet.ID,
+		Balance:   wallet.Balance,
+		Number:    wallet.Number,
+		IsBlocked: s.walletCache.CheckIsWalletBlocked(wallet.ID) != nil,
+	}, nil
 }
 
 func (s *walletServiceImpl) TopUp(userId int, req dto.TopUpRequest) (*model.WalletHistory, error) {

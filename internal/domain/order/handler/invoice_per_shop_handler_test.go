@@ -199,3 +199,123 @@ func TestGetInvoiceByCode(t *testing.T) {
 		})
 	}
 }
+
+func TestGetInvoicePerShopsByShopId(t *testing.T) {
+	var (
+		req = &dto.InvoicePerShopFilterRequest{
+			Page:  1,
+			Limit: 10,
+		}
+		invoices = &commonDto.PaginationResponse{}
+		userId   = 1
+	)
+	type input struct {
+		req        *dto.InvoicePerShopFilterRequest
+		result     *commonDto.PaginationResponse
+		err        error
+		beforeTest func(*mocks.InvoicePerShopService)
+	}
+	type expected struct {
+		statusCode int
+		response   response.Response
+	}
+	type cases struct {
+		description string
+		input
+		expected
+	}
+
+	for _, tc := range []cases{
+		{
+			description: "should return list of invoices with code 200 when success",
+			input: input{
+				req:    req,
+				result: invoices,
+				err:    nil,
+				beforeTest: func(ipss *mocks.InvoicePerShopService) {
+					ipss.On("GetInvoicesByShopId", userId, req).Return(invoices, nil)
+				},
+			},
+			expected: expected{
+				statusCode: http.StatusOK,
+				response: response.Response{
+					Code:    code.OK,
+					Message: "ok",
+					Data:    invoices,
+				},
+			},
+		},
+		{
+			description: "should return error with code 400 when queries invalid",
+			input: input{
+				req: &dto.InvoicePerShopFilterRequest{
+					StartDate: "test",
+				},
+				result:     nil,
+				err:        nil,
+				beforeTest: func(ipss *mocks.InvoicePerShopService) {},
+			},
+			expected: expected{
+				statusCode: http.StatusBadRequest,
+				response: response.Response{
+					Code:    code.BAD_REQUEST,
+					Message: "EndDate is required",
+				},
+			},
+		},
+		{
+			description: "should return error with code 404 when user shop not found",
+			input: input{
+				req:    req,
+				result: nil,
+				err:    errs.ErrShopNotFound,
+				beforeTest: func(ipss *mocks.InvoicePerShopService) {
+					ipss.On("GetInvoicesByShopId", userId, req).Return(nil, errs.ErrShopNotFound)
+				},
+			},
+			expected: expected{
+				statusCode: http.StatusNotFound,
+				response: response.Response{
+					Code:    code.SHOP_NOT_REGISTERED,
+					Message: errs.ErrShopNotFound.Error(),
+				},
+			},
+		},
+		{
+			description: "should return error with code 500 when internal server error",
+			input: input{
+				req:    req,
+				result: nil,
+				err:    errs.ErrInternalServerError,
+				beforeTest: func(ipss *mocks.InvoicePerShopService) {
+					ipss.On("GetInvoicesByShopId", userId, req).Return(nil, errs.ErrInternalServerError)
+				},
+			},
+			expected: expected{
+				statusCode: http.StatusInternalServerError,
+				response: response.Response{
+					Code:    code.INTERNAL_SERVER_ERROR,
+					Message: errs.ErrInternalServerError.Error(),
+				},
+			},
+		},
+	} {
+		t.Run(tc.description, func(t *testing.T) {
+			expectedJson, _ := json.Marshal(tc.expected.response)
+			invoicePerShopService := mocks.NewInvoicePerShopService(t)
+			tc.beforeTest(invoicePerShopService)
+			rec := httptest.NewRecorder()
+			c, _ := gin.CreateTestContext(rec)
+			c.Set("userId", userId)
+			c.Request, _ = http.NewRequest(http.MethodGet, fmt.Sprintf("/sellers/finances/incomes?startDate=%s&endDate=%s&s=%s&status=%s", tc.input.req.StartDate, tc.input.req.EndDate, tc.input.req.S, tc.input.req.Status), nil)
+			handler := handler.New(&handler.Config{
+				InvoicePerShopService: invoicePerShopService,
+			})
+
+			handler.GetInvoicePerShopsByShopId(c)
+
+			assert.Equal(t, tc.expected.statusCode, rec.Code)
+			assert.Equal(t, string(expectedJson), rec.Body.String())
+		})
+	}
+}

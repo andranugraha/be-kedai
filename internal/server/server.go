@@ -100,9 +100,14 @@ func createRouter() *gin.Engine {
 	courierRepo := shopRepoPackage.NewCourierRepository(&shopRepoPackage.CourierRConfig{
 		DB: db,
 	})
+	invoicePerShopRepo := orderRepoPackage.NewInvoicePerShopRepository(&orderRepoPackage.InvoicePerShopRConfig{
+		DB: db,
+	})
 
 	shopRepo := shopRepoPackage.NewShopRepository(&shopRepoPackage.ShopRConfig{
-		DB: db,
+		DB:                 db,
+		WalletHistoryRepo:  walletHistoryRepo,
+		InvoicePerShopRepo: invoicePerShopRepo,
 	})
 
 	shopService := shopServicePackage.NewShopService(&shopServicePackage.ShopSConfig{
@@ -114,11 +119,9 @@ func createRouter() *gin.Engine {
 		ShopService:       shopService,
 	})
 
-	invoicePerShopRepo := orderRepoPackage.NewInvoicePerShopRepository(&orderRepoPackage.InvoicePerShopRConfig{
-		DB: db,
-	})
 	invoicePerShopService := orderServicePackage.NewInvoicePerShopService(&orderServicePackage.InvoicePerShopSConfig{
 		InvoicePerShopRepo: invoicePerShopRepo,
+		ShopService:        shopService,
 	})
 
 	shopVoucherRepo := shopRepoPackage.NewShopVoucherRepository(&shopRepoPackage.ShopVoucherRConfig{
@@ -208,6 +211,7 @@ func createRouter() *gin.Engine {
 		GoogleMaps:      maps,
 		UserProfileRepo: userProfileRepo,
 		ShopRepo:        shopRepo,
+		SubdistrictRepo: subdistrictRepo,
 	})
 
 	addressService := locationServicePackage.NewAddressService(&locationServicePackage.AddressSConfig{

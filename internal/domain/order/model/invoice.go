@@ -9,13 +9,13 @@ import (
 )
 
 type Invoice struct {
-	ID            int       `json:"id"`
-	Code          string    `json:"code"`
-	Total         float64   `json:"total"`
-	Subtotal      float64   `json:"subtotal"`
-	VoucherAmount *float64  `json:"voucherAmount,omitempty"`
-	VoucherType   *string   `json:"voucherType,omitempty"`
-	PaymentDate   time.Time `json:"paymentDate" gorm:"default:CURRENT_TIMESTAMP"`
+	ID            int        `json:"id"`
+	Code          string     `json:"code"`
+	Total         float64    `json:"total"`
+	Subtotal      float64    `json:"subtotal"`
+	VoucherAmount *float64   `json:"voucherAmount,omitempty"`
+	VoucherType   *string    `json:"voucherType,omitempty"`
+	PaymentDate   *time.Time `json:"paymentDate" gorm:"default:CURRENT_TIMESTAMP"`
 
 	UserID          int  `json:"userId"`
 	VoucherID       *int `json:"voucherId,omitempty"`

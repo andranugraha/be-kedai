@@ -3,8 +3,10 @@ package repository
 import (
 	"errors"
 	errs "kedai/backend/be-kedai/internal/common/error"
+	orderRepo "kedai/backend/be-kedai/internal/domain/order/repository"
 	"kedai/backend/be-kedai/internal/domain/shop/dto"
 	"kedai/backend/be-kedai/internal/domain/shop/model"
+	userRepo "kedai/backend/be-kedai/internal/domain/user/repository"
 	"math"
 
 	"gorm.io/gorm"
@@ -16,19 +18,26 @@ type ShopRepository interface {
 	FindShopBySlug(slug string) (*model.Shop, error)
 	FindShopByKeyword(req dto.FindShopRequest) ([]*dto.FindShopResponse, int64, int, error)
 	UpdateShopAddressIdByUserId(tx *gorm.DB, userId int, addressId int) error
+	GetShopFinanceOverview(shopId int) (*dto.ShopFinanceOverviewResponse, error)
 }
 
 type shopRepositoryImpl struct {
-	db *gorm.DB
+	db                 *gorm.DB
+	invoicePerShopRepo orderRepo.InvoicePerShopRepository
+	walletHistoryRepo  userRepo.WalletHistoryRepository
 }
 
 type ShopRConfig struct {
-	DB *gorm.DB
+	DB                 *gorm.DB
+	InvoicePerShopRepo orderRepo.InvoicePerShopRepository
+	WalletHistoryRepo  userRepo.WalletHistoryRepository
 }
 
 func NewShopRepository(cfg *ShopRConfig) ShopRepository {
 	return &shopRepositoryImpl{
-		db: cfg.DB,
+		db:                 cfg.DB,
+		invoicePerShopRepo: cfg.InvoicePerShopRepo,
+		walletHistoryRepo:  cfg.WalletHistoryRepo,
 	}
 }
 
@@ -87,7 +96,8 @@ func (r *shopRepositoryImpl) FindShopByKeyword(req dto.FindShopRequest) ([]*dto.
 		Joins("left join products p on shops.id = p.shop_id and p.is_active = ?", isActive).
 		Group("shops.id").Where("shops.name ILIKE ?", "%"+req.Keyword+"%")
 
-	db.Model(&model.Shop{}).Count(&totalRows)
+	countQuery := db.Session(&gorm.Session{})
+	countQuery.Model(&model.Shop{}).Distinct("shops.id").Count(&totalRows)
 	totalPage = int(math.Ceil(float64(totalRows) / float64(req.Limit)))
 
 	err := db.Order("rating desc").Limit(req.Limit).Offset(req.Offset()).Find(&shopList).Error
@@ -111,4 +121,21 @@ func (r *shopRepositoryImpl) UpdateShopAddressIdByUserId(tx *gorm.DB, userId int
 	}
 
 	return nil
+}
+
+func (r *shopRepositoryImpl) GetShopFinanceOverview(shopId int) (*dto.ShopFinanceOverviewResponse, error) {
+	toRelease, err := r.invoicePerShopRepo.GetShopFinanceToRelease(shopId)
+	if err != nil {
+		return nil, err
+	}
+
+	released, err := r.walletHistoryRepo.GetShopFinanceReleased(shopId)
+	if err != nil {
+		return nil, err
+	}
+
+	return &dto.ShopFinanceOverviewResponse{
+		ToRelease: toRelease,
+		Released:  *released,
+	}, nil
 }

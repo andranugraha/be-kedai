@@ -18,6 +18,7 @@ type ProductRepository interface {
 	GetByShopID(shopID int, request *dto.ShopProductFilterRequest) ([]*dto.ProductDetail, int64, int, error)
 	GetRecommendationByCategory(productId int, categoryId int) ([]*dto.ProductResponse, error)
 	ProductSearchFiltering(req dto.ProductSearchFilterRequest, shopId int) ([]*dto.ProductResponse, int64, int, error)
+	GetBySellerID(shopID int, request *dto.SellerProductFilterRequest) ([]*dto.SellerProduct, int64, int, error)
 	SearchAutocomplete(req dto.ProductSearchAutocomplete) ([]*dto.ProductResponse, error)
 }
 
@@ -60,7 +61,9 @@ func (r *productRepositoryImpl) GetByCode(code string) (*dto.ProductDetail, erro
 		Joins("left join product_promotions pp on pp.sku_id = s.id and (select count(id) from shop_promotions sp where pp.promotion_id = sp.id and now() between sp.start_period and sp.end_period) > 0").
 		Group("products.id")
 
-	err := query.Where("code = ?", code).Preload("SKU").Preload("VariantGroup.Variant").Preload("Media").Preload("Bulk").Preload("Shop.Address.Subdistrict").First(&product).Error
+	err := query.Where("code = ?", code).Preload("SKU", func(query *gorm.DB) *gorm.DB {
+		return query.Select("skus.id, skus.price, skus.stock, skus.product_id")
+	}).Preload("VariantGroup.Variant").Preload("Media").Preload("Bulk").Preload("Shop.Address.Subdistrict").First(&product).Error
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, errs.ErrProductDoesNotExist
@@ -128,7 +131,9 @@ func (r *productRepositoryImpl) GetByShopID(shopID int, request *dto.ShopProduct
 		query = query.Where("products.id != ?", request.ExceptionID)
 	}
 
-	err := query.Model(&model.Product{}).Count(&totalRows).Error
+	query = query.Session(&gorm.Session{})
+
+	err := query.Model(&model.Product{}).Distinct("products.id").Count(&totalRows).Error
 	if err != nil {
 		return nil, 0, 0, err
 	}
@@ -226,7 +231,8 @@ func (r *productRepositoryImpl) ProductSearchFiltering(req dto.ProductSearchFilt
 		db = db.Order("products.created_at desc")
 	}
 
-	db.Model(&model.Product{}).Count(&totalRows)
+	countQuery := db.Session(&gorm.Session{})
+	countQuery.Model(&model.Product{}).Distinct("products.id").Count(&totalRows)
 	totalPages = int(math.Ceil(float64(totalRows) / float64(req.Limit)))
 
 	err := db.Model(&model.Product{}).Limit(req.Limit).Offset(req.Offset()).Find(&productList).Error
@@ -235,6 +241,79 @@ func (r *productRepositoryImpl) ProductSearchFiltering(req dto.ProductSearchFilt
 	}
 
 	return productList, totalRows, totalPages, nil
+}
+
+func (r *productRepositoryImpl) GetBySellerID(shopID int, request *dto.SellerProductFilterRequest) ([]*dto.SellerProduct, int64, int, error) {
+	var (
+		products   []*dto.SellerProduct
+		totalRows  int64
+		totalPages int
+	)
+
+	query := r.db.
+		Select(`products.*,
+		MIN(skus.price) AS min_price,
+		SUM(skus.stock) AS total_stock,
+		(SELECT url FROM product_medias pm WHERE pm.product_id = products.id LIMIT 1) AS image_url
+	`).
+		Joins("JOIN skus ON skus.product_id = products.id").
+		Group("products.id")
+
+	query = query.Where("products.shop_id = ?", shopID)
+	if request.Name != "" {
+		query = query.Where("products.name ILIKE ?", fmt.Sprintf("%%%s%%", request.Name))
+	}
+	if request.Sku != "" {
+		query = query.Where("skus.sku ILIKE ?", fmt.Sprintf("%%%s%%", request.Sku))
+	}
+	if request.Sales > 0 {
+		query = query.Where("products.sold >= ?", request.Sales)
+	}
+	if request.Stock > 0 {
+		query = query.Having("SUM(skus.stock) >= ?", request.Stock)
+	}
+
+	switch request.Status {
+	case constant.ProductStatusLive:
+		query = query.Where("products.is_active")
+	case constant.ProductStatusDelisted:
+		query = query.Not("products.is_active")
+	case constant.ProductStatusSoldOut:
+		query = query.Where("skus.stock = 0")
+	}
+
+	query = query.Session(&gorm.Session{})
+
+	err := query.Model(&model.Product{}).Distinct("products.id").Count(&totalRows).Error
+	if err != nil {
+		return nil, 0, 0, err
+	}
+	totalPages = int(math.Ceil(float64(totalRows) / float64(request.Limit)))
+
+	query = query.Order("products.is_active DESC")
+	switch request.Sort {
+	case constant.SortByLowSales:
+		query = query.Order("products.sold ASC")
+	case constant.SortByTopSales:
+		query = query.Order("products.sold DESC")
+	case constant.SortByPriceLow:
+		query = query.Order("min_price ASC")
+	case constant.SortByPriceHigh:
+		query = query.Order("min_price DESC")
+	case constant.SortByStockLow:
+		query = query.Order("total_stock ASC")
+	case constant.SortByStockHigh:
+		query = query.Order("total_stock DESC")
+	default:
+		query = query.Order("products.created_at DESC")
+	}
+
+	err = query.Preload("Bulk").Preload("SKUs.Variants").Find(&products).Error
+	if err != nil {
+		return nil, 0, 0, err
+	}
+
+	return products, totalRows, totalPages, nil
 }
 
 func (r *productRepositoryImpl) SearchAutocomplete(req dto.ProductSearchAutocomplete) ([]*dto.ProductResponse, error) {
