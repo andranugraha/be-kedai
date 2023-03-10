@@ -7,5 +7,6 @@ type Wallet struct {
 	UserID     int     `json:"userId"`
 	Pin        string  `json:"-"`
 	Balance    float64 `json:"balance"`
+	Number     string  `json:"number"`
 	gorm.Model `json:"-"`
 }
