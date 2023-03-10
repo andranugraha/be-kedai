@@ -4697,6 +4697,12 @@ paths:
                                 $ref: '#/components/schemas/ProductBulkPrice'
                           - type: object
                             properties:
+                              couriers:
+                                type: array
+                                items:
+                                  $ref: '#/components/schemas/Courier'
+                          - type: object
+                            properties:
                               variantGroups:
                                 type: array
                                 items:
@@ -4816,7 +4822,6 @@ paths:
                     example: "INTERNAL_SERVER_ERROR"
                   message:
                     type: string
-                    example: "error message"                       
                     example: "error message"
   /v1/sellers/finances/incomes:
     get:
