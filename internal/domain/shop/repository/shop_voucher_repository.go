@@ -3,6 +3,7 @@ package repository
 import (
 	"errors"
 	errs "kedai/backend/be-kedai/internal/common/error"
+	"kedai/backend/be-kedai/internal/domain/shop/dto"
 	"kedai/backend/be-kedai/internal/domain/shop/model"
 	"time"
 
@@ -14,7 +15,7 @@ import (
 type ShopVoucherRepository interface {
 	GetShopVoucher(shopId int) ([]*model.ShopVoucher, error)
 	GetValidByIdAndUserId(id, userId int) (*model.ShopVoucher, error)
-	GetValidByUserIDAndShopID(userID int, shopID int) ([]*model.ShopVoucher, error)
+	GetValidByUserIDAndShopID(dto.GetValidShopVoucherRequest, int) ([]*model.ShopVoucher, error)
 }
 
 type shopVoucherRepositoryImpl struct {
@@ -80,11 +81,11 @@ func (r *shopVoucherRepositoryImpl) GetValidByIdAndUserId(id, userId int) (*mode
 	return &shopVoucher, nil
 }
 
-func (r *shopVoucherRepositoryImpl) GetValidByUserIDAndShopID(userID int, shopID int) ([]*model.ShopVoucher, error) {
+func (r *shopVoucherRepositoryImpl) GetValidByUserIDAndShopID(req dto.GetValidShopVoucherRequest, shopID int) ([]*model.ShopVoucher, error) {
 	var shopVouchers []*model.ShopVoucher
 	var invalidVoucherID []int
 
-	userVoucher, err := r.userVoucherRepository.GetUsedShopByUserID(userID)
+	userVoucher, err := r.userVoucherRepository.GetUsedShopByUserID(req.UserID)
 	if err != nil {
 		return nil, err
 	}
@@ -100,9 +101,13 @@ func (r *shopVoucherRepositoryImpl) GetValidByUserIDAndShopID(userID int, shopID
 		db = db.Not("id IN (?)", invalidVoucherID)
 	}
 
-	publicVoucher := true
+	if req.Code != "" {
+		db = db.Where("code = ?", req.Code)
+	} else {
+		publicVoucher := true
+		db = db.Where("is_hidden != ?", publicVoucher)
+	}
 	err = db.Where("shop_id = ?", shopID).
-		Where("is_hidden != ?", publicVoucher).
 		Where("? < expired_at", time.Now()).
 		Find(&shopVouchers).Error
 	if err != nil {
