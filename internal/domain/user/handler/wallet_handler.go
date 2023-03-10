@@ -36,7 +36,7 @@ func (h *Handler) RegisterWallet(c *gin.Context) {
 func (h *Handler) GetWalletByUserID(c *gin.Context) {
 	userId := c.GetInt("userId")
 
-	wallet, err := h.walletService.GetWalletByUserID(userId)
+	wallet, err := h.walletService.GetWalletDetailByUserID(userId)
 	if err != nil {
 		if errors.Is(err, errs.ErrWalletDoesNotExist) {
 			response.Error(c, http.StatusNotFound, code.WALLET_DOES_NOT_EXIST, err.Error())

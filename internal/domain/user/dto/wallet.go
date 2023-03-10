@@ -47,3 +47,10 @@ func (req *WalletHistoryRequest) Offset() int {
 type StepUpRequest struct {
 	Pin string `form:"pin" binding:"required,numeric,len=6"`
 }
+
+type GetWalletResponse struct {
+	ID        int     `json:"id"`
+	Balance   float64 `json:"balance"`
+	Number    string  `json:"number"`
+	IsBlocked bool    `json:"isBlocked"`
+}

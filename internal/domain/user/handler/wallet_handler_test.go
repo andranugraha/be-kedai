@@ -131,7 +131,7 @@ func TestRegisterWallet(t *testing.T) {
 func TestGetWalletByUserID(t *testing.T) {
 	type input struct {
 		userId int
-		data   *model.Wallet
+		data   *dto.GetWalletResponse
 		err    error
 	}
 	type expected struct {
@@ -148,8 +148,7 @@ func TestGetWalletByUserID(t *testing.T) {
 			description: "should return wallet with status code 200 when successed fetching user wallet",
 			input: input{
 				userId: 1,
-				data: &model.Wallet{
-					UserID:  1,
+				data: &dto.GetWalletResponse{
 					Balance: 0,
 				},
 				err: nil,
@@ -159,8 +158,7 @@ func TestGetWalletByUserID(t *testing.T) {
 				response: response.Response{
 					Code:    code.OK,
 					Message: "success",
-					Data: &model.Wallet{
-						UserID:  1,
+					Data: &dto.GetWalletResponse{
 						Balance: 0,
 					},
 				},
@@ -206,7 +204,7 @@ func TestGetWalletByUserID(t *testing.T) {
 		c, _ := gin.CreateTestContext(rec)
 		c.Set("userId", tc.input.userId)
 		walletService := mocks.NewWalletService(t)
-		walletService.On("GetWalletByUserID", tc.input.userId).Return(tc.input.data, tc.input.err)
+		walletService.On("GetWalletDetailByUserID", tc.input.userId).Return(tc.input.data, tc.input.err)
 		cfg := handler.HandlerConfig{
 			WalletService: walletService,
 		}
