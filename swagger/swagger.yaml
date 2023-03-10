@@ -4862,6 +4862,7 @@ paths:
                     type: string
                     example: "error message"
   /v1/sellers/finances/incomes/{orderId}:
+  /v1/sellers/stats:
     get:
       security:
         - BearerAuth: []
@@ -4876,6 +4877,8 @@ paths:
           schema:
             type: integer
             example: 1
+      summary: Get shop stats
+      description: Get shop orders' stats
       responses:
         '200':
           description: operation successful
@@ -4942,6 +4945,25 @@ paths:
                                                   items:
                                                     $ref: '#/components/schemas/Variant'
                                     
+                      code:
+                        example: OK
+                      message:
+                        example: success
+                      data:
+                        $ref: '#/components/schemas/GetShopStatsResponse'
+        '400':
+          description: bad request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "BAD_REQUEST"
+                  message:
+                    type: string
+                    example: "error message"
         '404':
           description: shop not found
           content:
@@ -4980,7 +5002,7 @@ paths:
                     example: "INTERNAL_SERVER_ERROR"
                   message:
                     type: string
-                    example: "error message"                  
+                    example: "error message"
   /v1/orders/invoices:
     post:
       security:
@@ -6437,6 +6459,19 @@ components:
           $ref: '#/components/schemas/City'
         province:
           $ref: '#/components/schemas/Province'
+    GetShopStatsResponse:
+      type: object
+      properties:
+        toShip:
+          type: integer
+        shipping:
+          type: integer
+        completed:
+          type: integer
+        refund:
+          type: integer
+        outOfStock:
+          type: integer
   requestBodies:
     WalletBody:
       required: true
