@@ -196,5 +196,6 @@ func (p *ProductSearchAutocomplete) Validate() {
 
 type SellerProductDetail struct {
 	model.Product
-	Categories []*model.Category `json:"categories"`
+	Categories []*model.Category    `json:"categories"`
+	Couriers   []*shopModel.Courier `json:"couriers,omitempty"`
 }
