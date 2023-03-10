@@ -198,9 +198,10 @@ func NewRouter(cfg *RouterConfig) *gin.Engine {
 					courier.GET("", cfg.ShopHandler.GetShipmentList)
 				}
 
-				product := authenticated.Group("")
+				product := authenticated.Group("/products")
 				{
-					product.GET("/products", cfg.ProductHandler.GetSellerProducts)
+					product.GET("", cfg.ProductHandler.GetSellerProducts)
+					product.GET("/:code", cfg.ProductHandler.GetSellerProductDetailByCode)
 				}
 			}
 		}
