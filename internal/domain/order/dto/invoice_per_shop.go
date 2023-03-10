@@ -31,12 +31,16 @@ func (TransactionItem) TableName() string {
 }
 
 type InvoicePerShopFilterRequest struct {
-	S         string `form:"s"`
-	Limit     int    `form:"limit"`
-	Page      int    `form:"page"`
-	StartDate string `form:"startDate" binding:"required_with=EndDate,omitempty,datetime=2006-01-02"`
-	EndDate   string `form:"endDate" binding:"required_with=StartDate,omitempty,datetime=2006-01-02"`
-	Status    string `form:"status"`
+	S              string `form:"s"`
+	Username       string `form:"user"`
+	ProductName    string `form:"product"`
+	TrackingNumber string `form:"track"`
+	OrderId        string `form:"orderId"`
+	Limit          int    `form:"limit"`
+	Page           int    `form:"page"`
+	StartDate      string `form:"startDate" binding:"required_with=EndDate,omitempty,datetime=2006-01-02"`
+	EndDate        string `form:"endDate" binding:"required_with=StartDate,omitempty,datetime=2006-01-02"`
+	Status         string `form:"status"`
 }
 
 func (d *InvoicePerShopFilterRequest) Validate() {
