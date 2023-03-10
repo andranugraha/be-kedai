@@ -193,8 +193,9 @@ func NewRouter(cfg *RouterConfig) *gin.Engine {
 					income := finance.Group("/incomes")
 					{
 						income.GET("", cfg.OrderHandler.GetInvoicePerShopsByShopId)
+						income.GET("/overviews", cfg.ShopHandler.GetShopFinanceOverview)
+						income.POST("/withdrawals", cfg.OrderHandler.WithdrawFromInvoice)
 						income.GET("/:orderId", cfg.OrderHandler.GetInvoiceByShopIdAndOrderId)
-						income.GET("/overview", cfg.ShopHandler.GetShopFinanceOverview)
 					}
 				}
 				courier := authenticated.Group("/couriers")

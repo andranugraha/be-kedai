@@ -10,6 +10,7 @@ import (
 	"kedai/backend/be-kedai/internal/domain/order/dto"
 	"kedai/backend/be-kedai/internal/domain/order/handler"
 	"kedai/backend/be-kedai/internal/utils/response"
+	"kedai/backend/be-kedai/internal/utils/test"
 	"kedai/backend/be-kedai/mocks"
 	"net/http"
 	"net/http/httptest"
@@ -448,6 +449,163 @@ func TestGetInvoiceByShopIdAndOrderId(t *testing.T) {
 			assert.Equal(t, tc.expected.statusCode, rec.Code)
 			assert.Equal(t, string(expectedJson), rec.Body.String())
 		})
+	}
+}
+
+func TestWithdrawFromInvoice(t *testing.T) {
+	var (
+		userId  = 1
+		orderId = 1
+	)
+	type input struct {
+		req        dto.WithdrawInvoiceRequest
+		err        error
+		beforeTest func(*mocks.InvoicePerShopService)
+	}
+	type expected struct {
+		statusCode int
+		response   response.Response
+	}
+	type cases struct {
+		description string
+		input
+		expected
+	}
+
+	for _, tc := range []cases{
+		{
+			description: "should return error with code 400 when request body invalid",
+			input: input{
+				req: dto.WithdrawInvoiceRequest{},
+				err: errs.ErrInvoiceNotFound,
+				beforeTest: func(ipss *mocks.InvoicePerShopService) {
+				},
+			},
+			expected: expected{
+				statusCode: http.StatusBadRequest,
+				response: response.Response{
+					Code:    code.BAD_REQUEST,
+					Message: "OrderID is required",
+				},
+			},
+		},
+		{
+			description: "should return error with code 404 when invoice not found",
+			input: input{
+				req: dto.WithdrawInvoiceRequest{
+					OrderID: orderId,
+				},
+				err: errs.ErrInvoiceNotFound,
+				beforeTest: func(ipss *mocks.InvoicePerShopService) {
+					ipss.On("WithdrawFromInvoice", userId, orderId).Return(errs.ErrInvoiceNotFound)
+				},
+			},
+			expected: expected{
+				statusCode: http.StatusNotFound,
+				response: response.Response{
+					Code:    code.INVOICE_NOT_FOUND,
+					Message: errs.ErrInvoiceNotFound.Error(),
+				},
+			},
+		},
+		{
+			description: "should return error with code 404 when shop not found",
+			input: input{
+				req: dto.WithdrawInvoiceRequest{
+					OrderID: orderId,
+				},
+				err: errs.ErrShopNotFound,
+				beforeTest: func(ipss *mocks.InvoicePerShopService) {
+					ipss.On("WithdrawFromInvoice", userId, orderId).Return(errs.ErrShopNotFound)
+				},
+			},
+			expected: expected{
+				statusCode: http.StatusNotFound,
+				response: response.Response{
+					Code:    code.SHOP_NOT_REGISTERED,
+					Message: errs.ErrShopNotFound.Error(),
+				},
+			},
+		},
+		{
+			description: "should return error with code 404 when wallet not found",
+			input: input{
+				req: dto.WithdrawInvoiceRequest{
+					OrderID: orderId,
+				},
+				err: errs.ErrWalletDoesNotExist,
+				beforeTest: func(ipss *mocks.InvoicePerShopService) {
+					ipss.On("WithdrawFromInvoice", userId, orderId).Return(errs.ErrWalletDoesNotExist)
+				},
+			},
+			expected: expected{
+				statusCode: http.StatusNotFound,
+				response: response.Response{
+					Code:    code.WALLET_DOES_NOT_EXIST,
+					Message: errs.ErrWalletDoesNotExist.Error(),
+				},
+			},
+		},
+		{
+			description: "should return error with code 500 when withdraw from invoice failed",
+			input: input{
+				req: dto.WithdrawInvoiceRequest{
+					OrderID: orderId,
+				},
+				err: errs.ErrInternalServerError,
+				beforeTest: func(ipss *mocks.InvoicePerShopService) {
+					ipss.On("WithdrawFromInvoice", userId, orderId).Return(errs.ErrInternalServerError)
+				},
+			},
+			expected: expected{
+				statusCode: http.StatusInternalServerError,
+				response: response.Response{
+					Code:    code.INTERNAL_SERVER_ERROR,
+					Message: errs.ErrInternalServerError.Error(),
+				},
+			},
+		},
+		{
+			description: "should return success with code 200 when withdraw from invoice success",
+			input: input{
+				req: dto.WithdrawInvoiceRequest{
+					OrderID: orderId,
+				},
+				err: nil,
+				beforeTest: func(ipss *mocks.InvoicePerShopService) {
+					ipss.On("WithdrawFromInvoice", userId, orderId).Return(nil)
+				},
+			},
+			expected: expected{
+				statusCode: http.StatusOK,
+				response: response.Response{
+					Code:    code.OK,
+					Message: "success",
+				},
+			},
+		},
+	} {
+
+		t.Run(tc.description, func(t *testing.T) {
+			expectedJson, _ := json.Marshal(tc.expected.response)
+			invoicePerShopService := mocks.NewInvoicePerShopService(t)
+			tc.beforeTest(invoicePerShopService)
+			rec := httptest.NewRecorder()
+			c, _ := gin.CreateTestContext(rec)
+			c.Set("userId", userId)
+
+			payload := test.MakeRequestBody(tc.input.req)
+			c.Request, _ = http.NewRequest(http.MethodPost, "/sellers/finances/incomes/withdrawals", payload)
+			handler := handler.New(&handler.Config{
+				InvoicePerShopService: invoicePerShopService,
+			})
+
+			handler.WithdrawFromInvoice(c)
+
+			assert.Equal(t, tc.expected.statusCode, rec.Code)
+			assert.Equal(t, string(expectedJson), rec.Body.String())
+		},
+		)
 	}
 
 }

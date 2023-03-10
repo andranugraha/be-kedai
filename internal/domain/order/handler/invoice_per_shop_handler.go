@@ -75,6 +75,39 @@ func (h *Handler) GetInvoiceByCode(c *gin.Context) {
 	response.Success(c, http.StatusOK, code.OK, "success", invoice)
 }
 
+func (h *Handler) WithdrawFromInvoice(c *gin.Context) {
+	var req dto.WithdrawInvoiceRequest
+
+	err := c.ShouldBindJSON(&req)
+	if err != nil {
+		response.ErrorValidator(c, http.StatusBadRequest, err)
+		return
+	}
+	req.Validate()
+	userId := c.GetInt("userId")
+
+	err = h.invoicePerShopService.WithdrawFromInvoice(req.OrderID, userId)
+	if err != nil {
+		if errors.Is(err, errs.ErrInvoiceNotFound) {
+			response.Error(c, http.StatusNotFound, code.INVOICE_NOT_FOUND, err.Error())
+			return
+		}
+		if errors.Is(err, errs.ErrShopNotFound) {
+			response.Error(c, http.StatusNotFound, code.SHOP_NOT_REGISTERED, err.Error())
+			return
+		}
+		if errors.Is(err, errs.ErrWalletDoesNotExist) {
+			response.Error(c, http.StatusNotFound, code.WALLET_DOES_NOT_EXIST, err.Error())
+			return
+		}
+
+		response.Error(c, http.StatusInternalServerError, code.INTERNAL_SERVER_ERROR, errs.ErrInternalServerError.Error())
+		return
+	}
+
+	response.Success(c, http.StatusOK, code.OK, "success", nil)
+}
+
 func (h *Handler) GetInvoiceByShopIdAndOrderId(c *gin.Context) {
 	userId := c.GetInt("userId")
 	id := c.Param("orderId")

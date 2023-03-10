@@ -101,7 +101,8 @@ func createRouter() *gin.Engine {
 		DB: db,
 	})
 	invoicePerShopRepo := orderRepoPackage.NewInvoicePerShopRepository(&orderRepoPackage.InvoicePerShopRConfig{
-		DB: db,
+		DB:         db,
+		WalletRepo: walletRepo,
 	})
 
 	shopRepo := shopRepoPackage.NewShopRepository(&shopRepoPackage.ShopRConfig{
@@ -117,11 +118,6 @@ func createRouter() *gin.Engine {
 	courierService := shopServicePackage.NewCourierService(&shopServicePackage.CourierSConfig{
 		CourierRepository: courierRepo,
 		ShopService:       shopService,
-	})
-
-	invoicePerShopService := orderServicePackage.NewInvoicePerShopService(&orderServicePackage.InvoicePerShopSConfig{
-		InvoicePerShopRepo: invoicePerShopRepo,
-		ShopService:        shopService,
 	})
 
 	shopVoucherRepo := shopRepoPackage.NewShopVoucherRepository(&shopRepoPackage.ShopVoucherRConfig{
@@ -185,6 +181,12 @@ func createRouter() *gin.Engine {
 		UserService: userService,
 		MailUtils:   mailUtils,
 		RandomUtils: randomUtils,
+	})
+
+	invoicePerShopService := orderServicePackage.NewInvoicePerShopService(&orderServicePackage.InvoicePerShopSConfig{
+		InvoicePerShopRepo: invoicePerShopRepo,
+		ShopService:        shopService,
+		WalletService:      walletService,
 	})
 
 	walletHistoryService := userServicePackage.NewWalletHistoryService(&userServicePackage.WalletHistorySConfig{

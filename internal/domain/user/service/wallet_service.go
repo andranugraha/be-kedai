@@ -15,7 +15,7 @@ import (
 )
 
 const (
-	TopUp = "Top-up"
+	TopUp = model.WalletHistoryTypeTopup
 )
 
 type WalletService interface {

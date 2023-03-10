@@ -11,6 +11,7 @@ import (
 	"testing"
 
 	shopModel "kedai/backend/be-kedai/internal/domain/shop/model"
+	walletModel "kedai/backend/be-kedai/internal/domain/user/model"
 
 	commonErr "kedai/backend/be-kedai/internal/common/error"
 
@@ -382,6 +383,89 @@ func TestGetInvoiceByUserIdAndId(t *testing.T) {
 			data, err := invoicePerShopService.GetInvoiceByUserIdAndId(tc.input.userID, tc.input.id)
 
 			assert.Equal(t, tc.expected.data, data)
+			assert.Equal(t, tc.expected.err, err)
+		})
+	}
+
+}
+
+func TestWithdrawFromInvoice(t *testing.T) {
+	type input struct {
+		userID     int
+		id         int
+		beforeTest func(*mocks.InvoicePerShopRepository, *mocks.ShopService, *mocks.WalletService)
+	}
+	type expected struct {
+		data *dto.InvoicePerShopDetail
+		err  error
+	}
+
+	tests := []struct {
+		description string
+		input
+		expected
+	}{
+		{
+			description: "should return error when FindShopByUserId failed",
+			input: input{
+				userID: 1,
+				id:     1,
+				beforeTest: func(ipsr *mocks.InvoicePerShopRepository, ss *mocks.ShopService, ws *mocks.WalletService) {
+					ss.On("FindShopByUserId", 1).Return(nil, errors.New("failed to get shop"))
+				},
+			},
+			expected: expected{
+				data: nil,
+				err:  errors.New("failed to get shop"),
+			},
+		},
+		{
+			description: "should return error when GetWalletByUserID failed",
+			input: input{
+				userID: 1,
+				id:     1,
+				beforeTest: func(ipsr *mocks.InvoicePerShopRepository, ss *mocks.ShopService, ws *mocks.WalletService) {
+					ss.On("FindShopByUserId", 1).Return(&shopModel.Shop{ID: 1}, nil)
+					ws.On("GetWalletByUserID", 1).Return(nil, errors.New("failed to get wallet"))
+				},
+			},
+			expected: expected{
+				data: nil,
+				err:  errors.New("failed to get wallet"),
+			},
+		},
+		{
+			description: "should return error when WithdrawFromInvoice failed",
+			input: input{
+				userID: 1,
+				id:     1,
+				beforeTest: func(ipsr *mocks.InvoicePerShopRepository, ss *mocks.ShopService, ws *mocks.WalletService) {
+					ss.On("FindShopByUserId", 1).Return(&shopModel.Shop{ID: 1}, nil)
+					ws.On("GetWalletByUserID", 1).Return(&walletModel.Wallet{ID: 1}, nil)
+					ipsr.On("WithdrawFromInvoice", 1, 1, 1).Return(errors.New("failed to get invoice"))
+				},
+			},
+			expected: expected{
+				data: nil,
+				err:  errors.New("failed to get invoice"),
+			},
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.description, func(t *testing.T) {
+			invoicePerShopRepo := mocks.NewInvoicePerShopRepository(t)
+			shopService := mocks.NewShopService(t)
+			walletService := mocks.NewWalletService(t)
+			tc.beforeTest(invoicePerShopRepo, shopService, walletService)
+			invoicePerShopService := service.NewInvoicePerShopService(&service.InvoicePerShopSConfig{
+				InvoicePerShopRepo: invoicePerShopRepo,
+				ShopService:        shopService,
+				WalletService:      walletService,
+			})
+
+			err := invoicePerShopService.WithdrawFromInvoice(tc.input.id, tc.input.userID)
+
 			assert.Equal(t, tc.expected.err, err)
 		})
 	}
