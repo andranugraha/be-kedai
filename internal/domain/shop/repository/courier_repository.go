@@ -15,6 +15,7 @@ type CourierRepository interface {
 	GetByShopID(shopID int) ([]*model.Courier, error)
 	GetByServiceIDAndShopID(courierID, shopID int) (*model.Courier, error)
 	GetByProductID(productID int) ([]*model.Courier, error)
+	GetMatchingCouriersByShopIDAndProductIDs(*dto.MatchingProductCourierRequest) ([]*model.Courier, error)
 }
 
 type courierRepositoryImpl struct {
@@ -103,6 +104,30 @@ func (r *courierRepositoryImpl) GetByProductID(productID int) ([]*model.Courier,
 		Joins("JOIN product_couriers ON cs.id = product_couriers.courier_service_id").
 		Where("product_couriers.product_id = ?", productID).
 		Distinct().
+		Find(&couriers).
+		Error
+
+	if err != nil {
+		return nil, err
+	}
+
+	return couriers, nil
+}
+
+func (r *courierRepositoryImpl) GetMatchingCouriersByShopIDAndProductIDs(req *dto.MatchingProductCourierRequest) ([]*model.Courier, error) {
+	var couriers []*model.Courier
+
+	err := r.db.
+		Preload("Services").
+		Joins("JOIN courier_services cs ON couriers.id = cs.courier_id").
+		Joins("JOIN shop_couriers sc on sc.courier_service_id = cs.id").
+		Joins(`JOIN (SELECT courier_service_id
+		FROM product_couriers
+		WHERE product_id IN (?)
+		GROUP BY courier_service_id
+		HAVING COUNT(DISTINCT product_id) = ?)
+		pc ON sc.courier_service_id = pc.courier_service_id`, req.ProductIDs, len(req.ProductIDs)).
+		Where("sc.shop_id = ?", req.ShopID).
 		Find(&couriers).
 		Error
 
