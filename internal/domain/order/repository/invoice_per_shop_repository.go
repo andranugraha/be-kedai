@@ -230,7 +230,7 @@ func (r *invoicePerShopRepositoryImpl) GetShopOrder(shopId int, req *dto.Invoice
 		Joins("JOIN transactions t ON t.invoice_id = invoice_per_shops.id").
 		Joins("JOIN skus s ON s.id = t.sku_id").
 		Joins("JOIN products p ON p.id = s.product_id").
-		Joins("JOIN users u ON u.id = invoice_per_shops.id").
+		Joins("JOIN users u ON u.id = invoice_per_shops.user_id").
 		Where("invoice_per_shops.shop_id = ?", shopId)
 
 	if req.ProductName != "" {
