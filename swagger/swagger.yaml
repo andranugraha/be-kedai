@@ -4980,6 +4980,81 @@ paths:
                     example: "INTERNAL_SERVER_ERROR"
                   message:
                     type: string
+                    example: "error message"   
+  /v1/sellers/finances/incomes/withdrawals:
+    post:
+      security:
+        - BearerAuth: []
+      tags:
+        - Seller
+      requestBody:
+        $ref: '#/components/requestBodies/WithdrawInvoiceRequest'  
+      summary: Withdraw money from an invoice
+      description: Withdraw money using an orderId as the request body. Invoice can only be withdrawn once.
+      responses:
+        '200':
+          description: operation successful
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - type: object
+                    properties:
+                      code:
+                        example: OK
+                      message:
+                        example: success
+        '400':
+          description: bad request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "BAD_REQUEST"
+                  message:
+                    type: string
+                    example: "error message"
+        '404':
+          description: shop not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "NOT_FOUND"
+                  message:
+                    type: string
+                    example: "shop not found"
+        '401':
+          description: unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "UNAUTHORIZED"
+                  message:
+                    type: string
+                    example: "invalid credential"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "INTERNAL_SERVER_ERROR"
+                  message:
+                    type: string
                     example: "error message"                  
   /v1/sellers/stats:
     get:
@@ -7061,6 +7136,18 @@ components:
                 minLength: 6
                 maxLength: 6
                 example: "1a3c5e"
+    WithdrawInvoiceRequest:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - orderId
+            properties:
+              orderId:
+                type: integer
+                example: 1
     CompleteResetPinRequestBody:
       required: true
       content:
