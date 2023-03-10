@@ -4698,7 +4698,6 @@ paths:
                   message:
                     type: string
                     example: "error message"                       
-                    example: "error message"
   /v1/sellers/finances/incomes:
     get:
       security:
