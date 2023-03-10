@@ -193,3 +193,8 @@ func (p *ProductSearchAutocomplete) Validate() {
 		p.Limit = 10
 	}
 }
+
+type SellerProductDetail struct {
+	model.Product
+	Categories []*model.Category `json:"categories"`
+}
