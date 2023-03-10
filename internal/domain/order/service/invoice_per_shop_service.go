@@ -6,6 +6,7 @@ import (
 	"kedai/backend/be-kedai/internal/domain/order/model"
 	"kedai/backend/be-kedai/internal/domain/order/repository"
 	shopService "kedai/backend/be-kedai/internal/domain/shop/service"
+	userService "kedai/backend/be-kedai/internal/domain/user/service"
 	"strings"
 )
 
@@ -14,22 +15,26 @@ type InvoicePerShopService interface {
 	GetInvoicesByShopId(userId int, req *dto.InvoicePerShopFilterRequest) (*commonDto.PaginationResponse, error)
 	GetByID(id int) (*model.InvoicePerShop, error)
 	GetInvoicesByUserIDAndCode(userID int, code string) (*dto.InvoicePerShopDetail, error)
+	WithdrawFromInvoice(invoicePerShopId int, userId int) error
 }
 
 type invoicePerShopServiceImpl struct {
 	invoicePerShopRepo repository.InvoicePerShopRepository
 	shopService        shopService.ShopService
+	walletService      userService.WalletService
 }
 
 type InvoicePerShopSConfig struct {
 	InvoicePerShopRepo repository.InvoicePerShopRepository
 	ShopService        shopService.ShopService
+	WalletService      userService.WalletService
 }
 
 func NewInvoicePerShopService(cfg *InvoicePerShopSConfig) InvoicePerShopService {
 	return &invoicePerShopServiceImpl{
 		invoicePerShopRepo: cfg.InvoicePerShopRepo,
 		shopService:        cfg.ShopService,
+		walletService:      cfg.WalletService,
 	}
 }
 
@@ -76,4 +81,18 @@ func (s *invoicePerShopServiceImpl) GetInvoicesByUserIDAndCode(userID int, code 
 	decoded := strings.Replace(code, "-", "/", -1)
 
 	return s.invoicePerShopRepo.GetByUserIDAndCode(userID, decoded)
+}
+
+func (s *invoicePerShopServiceImpl) WithdrawFromInvoice(invoicePerShopId int, userId int) error {
+	shop, err := s.shopService.FindShopByUserId(userId)
+	if err != nil {
+		return err
+	}
+
+	wallet, err := s.walletService.GetWalletByUserID(userId)
+	if err != nil {
+		return err
+	}
+
+	return s.invoicePerShopRepo.WithdrawFromInvoice(invoicePerShopId, shop.ID, wallet.ID)
 }
