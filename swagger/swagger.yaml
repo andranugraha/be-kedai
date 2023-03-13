@@ -4681,7 +4681,76 @@ paths:
                     example: "INTERNAL_SERVER_ERROR"
                   message:
                     type: string
-                    example: "error message"                                
+                    example: "error message"     
+    post:
+      security:
+        - BearerAuth: []
+      tags:
+        - Seller
+      summary: Toggle seller shipment courier
+      description: Activate or deactivate shipment courier for seller
+      requestBody:
+        $ref: '#/components/requestBodies/ToggleSellerShipmenttBody'
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Response'
+                  - type: object
+                    properties:
+                      code:
+                        example: "OK"
+                      message:
+                        example: "success"
+                      data:
+                        type: object
+                        properties:
+                          courierId:
+                            type: integer
+                          isToggled:
+                            type: boolean
+        '401':
+          description: unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "UNAUTHORIZED"
+                  message:
+                    type: string
+                    example: "invalid credential"
+        '404':
+          description: not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "NOT_FOUND"
+                  message:
+                    type: string
+                    example: "shop not found"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "INTERNAL_SERVER_ERROR"
+                  message:
+                    type: string
+                    example: "error message"
   /v1/sellers/products:
     get:
       security:
@@ -7853,6 +7922,17 @@ components:
                 minLength: 6
                 maxLength: 6
                 example: "123456"
+    ToggleSellerShipmenttBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - courierId
+            properties:
+              courierId:
+                type: integer
   securitySchemes:
     BearerAuth:
       type: http
