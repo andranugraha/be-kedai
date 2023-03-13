@@ -5326,6 +5326,82 @@ paths:
                   message:
                     type: string
                     example: "error message"
+  /v1/sellers/insights:
+    get:
+      security:
+        - BearerAuth: []
+      tags:
+        - Seller
+      summary: Get shop insight
+      description: Get shop total visitor, page view, order, and sales activity
+      responses:
+        '200':
+          description: operation successful
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Response'
+                  - type: object
+                    properties:
+                      code:
+                        example: OK
+                      message:
+                        example: success
+                      data:
+                        $ref: '#/components/schemas/GetShopInsightResponse'
+        '400':
+          description: bad request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "BAD_REQUEST"
+                  message:
+                    type: string
+                    example: "error message"
+        '404':
+          description: shop not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "NOT_FOUND"
+                  message:
+                    type: string
+                    example: "shop not found"
+        '401':
+          description: unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "UNAUTHORIZED"
+                  message:
+                    type: string
+                    example: "invalid credential"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "INTERNAL_SERVER_ERROR"
+                  message:
+                    type: string
+                    example: "error message"
   /v1/orders/invoices:
     post:
       security:
@@ -6795,6 +6871,26 @@ components:
           type: integer
         outOfStock:
           type: integer
+    GetShopInsightResponse:
+      type: object
+      properties:
+        visitor:
+          type: integer
+        pageView:
+          type: integer
+        order:
+          type: integer
+        sales:
+          type: array
+          items:
+            type: object
+            properties:
+              label:
+                type: string
+                example: 2023-03-13T00:00:00+07:00
+              value:
+                type: integer
+                example: 12
   requestBodies:
     WalletBody:
       required: true
