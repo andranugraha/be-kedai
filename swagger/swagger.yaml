@@ -5334,6 +5334,12 @@ paths:
         - Seller
       summary: Get shop insight
       description: Get shop total visitor, page view, order, and sales activity
+      parameters:
+        - in: query
+          name: timeframe
+          schema:
+            type: string
+            example: day/week/month
       responses:
         '200':
           description: operation successful
