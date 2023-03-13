@@ -102,7 +102,7 @@ func (r *shopRepositoryImpl) FindShopByKeyword(req dto.FindShopRequest) ([]*dto.
 	countQuery.Model(&model.Shop{}).Distinct("shops.id").Count(&totalRows)
 	totalPage = int(math.Ceil(float64(totalRows) / float64(req.Limit)))
 
-	err := db.Order("rating desc").Limit(req.Limit).Offset(req.Offset()).Find(&shopList).Error
+	err := db.Model(&model.Shop{}).Order("rating desc").Limit(req.Limit).Offset(req.Offset()).Find(&shopList).Error
 	if err != nil {
 		return nil, 0, 0, err
 	}
