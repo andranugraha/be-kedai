@@ -77,6 +77,7 @@ func (h *Handler) GetShopStats(c *gin.Context) {
 func (h *Handler) GetShopInsights(c *gin.Context) {
 	var req dto.GetShopInsightRequest
 	_ = c.ShouldBindQuery(&req)
+	req.Validate()
 	req.UserId = c.GetInt("userId")
 
 	result, err := h.shopService.GetShopInsight(req)

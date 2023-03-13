@@ -69,3 +69,9 @@ const (
 	ShopInsightTimeframeWeek  = "week"
 	ShopInsightTimeframeMonth = "month"
 )
+
+func (req *GetShopInsightRequest) Validate() {
+	if req.Timeframe == "" {
+		req.Timeframe = ShopInsightTimeframeDay
+	}
+}
