@@ -28,6 +28,7 @@ type InvoicePerShopRepository interface {
 	GetByShopIdAndId(shopId int, id int) (*dto.InvoicePerShopDetail, error)
 	GetShopOrder(shopId int, req *dto.InvoicePerShopFilterRequest) ([]*dto.InvoicePerShopDetail, int64, int, error)
 	UpdateStatusToDelivery(shopId int, orderId int, invoiceStatuses []*model.InvoiceStatus) error
+	UpdateStatusToCancelled(shopId int, orderId int, invoiceStatuses []*model.InvoiceStatus) error
 }
 
 type invoicePerShopRepositoryImpl struct {
@@ -381,6 +382,31 @@ func (r *invoicePerShopRepositoryImpl) GetShopOrder(shopId int, req *dto.Invoice
 
 func (r *invoicePerShopRepositoryImpl) UpdateStatusToDelivery(shopId int, orderId int, invoiceStatuses []*model.InvoiceStatus) error {
 	var status = "ON_DELIVERY"
+
+	err := r.db.Transaction(func(tx *gorm.DB) error {
+		if err := tx.Model(&model.InvoicePerShop{}).Where("shop_id = ? AND id = ?", shopId, orderId).Update("status = ?", status).Error; err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				return commonErr.ErrInvoiceNotFound
+			}
+			return err
+		}
+
+		if err := r.invoiceStatusRepo.Create(tx, invoiceStatuses); err != nil {
+			return err
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (r *invoicePerShopRepositoryImpl) UpdateStatusToCancelled(shopId int, orderId int, invoiceStatuses []*model.InvoiceStatus) error {
+	var status = "CANCELLED"
 
 	err := r.db.Transaction(func(tx *gorm.DB) error {
 		if err := tx.Model(&model.InvoicePerShop{}).Where("shop_id = ? AND id = ?", shopId, orderId).Update("status = ?", status).Error; err != nil {
