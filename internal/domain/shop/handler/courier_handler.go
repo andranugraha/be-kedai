@@ -67,7 +67,7 @@ func (h *Handler) ToggleShopCourier(c *gin.Context) {
 
 	userId := c.GetInt("userId")
 
-	res, err := h.courierService.ToggleShopCourier(userId, req)
+	res, err := h.courierService.ToggleShopCourier(userId, req.CourierId)
 	if err != nil {
 		if errors.Is(err, errs.ErrShopNotFound) {
 			response.Error(c, http.StatusNotFound, code.SHOP_NOT_REGISTERED, err.Error())
