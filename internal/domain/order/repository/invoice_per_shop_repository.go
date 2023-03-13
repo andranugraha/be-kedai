@@ -31,19 +31,22 @@ type InvoicePerShopRepository interface {
 }
 
 type invoicePerShopRepositoryImpl struct {
-	db         *gorm.DB
-	walletRepo userRepo.WalletRepository
+	db                *gorm.DB
+	walletRepo        userRepo.WalletRepository
+	invoiceStatusRepo InvoiceStatusRepository
 }
 
 type InvoicePerShopRConfig struct {
-	DB         *gorm.DB
-	WalletRepo userRepo.WalletRepository
+	DB                *gorm.DB
+	WalletRepo        userRepo.WalletRepository
+	InvoiceStatusRepo InvoiceStatusRepository
 }
 
 func NewInvoicePerShopRepository(cfg *InvoicePerShopRConfig) InvoicePerShopRepository {
 	return &invoicePerShopRepositoryImpl{
-		db:         cfg.DB,
-		walletRepo: cfg.WalletRepo,
+		db:                cfg.DB,
+		walletRepo:        cfg.WalletRepo,
+		invoiceStatusRepo: cfg.InvoiceStatusRepo,
 	}
 }
 
@@ -377,7 +380,7 @@ func (r *invoicePerShopRepositoryImpl) GetShopOrder(shopId int, req *dto.Invoice
 }
 
 func (r *invoicePerShopRepositoryImpl) UpdateStatusToDelivery(shopId int, orderId int) error {
-	var invoiceStatus *model.InvoiceStatus
+	var invoiceStatuses []*model.InvoiceStatus
 
 	err := r.db.Transaction(func(tx *gorm.DB) error {
 
@@ -385,14 +388,16 @@ func (r *invoicePerShopRepositoryImpl) UpdateStatusToDelivery(shopId int, orderI
 			return err
 		}
 
-		invoiceStatus.InvoicePerShopID = orderId
-		invoiceStatus.Status = "ON_DELIVERY"
+		invoiceStatuses = append(invoiceStatuses, &model.InvoiceStatus{
+			InvoicePerShopID: orderId,
+			Status: "ON_DELIVERY",
+		})
 
-		if err := tx.Create(&invoiceStatus).Error; err != nil {
+		if err := r.invoiceStatusRepo.Create(tx, invoiceStatuses) ; err != nil {
 			return err
 		}
 
-		return nil	
+		return nil
 	})
 
 	if err != nil {
