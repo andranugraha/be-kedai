@@ -21,6 +21,7 @@ type InvoicePerShop struct {
 	VoucherAmount  *float64 `json:"voucherAmount,omitempty"`
 	VoucherType    *string  `json:"voucherType,omitempty"`
 	Status         string   `json:"status"`
+	IsReleased     bool     `json:"isReleased"`
 
 	UserID           int  `json:"userId"`
 	VoucherID        *int `json:"voucherId,omitempty"`

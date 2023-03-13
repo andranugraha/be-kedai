@@ -5,12 +5,16 @@ import (
 	"fmt"
 	"kedai/backend/be-kedai/internal/common/constant"
 	commonErr "kedai/backend/be-kedai/internal/common/error"
+	marketplaceModel "kedai/backend/be-kedai/internal/domain/marketplace/model"
 	"kedai/backend/be-kedai/internal/domain/order/dto"
 	"kedai/backend/be-kedai/internal/domain/order/model"
+	userModel "kedai/backend/be-kedai/internal/domain/user/model"
+	userRepo "kedai/backend/be-kedai/internal/domain/user/repository"
 	"math"
 	"time"
 
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 type InvoicePerShopRepository interface {
@@ -20,20 +24,25 @@ type InvoicePerShopRepository interface {
 	GetByUserIDAndCode(userID int, code string) (*dto.InvoicePerShopDetail, error)
 	GetShopFinanceToRelease(shopID int) (float64, error)
 	GetByShopId(shopId int, req *dto.InvoicePerShopFilterRequest) ([]*dto.InvoicePerShopDetail, int64, int, error)
+	WithdrawFromInvoice(invoicePerShopId int, shopId int, walletId int) error
+	GetByShopIdAndId(shopId int, id int) (*dto.InvoicePerShopDetail, error)
 	GetShopOrder(shopId int, req *dto.InvoicePerShopFilterRequest) ([]*dto.InvoicePerShopDetail, int64, int, error)
 }
 
 type invoicePerShopRepositoryImpl struct {
-	db *gorm.DB
+	db         *gorm.DB
+	walletRepo userRepo.WalletRepository
 }
 
 type InvoicePerShopRConfig struct {
-	DB *gorm.DB
+	DB         *gorm.DB
+	WalletRepo userRepo.WalletRepository
 }
 
 func NewInvoicePerShopRepository(cfg *InvoicePerShopRConfig) InvoicePerShopRepository {
 	return &invoicePerShopRepositoryImpl{
-		db: cfg.DB,
+		db:         cfg.DB,
+		walletRepo: cfg.WalletRepo,
 	}
 }
 
@@ -216,6 +225,95 @@ func (r *invoicePerShopRepositoryImpl) GetByShopId(shopId int, req *dto.InvoiceP
 	}
 
 	return invoices, totalRows, totalPages, nil
+}
+
+func (r *invoicePerShopRepositoryImpl) WithdrawFromInvoice(invoicePerShopId int, shopId int, walletId int) error {
+	var invoicePerShop model.InvoicePerShop
+
+	err := r.db.Transaction(func(trx *gorm.DB) error {
+
+		res := trx.
+			Clauses(clause.Returning{}).
+			Model(&invoicePerShop).
+			Where("id = ?", invoicePerShopId).
+			Where("shop_id = ?", shopId).
+			Where("status = ?", constant.TransactionStatusCompleted).
+			Where("is_released != ?", true).
+			Update("is_released", true)
+		if err := res.Error; err != nil {
+			return err
+		}
+
+		if res.RowsAffected == 0 {
+			return commonErr.ErrInvoiceNotFound
+		}
+
+		wh := userModel.WalletHistory{}
+		wh.Type = userModel.WalletHistoryTypeWithdrawal
+		wh.Amount = invoicePerShop.Total
+		wh.WalletId = walletId
+
+		_, err := r.walletRepo.TopUp(&wh, &userModel.Wallet{
+			ID: walletId,
+		})
+
+		if err != nil {
+			return err
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (r *invoicePerShopRepositoryImpl) GetByShopIdAndId(shopId int, id int) (*dto.InvoicePerShopDetail, error) {
+	var invoice dto.InvoicePerShopDetail
+
+	query := r.db.
+		Select(`invoice_per_shops.*, case when invoices.voucher_type = ?
+		THEN ROUND(invoice_per_shops.shipping_cost  / (
+			select SUM(ips2.shipping_cost) from invoice_per_shops ips2 where ips2.invoice_id = invoice_per_shops.invoice_id 
+			group by ips2.invoice_id 
+		) * invoices.voucher_amount) when invoices.voucher_type = ?
+		THEN ROUND(invoice_per_shops.subtotal / (
+			select SUM(ips2.subtotal) from invoice_per_shops ips2 where ips2.invoice_id = invoice_per_shops.invoice_id 
+			group by ips2.invoice_id 
+		) * invoices.voucher_amount) 
+		ELSE invoices.voucher_amount 
+		END AS marketplace_voucher_amount, 
+		invoices.voucher_type AS marketplace_voucher_type, 
+		invoices.payment_date AS payment_date`).
+		Joins("JOIN invoices ON invoices.id = invoice_per_shops.invoice_id", marketplaceModel.VoucherTypeShipping, marketplaceModel.VoucherTypeNominal).
+		Where("invoice_per_shops.shop_id = ?", shopId).
+		Where("invoice_per_shops.id = ?", id)
+
+	query = query.Preload("TransactionItems", func(query *gorm.DB) *gorm.DB {
+		return query.Select(`
+			transactions.*,
+			(SELECT url FROM product_medias WHERE products.id = product_medias.product_id LIMIT 1) AS image_url,
+			products.name AS product_name
+		`).
+			Joins("JOIN skus ON skus.id = transactions.sku_id").
+			Joins("JOIN products ON skus.product_id = products.id")
+	}).
+		Preload("TransactionItems.Sku.Variants").
+		Preload("Shop")
+
+	err := query.First(&invoice).Error
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, commonErr.ErrInvoiceNotFound
+		}
+
+		return nil, err
+	}
+
+	return &invoice, nil
 }
 
 func (r *invoicePerShopRepositoryImpl) GetShopOrder(shopId int, req *dto.InvoicePerShopFilterRequest) ([]*dto.InvoicePerShopDetail, int64, int, error) {

@@ -67,3 +67,13 @@ func (d *InvoicePerShopFilterRequest) Validate() {
 func (d *InvoicePerShopFilterRequest) Offset() int {
 	return (d.Page - 1) * d.Limit
 }
+
+type WithdrawInvoiceRequest struct {
+	OrderID int `json:"orderId" binding:"required"`
+}
+
+func (d *WithdrawInvoiceRequest) Validate() {
+	if d.OrderID < 1 {
+		d.OrderID = 0
+	}
+}
