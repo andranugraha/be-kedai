@@ -18,8 +18,8 @@ type InvoicePerShopService interface {
 	WithdrawFromInvoice(invoicePerShopId int, userId int) error
 	GetInvoiceByUserIdAndId(userId int, id int) (*dto.InvoicePerShopDetail, error)
 	GetShopOrder(userId int, req *dto.InvoicePerShopFilterRequest) (*commonDto.PaginationResponse, error)
-	UpdateStatusToDelivery(userId int, orderId int) (error)
-	UpdateStatusToCancelled(userId int, orderId int) (error)
+	UpdateStatusToDelivery(userId int, orderId int) error
+	UpdateStatusToCancelled(userId int, orderId int) error
 }
 
 type invoicePerShopServiceImpl struct {
@@ -130,7 +130,7 @@ func (s *invoicePerShopServiceImpl) GetShopOrder(userId int, req *dto.InvoicePer
 	}, nil
 }
 
-func (s *invoicePerShopServiceImpl) UpdateStatusToDelivery(userId int, orderId int) (error) {
+func (s *invoicePerShopServiceImpl) UpdateStatusToDelivery(userId int, orderId int) error {
 	shop, err := s.shopService.FindShopByUserId(userId)
 	if err != nil {
 		return err
@@ -152,7 +152,7 @@ func (s *invoicePerShopServiceImpl) UpdateStatusToDelivery(userId int, orderId i
 	return nil
 }
 
-func (s *invoicePerShopServiceImpl) UpdateStatusToCancelled(userId int, orderId int) (error) {
+func (s *invoicePerShopServiceImpl) UpdateStatusToCancelled(userId int, orderId int) error {
 	shop, err := s.shopService.FindShopByUserId(userId)
 	if err != nil {
 		return err

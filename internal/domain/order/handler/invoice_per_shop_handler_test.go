@@ -731,18 +731,18 @@ func TestGetShopOrder(t *testing.T) {
 }
 
 func TestUpdateToDeliver(t *testing.T) {
-	var(
-		userId = 1
+	var (
+		userId  = 1
 		orderId = 1
 	)
 	type input struct {
-		userId int
+		userId  int
 		orderId int
-		err error
+		err     error
 	}
 	type expected struct {
 		statusCode int
-		response response.Response
+		response   response.Response
 	}
 	type cases struct {
 		description string
@@ -754,14 +754,14 @@ func TestUpdateToDeliver(t *testing.T) {
 		{
 			description: "should return nil error with code 200 when success",
 			input: input{
-				userId: userId,
+				userId:  userId,
 				orderId: orderId,
-				err: nil,
+				err:     nil,
 			},
 			expected: expected{
 				statusCode: http.StatusOK,
 				response: response.Response{
-					Code: code.OK,
+					Code:    code.OK,
 					Message: "ok",
 				},
 			},
@@ -769,14 +769,14 @@ func TestUpdateToDeliver(t *testing.T) {
 		{
 			description: "should return error with code 404 when shop not found",
 			input: input{
-				userId: userId,
+				userId:  userId,
 				orderId: orderId,
-				err: errs.ErrShopNotFound,
+				err:     errs.ErrShopNotFound,
 			},
 			expected: expected{
 				statusCode: http.StatusNotFound,
 				response: response.Response{
-					Code: code.SHOP_NOT_REGISTERED,
+					Code:    code.SHOP_NOT_REGISTERED,
 					Message: errs.ErrShopNotFound.Error(),
 				},
 			},
@@ -784,14 +784,14 @@ func TestUpdateToDeliver(t *testing.T) {
 		{
 			description: "should return error with code 404 when invoice not found",
 			input: input{
-				userId: 1,
+				userId:  1,
 				orderId: 1,
-				err: errs.ErrInvoiceNotFound,
+				err:     errs.ErrInvoiceNotFound,
 			},
 			expected: expected{
 				statusCode: http.StatusNotFound,
 				response: response.Response{
-					Code: code.INVOICE_NOT_FOUND,
+					Code:    code.INVOICE_NOT_FOUND,
 					Message: errs.ErrInvoiceNotFound.Error(),
 				},
 			},
@@ -799,14 +799,14 @@ func TestUpdateToDeliver(t *testing.T) {
 		{
 			description: "should return error with code 500 when internal server error",
 			input: input{
-				userId: 1,
+				userId:  1,
 				orderId: 1,
-				err: errs.ErrInternalServerError,
+				err:     errs.ErrInternalServerError,
 			},
 			expected: expected{
 				statusCode: http.StatusInternalServerError,
 				response: response.Response{
-					Code: code.INTERNAL_SERVER_ERROR,
+					Code:    code.INTERNAL_SERVER_ERROR,
 					Message: errs.ErrInternalServerError.Error(),
 				},
 			},
@@ -834,18 +834,18 @@ func TestUpdateToDeliver(t *testing.T) {
 }
 
 func TestUpdateToCancelled(t *testing.T) {
-	var(
-		userId = 1
+	var (
+		userId  = 1
 		orderId = 1
 	)
 	type input struct {
-		userId int
+		userId  int
 		orderId int
-		err error
+		err     error
 	}
 	type expected struct {
 		statusCode int
-		response response.Response
+		response   response.Response
 	}
 	type cases struct {
 		description string
@@ -857,14 +857,14 @@ func TestUpdateToCancelled(t *testing.T) {
 		{
 			description: "should return nil error with code 200 when success",
 			input: input{
-				userId: userId,
+				userId:  userId,
 				orderId: orderId,
-				err: nil,
+				err:     nil,
 			},
 			expected: expected{
 				statusCode: http.StatusOK,
 				response: response.Response{
-					Code: code.OK,
+					Code:    code.OK,
 					Message: "ok",
 				},
 			},
@@ -872,14 +872,14 @@ func TestUpdateToCancelled(t *testing.T) {
 		{
 			description: "should return error with code 404 when shop not found",
 			input: input{
-				userId: userId,
+				userId:  userId,
 				orderId: orderId,
-				err: errs.ErrShopNotFound,
+				err:     errs.ErrShopNotFound,
 			},
 			expected: expected{
 				statusCode: http.StatusNotFound,
 				response: response.Response{
-					Code: code.SHOP_NOT_REGISTERED,
+					Code:    code.SHOP_NOT_REGISTERED,
 					Message: errs.ErrShopNotFound.Error(),
 				},
 			},
@@ -887,14 +887,14 @@ func TestUpdateToCancelled(t *testing.T) {
 		{
 			description: "should return error with code 404 when invoice not found",
 			input: input{
-				userId: 1,
+				userId:  1,
 				orderId: 1,
-				err: errs.ErrInvoiceNotFound,
+				err:     errs.ErrInvoiceNotFound,
 			},
 			expected: expected{
 				statusCode: http.StatusNotFound,
 				response: response.Response{
-					Code: code.INVOICE_NOT_FOUND,
+					Code:    code.INVOICE_NOT_FOUND,
 					Message: errs.ErrInvoiceNotFound.Error(),
 				},
 			},
@@ -902,14 +902,14 @@ func TestUpdateToCancelled(t *testing.T) {
 		{
 			description: "should return error with code 500 when internal server error",
 			input: input{
-				userId: 1,
+				userId:  1,
 				orderId: 1,
-				err: errs.ErrInternalServerError,
+				err:     errs.ErrInternalServerError,
 			},
 			expected: expected{
 				statusCode: http.StatusInternalServerError,
 				response: response.Response{
-					Code: code.INTERNAL_SERVER_ERROR,
+					Code:    code.INTERNAL_SERVER_ERROR,
 					Message: errs.ErrInternalServerError.Error(),
 				},
 			},

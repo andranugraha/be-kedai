@@ -574,15 +574,15 @@ func TestUpdateStatusToDelivery(t *testing.T) {
 		invoiceStatuses = []*model.InvoiceStatus{
 			{
 				InvoicePerShopID: 1,
-				Status: "ON_DELIVERY",
+				Status:           "ON_DELIVERY",
 			},
 		}
-		userId          = 1
-		orderId         = 1
+		userId  = 1
+		orderId = 1
 	)
 	type input struct {
-		userId int
-		orderId int
+		userId     int
+		orderId    int
 		beforeTest func(*mocks.ShopService, *mocks.InvoicePerShopRepository)
 	}
 	type expected struct {
@@ -598,7 +598,7 @@ func TestUpdateStatusToDelivery(t *testing.T) {
 		{
 			description: "should return nil error when success",
 			input: input{
-				userId: userId,
+				userId:  userId,
 				orderId: orderId,
 				beforeTest: func(ss *mocks.ShopService, ipsr *mocks.InvoicePerShopRepository) {
 					ss.On("FindShopByUserId", userId).Return(shop, nil)
@@ -612,7 +612,7 @@ func TestUpdateStatusToDelivery(t *testing.T) {
 		{
 			description: "should return error when shop not found",
 			input: input{
-				userId: userId,
+				userId:  userId,
 				orderId: orderId,
 				beforeTest: func(ss *mocks.ShopService, ipsr *mocks.InvoicePerShopRepository) {
 					ss.On("FindShopByUserId", userId).Return(nil, commonErr.ErrShopNotFound)
@@ -625,11 +625,12 @@ func TestUpdateStatusToDelivery(t *testing.T) {
 		{
 			description: "should return error when internal server error",
 			input: input{
-				userId: userId,
+				userId:  userId,
 				orderId: orderId,
 				beforeTest: func(ss *mocks.ShopService, ipsr *mocks.InvoicePerShopRepository) {
 					ss.On("FindShopByUserId", userId).Return(shop, nil)
-					ipsr.On("UpdateStatusToDelivery", shop.ID, orderId, invoiceStatuses).Return(commonErr.ErrInternalServerError)},
+					ipsr.On("UpdateStatusToDelivery", shop.ID, orderId, invoiceStatuses).Return(commonErr.ErrInternalServerError)
+				},
 			},
 			expected: expected{
 				err: commonErr.ErrInternalServerError,
@@ -660,15 +661,15 @@ func TestUpdateStatusToCancelled(t *testing.T) {
 		invoiceStatuses = []*model.InvoiceStatus{
 			{
 				InvoicePerShopID: 1,
-				Status: "CANCELLED",
+				Status:           "CANCELLED",
 			},
 		}
-		userId          = 1
-		orderId         = 1
+		userId  = 1
+		orderId = 1
 	)
 	type input struct {
-		userId int
-		orderId int
+		userId     int
+		orderId    int
 		beforeTest func(*mocks.ShopService, *mocks.InvoicePerShopRepository)
 	}
 	type expected struct {
@@ -684,7 +685,7 @@ func TestUpdateStatusToCancelled(t *testing.T) {
 		{
 			description: "should return nil error when success",
 			input: input{
-				userId: userId,
+				userId:  userId,
 				orderId: orderId,
 				beforeTest: func(ss *mocks.ShopService, ipsr *mocks.InvoicePerShopRepository) {
 					ss.On("FindShopByUserId", userId).Return(shop, nil)
@@ -698,7 +699,7 @@ func TestUpdateStatusToCancelled(t *testing.T) {
 		{
 			description: "should return error when shop not found",
 			input: input{
-				userId: userId,
+				userId:  userId,
 				orderId: orderId,
 				beforeTest: func(ss *mocks.ShopService, ipsr *mocks.InvoicePerShopRepository) {
 					ss.On("FindShopByUserId", userId).Return(nil, commonErr.ErrShopNotFound)
@@ -711,11 +712,12 @@ func TestUpdateStatusToCancelled(t *testing.T) {
 		{
 			description: "should return error when internal server error",
 			input: input{
-				userId: userId,
+				userId:  userId,
 				orderId: orderId,
 				beforeTest: func(ss *mocks.ShopService, ipsr *mocks.InvoicePerShopRepository) {
 					ss.On("FindShopByUserId", userId).Return(shop, nil)
-					ipsr.On("UpdateStatusToCancelled", shop.ID, orderId, invoiceStatuses).Return(commonErr.ErrInternalServerError)},
+					ipsr.On("UpdateStatusToCancelled", shop.ID, orderId, invoiceStatuses).Return(commonErr.ErrInternalServerError)
+				},
 			},
 			expected: expected{
 				err: commonErr.ErrInternalServerError,

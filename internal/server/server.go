@@ -106,8 +106,8 @@ func createRouter() *gin.Engine {
 	})
 
 	invoicePerShopRepo := orderRepoPackage.NewInvoicePerShopRepository(&orderRepoPackage.InvoicePerShopRConfig{
-		DB:         db,
-		WalletRepo: walletRepo,
+		DB:                db,
+		WalletRepo:        walletRepo,
 		InvoiceStatusRepo: invoiceStatusRepo,
 	})
 
