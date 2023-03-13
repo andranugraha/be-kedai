@@ -267,7 +267,7 @@ func (r *shopRepositoryImpl) getShopSalesWithinInterval(shopId int, timeframe st
 					LEFT JOIN invoices i ON ips.invoice_id = i.id
 				WHERE
 					s.id = ? AND
-					i.payment_date >= `+start+`
+					i.payment_date >= `+start+` - interval '7 hours'
 			) AS data ON intervals.label <= data.label AND data.label < intervals.label + interval '`+interval+`'
 			GROUP BY intervals.label
 			ORDER BY intervals.label
