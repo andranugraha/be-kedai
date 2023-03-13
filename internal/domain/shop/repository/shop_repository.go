@@ -181,16 +181,20 @@ func (r *shopRepositoryImpl) GetShopInsight(shopId int, req dto.GetShopInsightRe
 	)
 
 	row := r.db.Model(&model.Shop{}).
-		Joins("left join shop_guests sg on shops.id = sg.shop_id").
-		Joins("left join products p on shops.id = p.shop_id").
-		Joins("left join invoice_per_shops ips on shops.id = ips.shop_id and ips.status = ?", constant.TransactionStatusCompleted).
+		Select(`(
+				select count(sg.uuid) from shop_guests sg
+				where sg.shop_id = shops.id
+			) as visitor, 
+			(
+				select sum(p."view") from products p
+				where p.shop_id = shops.id
+			) as page_view, 
+			(
+				select count(ips.id) from invoice_per_shops ips
+				where ips.shop_id = shops.id and ips.status = ?
+			) as order
+		`, constant.TransactionStatusCompleted).
 		Where("shops.id = ?", shopId).
-		Select(`
-				count(sg.uuid) as visitor, 
-				count(p."view") as page_view, 
-				count(ips.id) as order
-		`).
-		Group("shops.id").
 		Row()
 	if row.Err() != nil {
 		if errors.Is(row.Err(), gorm.ErrRecordNotFound) {
@@ -243,8 +247,8 @@ func (r *shopRepositoryImpl) getShopSalesWithinInterval(shopId int, timeframe st
 		Raw(`
 			WITH intervals AS (
 				SELECT generate_series(
-					`+start+`,
-					`+end+`,
+					`+start+` - interval '7 hours',
+					`+end+` - interval '7 hours',
 					interval '`+interval+`'
 				) AS label
 			)
