@@ -21,6 +21,7 @@ type ShopRepository interface {
 	UpdateShopAddressIdByUserId(tx *gorm.DB, userId int, addressId int) error
 	GetShopFinanceOverview(shopId int) (*dto.ShopFinanceOverviewResponse, error)
 	GetShopStats(shopId int) (*dto.GetShopStatsResponse, error)
+	GetShopInsight(shopId int, req dto.GetShopInsightRequest) (*dto.GetShopInsightResponse, error)
 }
 
 type shopRepositoryImpl struct {
@@ -172,4 +173,109 @@ func (r *shopRepositoryImpl) GetShopStats(shopId int) (*dto.GetShopStatsResponse
 	}
 
 	return &shopStats, nil
+}
+
+func (r *shopRepositoryImpl) GetShopInsight(shopId int, req dto.GetShopInsightRequest) (*dto.GetShopInsightResponse, error) {
+	var (
+		shopInsight dto.GetShopInsightResponse
+	)
+
+	row := r.db.Model(&model.Shop{}).
+		Select(`(
+				select count(sg.uuid) from shop_guests sg
+				where sg.shop_id = shops.id
+			) as visitor, 
+			(
+				select sum(p."view") from products p
+				where p.shop_id = shops.id
+			) as page_view, 
+			(
+				select count(ips.id) from invoice_per_shops ips
+				where ips.shop_id = shops.id and ips.status = ?
+			) as order
+		`, constant.TransactionStatusCompleted).
+		Where("shops.id = ?", shopId).
+		Row()
+	if row.Err() != nil {
+		if errors.Is(row.Err(), gorm.ErrRecordNotFound) {
+			return nil, errs.ErrShopNotFound
+		}
+
+		return nil, row.Err()
+	}
+
+	row.Scan(&shopInsight.Visitor, &shopInsight.PageView, &shopInsight.Order)
+
+	sales, err := r.getShopSalesWithinInterval(shopId, req.Timeframe)
+	if err != nil {
+		return nil, err
+	}
+
+	shopInsight.Sales = sales
+
+	return &shopInsight, nil
+}
+
+func (r *shopRepositoryImpl) getShopSalesWithinInterval(shopId int, timeframe string) ([]*dto.GetShopInsightSale, error) {
+	var (
+		shopInsightSale []*dto.GetShopInsightSale
+		interval        string
+		start           string
+		end             string
+		paymentDate     string
+	)
+
+	switch timeframe {
+	case dto.ShopInsightTimeframeDay:
+		interval = "2 hours"
+		start = "date_trunc('day', now())"
+		end = "date_trunc('day', now()) + interval '1 day'"
+		paymentDate = "date_trunc('hour', i.payment_date)"
+	case dto.ShopInsightTimeframeWeek:
+		interval = "1 day"
+		start = "date_trunc('week', now())"
+		end = "date_trunc('week', now()) + interval '1 week'"
+		paymentDate = "date_trunc('day', i.payment_date)"
+	case dto.ShopInsightTimeframeMonth:
+		interval = "1 week"
+		start = "date_trunc('month', now())"
+		end = "date_trunc('month', now()) + interval '1 month'"
+		paymentDate = "date_trunc('week', i.payment_date)"
+	}
+
+	err := r.db.Model(&model.Shop{}).
+		Raw(`
+			WITH intervals AS (
+				SELECT generate_series(
+					`+start+` - interval '7 hours',
+					`+end+` - interval '7 hours',
+					interval '`+interval+`'
+				) AS label
+			)
+			SELECT
+				count(data.id) AS value,
+				intervals.label
+			FROM
+				intervals
+			LEFT JOIN (
+				SELECT
+					ips.id,
+					`+paymentDate+` AS label
+				FROM
+					shops s
+					LEFT JOIN invoice_per_shops ips ON s.id = ips.shop_id
+					LEFT JOIN invoices i ON ips.invoice_id = i.id
+				WHERE
+					s.id = ? AND
+					i.payment_date >= `+start+` - interval '7 hours'
+			) AS data ON intervals.label <= data.label AND data.label < intervals.label + interval '`+interval+`'
+			GROUP BY intervals.label
+			ORDER BY intervals.label
+		`, shopId).
+		Scan(&shopInsightSale).Error
+	if err != nil {
+		return nil, err
+	}
+
+	return shopInsightSale, nil
 }
