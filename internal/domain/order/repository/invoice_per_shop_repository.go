@@ -388,9 +388,10 @@ func (r *invoicePerShopRepositoryImpl) GetShopOrder(shopId int, req *dto.Invoice
 
 func (r *invoicePerShopRepositoryImpl) UpdateStatusToDelivery(shopId int, orderId int, invoiceStatuses []*model.InvoiceStatus) error {
 	var status = "ON_DELIVERY"
+	var created = "CREATED"
 
 	err := r.db.Transaction(func(tx *gorm.DB) error {
-		if err := tx.Model(&model.InvoicePerShop{}).Where("shop_id = ? AND id = ?", shopId, orderId).Update("status = ?", status).Error; err != nil {
+		if err := tx.Model(&model.InvoicePerShop{}).Where("shop_id = ? AND id = ? AND status = ?", shopId, orderId, created).Update("status = ?", status).Error; err != nil {
 			if errors.Is(err, gorm.ErrRecordNotFound) {
 				return commonErr.ErrInvoiceNotFound
 			}
@@ -413,9 +414,10 @@ func (r *invoicePerShopRepositoryImpl) UpdateStatusToDelivery(shopId int, orderI
 
 func (r *invoicePerShopRepositoryImpl) UpdateStatusToCancelled(shopId int, orderId int, invoiceStatuses []*model.InvoiceStatus) error {
 	var status = "CANCELLED"
+	var created = "CREATED"
 
 	err := r.db.Transaction(func(tx *gorm.DB) error {
-		if err := tx.Model(&model.InvoicePerShop{}).Where("shop_id = ? AND id = ?", shopId, orderId).Update("status = ?", status).Error; err != nil {
+		if err := tx.Model(&model.InvoicePerShop{}).Where("shop_id = ? AND id = ? AND status = ?", shopId, orderId, created).Update("status = ?", status).Error; err != nil {
 			if errors.Is(err, gorm.ErrRecordNotFound) {
 				return commonErr.ErrInvoiceNotFound
 			}
