@@ -126,6 +126,8 @@ func NewRouter(cfg *RouterConfig) *gin.Engine {
 			product.GET("/:code/reviews/stats", cfg.ProductHandler.GetProductReviewStats)
 			product.GET("/recommendations/categories", cfg.ProductHandler.GetRecommendationByCategory)
 			product.GET("/autocompletes", cfg.ProductHandler.SearchAutocomplete)
+			product.POST("/views", cfg.ProductHandler.AddProductView)
+
 			category := product.Group("/categories")
 			{
 				category.GET("", cfg.ProductHandler.GetCategories)
@@ -140,11 +142,20 @@ func NewRouter(cfg *RouterConfig) *gin.Engine {
 		shop := v1.Group("/shops")
 		{
 			shop.GET("", cfg.ShopHandler.FindShopByKeyword)
-			shop.GET("/:slug", cfg.ShopHandler.FindShopBySlug)
-			shop.GET("/:slug/products", cfg.ProductHandler.GetProductsByShopSlug)
-			shop.GET("/:slug/vouchers", cfg.ShopHandler.GetShopVoucher)
+			visitor := shop.Group("/visitors")
+			{
+				visitor.POST("", cfg.ShopHandler.AddShopGuest)
+			}
+			slug := v1.Group("/:slug")
+			{
+				slug.GET("", cfg.ShopHandler.FindShopBySlug)
+				slug.GET("/products", cfg.ProductHandler.GetProductsByShopSlug)
+				slug.GET("/vouchers", cfg.ShopHandler.GetShopVoucher)
+			}
+
 			authenticated := shop.Group("", middleware.JWTAuthorization, cfg.UserHandler.GetSession)
 			{
+				authenticated.GET("/profile", cfg.ShopHandler.GetShopProfile)
 				authenticated.GET("/:slug/vouchers/valid", cfg.ShopHandler.GetValidShopVoucher)
 				authenticated.GET("/:slug/couriers", cfg.ShopHandler.GetMatchingCouriers)
 			}
@@ -212,6 +223,7 @@ func NewRouter(cfg *RouterConfig) *gin.Engine {
 				order := authenticated.Group("/orders")
 				{
 					order.GET("", cfg.OrderHandler.GetShopOrder)
+					order.GET("/:orderId", cfg.OrderHandler.GetInvoiceByShopIdAndOrderId)
 					order.PUT("/:orderId/delivery", cfg.OrderHandler.UpdateToDelivery)
 					order.PUT("/:orderId/cancel", cfg.OrderHandler.UpdateToCancelled)
 				}

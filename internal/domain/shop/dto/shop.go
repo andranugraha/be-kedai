@@ -1,5 +1,7 @@
 package dto
 
+import "kedai/backend/be-kedai/internal/domain/shop/model"
+
 type FindShopRequest struct {
 	Keyword string `form:"keyword"`
 	Page    int    `form:"page"`
@@ -73,5 +75,21 @@ const (
 func (req *GetShopInsightRequest) Validate() {
 	if req.Timeframe == "" {
 		req.Timeframe = ShopInsightTimeframeDay
+	}
+}
+
+type GetShopProfileResponse struct {
+	Name        string  `json:"name"`
+	LogoUrl     *string `json:"logoUrl,omitempty"`
+	BannerUrl   *string `json:"bannerUrl,omitempty"`
+	Description *string `json:"description,omitempty"`
+}
+
+func ComposeShopProfileFromModel(shop *model.Shop) *GetShopProfileResponse {
+	return &GetShopProfileResponse{
+		Name:        shop.Name,
+		LogoUrl:     shop.PhotoUrl,
+		BannerUrl:   shop.BannerUrl,
+		Description: shop.Description,
 	}
 }

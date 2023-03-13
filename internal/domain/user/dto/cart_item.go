@@ -67,6 +67,10 @@ type CartItemResponse struct {
 	OriginalPrice   float64                `json:"originalPrice"`
 	PromotionType   string                 `json:"promotionType"`
 	PromotionAmount float64                `json:"promotionAmount"`
+	Weight          float64                `json:"weight"`
+	Length          float64                `json:"length"`
+	Width           float64                `json:"width"`
+	Height          float64                `json:"height"`
 }
 
 func (r *GetCartItemsRequest) Validate() {
@@ -115,6 +119,10 @@ func (d *CartItemResponse) ToCartItemResponse(cartItem model.CartItem) {
 	d.OriginalPrice = cartItem.Sku.Price
 	d.Quantity = cartItem.Quantity
 	d.Stock = cartItem.Sku.Stock
+	d.Weight = cartItem.Sku.Product.Weight
+	d.Length = cartItem.Sku.Product.Length
+	d.Width = cartItem.Sku.Product.Width
+	d.Height = cartItem.Sku.Product.Height
 
 	if cartItem.Sku.Promotion != nil {
 		d.PromotionType = cartItem.Sku.Promotion.Type

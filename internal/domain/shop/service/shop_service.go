@@ -16,6 +16,7 @@ type ShopService interface {
 	GetShopFinanceOverview(userId int) (*dto.ShopFinanceOverviewResponse, error)
 	GetShopStats(userId int) (*dto.GetShopStatsResponse, error)
 	GetShopInsight(req dto.GetShopInsightRequest) (*dto.GetShopInsightResponse, error)
+	GetShopProfile(userId int) (*dto.GetShopProfileResponse, error)
 }
 
 type shopServiceImpl struct {
@@ -105,4 +106,13 @@ func (s *shopServiceImpl) GetShopInsight(req dto.GetShopInsightRequest) (*dto.Ge
 	}
 
 	return s.shopRepository.GetShopInsight(shop.ID, req)
+}
+
+func (s *shopServiceImpl) GetShopProfile(userId int) (*dto.GetShopProfileResponse, error) {
+	shop, err := s.shopRepository.FindShopByUserId(userId)
+	if err != nil {
+		return nil, err
+	}
+
+	return dto.ComposeShopProfileFromModel(shop), nil
 }
