@@ -566,7 +566,7 @@ func TestGetShopProfile(t *testing.T) {
 	}
 
 	type expected struct {
-		result *dto.GetShopProfileResponse
+		result *dto.ShopProfile
 		err    error
 	}
 
@@ -601,7 +601,7 @@ func TestGetShopProfile(t *testing.T) {
 				},
 			},
 			expected: expected{
-				result: &dto.GetShopProfileResponse{},
+				result: &dto.ShopProfile{},
 				err:    nil,
 			},
 		},

@@ -1,6 +1,9 @@
 package dto
 
-import "kedai/backend/be-kedai/internal/domain/shop/model"
+import (
+	"kedai/backend/be-kedai/internal/domain/shop/model"
+	"kedai/backend/be-kedai/internal/utils/strings"
+)
 
 type FindShopRequest struct {
 	Keyword string `form:"keyword"`
@@ -78,18 +81,28 @@ func (req *GetShopInsightRequest) Validate() {
 	}
 }
 
-type GetShopProfileResponse struct {
+type ShopProfile struct {
 	Name        string  `json:"name"`
 	LogoUrl     *string `json:"logoUrl,omitempty"`
 	BannerUrl   *string `json:"bannerUrl,omitempty"`
 	Description *string `json:"description,omitempty"`
 }
 
-func ComposeShopProfileFromModel(shop *model.Shop) *GetShopProfileResponse {
-	return &GetShopProfileResponse{
+func ComposeShopProfileFromModel(shop *model.Shop) *ShopProfile {
+	return &ShopProfile{
 		Name:        shop.Name,
 		LogoUrl:     shop.PhotoUrl,
 		BannerUrl:   shop.BannerUrl,
 		Description: shop.Description,
 	}
+}
+
+func (req *ShopProfile) ComposeToModel(shop *model.Shop) {
+	if shop.Name != req.Name {
+		shop.Slug = strings.GenerateSlug(req.Name)
+	}
+	shop.Name = req.Name
+	shop.PhotoUrl = req.LogoUrl
+	shop.BannerUrl = req.BannerUrl
+	shop.Description = req.Description
 }

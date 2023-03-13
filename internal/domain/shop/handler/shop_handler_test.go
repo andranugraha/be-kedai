@@ -593,14 +593,14 @@ func TestGetShopInsight(t *testing.T) {
 func TestGetShopProfile(t *testing.T) {
 	var (
 		userId = 1
-		shop   = &dto.GetShopProfileResponse{
+		shop   = &dto.ShopProfile{
 			Name: "shop name",
 		}
 	)
 
 	type input struct {
 		userId int
-		result *dto.GetShopProfileResponse
+		result *dto.ShopProfile
 		err    error
 	}
 

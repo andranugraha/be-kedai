@@ -11,6 +11,7 @@ import (
 	"math"
 
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 type ShopRepository interface {
@@ -22,6 +23,8 @@ type ShopRepository interface {
 	GetShopFinanceOverview(shopId int) (*dto.ShopFinanceOverviewResponse, error)
 	GetShopStats(shopId int) (*dto.GetShopStatsResponse, error)
 	GetShopInsight(shopId int, req dto.GetShopInsightRequest) (*dto.GetShopInsightResponse, error)
+	FindShopByUserIdForUpdate(userId int) (*model.Shop, error)
+	UpdateShop(shop *model.Shop) error
 }
 
 type shopRepositoryImpl struct {
@@ -278,4 +281,26 @@ func (r *shopRepositoryImpl) getShopSalesWithinInterval(shopId int, timeframe st
 	}
 
 	return shopInsightSale, nil
+}
+
+func (r *shopRepositoryImpl) FindShopByUserIdForUpdate(userId int) (*model.Shop, error) {
+	var shop model.Shop
+
+	err := r.db.Model(&model.Shop{}).
+		Clauses(clause.Locking{Strength: "UPDATE"}).
+		Where("user_id = ?", userId).
+		First(&shop).Error
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, errs.ErrShopNotFound
+		}
+
+		return nil, err
+	}
+
+	return &shop, nil
+}
+
+func (r *shopRepositoryImpl) UpdateShop(shop *model.Shop) error {
+	return r.db.Save(shop).Error
 }
