@@ -129,3 +129,28 @@ func (h *Handler) GetInvoiceByShopIdAndOrderId(c *gin.Context) {
 
 	response.Success(c, http.StatusOK, code.OK, "success", invoice)
 }
+
+func (h *Handler) GetShopOrder(c *gin.Context) {
+	var req dto.InvoicePerShopFilterRequest
+	err := c.ShouldBindQuery(&req)
+	if err != nil {
+		response.ErrorValidator(c, http.StatusBadRequest, err)
+		return
+	}
+
+	req.Validate()
+	userId := c.GetInt("userId")
+
+	result, err := h.invoicePerShopService.GetShopOrder(userId, &req)
+	if err != nil {
+		if errors.Is(err, errs.ErrShopNotFound) {
+			response.Error(c, http.StatusNotFound, code.SHOP_NOT_REGISTERED, err.Error())
+			return
+		}
+
+		response.Error(c, http.StatusInternalServerError, code.INTERNAL_SERVER_ERROR, err.Error())
+		return
+	}
+
+	response.Success(c, http.StatusOK, code.OK, "ok", result)
+}

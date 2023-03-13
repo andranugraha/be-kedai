@@ -17,6 +17,7 @@ type InvoicePerShopService interface {
 	GetInvoicesByUserIDAndCode(userID int, code string) (*dto.InvoicePerShopDetail, error)
 	WithdrawFromInvoice(invoicePerShopId int, userId int) error
 	GetInvoiceByUserIdAndId(userId int, id int) (*dto.InvoicePerShopDetail, error)
+	GetShopOrder(userId int, req *dto.InvoicePerShopFilterRequest) (*commonDto.PaginationResponse, error)
 }
 
 type invoicePerShopServiceImpl struct {
@@ -105,4 +106,24 @@ func (s *invoicePerShopServiceImpl) GetInvoiceByUserIdAndId(userId int, id int) 
 	}
 
 	return s.invoicePerShopRepo.GetByShopIdAndId(shop.ID, id)
+}
+
+func (s *invoicePerShopServiceImpl) GetShopOrder(userId int, req *dto.InvoicePerShopFilterRequest) (*commonDto.PaginationResponse, error) {
+	shop, err := s.shopService.FindShopByUserId(userId)
+	if err != nil {
+		return nil, err
+	}
+
+	result, rows, pages, err := s.invoicePerShopRepo.GetShopOrder(shop.ID, req)
+	if err != nil {
+		return nil, err
+	}
+
+	return &commonDto.PaginationResponse{
+		Limit:      req.Limit,
+		Page:       req.Page,
+		TotalRows:  rows,
+		TotalPages: pages,
+		Data:       result,
+	}, nil
 }
