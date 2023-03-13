@@ -832,3 +832,106 @@ func TestUpdateToDeliver(t *testing.T) {
 		})
 	}
 }
+
+func TestUpdateToCancelled(t *testing.T) {
+	var(
+		userId = 1
+		orderId = 1
+	)
+	type input struct {
+		userId int
+		orderId int
+		err error
+	}
+	type expected struct {
+		statusCode int
+		response response.Response
+	}
+	type cases struct {
+		description string
+		input
+		expected
+	}
+
+	for _, tc := range []cases{
+		{
+			description: "should return nil error with code 200 when success",
+			input: input{
+				userId: userId,
+				orderId: orderId,
+				err: nil,
+			},
+			expected: expected{
+				statusCode: http.StatusOK,
+				response: response.Response{
+					Code: code.OK,
+					Message: "ok",
+				},
+			},
+		},
+		{
+			description: "should return error with code 404 when shop not found",
+			input: input{
+				userId: userId,
+				orderId: orderId,
+				err: errs.ErrShopNotFound,
+			},
+			expected: expected{
+				statusCode: http.StatusNotFound,
+				response: response.Response{
+					Code: code.SHOP_NOT_REGISTERED,
+					Message: errs.ErrShopNotFound.Error(),
+				},
+			},
+		},
+		{
+			description: "should return error with code 404 when invoice not found",
+			input: input{
+				userId: 1,
+				orderId: 1,
+				err: errs.ErrInvoiceNotFound,
+			},
+			expected: expected{
+				statusCode: http.StatusNotFound,
+				response: response.Response{
+					Code: code.INVOICE_NOT_FOUND,
+					Message: errs.ErrInvoiceNotFound.Error(),
+				},
+			},
+		},
+		{
+			description: "should return error with code 500 when internal server error",
+			input: input{
+				userId: 1,
+				orderId: 1,
+				err: errs.ErrInternalServerError,
+			},
+			expected: expected{
+				statusCode: http.StatusInternalServerError,
+				response: response.Response{
+					Code: code.INTERNAL_SERVER_ERROR,
+					Message: errs.ErrInternalServerError.Error(),
+				},
+			},
+		},
+	} {
+		t.Run(tc.description, func(t *testing.T) {
+			expectedJson, _ := json.Marshal(tc.expected.response)
+			invoicePerShopService := mocks.NewInvoicePerShopService(t)
+			invoicePerShopService.On("UpdateStatusToCancelled", tc.input.userId, tc.input.orderId).Return(tc.input.err)
+			rec := httptest.NewRecorder()
+			c, _ := gin.CreateTestContext(rec)
+			c.Set("userId", userId)
+			c.AddParam("orderId", "1")
+			c.Request, _ = http.NewRequest(http.MethodGet, fmt.Sprintf("/sellers/orders/{%d}/cancel", tc.orderId), nil)
+			handler := handler.New(&handler.Config{
+				InvoicePerShopService: invoicePerShopService,
+			})
+
+			handler.UpdateToCancelled(c)
+
+			assert.Equal(t, tc.expected.statusCode, rec.Code)
+			assert.Equal(t, string(expectedJson), rec.Body.String())
+		})
+	}
+}
