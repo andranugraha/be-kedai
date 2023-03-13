@@ -213,6 +213,7 @@ func NewRouter(cfg *RouterConfig) *gin.Engine {
 				{
 					order.GET("", cfg.OrderHandler.GetShopOrder)
 					order.PUT("/:orderId/delivery", cfg.OrderHandler.UpdateToDelivery)
+					order.PUT("/:orderId/cancel", cfg.OrderHandler.UpdateToCancelled)
 				}
 			}
 		}
