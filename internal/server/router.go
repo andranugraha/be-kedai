@@ -212,6 +212,7 @@ func NewRouter(cfg *RouterConfig) *gin.Engine {
 				order := authenticated.Group("/orders")
 				{
 					order.GET("", cfg.OrderHandler.GetShopOrder)
+					order.PUT("/:orderId/delivery", cfg.OrderHandler.UpdateToDelivery)
 				}
 			}
 		}
