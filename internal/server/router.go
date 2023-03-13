@@ -155,6 +155,7 @@ func NewRouter(cfg *RouterConfig) *gin.Engine {
 
 			authenticated := shop.Group("", middleware.JWTAuthorization, cfg.UserHandler.GetSession)
 			{
+				authenticated.GET("/profile", cfg.ShopHandler.GetShopProfile)
 				authenticated.GET("/:slug/vouchers/valid", cfg.ShopHandler.GetValidShopVoucher)
 				authenticated.GET("/:slug/couriers", cfg.ShopHandler.GetMatchingCouriers)
 			}

@@ -4284,6 +4284,56 @@ paths:
                   message:
                     type: string
                     example: "error message"                  
+  /v1/shops/profile:
+    get:
+      security:
+        - BearerAuth: []
+      tags:
+        - Shop
+      summary: Get shop profile
+      description: Get shop name, logo, banner, and description
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: OK
+                  message:
+                    type: string
+                    example: success
+                  data:
+                    $ref: '#/components/schemas/GetShopProfileResponse'
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "SHOP_NOT_REGISTERED"
+                  message:
+                    type: string
+                    example: "shop not found"                     
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "INTERNAL_SERVER_ERROR"
+                  message:
+                    type: string
+                    example: "error message"                  
   /v1/users/sealabs-pays:
     get:
       security:
@@ -7179,6 +7229,17 @@ components:
               value:
                 type: integer
                 example: 12
+    GetShopProfileResponse:
+      type: object
+      properties:
+        name:
+          type: string
+        logoUrl:
+          type: string
+        bannerUrl:
+          type: string
+        description:
+          type: string
   requestBodies:
     WalletBody:
       required: true
