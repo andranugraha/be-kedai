@@ -11,6 +11,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 )
 
 func TestFindShopById(t *testing.T) {
@@ -616,6 +617,91 @@ func TestGetShopProfile(t *testing.T) {
 			result, err := service.GetShopProfile(tc.input.userId)
 
 			assert.Equal(t, tc.expected.result, result)
+			assert.ErrorIs(t, tc.expected.err, err)
+		})
+	}
+}
+
+func TestUpdateShopProfile(t *testing.T) {
+	var (
+		userId = 1
+		shopId = 1
+		req    = dto.ShopProfile{
+			Name: "shop name",
+		}
+	)
+	type input struct {
+		req        dto.ShopProfile
+		beforeTest func(*mocks.ShopRepository)
+	}
+
+	type expected struct {
+		result *dto.ShopProfile
+		err    error
+	}
+
+	type cases struct {
+		description string
+		input
+		expected
+	}
+
+	for _, tc := range []cases{
+		{
+			description: "should return error when shop not found",
+			input: input{
+				req: req,
+				beforeTest: func(sr *mocks.ShopRepository) {
+					sr.On("FindShopByUserId", userId).Return(nil, errs.ErrShopNotFound)
+				},
+			},
+			expected: expected{
+				result: nil,
+				err:    errs.ErrShopNotFound,
+			},
+		},
+		{
+			description: "should return error when UpdateShopProfile return error",
+			input: input{
+				req: req,
+				beforeTest: func(sr *mocks.ShopRepository) {
+					sr.On("FindShopByUserId", userId).Return(&model.Shop{
+						ID: shopId,
+					}, nil)
+					sr.On("UpdateShop", mock.Anything).Return(errs.ErrInternalServerError)
+				},
+			},
+			expected: expected{
+				result: nil,
+				err:    errs.ErrInternalServerError,
+			},
+		},
+		{
+			description: "should return shop profile when success",
+			input: input{
+				req: req,
+				beforeTest: func(sr *mocks.ShopRepository) {
+					sr.On("FindShopByUserId", userId).Return(&model.Shop{
+						ID: shopId,
+					}, nil)
+					sr.On("UpdateShop", mock.Anything).Return(nil)
+				},
+			},
+			expected: expected{
+				result: &dto.ShopProfile{},
+				err:    nil,
+			},
+		},
+	} {
+		t.Run(tc.description, func(t *testing.T) {
+			mockRepo := new(mocks.ShopRepository)
+			tc.beforeTest(mockRepo)
+			service := service.NewShopService(&service.ShopSConfig{
+				ShopRepository: mockRepo,
+			})
+
+			err := service.UpdateShopProfile(userId, tc.input.req)
+
 			assert.ErrorIs(t, tc.expected.err, err)
 		})
 	}

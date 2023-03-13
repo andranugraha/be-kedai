@@ -82,10 +82,10 @@ func (req *GetShopInsightRequest) Validate() {
 }
 
 type ShopProfile struct {
-	Name        string  `json:"name"`
-	LogoUrl     *string `json:"logoUrl,omitempty"`
-	BannerUrl   *string `json:"bannerUrl,omitempty"`
-	Description *string `json:"description,omitempty"`
+	Name        string  `json:"name" binding:"required"`
+	LogoUrl     *string `json:"logoUrl,omitempty" binding:"required"`
+	BannerUrl   *string `json:"bannerUrl,omitempty" binding:"required"`
+	Description *string `json:"description,omitempty" binding:"required"`
 }
 
 func ComposeShopProfileFromModel(shop *model.Shop) *ShopProfile {
