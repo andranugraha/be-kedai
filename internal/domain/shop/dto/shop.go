@@ -46,3 +46,26 @@ type GetShopStatsResponse struct {
 	Refund     int `json:"refund"`
 	OutOfStock int `json:"outOfStock"`
 }
+
+type GetShopInsightRequest struct {
+	Timeframe string `form:"timeframe"`
+	UserId    int
+}
+
+type GetShopInsightResponse struct {
+	Visitor  int                   `json:"visitor"`
+	PageView int                   `json:"pageView"`
+	Order    int                   `json:"order"`
+	Sales    []*GetShopInsightSale `json:"sales"`
+}
+
+type GetShopInsightSale struct {
+	Label string `json:"label"`
+	Value int    `json:"value"`
+}
+
+const (
+	ShopInsightTimeframeDay   = "day"
+	ShopInsightTimeframeWeek  = "week"
+	ShopInsightTimeframeMonth = "month"
+)
