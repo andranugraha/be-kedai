@@ -384,6 +384,9 @@ func (r *invoicePerShopRepositoryImpl) UpdateStatusToDelivery(shopId int, orderI
 
 	err := r.db.Transaction(func(tx *gorm.DB) error {
 		if err := tx.Model(&model.InvoicePerShop{}).Where("shop_id = ? AND id = ?", shopId, orderId).Update("status = ?", status).Error; err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				return commonErr.ErrInvoiceNotFound
+			}
 			return err
 		}
 
