@@ -140,9 +140,17 @@ func NewRouter(cfg *RouterConfig) *gin.Engine {
 		shop := v1.Group("/shops")
 		{
 			shop.GET("", cfg.ShopHandler.FindShopByKeyword)
-			shop.GET("/:slug", cfg.ShopHandler.FindShopBySlug)
-			shop.GET("/:slug/products", cfg.ProductHandler.GetProductsByShopSlug)
-			shop.GET("/:slug/vouchers", cfg.ShopHandler.GetShopVoucher)
+			visitor := shop.Group("/visitors")
+			{
+				visitor.POST("", cfg.ShopHandler.AddShopGuest)
+			}
+			slug := v1.Group("/:slug")
+			{
+				slug.GET("", cfg.ShopHandler.FindShopBySlug)
+				slug.GET("/products", cfg.ProductHandler.GetProductsByShopSlug)
+				slug.GET("/vouchers", cfg.ShopHandler.GetShopVoucher)
+			}
+
 			authenticated := shop.Group("", middleware.JWTAuthorization, cfg.UserHandler.GetSession)
 			{
 				authenticated.GET("/:slug/vouchers/valid", cfg.ShopHandler.GetValidShopVoucher)
