@@ -287,8 +287,8 @@ func (r *invoicePerShopRepositoryImpl) GetByShopIdAndId(shopId int, id int) (*dt
 		ELSE invoices.voucher_amount 
 		END AS marketplace_voucher_amount, 
 		invoices.voucher_type AS marketplace_voucher_type, 
-		invoices.payment_date AS payment_date`).
-		Joins("JOIN invoices ON invoices.id = invoice_per_shops.invoice_id", marketplaceModel.VoucherTypeShipping, marketplaceModel.VoucherTypeNominal).
+		invoices.payment_date AS payment_date`, marketplaceModel.VoucherTypeShipping, marketplaceModel.VoucherTypeNominal).
+		Joins("JOIN invoices ON invoices.id = invoice_per_shops.invoice_id").
 		Where("invoice_per_shops.shop_id = ?", shopId).
 		Where("invoice_per_shops.id = ?", id)
 
@@ -302,7 +302,13 @@ func (r *invoicePerShopRepositoryImpl) GetByShopIdAndId(shopId int, id int) (*dt
 			Joins("JOIN products ON skus.product_id = products.id")
 	}).
 		Preload("TransactionItems.Sku.Variants").
-		Preload("Shop")
+		Preload("Shop").
+		Preload("Address.Province").
+		Preload("Address.City").
+		Preload("Address.District").
+		Preload("Address.Subdistrict").
+		Preload("User").
+		Preload("CourierService.Courier")
 
 	err := query.First(&invoice).Error
 	if err != nil {
