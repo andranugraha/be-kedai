@@ -27,7 +27,7 @@ type InvoicePerShopRepository interface {
 	WithdrawFromInvoice(invoicePerShopId int, shopId int, walletId int) error
 	GetByShopIdAndId(shopId int, id int) (*dto.InvoicePerShopDetail, error)
 	GetShopOrder(shopId int, req *dto.InvoicePerShopFilterRequest) ([]*dto.InvoicePerShopDetail, int64, int, error)
-	UpdateStatusToDelivery(shopId int, orderId int) error
+	UpdateStatusToDelivery(shopId int, orderId int, invoiceStatuses []*model.InvoiceStatus) error
 }
 
 type invoicePerShopRepositoryImpl struct {
@@ -379,21 +379,15 @@ func (r *invoicePerShopRepositoryImpl) GetShopOrder(shopId int, req *dto.Invoice
 	return invoices, totalRows, totalPages, nil
 }
 
-func (r *invoicePerShopRepositoryImpl) UpdateStatusToDelivery(shopId int, orderId int) error {
-	var invoiceStatuses []*model.InvoiceStatus
+func (r *invoicePerShopRepositoryImpl) UpdateStatusToDelivery(shopId int, orderId int, invoiceStatuses []*model.InvoiceStatus) error {
+	var status = "ON_DELIVERY"
 
 	err := r.db.Transaction(func(tx *gorm.DB) error {
-
-		if err := tx.Model(&model.InvoicePerShop{}).Where("shop_id = ? AND id = ?", shopId, orderId).Update("status", "ON_DELIVERY").Error; err != nil {
+		if err := tx.Model(&model.InvoicePerShop{}).Where("shop_id = ? AND id = ?", shopId, orderId).Update("status = ?", status).Error; err != nil {
 			return err
 		}
 
-		invoiceStatuses = append(invoiceStatuses, &model.InvoiceStatus{
-			InvoicePerShopID: orderId,
-			Status: "ON_DELIVERY",
-		})
-
-		if err := r.invoiceStatusRepo.Create(tx, invoiceStatuses) ; err != nil {
+		if err := r.invoiceStatusRepo.Create(tx, invoiceStatuses); err != nil {
 			return err
 		}
 
