@@ -193,3 +193,13 @@ func (p *ProductSearchAutocomplete) Validate() {
 		p.Limit = 10
 	}
 }
+
+type AddProductViewRequest struct {
+	ProductID int `form:"productId" binding:"required"`
+}
+
+func (p *AddProductViewRequest) Validate() {
+	if p.ProductID < 1 {
+		p.ProductID = 0
+	}
+}

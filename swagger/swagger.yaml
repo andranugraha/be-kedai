@@ -3533,6 +3533,66 @@ paths:
                   message:
                     type: string
                     example: "error message"
+  /v1/products/views:
+    post:
+      tags:
+        - Product
+      summary: Add product views
+      description: Add product view using productId as request body
+      requestBody:
+        $ref: '#/components/requestBodies/AddProductViewRequestBody'
+      responses:
+        '201':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - type: object
+                    properties:
+                      code:
+                        example: 'OK'
+                      message:
+                        example: 'ok'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "BAD_REQUEST"
+                  message:
+                    type: string
+                    example: "error message"
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "NOT_FOUND"
+                  message:
+                    type: string
+                    example: "error message"            
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "INTERNAL_SERVER_ERROR"
+                  message:
+                    type: string
+                    example: "error message"                  
   /v1/products/autocompletes:
     get:
       tags:
@@ -3998,6 +4058,19 @@ paths:
                   message:
                     type: string
                     example: "error message"
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "NOT_FOUND"
+                  message:
+                    type: string
+                    example: "error message"                
         '500':
           description: Internal server error
           content:
@@ -7665,6 +7738,18 @@ components:
               shopId:
                 type: integer
                 example: 1
+    AddProductViewRequestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - productId
+            properties:
+              productId:
+                type: integer
+                example: 1            
     CompleteResetPinRequestBody:
       required: true
       content:

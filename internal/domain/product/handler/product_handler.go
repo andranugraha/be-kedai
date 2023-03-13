@@ -125,3 +125,24 @@ func (h *Handler) SearchAutocomplete(c *gin.Context) {
 
 	response.Success(c, http.StatusOK, code.OK, "ok", result)
 }
+
+func (h *Handler) AddProductView(c *gin.Context) {
+	var req dto.AddProductViewRequest
+	err := c.ShouldBindJSON(&req)
+	if err != nil {
+		response.ErrorValidator(c, http.StatusBadRequest, err)
+		return
+	}
+
+	err = h.productService.AddViewCount(req.ProductID)
+	if err != nil {
+		if errors.Is(err, errs.ErrProductDoesNotExist) {
+			response.Error(c, http.StatusNotFound, code.PRODUCT_NOT_EXISTS, err.Error())
+			return
+		}
+		response.Error(c, http.StatusInternalServerError, code.INTERNAL_SERVER_ERROR, err.Error())
+		return
+	}
+
+	response.Success(c, http.StatusOK, code.OK, "ok", nil)
+}
