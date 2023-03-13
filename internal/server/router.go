@@ -211,6 +211,7 @@ func NewRouter(cfg *RouterConfig) *gin.Engine {
 				order := authenticated.Group("/orders")
 				{
 					order.GET("", cfg.OrderHandler.GetShopOrder)
+					order.GET("/:orderId", cfg.OrderHandler.GetInvoiceByShopIdAndOrderId)
 				}
 			}
 		}
