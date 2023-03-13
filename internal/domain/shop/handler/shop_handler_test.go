@@ -369,7 +369,6 @@ func TestGetShopStats(t *testing.T) {
 			c.Set("userId", 1)
 
 			c.Request, _ = http.NewRequest("GET", "/v1/sellers/stats", nil)
-
 			handler.GetShopStats(c)
 
 			assert.Equal(t, tc.expected.statusCode, rec.Code)
@@ -465,8 +464,100 @@ func TestGetShopInsight(t *testing.T) {
 			c.Set("userId", 1)
 
 			c.Request, _ = http.NewRequest("GET", "/v1/sellers/insights", nil)
-
 			handler.GetShopInsights(c)
+
+			assert.Equal(t, tc.expected.statusCode, rec.Code)
+			assert.Equal(t, string(expectedBody), rec.Body.String())
+		})
+	}
+}
+
+func TestGetShopProfile(t *testing.T) {
+	var (
+		userId = 1
+		shop   = &dto.GetShopProfileResponse{
+			Name: "shop name",
+		}
+	)
+
+	type input struct {
+		userId int
+		result *dto.GetShopProfileResponse
+		err    error
+	}
+
+	type expected struct {
+		statusCode int
+		response   response.Response
+	}
+
+	type cases struct {
+		description string
+		input
+		expected
+	}
+
+	for _, tc := range []cases{
+		{
+			description: "should return shop profile with code 200 when success",
+			input: input{
+				userId: userId,
+				result: shop,
+				err:    nil,
+			},
+			expected: expected{
+				statusCode: http.StatusOK,
+				response: response.Response{
+					Code:    code.OK,
+					Message: "success",
+					Data:    shop,
+				},
+			},
+		},
+		{
+			description: "should return error with code 404 when shop not found",
+			input: input{
+				userId: userId,
+				result: nil,
+				err:    errs.ErrShopNotFound,
+			},
+			expected: expected{
+				statusCode: http.StatusNotFound,
+				response: response.Response{
+					Code:    code.SHOP_NOT_REGISTERED,
+					Message: errs.ErrShopNotFound.Error(),
+				},
+			},
+		},
+		{
+			description: "should return error with code 500 when internal server error",
+			input: input{
+				userId: userId,
+				result: nil,
+				err:    errs.ErrInternalServerError,
+			},
+			expected: expected{
+				statusCode: http.StatusInternalServerError,
+				response: response.Response{
+					Code:    code.INTERNAL_SERVER_ERROR,
+					Message: errs.ErrInternalServerError.Error(),
+				},
+			},
+		},
+	} {
+		t.Run(tc.description, func(t *testing.T) {
+			expectedBody, _ := json.Marshal(tc.expected.response)
+			rec := httptest.NewRecorder()
+			c, _ := gin.CreateTestContext(rec)
+			mockService := new(mocks.ShopService)
+			mockService.On("GetShopProfile", tc.input.userId).Return(tc.input.result, tc.input.err)
+			handler := handler.New(&handler.HandlerConfig{
+				ShopService: mockService,
+			})
+			c.Set("userId", 1)
+
+			c.Request, _ = http.NewRequest("GET", "/v1/shops/profile", nil)
+			handler.GetShopProfile(c)
 
 			assert.Equal(t, tc.expected.statusCode, rec.Code)
 			assert.Equal(t, string(expectedBody), rec.Body.String())
