@@ -18,6 +18,7 @@ type InvoicePerShopService interface {
 	WithdrawFromInvoice(invoicePerShopId int, userId int) error
 	GetInvoiceByUserIdAndId(userId int, id int) (*dto.InvoicePerShopDetail, error)
 	GetShopOrder(userId int, req *dto.InvoicePerShopFilterRequest) (*commonDto.PaginationResponse, error)
+	UpdateStatusToDelivery(userId int, orderId int) (error)
 }
 
 type invoicePerShopServiceImpl struct {
@@ -126,4 +127,26 @@ func (s *invoicePerShopServiceImpl) GetShopOrder(userId int, req *dto.InvoicePer
 		TotalPages: pages,
 		Data:       result,
 	}, nil
+}
+
+func (s *invoicePerShopServiceImpl) UpdateStatusToDelivery(userId int, orderId int) (error) {
+	shop, err := s.shopService.FindShopByUserId(userId)
+	if err != nil {
+		return err
+	}
+
+	var invoiceStatuses []*model.InvoiceStatus
+	var status = "ON_DELIVERY"
+
+	invoiceStatuses = append(invoiceStatuses, &model.InvoiceStatus{
+		InvoicePerShopID: orderId,
+		Status:           status,
+	})
+
+	err = s.invoicePerShopRepo.UpdateStatusToDelivery(shop.ID, orderId, invoiceStatuses)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
