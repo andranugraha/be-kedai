@@ -100,9 +100,15 @@ func createRouter() *gin.Engine {
 	courierRepo := shopRepoPackage.NewCourierRepository(&shopRepoPackage.CourierRConfig{
 		DB: db,
 	})
+
+	invoiceStatusRepo := orderRepoPackage.NewInvoiceStatusRepository(&orderRepoPackage.InvoiceStatusRConfig{
+		DB: db,
+	})
+
 	invoicePerShopRepo := orderRepoPackage.NewInvoicePerShopRepository(&orderRepoPackage.InvoicePerShopRConfig{
 		DB:         db,
 		WalletRepo: walletRepo,
+		InvoiceStatusRepo: invoiceStatusRepo,
 	})
 
 	shopRepo := shopRepoPackage.NewShopRepository(&shopRepoPackage.ShopRConfig{
@@ -288,9 +294,6 @@ func createRouter() *gin.Engine {
 		TransactionReviewService: transactionReviewService,
 	})
 
-	invoiceStatusRepo := orderRepoPackage.NewInvoiceStatusRepository(&orderRepoPackage.InvoiceStatusRConfig{
-		DB: db,
-	})
 	invoiceRepo := orderRepoPackage.NewInvoiceRepository(&orderRepoPackage.InvoiceRConfig{
 		DB:                db,
 		UserCartItemRepo:  userCartItemRepo,
