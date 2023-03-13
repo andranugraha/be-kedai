@@ -429,12 +429,12 @@ func TestGetShopStats(t *testing.T) {
 					sr.On("FindShopByUserId", userId).Return(&model.Shop{
 						ID: shopId,
 					}, nil)
-					sr.On("GetShopStats", shopId).Return(nil, errors.New("error"))
+					sr.On("GetShopStats", shopId).Return(nil, errs.ErrInternalServerError)
 				},
 			},
 			expected: expected{
 				result: nil,
-				err:    errors.New("error"),
+				err:    errs.ErrInternalServerError,
 			},
 		},
 		{
@@ -464,7 +464,93 @@ func TestGetShopStats(t *testing.T) {
 			result, err := service.GetShopStats(tc.input.userId)
 
 			assert.Equal(t, tc.expected.result, result)
-			assert.Equal(t, tc.expected.err, err)
+			assert.ErrorIs(t, tc.expected.err, err)
+		})
+	}
+}
+
+func TestGetShopInsight(t *testing.T) {
+	var (
+		userId = 1
+		shopId = 1
+		req    = dto.GetShopInsightRequest{
+			UserId: userId,
+		}
+	)
+	type input struct {
+		req        dto.GetShopInsightRequest
+		beforeTest func(*mocks.ShopRepository)
+	}
+
+	type expected struct {
+		result *dto.GetShopInsightResponse
+		err    error
+	}
+
+	type cases struct {
+		description string
+		input
+		expected
+	}
+
+	for _, tc := range []cases{
+		{
+			description: "should return error when shop not found",
+			input: input{
+				req: req,
+				beforeTest: func(sr *mocks.ShopRepository) {
+					sr.On("FindShopByUserId", userId).Return(nil, errs.ErrShopNotFound)
+				},
+			},
+			expected: expected{
+				result: nil,
+				err:    errs.ErrShopNotFound,
+			},
+		},
+		{
+			description: "should return error when GetShopInsight return error",
+			input: input{
+				req: req,
+				beforeTest: func(sr *mocks.ShopRepository) {
+					sr.On("FindShopByUserId", userId).Return(&model.Shop{
+						ID: shopId,
+					}, nil)
+					sr.On("GetShopInsight", shopId, req).Return(nil, errs.ErrInternalServerError)
+				},
+			},
+			expected: expected{
+				result: nil,
+				err:    errs.ErrInternalServerError,
+			},
+		},
+		{
+			description: "should return shop insight when success",
+			input: input{
+				req: req,
+				beforeTest: func(sr *mocks.ShopRepository) {
+					sr.On("FindShopByUserId", userId).Return(&model.Shop{
+						ID: shopId,
+					}, nil)
+					sr.On("GetShopInsight", shopId, req).Return(&dto.GetShopInsightResponse{}, nil)
+				},
+			},
+			expected: expected{
+				result: &dto.GetShopInsightResponse{},
+				err:    nil,
+			},
+		},
+	} {
+		t.Run(tc.description, func(t *testing.T) {
+			mockRepo := new(mocks.ShopRepository)
+			tc.beforeTest(mockRepo)
+			service := service.NewShopService(&service.ShopSConfig{
+				ShopRepository: mockRepo,
+			})
+
+			result, err := service.GetShopInsight(tc.input.req)
+
+			assert.Equal(t, tc.expected.result, result)
+			assert.ErrorIs(t, tc.expected.err, err)
 		})
 	}
 }
