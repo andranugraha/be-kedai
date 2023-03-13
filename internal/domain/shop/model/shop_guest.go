@@ -8,12 +8,12 @@ import (
 )
 
 type ShopGuest struct {
-	UUID   string
-	ShopId int
+	UUID   string `json:"uuid" gorm:"column:uuid;primaryKey"`
+	ShopId int    `json:"shopId"`
 
-	CreatedAt time.Time      `gorm:"column:created_at"`
-	UpdatedAt time.Time      `gorm:"column:updated_at"`
-	DeletedAt gorm.DeletedAt `gorm:"column:deleted_at"`
+	CreatedAt time.Time      `json:"-" gorm:"column:created_at"`
+	UpdatedAt time.Time      `json:"-" gorm:"column:updated_at"`
+	DeletedAt gorm.DeletedAt `json:"-" gorm:"column:deleted_at"`
 }
 
 func (ShopGuest) BeforeCreate(tx *gorm.DB) (err error) {
