@@ -13,6 +13,7 @@ type CourierService interface {
 	GetCourierByServiceIDAndShopID(courierID, shopID int) (*model.Courier, error)
 	GetCouriersByProductID(productID int) ([]*model.Courier, error)
 	GetMatchingCouriersByShopIDAndProductIDs(*dto.MatchingProductCourierRequest) ([]*model.Courier, error)
+	ToggleShopCourier(userId int, req dto.ToggleShopCourierRequest) (*dto.ToggleShopCourierResponse, error)
 }
 
 type courierServiceImpl struct {
@@ -65,4 +66,44 @@ func (s *courierServiceImpl) GetMatchingCouriersByShopIDAndProductIDs(req *dto.M
 	req.ShopID = shop.ID
 
 	return s.courierRepository.GetMatchingCouriersByShopIDAndProductIDs(req)
+}
+
+func (s *courierServiceImpl) ToggleShopCourier(userId int, req dto.ToggleShopCourierRequest) (*dto.ToggleShopCourierResponse, error) {
+	shop, err := s.shopService.FindShopByUserId(userId)
+	if err != nil {
+		return nil, err
+	}
+
+	courier, err := s.courierRepository.GetByID(req.CourierId)
+	if err != nil {
+		return nil, err
+	}
+
+	var (
+		shopCouriers []*model.ShopCourier
+		active       = true
+	)
+	for _, service := range courier.Services {
+		shopCouriers = append(shopCouriers, &model.ShopCourier{
+			ShopID:           shop.ID,
+			CourierServiceID: service.ID,
+			IsActive:         active,
+		})
+	}
+
+	err = s.courierRepository.ToggleShopCourier(shopCouriers)
+	if err != nil {
+		return nil, err
+	}
+
+	return &dto.ToggleShopCourierResponse{
+		CourierId: req.CourierId,
+		IsToggled: func() bool {
+			if len(shopCouriers) == 0 {
+				return false
+			}
+
+			return shopCouriers[0].IsActive
+		}(),
+	}, nil
 }

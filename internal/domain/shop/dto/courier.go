@@ -12,3 +12,12 @@ type MatchingProductCourierRequest struct {
 	Slug       string
 	ShopID     int
 }
+
+type ToggleShopCourierRequest struct {
+	CourierId int `json:"courierId" binding:"required"`
+}
+
+type ToggleShopCourierResponse struct {
+	CourierId int  `json:"courierId"`
+	IsToggled bool `json:"isActive"`
+}
