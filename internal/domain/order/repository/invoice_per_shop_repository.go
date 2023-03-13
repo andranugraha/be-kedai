@@ -27,6 +27,7 @@ type InvoicePerShopRepository interface {
 	WithdrawFromInvoice(invoicePerShopId int, shopId int, walletId int) error
 	GetByShopIdAndId(shopId int, id int) (*dto.InvoicePerShopDetail, error)
 	GetShopOrder(shopId int, req *dto.InvoicePerShopFilterRequest) ([]*dto.InvoicePerShopDetail, int64, int, error)
+	UpdateStatusToDelivery(shopId int, orderId int) error
 }
 
 type invoicePerShopRepositoryImpl struct {
@@ -373,4 +374,30 @@ func (r *invoicePerShopRepositoryImpl) GetShopOrder(shopId int, req *dto.Invoice
 	}
 
 	return invoices, totalRows, totalPages, nil
+}
+
+func (r *invoicePerShopRepositoryImpl) UpdateStatusToDelivery(shopId int, orderId int) error {
+	var invoiceStatus *model.InvoiceStatus
+
+	err := r.db.Transaction(func(tx *gorm.DB) error {
+
+		if err := tx.Model(&model.InvoicePerShop{}).Where("shop_id = ? AND id = ?", shopId, orderId).Update("status", "ON_DELIVERY").Error; err != nil {
+			return err
+		}
+
+		invoiceStatus.InvoicePerShopID = orderId
+		invoiceStatus.Status = "ON_DELIVERY"
+
+		if err := tx.Create(&invoiceStatus).Error; err != nil {
+			return err
+		}
+
+		return nil	
+	})
+
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
