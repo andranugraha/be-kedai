@@ -6773,6 +6773,26 @@ components:
           type: number
           format: float64
           example: 5000
+        weight:
+          type: number
+          format: float64
+          description: weight of product in grams (g))
+          example: 500
+        width:
+          type: number
+          format: float64
+          description: width in centimeters (cm)
+          example: 20
+        height:
+          type: number
+          format: float64
+          description: height in centimeters (cm)
+          example: 20
+        length:
+          type: number
+          format: float64
+          description: length in centimeters (cm)
+          example: 20  
     CartItemShopResponse:
       type: object
       properties: 
