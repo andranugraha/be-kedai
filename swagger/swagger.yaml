@@ -6891,6 +6891,12 @@ components:
         courierId:
           type: integer
           example: 1
+        minDuration:
+          type: integer
+          example: 86400
+        maxDuration:
+          type: integer
+          example: 172800
     ShopGuest:
       type: object
       properties:
