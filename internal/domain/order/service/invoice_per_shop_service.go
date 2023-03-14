@@ -21,7 +21,9 @@ type InvoicePerShopService interface {
 	GetShopOrder(userId int, req *dto.InvoicePerShopFilterRequest) (*commonDto.PaginationResponse, error)
 	UpdateStatusToDelivery(userId int, orderId int) error
 	UpdateStatusToCancelled(userId int, orderId int) error
+	UpdateStatusToReceived(userId int, orderId int) error
 	UpdateStatusCRONJob() error
+	AutoReceivedCRONJob() error
 }
 
 type invoicePerShopServiceImpl struct {
@@ -176,6 +178,32 @@ func (s *invoicePerShopServiceImpl) UpdateStatusToCancelled(userId int, orderId 
 	return nil
 }
 
+func (s *invoicePerShopServiceImpl) UpdateStatusToReceived(userId int, orderId int) error {
+	shop, err := s.shopService.FindShopByUserId(userId)
+	if err != nil {
+		return err
+	}
+
+	var invoiceStatuses []*model.InvoiceStatus
+	var status = constant.TransactionStatusReceived
+
+	invoiceStatuses = append(invoiceStatuses, &model.InvoiceStatus{
+		InvoicePerShopID: orderId,
+		Status:           status,
+	})
+
+	err = s.invoicePerShopRepo.UpdateStatusToReceived(shop.ID, orderId, invoiceStatuses)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func (s *invoicePerShopServiceImpl) UpdateStatusCRONJob() error {
 	return s.invoicePerShopRepo.UpdateStatusCRONJob()
+}
+
+func (s *invoicePerShopServiceImpl) AutoReceivedCRONJob() error {
+	return s.invoicePerShopRepo.AutoReceivedCRONJob()
 }
