@@ -84,6 +84,7 @@ func (h *Handler) WithdrawFromInvoice(c *gin.Context) {
 		return
 	}
 	req.Validate()
+
 	userId := c.GetInt("userId")
 
 	err = h.invoicePerShopService.WithdrawFromInvoice(req.OrderID, userId)

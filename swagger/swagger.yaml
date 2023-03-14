@@ -8162,8 +8162,11 @@ components:
               - orderId
             properties:
               orderId:
-                type: integer
-                example: 1
+                type: array
+                items:
+                  type: integer
+                example: [1, 2]  
+  
     AddShopVisitorRequestBody:
       required: true
       content:

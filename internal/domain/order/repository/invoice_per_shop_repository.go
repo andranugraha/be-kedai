@@ -24,7 +24,7 @@ type InvoicePerShopRepository interface {
 	GetByUserIDAndCode(userID int, code string) (*dto.InvoicePerShopDetail, error)
 	GetShopFinanceToRelease(shopID int) (float64, error)
 	GetByShopId(shopId int, req *dto.InvoicePerShopFilterRequest) ([]*dto.InvoicePerShopDetail, int64, int, error)
-	WithdrawFromInvoice(invoicePerShopId int, shopId int, walletId int) error
+	WithdrawFromInvoice(invoicePerShopIds []int, shopId int, walletId int) error
 	GetByShopIdAndId(shopId int, id int) (*dto.InvoicePerShopDetail, error)
 	GetShopOrder(shopId int, req *dto.InvoicePerShopFilterRequest) ([]*dto.InvoicePerShopDetail, int64, int, error)
 }
@@ -227,15 +227,15 @@ func (r *invoicePerShopRepositoryImpl) GetByShopId(shopId int, req *dto.InvoiceP
 	return invoices, totalRows, totalPages, nil
 }
 
-func (r *invoicePerShopRepositoryImpl) WithdrawFromInvoice(invoicePerShopId int, shopId int, walletId int) error {
-	var invoicePerShop model.InvoicePerShop
+func (r *invoicePerShopRepositoryImpl) WithdrawFromInvoice(invoicePerShopIds []int, shopId int, walletId int) error {
+	var invoicePerShops []model.InvoicePerShop
 
 	err := r.db.Transaction(func(trx *gorm.DB) error {
 
 		res := trx.
 			Clauses(clause.Returning{}).
-			Model(&invoicePerShop).
-			Where("id = ?", invoicePerShopId).
+			Model(&invoicePerShops).
+			Where("id in (?)", invoicePerShopIds).
 			Where("shop_id = ?", shopId).
 			Where("status = ?", constant.TransactionStatusCompleted).
 			Where("is_released != ?", true).
@@ -248,15 +248,17 @@ func (r *invoicePerShopRepositoryImpl) WithdrawFromInvoice(invoicePerShopId int,
 			return commonErr.ErrInvoiceNotFound
 		}
 
-		wh := userModel.WalletHistory{}
-		wh.Type = userModel.WalletHistoryTypeWithdrawal
-		wh.Amount = invoicePerShop.Total
-		wh.WalletId = walletId
+		var histories []*userModel.WalletHistory
 
-		_, err := r.walletRepo.TopUp(&wh, &userModel.Wallet{
-			ID: walletId,
-		})
+		for _, invoice := range invoicePerShops {
+			wh := userModel.WalletHistory{}
+			wh.Type = userModel.WalletHistoryTypeWithdrawal
+			wh.Amount = invoice.Total
+			wh.WalletId = walletId
+			histories = append(histories, &wh)
+		}
 
+		_, err := r.walletRepo.MultipleTopUp(histories, &userModel.Wallet{ID: walletId})
 		if err != nil {
 			return err
 		}

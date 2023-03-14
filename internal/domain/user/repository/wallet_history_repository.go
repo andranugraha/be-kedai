@@ -13,6 +13,7 @@ import (
 
 type WalletHistoryRepository interface {
 	Create(*gorm.DB, *model.WalletHistory) error
+	CreateMultiple(*gorm.DB, []*model.WalletHistory) error
 	GetHistoryDetailById(ref string, wallet *model.Wallet) (*model.WalletHistory, error)
 	GetWalletHistoryById(req dto.WalletHistoryRequest, id int) ([]*model.WalletHistory, int64, int, error)
 	GetShopFinanceReleased(shopId int) (*shopDto.ShopFinanceReleased, error)
@@ -93,4 +94,9 @@ func (r *walletHistoryRepoImpl) GetShopFinanceReleased(shopId int) (*shopDto.Sho
 	}
 
 	return shopFinanceReleased, nil
+}
+
+func (r *walletHistoryRepoImpl) CreateMultiple(tx *gorm.DB, histories []*model.WalletHistory) error {
+	err := tx.Create(&histories).Error
+	return err
 }
