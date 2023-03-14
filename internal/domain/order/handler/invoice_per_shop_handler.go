@@ -241,5 +241,6 @@ func (h *Handler) UpdateToCompleted(c *gin.Context) {
 func (h *Handler) UpdateCronJob(c *gin.Context) {
 	_ = h.invoicePerShopService.UpdateStatusCRONJob()
 	_ = h.invoicePerShopService.AutoReceivedCRONJob()
+	_ = h.invoicePerShopService.AutoCompletedCRONJob()
 	log.Println("SHIPPING CRON JOB")
 }
