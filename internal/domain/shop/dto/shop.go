@@ -38,3 +38,9 @@ func (req *FindShopRequest) Validate() {
 func (req *FindShopRequest) Offset() int {
 	return (req.Page - 1) * req.Limit
 }
+
+type CreateShopRequest struct {
+	Name       string `json:"string" binding:"required,min=5,max=30"`
+	AddressID  int    `json:"addressId" binding:"omitempty,gte=1"`
+	CourierIDs []int  `json:"courierIds" binding:"required,dive,gte=1"`
+}
