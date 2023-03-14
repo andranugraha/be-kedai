@@ -935,3 +935,19 @@ func TestUpdateToCancelled(t *testing.T) {
 		})
 	}
 }
+
+func TestUpdateCronJob(t *testing.T) {
+	t.Run("should return nothing when called whether its error or success", func(t *testing.T) {
+		mockService := new(mocks.InvoicePerShopService)
+		mockService.On("UpdateStatusCRONJob").Return(nil)
+		handler := handler.New(&handler.Config{
+			InvoicePerShopService: mockService,
+		})
+		rec := httptest.NewRecorder()
+		c, _ := gin.CreateTestContext(rec)
+
+		handler.UpdateCronJob(c)
+
+		mockService.AssertNumberOfCalls(t, "UpdateStatusCRONJob", 1)
+	})
+}

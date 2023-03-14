@@ -739,3 +739,17 @@ func TestUpdateStatusToCancelled(t *testing.T) {
 		})
 	}
 }
+
+func TestUpdateStatusCRONJob(t *testing.T) {
+	t.Run("should return number of calls when called", func(t *testing.T) {
+		mockRepo := new(mocks.InvoicePerShopRepository)
+		mockRepo.On("UpdateStatusCRONJob").Return(nil)
+		service := service.NewInvoicePerShopService(&service.InvoicePerShopSConfig{
+			InvoicePerShopRepo: mockRepo,
+		})
+		
+		service.UpdateStatusCRONJob()
+		
+		mockRepo.AssertNumberOfCalls(t, "UpdateStatusCRONJob", 1)
+	})
+}
