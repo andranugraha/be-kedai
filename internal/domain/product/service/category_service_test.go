@@ -1,6 +1,7 @@
 package service_test
 
 import (
+	"errors"
 	"kedai/backend/be-kedai/internal/common/dto"
 	errorResponse "kedai/backend/be-kedai/internal/common/error"
 	categoryDto "kedai/backend/be-kedai/internal/domain/product/dto"
@@ -95,6 +96,64 @@ func TestGetCategories(t *testing.T) {
 
 			assert.Equal(t, test.want, got)
 			assert.Equal(t, test.wantErr, err)
+		})
+	}
+}
+
+func TestGetCategoryLineAgesFromBottom(t *testing.T) {
+	type input struct {
+		categoryID int
+		mockData   []*model.Category
+		mockErr    error
+	}
+	type expected struct {
+		data []*model.Category
+		err  error
+	}
+
+	tests := []struct {
+		description string
+		input
+		expected
+	}{
+		{
+			description: "should return error when failed to get categories",
+			input: input{
+				categoryID: 1,
+				mockData:   nil,
+				mockErr:    errors.New("failed to get categories"),
+			},
+			expected: expected{
+				data: nil,
+				err:  errors.New("failed to get categories"),
+			},
+		},
+		{
+			description: "should return categories data when succeed to get categories",
+			input: input{
+				categoryID: 1,
+				mockData:   []*model.Category{},
+				mockErr:    nil,
+			},
+			expected: expected{
+				data: []*model.Category{},
+				err:  nil,
+			},
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.description, func(t *testing.T) {
+			categoryRepo := mocks.NewCategoryRepository(t)
+			categoryRepo.On("GetLineageFromBottom", tc.input.categoryID).Return(tc.input.mockData, tc.input.mockErr)
+			categoryService := service.NewCategoryService(&service.CategorySConfig{
+				CategoryRepo: categoryRepo,
+			})
+
+			data, err := categoryService.GetCategoryLineAgesFromBottom(tc.categoryID)
+
+			assert.Equal(t, tc.expected.data, data)
+			assert.Equal(t, tc.expected.err, err)
 		})
 	}
 }
