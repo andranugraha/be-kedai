@@ -46,10 +46,10 @@ func (req *FindShopRequest) Offset() int {
 }
 
 type CreateShopRequest struct {
-	Name       string `json:"string" binding:"required,min=5,max=30"`
-	AddressID  int    `json:"addressId" binding:"omitempty,gte=1"`
-	CourierIDs []int  `json:"courierIds" binding:"required,dive,gte=1"`
-	ImageUrl   string `json:"imageUrl" binding:"omitempty,url"`
+	Name       string  `json:"name" binding:"required,min=5,max=30"`
+	AddressID  int     `json:"addressId" binding:"omitempty,gte=1"`
+	CourierIDs []int   `json:"courierIds" binding:"required,dive,gte=1"`
+	PhotoUrl   *string `json:"photoUrl" binding:"omitempty,url"`
 }
 
 type GetShopStatsResponse struct {
