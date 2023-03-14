@@ -19,5 +19,5 @@ type ToggleShopCourierRequest struct {
 
 type ToggleShopCourierResponse struct {
 	CourierId int  `json:"courierId"`
-	IsToggled bool `json:"isActive"`
+	IsToggled bool `json:"isToggled"`
 }
