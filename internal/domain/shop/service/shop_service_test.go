@@ -9,6 +9,7 @@ import (
 	"kedai/backend/be-kedai/internal/domain/shop/service"
 	stringUtils "kedai/backend/be-kedai/internal/utils/strings"
 	"kedai/backend/be-kedai/mocks"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -854,7 +855,7 @@ func TestCreateShop(t *testing.T) {
 					AddressID:      AddressID,
 					CourierService: courierServices,
 					PhotoUrl:       &photoUrl,
-					Slug:           stringUtils.GenerateSlug(shopName),
+					Slug:           stringUtils.GenerateSlug(strings.ToLower(shopName)),
 				},
 				err: nil,
 			},

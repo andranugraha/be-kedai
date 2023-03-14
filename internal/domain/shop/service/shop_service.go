@@ -123,7 +123,7 @@ func (s *shopServiceImpl) CreateShop(userID int, request *dto.CreateShopRequest)
 	shop := model.Shop{
 		Name:           request.Name,
 		PhotoUrl:       request.PhotoUrl,
-		Slug:           stringUtils.GenerateSlug(request.Name),
+		Slug:           stringUtils.GenerateSlug(strings.ToLower(request.Name)),
 		CourierService: courierServices,
 		AddressID:      request.AddressID,
 		UserID:         userID,
