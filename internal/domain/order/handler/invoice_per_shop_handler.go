@@ -6,6 +6,7 @@ import (
 	errs "kedai/backend/be-kedai/internal/common/error"
 	"kedai/backend/be-kedai/internal/domain/order/dto"
 	"kedai/backend/be-kedai/internal/utils/response"
+	"log"
 	"net/http"
 	"strconv"
 
@@ -199,4 +200,9 @@ func (h *Handler) UpdateToCancelled(c *gin.Context) {
 	}
 
 	response.Success(c, http.StatusOK, code.OK, "ok", nil)
+}
+
+func (h *Handler) UpdateCronJob(c *gin.Context) {
+	_ = h.invoicePerShopService.UpdateStatusCRONJob()
+	log.Println("SHIPPING CRON JOB")
 }
