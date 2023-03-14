@@ -2,7 +2,8 @@ package dto
 
 import (
 	"kedai/backend/be-kedai/internal/domain/shop/model"
-	"kedai/backend/be-kedai/internal/utils/strings"
+	stringsUtil "kedai/backend/be-kedai/internal/utils/strings"
+	"strings"
 )
 
 type FindShopRequest struct {
@@ -98,10 +99,11 @@ func ComposeShopProfileFromModel(shop *model.Shop) *ShopProfile {
 }
 
 func (req *ShopProfile) ComposeToModel(shop *model.Shop) {
-	if shop.Name != req.Name {
-		shop.Slug = strings.GenerateSlug(req.Name)
+	shopName := strings.TrimSpace(req.Name)
+	if shop.Name != shopName {
+		shop.Slug = stringsUtil.GenerateSlug(shopName)
 	}
-	shop.Name = req.Name
+	shop.Name = shopName
 	shop.PhotoUrl = req.LogoUrl
 	shop.BannerUrl = req.BannerUrl
 	shop.Description = req.Description
