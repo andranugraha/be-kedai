@@ -96,7 +96,7 @@ func (s *userWishlistServiceImpl) RemoveUserWishlist(req *dto.UserWishlistReques
 		return err
 	}
 
-	product, err := s.productService.GetByID(req.ProductId)
+	product, err := s.productService.GetActiveByID(req.ProductId)
 	if err != nil {
 		return err
 	}
