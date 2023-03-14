@@ -179,6 +179,7 @@ func NewRouter(cfg *RouterConfig) *gin.Engine {
 					invoice.GET("", cfg.OrderHandler.GetInvoicePerShopsByUserID)
 					invoice.GET("/:code", cfg.OrderHandler.GetInvoiceByCode)
 					invoice.PUT("/:code/receive", cfg.OrderHandler.UpdateToReceived)
+					invoice.PUT("/:code/complete", cfg.OrderHandler.UpdateToCompleted)
 				}
 
 				transaction := authenticated.Group("/transactions")
