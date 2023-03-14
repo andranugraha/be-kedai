@@ -10,7 +10,6 @@ import (
 	shopUtils "kedai/backend/be-kedai/internal/utils/shop"
 	stringUtils "kedai/backend/be-kedai/internal/utils/strings"
 	"strings"
-	"time"
 )
 
 type ShopService interface {
@@ -124,7 +123,6 @@ func (s *shopServiceImpl) CreateShop(userID int, request *dto.CreateShopRequest)
 	shop := model.Shop{
 		Name:           request.Name,
 		PhotoUrl:       request.PhotoUrl,
-		JoinedDate:     time.Now(),
 		Slug:           stringUtils.GenerateSlug(request.Name),
 		CourierService: courierServices,
 		AddressID:      request.AddressID,

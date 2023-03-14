@@ -9,6 +9,7 @@ import (
 	"kedai/backend/be-kedai/internal/domain/shop/model"
 	userRepo "kedai/backend/be-kedai/internal/domain/user/repository"
 	"math"
+	"time"
 
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
@@ -307,6 +308,8 @@ func (r *shopRepositoryImpl) UpdateShop(shop *model.Shop) error {
 }
 
 func (r *shopRepositoryImpl) Create(shop *model.Shop) error {
+	shop.JoinedDate = time.Now()
+
 	res := r.db.Clauses(clause.OnConflict{DoNothing: true}).Create(shop)
 	if res.Error != nil {
 		return res.Error
