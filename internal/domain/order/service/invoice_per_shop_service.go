@@ -15,7 +15,7 @@ type InvoicePerShopService interface {
 	GetInvoicesByShopId(userId int, req *dto.InvoicePerShopFilterRequest) (*commonDto.PaginationResponse, error)
 	GetByID(id int) (*model.InvoicePerShop, error)
 	GetInvoicesByUserIDAndCode(userID int, code string) (*dto.InvoicePerShopDetail, error)
-	WithdrawFromInvoice(invoicePerShopId int, userId int) error
+	WithdrawFromInvoice(invoicePerShopIds []int, userId int) error
 	GetInvoiceByUserIdAndId(userId int, id int) (*dto.InvoicePerShopDetail, error)
 	GetShopOrder(userId int, req *dto.InvoicePerShopFilterRequest) (*commonDto.PaginationResponse, error)
 }
@@ -85,7 +85,7 @@ func (s *invoicePerShopServiceImpl) GetInvoicesByUserIDAndCode(userID int, code 
 	return s.invoicePerShopRepo.GetByUserIDAndCode(userID, decoded)
 }
 
-func (s *invoicePerShopServiceImpl) WithdrawFromInvoice(invoicePerShopId int, userId int) error {
+func (s *invoicePerShopServiceImpl) WithdrawFromInvoice(invoicePerShopIds []int, userId int) error {
 	shop, err := s.shopService.FindShopByUserId(userId)
 	if err != nil {
 		return err
@@ -96,7 +96,7 @@ func (s *invoicePerShopServiceImpl) WithdrawFromInvoice(invoicePerShopId int, us
 		return err
 	}
 
-	return s.invoicePerShopRepo.WithdrawFromInvoice(invoicePerShopId, shop.ID, wallet.ID)
+	return s.invoicePerShopRepo.WithdrawFromInvoice(invoicePerShopIds, shop.ID, wallet.ID)
 }
 
 func (s *invoicePerShopServiceImpl) GetInvoiceByUserIdAndId(userId int, id int) (*dto.InvoicePerShopDetail, error) {
