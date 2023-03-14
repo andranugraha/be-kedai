@@ -210,6 +210,7 @@ func NewRouter(cfg *RouterConfig) *gin.Engine {
 				courier := authenticated.Group("/couriers")
 				{
 					courier.GET("", cfg.ShopHandler.GetShipmentList)
+					courier.POST("", cfg.ShopHandler.ToggleShopCourier)
 				}
 
 				product := authenticated.Group("/products")
