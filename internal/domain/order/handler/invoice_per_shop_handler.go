@@ -204,5 +204,6 @@ func (h *Handler) UpdateToCancelled(c *gin.Context) {
 
 func (h *Handler) UpdateCronJob(c *gin.Context) {
 	_ = h.invoicePerShopService.UpdateStatusCRONJob()
+	_ = h.invoicePerShopService.AutoReceivedCRONJob()
 	log.Println("SHIPPING CRON JOB")
 }
