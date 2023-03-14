@@ -6,7 +6,6 @@ import (
 	"kedai/backend/be-kedai/internal/domain/product/model"
 	"kedai/backend/be-kedai/internal/domain/product/repository"
 	"kedai/backend/be-kedai/internal/domain/shop/service"
-	"strconv"
 	"strings"
 )
 
@@ -20,7 +19,7 @@ type ProductService interface {
 	SearchAutocomplete(req dto.ProductSearchAutocomplete) ([]*dto.ProductResponse, error)
 	GetSellerProductByCode(userID int, productCode string) (*dto.SellerProductDetail, error)
 	AddViewCount(id int) error
-	UpdateProductActivation(userID int, code string, request *dto.UpdateProductActiationRequest) error
+	UpdateProductActivation(userID int, code string, request *dto.UpdateProductActivationRequest) error
 }
 
 type productServiceImpl struct {
@@ -195,13 +194,11 @@ func (s *productServiceImpl) AddViewCount(id int) error {
 	return s.productRepository.AddViewCount(id)
 }
 
-func (s *productServiceImpl) UpdateProductActivation(userID int, code string, request *dto.UpdateProductActiationRequest) error {
+func (s *productServiceImpl) UpdateProductActivation(userID int, code string, request *dto.UpdateProductActivationRequest) error {
 	shop, err := s.shopService.FindShopByUserId(userID)
 	if err != nil {
 		return err
 	}
 
-	isActive, _ := strconv.ParseBool(request.IsActive)
-
-	return s.productRepository.UpdateActivation(shop.ID, code, isActive)
+	return s.productRepository.UpdateActivation(shop.ID, code, *request.IsActive)
 }

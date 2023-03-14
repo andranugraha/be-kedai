@@ -780,7 +780,7 @@ func TestUpdateProductActivation(t *testing.T) {
 	type input struct {
 		userID      int
 		productCode string
-		request     *dto.UpdateProductActiationRequest
+		request     *dto.UpdateProductActivationRequest
 		mockErr     error
 	}
 	type expected struct {
@@ -792,8 +792,8 @@ func TestUpdateProductActivation(t *testing.T) {
 		shopID      = 1
 		productCode = "product-code"
 		isActive    = false
-		request     = &dto.UpdateProductActiationRequest{
-			IsActive: "false",
+		request     = &dto.UpdateProductActivationRequest{
+			IsActive: &isActive,
 		}
 	)
 

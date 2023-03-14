@@ -210,6 +210,6 @@ func (p *AddProductViewRequest) Validate() {
 	}
 }
 
-type UpdateProductActiationRequest struct {
-	IsActive string `json:"isActive" binding:"required,boolean"`
+type UpdateProductActivationRequest struct {
+	IsActive *bool `json:"isActive" binding:"required"`
 }

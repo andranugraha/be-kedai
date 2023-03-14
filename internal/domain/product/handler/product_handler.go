@@ -171,7 +171,7 @@ func (h *Handler) AddProductView(c *gin.Context) {
 }
 
 func (h *Handler) UpdateProductActivation(c *gin.Context) {
-	var req dto.UpdateProductActiationRequest
+	var req dto.UpdateProductActivationRequest
 	err := c.ShouldBindJSON(&req)
 	if err != nil {
 		response.ErrorValidator(c, http.StatusBadRequest, err)

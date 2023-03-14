@@ -830,7 +830,7 @@ func TestXxx(t *testing.T) {
 	type input struct {
 		userID      int
 		productCode string
-		request     *dto.UpdateProductActiationRequest
+		request     *dto.UpdateProductActivationRequest
 	}
 	type expected struct {
 		statusCode int
@@ -840,8 +840,9 @@ func TestXxx(t *testing.T) {
 	var (
 		userID      = 1
 		productCode = "product-code"
-		request     = &dto.UpdateProductActiationRequest{
-			IsActive: "true",
+		isActive    = false
+		request     = &dto.UpdateProductActivationRequest{
+			IsActive: &isActive,
 		}
 	)
 
@@ -856,16 +857,14 @@ func TestXxx(t *testing.T) {
 			input: input{
 				userID:      userID,
 				productCode: productCode,
-				request: &dto.UpdateProductActiationRequest{
-					IsActive: "not-boolean",
-				},
+				request:     &dto.UpdateProductActivationRequest{},
 			},
 			beforeTest: func(ps *mocks.ProductService) {},
 			expected: expected{
 				statusCode: http.StatusBadRequest,
 				response: response.Response{
 					Code:    code.BAD_REQUEST,
-					Message: "IsActive must be either 'true' or 'false'",
+					Message: "IsActive is required",
 				},
 			},
 		},

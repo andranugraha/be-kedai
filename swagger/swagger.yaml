@@ -8192,9 +8192,8 @@ components:
               - isActive
             properties:
               isActive:
-                type: string
-                format: boolean
-                enum: ['true', 'false']
+                type: boolean
+                example: true
     CompleteResetPinRequestBody:
       required: true
       content:
