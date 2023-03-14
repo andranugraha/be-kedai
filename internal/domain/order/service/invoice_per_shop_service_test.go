@@ -747,9 +747,9 @@ func TestUpdateStatusCRONJob(t *testing.T) {
 		service := service.NewInvoicePerShopService(&service.InvoicePerShopSConfig{
 			InvoicePerShopRepo: mockRepo,
 		})
-		
+
 		service.UpdateStatusCRONJob()
-		
+
 		mockRepo.AssertNumberOfCalls(t, "UpdateStatusCRONJob", 1)
 	})
 }
