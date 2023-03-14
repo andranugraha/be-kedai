@@ -21,7 +21,7 @@ type InvoicePerShopService interface {
 	GetShopOrder(userId int, req *dto.InvoicePerShopFilterRequest) (*commonDto.PaginationResponse, error)
 	UpdateStatusToDelivery(userId int, orderId int) error
 	UpdateStatusToCancelled(userId int, orderId int) error
-	UpdateStatusToReceived(userId int, orderId int) error
+	UpdateStatusToReceived(userId int, orderCode string) error
 	UpdateStatusCRONJob() error
 	AutoReceivedCRONJob() error
 }
@@ -178,16 +178,22 @@ func (s *invoicePerShopServiceImpl) UpdateStatusToCancelled(userId int, orderId 
 	return nil
 }
 
-func (s *invoicePerShopServiceImpl) UpdateStatusToReceived(shopId int, orderId int) error {
+func (s *invoicePerShopServiceImpl) UpdateStatusToReceived(userId int, orderCode string) error {
+	decoded := strings.Replace(orderCode, "-", "/", -1)
+	order, err := s.invoicePerShopRepo.GetByUserIDAndCode(userId, decoded)
+	if err != nil {
+		return err
+	}
+	
 	var invoiceStatuses []*model.InvoiceStatus
 	var status = constant.TransactionStatusReceived
 
 	invoiceStatuses = append(invoiceStatuses, &model.InvoiceStatus{
-		InvoicePerShopID: orderId,
+		InvoicePerShopID: order.ID,
 		Status:           status,
 	})
 
-	err := s.invoicePerShopRepo.UpdateStatusToReceived(shopId, orderId, invoiceStatuses)
+	err = s.invoicePerShopRepo.UpdateStatusToReceived(order.ShopID, order.ID, invoiceStatuses)
 	if err != nil {
 		return err
 	}
