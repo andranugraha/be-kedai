@@ -820,7 +820,7 @@ func TestUpdateStatusToReceived(t *testing.T) {
 			})
 
 			err := service.UpdateStatusToReceived(tc.id, tc.code)
-			
+
 			assert.Equal(t, tc.err, err)
 		})
 	}
@@ -905,7 +905,7 @@ func TestUpdateStatusToCompleted(t *testing.T) {
 			})
 
 			err := service.UpdateStatusToCompleted(tc.id, tc.code)
-			
+
 			assert.Equal(t, tc.err, err)
 		})
 	}
@@ -936,5 +936,19 @@ func TestAutoReceivedCRONJob(t *testing.T) {
 		service.AutoReceivedCRONJob()
 
 		mockRepo.AssertNumberOfCalls(t, "AutoReceivedCRONJob", 1)
+	})
+}
+
+func TestAutoCompletedCRONJob(t *testing.T) {
+	t.Run("should return number of calls when called", func(t *testing.T) {
+		mockRepo := new(mocks.InvoicePerShopRepository)
+		mockRepo.On("AutoCompletedCRONJob").Return(nil)
+		service := service.NewInvoicePerShopService(&service.InvoicePerShopSConfig{
+			InvoicePerShopRepo: mockRepo,
+		})
+
+		service.AutoCompletedCRONJob()
+
+		mockRepo.AssertNumberOfCalls(t, "AutoCompletedCRONJob", 1)
 	})
 }

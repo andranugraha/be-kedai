@@ -1117,6 +1117,7 @@ func TestUpdateCronJob(t *testing.T) {
 		mockService := new(mocks.InvoicePerShopService)
 		mockService.On("UpdateStatusCRONJob").Return(nil)
 		mockService.On("AutoReceivedCRONJob").Return(nil)
+		mockService.On("AutoCompletedCRONJob").Return(nil)
 		handler := handler.New(&handler.Config{
 			InvoicePerShopService: mockService,
 		})
@@ -1127,5 +1128,6 @@ func TestUpdateCronJob(t *testing.T) {
 
 		mockService.AssertNumberOfCalls(t, "UpdateStatusCRONJob", 1)
 		mockService.AssertNumberOfCalls(t, "AutoReceivedCRONJob", 1)
+		mockService.AssertNumberOfCalls(t, "AutoCompletedCRONJob", 1)
 	})
 }
