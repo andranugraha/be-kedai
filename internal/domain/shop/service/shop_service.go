@@ -1,11 +1,16 @@
 package service
 
 import (
+	"errors"
 	commonDto "kedai/backend/be-kedai/internal/common/dto"
+	commonError "kedai/backend/be-kedai/internal/common/error"
 	"kedai/backend/be-kedai/internal/domain/shop/dto"
 	"kedai/backend/be-kedai/internal/domain/shop/model"
 	"kedai/backend/be-kedai/internal/domain/shop/repository"
+	shopUtils "kedai/backend/be-kedai/internal/utils/shop"
+	stringUtils "kedai/backend/be-kedai/internal/utils/strings"
 	"strings"
+	"time"
 )
 
 type ShopService interface {
@@ -96,7 +101,40 @@ func (s *shopServiceImpl) GetShopFinanceOverview(userId int) (*dto.ShopFinanceOv
 }
 
 func (s *shopServiceImpl) CreateShop(userID int, request *dto.CreateShopRequest) (*model.Shop, error) {
-	var shop model.Shop
+	previousShop, err := s.FindShopByUserId(userID)
+	if err != nil && !errors.Is(err, commonError.ErrShopNotFound) {
+		return nil, err
+	}
+
+	if previousShop != nil {
+		return nil, commonError.ErrUserHasShop
+	}
+
+	request.Name = strings.Trim(request.Name, " ")
+
+	if isShopNameValid := shopUtils.ValidateShopName(request.Name); !isShopNameValid {
+		return nil, commonError.ErrInvalidShopName
+	}
+
+	courierServices, err := s.courierServiceService.GetCourierServicesByCourierIDs(request.CourierIDs)
+	if err != nil {
+		return nil, err
+	}
+
+	shop := model.Shop{
+		Name:           request.Name,
+		PhotoUrl:       request.PhotoUrl,
+		JoinedDate:     time.Now(),
+		Slug:           stringUtils.GenerateSlug(request.Name),
+		CourierService: courierServices,
+		AddressID:      request.AddressID,
+		UserID:         userID,
+	}
+
+	err = s.shopRepository.Create(&shop)
+	if err != nil {
+		return nil, err
+	}
 
 	return &shop, nil
 }
