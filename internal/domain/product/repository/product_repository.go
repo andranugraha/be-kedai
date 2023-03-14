@@ -14,6 +14,7 @@ import (
 
 type ProductRepository interface {
 	GetByID(ID int) (*model.Product, error)
+	GetActiveByID(ID int) (*model.Product, error)
 	GetByCode(code string) (*dto.ProductDetail, error)
 	GetByShopID(shopID int, request *dto.ShopProductFilterRequest) ([]*dto.ProductDetail, int64, int, error)
 	GetRecommendationByCategory(productId int, categoryId int) ([]*dto.ProductResponse, error)
@@ -42,6 +43,23 @@ func (r *productRepositoryImpl) GetByID(ID int) (*model.Product, error) {
 	var product model.Product
 
 	err := r.db.Where("id = ?", ID).First(&product).Error
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, errs.ErrProductDoesNotExist
+		}
+
+		return nil, err
+	}
+
+	return &product, err
+}
+
+func (r *productRepositoryImpl) GetActiveByID(ID int) (*model.Product, error) {
+	var (
+		product model.Product
+		active  = true
+	)
+	err := r.db.Where("is_active = ?", active).First(&product, ID).Error
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, errs.ErrProductDoesNotExist
