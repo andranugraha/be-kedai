@@ -392,7 +392,7 @@ func TestGetInvoiceByUserIdAndId(t *testing.T) {
 func TestWithdrawFromInvoice(t *testing.T) {
 	type input struct {
 		userID     int
-		id         int
+		id         []int
 		beforeTest func(*mocks.InvoicePerShopRepository, *mocks.ShopService, *mocks.WalletService)
 	}
 	type expected struct {
@@ -409,7 +409,7 @@ func TestWithdrawFromInvoice(t *testing.T) {
 			description: "should return error when FindShopByUserId failed",
 			input: input{
 				userID: 1,
-				id:     1,
+				id:     []int{1},
 				beforeTest: func(ipsr *mocks.InvoicePerShopRepository, ss *mocks.ShopService, ws *mocks.WalletService) {
 					ss.On("FindShopByUserId", 1).Return(nil, errors.New("failed to get shop"))
 				},
@@ -423,7 +423,7 @@ func TestWithdrawFromInvoice(t *testing.T) {
 			description: "should return error when GetWalletByUserID failed",
 			input: input{
 				userID: 1,
-				id:     1,
+				id:     []int{1},
 				beforeTest: func(ipsr *mocks.InvoicePerShopRepository, ss *mocks.ShopService, ws *mocks.WalletService) {
 					ss.On("FindShopByUserId", 1).Return(&shopModel.Shop{ID: 1}, nil)
 					ws.On("GetWalletByUserID", 1).Return(nil, errors.New("failed to get wallet"))
@@ -438,11 +438,11 @@ func TestWithdrawFromInvoice(t *testing.T) {
 			description: "should return error when WithdrawFromInvoice failed",
 			input: input{
 				userID: 1,
-				id:     1,
+				id:     []int{1},
 				beforeTest: func(ipsr *mocks.InvoicePerShopRepository, ss *mocks.ShopService, ws *mocks.WalletService) {
 					ss.On("FindShopByUserId", 1).Return(&shopModel.Shop{ID: 1}, nil)
 					ws.On("GetWalletByUserID", 1).Return(&walletModel.Wallet{ID: 1}, nil)
-					ipsr.On("WithdrawFromInvoice", 1, 1, 1).Return(errors.New("failed to get invoice"))
+					ipsr.On("WithdrawFromInvoice", []int{1}, 1, 1).Return(errors.New("failed to get invoice"))
 				},
 			},
 			expected: expected{
@@ -473,7 +473,7 @@ func TestWithdrawFromInvoice(t *testing.T) {
 }
 
 func TestGetShopOrder(t *testing.T) {
-	var(
+	var (
 		shop = &shopModel.Shop{
 			ID: 1,
 		}

@@ -455,7 +455,7 @@ func TestGetInvoiceByShopIdAndOrderId(t *testing.T) {
 func TestWithdrawFromInvoice(t *testing.T) {
 	var (
 		userId  = 1
-		orderId = 1
+		orderId = []int{1}
 	)
 	type input struct {
 		req        dto.WithdrawInvoiceRequest
@@ -497,7 +497,7 @@ func TestWithdrawFromInvoice(t *testing.T) {
 				},
 				err: errs.ErrInvoiceNotFound,
 				beforeTest: func(ipss *mocks.InvoicePerShopService) {
-					ipss.On("WithdrawFromInvoice", userId, orderId).Return(errs.ErrInvoiceNotFound)
+					ipss.On("WithdrawFromInvoice", orderId, userId).Return(errs.ErrInvoiceNotFound)
 				},
 			},
 			expected: expected{
@@ -516,7 +516,7 @@ func TestWithdrawFromInvoice(t *testing.T) {
 				},
 				err: errs.ErrShopNotFound,
 				beforeTest: func(ipss *mocks.InvoicePerShopService) {
-					ipss.On("WithdrawFromInvoice", userId, orderId).Return(errs.ErrShopNotFound)
+					ipss.On("WithdrawFromInvoice", orderId, userId).Return(errs.ErrShopNotFound)
 				},
 			},
 			expected: expected{
@@ -535,7 +535,7 @@ func TestWithdrawFromInvoice(t *testing.T) {
 				},
 				err: errs.ErrWalletDoesNotExist,
 				beforeTest: func(ipss *mocks.InvoicePerShopService) {
-					ipss.On("WithdrawFromInvoice", userId, orderId).Return(errs.ErrWalletDoesNotExist)
+					ipss.On("WithdrawFromInvoice", orderId, userId).Return(errs.ErrWalletDoesNotExist)
 				},
 			},
 			expected: expected{
@@ -554,7 +554,7 @@ func TestWithdrawFromInvoice(t *testing.T) {
 				},
 				err: errs.ErrInternalServerError,
 				beforeTest: func(ipss *mocks.InvoicePerShopService) {
-					ipss.On("WithdrawFromInvoice", userId, orderId).Return(errs.ErrInternalServerError)
+					ipss.On("WithdrawFromInvoice", orderId, userId).Return(errs.ErrInternalServerError)
 				},
 			},
 			expected: expected{
@@ -573,7 +573,7 @@ func TestWithdrawFromInvoice(t *testing.T) {
 				},
 				err: nil,
 				beforeTest: func(ipss *mocks.InvoicePerShopService) {
-					ipss.On("WithdrawFromInvoice", userId, orderId).Return(nil)
+					ipss.On("WithdrawFromInvoice", orderId, userId).Return(nil)
 				},
 			},
 			expected: expected{
