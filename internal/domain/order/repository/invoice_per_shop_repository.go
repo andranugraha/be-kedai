@@ -451,7 +451,6 @@ func (r *invoicePerShopRepositoryImpl) UpdateStatusToCancelled(shopId int, order
 	return nil
 }
 
-
 func (r *invoicePerShopRepositoryImpl) UpdateStatusToReceived(shopId int, orderId int, invoiceStatuses []*model.InvoiceStatus) error {
 	err := r.db.Transaction(func(tx *gorm.DB) error {
 		if err := tx.Model(&model.InvoicePerShop{}).Where("shop_id = ? AND id = ? AND status = ?", shopId, orderId, constant.TransactionStatusDelivered).Update("status", constant.TransactionStatusReceived).Error; err != nil {
