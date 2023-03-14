@@ -826,6 +826,91 @@ func TestUpdateStatusToReceived(t *testing.T) {
 	}
 }
 
+func TestUpdateStatusToCompleted(t *testing.T) {
+	var (
+		orderCode = "code"
+		order     = &dto.InvoicePerShopDetail{
+			InvoicePerShop: model.InvoicePerShop{ID: 1, ShopID: 1},
+		}
+		userId        = 1
+		invoiceStatus = []*model.InvoiceStatus{
+			{
+				InvoicePerShopID: order.ID,
+				Status:           constant.TransactionStatusCompleted,
+			},
+		}
+	)
+	type input struct {
+		id         int
+		code       string
+		beforeTest func(*mocks.InvoicePerShopRepository)
+	}
+	type expected struct {
+		err error
+	}
+	type cases struct {
+		description string
+		input
+		expected
+	}
+
+	for _, tc := range []cases{
+		{
+			description: "should return nil error when success",
+			input: input{
+				id:   userId,
+				code: orderCode,
+				beforeTest: func(ipsr *mocks.InvoicePerShopRepository) {
+					ipsr.On("GetByUserIDAndCode", userId, orderCode).Return(order, nil)
+					ipsr.On("UpdateStatusToCompleted", order.ShopID, order.ID, invoiceStatus).Return(nil)
+				},
+			},
+			expected: expected{
+				err: nil,
+			},
+		},
+		{
+			description: "should return error when invoice not found",
+			input: input{
+				id:   userId,
+				code: orderCode,
+				beforeTest: func(ipsr *mocks.InvoicePerShopRepository) {
+					ipsr.On("GetByUserIDAndCode", userId, orderCode).Return(nil, commonErr.ErrInvoiceNotFound)
+				},
+			},
+			expected: expected{
+				err: commonErr.ErrInvoiceNotFound,
+			},
+		},
+		{
+			description: "should return error when internal server error",
+			input: input{
+				id:   userId,
+				code: orderCode,
+				beforeTest: func(ipsr *mocks.InvoicePerShopRepository) {
+					ipsr.On("GetByUserIDAndCode", userId, orderCode).Return(order, nil)
+					ipsr.On("UpdateStatusToCompleted", order.ShopID, order.ID, invoiceStatus).Return(commonErr.ErrInternalServerError)
+				},
+			},
+			expected: expected{
+				err: commonErr.ErrInternalServerError,
+			},
+		},
+	} {
+		t.Run(tc.description, func(t *testing.T) {
+			mockRepo := new(mocks.InvoicePerShopRepository)
+			tc.beforeTest(mockRepo)
+			service := service.NewInvoicePerShopService(&service.InvoicePerShopSConfig{
+				InvoicePerShopRepo: mockRepo,
+			})
+
+			err := service.UpdateStatusToCompleted(tc.id, tc.code)
+			
+			assert.Equal(t, tc.err, err)
+		})
+	}
+}
+
 func TestUpdateStatusCRONJob(t *testing.T) {
 	t.Run("should return number of calls when called", func(t *testing.T) {
 		mockRepo := new(mocks.InvoicePerShopRepository)
