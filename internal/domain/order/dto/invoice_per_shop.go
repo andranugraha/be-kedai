@@ -69,11 +69,11 @@ func (d *InvoicePerShopFilterRequest) Offset() int {
 }
 
 type WithdrawInvoiceRequest struct {
-	OrderID int `json:"orderId" binding:"required"`
+	OrderID []int `json:"orderId" binding:"required,min=1"`
 }
 
 func (d *WithdrawInvoiceRequest) Validate() {
-	if d.OrderID < 1 {
-		d.OrderID = 0
+	if len(d.OrderID) == 0 {
+		d.OrderID = []int{}
 	}
 }
