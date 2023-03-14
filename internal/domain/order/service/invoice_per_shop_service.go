@@ -22,6 +22,7 @@ type InvoicePerShopService interface {
 	UpdateStatusToDelivery(userId int, orderId int) error
 	UpdateStatusToCancelled(userId int, orderId int) error
 	UpdateStatusToReceived(userId int, orderCode string) error
+	UpdateStatusToCompleted(userId int, orderCode string) error
 	UpdateStatusCRONJob() error
 	AutoReceivedCRONJob() error
 }
@@ -194,6 +195,29 @@ func (s *invoicePerShopServiceImpl) UpdateStatusToReceived(userId int, orderCode
 	})
 
 	err = s.invoicePerShopRepo.UpdateStatusToReceived(order.ShopID, order.ID, invoiceStatuses)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (s *invoicePerShopServiceImpl) UpdateStatusToCompleted(userId int, orderCode string) error {
+	decoded := strings.Replace(orderCode, "-", "/", -1)
+	order, err := s.invoicePerShopRepo.GetByUserIDAndCode(userId, decoded)
+	if err != nil {
+		return err
+	}
+	
+	var invoiceStatuses []*model.InvoiceStatus
+	var status = constant.TransactionStatusCompleted
+
+	invoiceStatuses = append(invoiceStatuses, &model.InvoiceStatus{
+		InvoicePerShopID: order.ID,
+		Status:           status,
+	})
+
+	err = s.invoicePerShopRepo.UpdateStatusToCompleted(order.ShopID, order.ID, invoiceStatuses)
 	if err != nil {
 		return err
 	}
