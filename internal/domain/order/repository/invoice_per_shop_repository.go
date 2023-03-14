@@ -512,7 +512,7 @@ func (r *invoicePerShopRepositoryImpl) AutoReceivedCRONJob() error {
 	now := time.Now()
 	duration := now.Add(constant.OneDayDuration * time.Hour)
 
-	if err := r.db.Select("invoice_statuses.invoice_per_shop_id").Joins("JOIN invoice_per_shops ip ON ip.id = invoice_statuses.invoice_per_shop_id AND invoice_statuses.status = ?", constant.TransactionStatusOnDelivery).Where("ip.status = ?", constant.TransactionStatusOnDelivery).Find(&invoiceStatuses).Error; err != nil {
+	if err := r.db.Select("invoice_statuses.invoice_per_shop_id").Joins("JOIN invoice_per_shops ip ON ip.id = invoice_statuses.invoice_per_shop_id AND invoice_statuses.status = ?", constant.TransactionStatusDelivered).Where("ip.status = ?", constant.TransactionStatusDelivered).Find(&invoiceStatuses).Error; err != nil {
 		return err
 	}
 
@@ -521,7 +521,7 @@ func (r *invoicePerShopRepositoryImpl) AutoReceivedCRONJob() error {
 	}
 
 	err := r.db.Transaction(func(tx *gorm.DB) error {
-		if err := tx.Model(&model.InvoicePerShop{}).Where("status = ? AND (arrival_date + ?) < ?", constant.TransactionStatusOnDelivery, duration, now).Update("status", constant.TransactionStatusDelivered).Error; err != nil {
+		if err := tx.Model(&model.InvoicePerShop{}).Where("status = ? AND (arrival_date + ?) < ?", constant.TransactionStatusDelivered, duration, now).Update("status", constant.TransactionStatusReceived).Error; err != nil {
 			if errors.Is(err, gorm.ErrRecordNotFound) {
 				return commonErr.ErrInvoiceNotFound
 			}
