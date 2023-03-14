@@ -9,6 +9,7 @@ import (
 )
 
 type ShopService interface {
+	CreateShop(userID int, request *dto.CreateShopRequest) (*model.Shop, error)
 	FindShopById(id int) (*model.Shop, error)
 	FindShopByUserId(userId int) (*model.Shop, error)
 	FindShopBySlug(slug string) (*model.Shop, error)
@@ -17,16 +18,19 @@ type ShopService interface {
 }
 
 type shopServiceImpl struct {
-	shopRepository repository.ShopRepository
+	shopRepository        repository.ShopRepository
+	courierServiceService CourierServiceService
 }
 
 type ShopSConfig struct {
-	ShopRepository repository.ShopRepository
+	ShopRepository        repository.ShopRepository
+	CourierServiceService CourierServiceService
 }
 
 func NewShopService(cfg *ShopSConfig) ShopService {
 	return &shopServiceImpl{
-		shopRepository: cfg.ShopRepository,
+		shopRepository:        cfg.ShopRepository,
+		courierServiceService: cfg.CourierServiceService,
 	}
 }
 
@@ -85,4 +89,10 @@ func (s *shopServiceImpl) GetShopFinanceOverview(userId int) (*dto.ShopFinanceOv
 	}
 
 	return shopFinanceOverview, nil
+}
+
+func (s *shopServiceImpl) CreateShop(userID int, request *dto.CreateShopRequest) (*model.Shop, error) {
+	var shop model.Shop
+
+	return &shop, nil
 }
