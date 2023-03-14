@@ -825,3 +825,142 @@ func TestAddProductView(t *testing.T) {
 	}
 
 }
+
+func TestXxx(t *testing.T) {
+	type input struct {
+		userID      int
+		productCode string
+		request     *dto.UpdateProductActivationRequest
+	}
+	type expected struct {
+		statusCode int
+		response   response.Response
+	}
+
+	var (
+		userID      = 1
+		productCode = "product-code"
+		isActive    = false
+		request     = &dto.UpdateProductActivationRequest{
+			IsActive: &isActive,
+		}
+	)
+
+	tests := []struct {
+		description string
+		input
+		beforeTest func(*mocks.ProductService)
+		expected
+	}{
+		{
+			description: "should return error with status code 400 when given empty request body",
+			input: input{
+				userID:      userID,
+				productCode: productCode,
+				request:     &dto.UpdateProductActivationRequest{},
+			},
+			beforeTest: func(ps *mocks.ProductService) {},
+			expected: expected{
+				statusCode: http.StatusBadRequest,
+				response: response.Response{
+					Code:    code.BAD_REQUEST,
+					Message: "IsActive is required",
+				},
+			},
+		},
+		{
+			description: "should return error with status code 404 when shop not found",
+			input: input{
+				userID:      userID,
+				productCode: productCode,
+				request:     request,
+			},
+			beforeTest: func(ps *mocks.ProductService) {
+				ps.On("UpdateProductActivation", userID, productCode, request).Return(errs.ErrShopNotFound)
+			},
+			expected: expected{
+				statusCode: http.StatusNotFound,
+				response: response.Response{
+					Code:    code.SHOP_NOT_REGISTERED,
+					Message: errs.ErrShopNotFound.Error(),
+				},
+			},
+		},
+		{
+			description: "should return error with status code 404 when product not found",
+			input: input{
+				userID:      userID,
+				productCode: productCode,
+				request:     request,
+			},
+			beforeTest: func(ps *mocks.ProductService) {
+				ps.On("UpdateProductActivation", userID, productCode, request).Return(errs.ErrProductDoesNotExist)
+			},
+			expected: expected{
+				statusCode: http.StatusNotFound,
+				response: response.Response{
+					Code:    code.PRODUCT_NOT_EXISTS,
+					Message: errs.ErrProductDoesNotExist.Error(),
+				},
+			},
+		},
+		{
+			description: "should return error with status code 500 when failed to update product",
+			input: input{
+				userID:      userID,
+				productCode: productCode,
+				request:     request,
+			},
+			beforeTest: func(ps *mocks.ProductService) {
+				ps.On("UpdateProductActivation", userID, productCode, request).Return(errors.New("failed to update product activation"))
+			},
+			expected: expected{
+				statusCode: http.StatusInternalServerError,
+				response: response.Response{
+					Code:    code.INTERNAL_SERVER_ERROR,
+					Message: errs.ErrInternalServerError.Error(),
+				},
+			},
+		},
+		{
+			description: "should return error with status code 200 when update succeed",
+			input: input{
+				userID:      userID,
+				productCode: productCode,
+				request:     request,
+			},
+			beforeTest: func(ps *mocks.ProductService) {
+				ps.On("UpdateProductActivation", userID, productCode, request).Return(nil)
+			},
+			expected: expected{
+				statusCode: http.StatusOK,
+				response: response.Response{
+					Code:    code.UPDATED,
+					Message: "update successful",
+				},
+			},
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.description, func(t *testing.T) {
+			expectedRes, _ := json.Marshal(tc.expected.response)
+			productService := mocks.NewProductService(t)
+			tc.beforeTest(productService)
+			rec := httptest.NewRecorder()
+			c, _ := gin.CreateTestContext(rec)
+			c.Set("userId", tc.input.userID)
+			c.AddParam("code", productCode)
+			h := handler.New(&handler.Config{
+				ProductService: productService,
+			})
+			payload := test.MakeRequestBody(tc.input.request)
+			c.Request = httptest.NewRequest(http.MethodPut, fmt.Sprintf("/v1/sellers/products/%s/activations", tc.input.productCode), payload)
+
+			h.UpdateProductActivation(c)
+
+			assert.Equal(t, tc.expected.statusCode, rec.Code)
+			assert.Equal(t, string(expectedRes), rec.Body.String())
+		})
+	}
+}
