@@ -3195,6 +3195,12 @@ paths:
                           - $ref: '#/components/schemas/Product'
                           - type: object
                             properties:
+                              media:
+                                type: array
+                                items:
+                                  $ref: '#/components/schemas/ProductMedia'
+                          - type: object
+                            properties:
                               bulk:
                                 $ref: '#/components/schemas/ProductBulkPrice'
                           - type: object
@@ -4333,7 +4339,69 @@ paths:
                     example: "INTERNAL_SERVER_ERROR"
                   message:
                     type: string
-                    example: "error message"                  
+                    example: "error message"
+    post:
+      security:
+        - BearerAuth: []
+      tags:
+        - Shop
+      summary: Update shop profile
+      description: Update shop name, logo, banner, and description
+      requestBody:
+        $ref: '#/components/requestBodies/UpdateShopProfileBody'
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: OK
+                  message:
+                    type: string
+                    example: success
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "BAD_REQUEST"
+                  message:
+                    type: string
+                    example: "error message"                     
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "SHOP_NOT_REGISTERED"
+                  message:
+                    type: string
+                    example: "shop not found"                     
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "INTERNAL_SERVER_ERROR"
+                  message:
+                    type: string
+                    example: "error message"
   /v1/users/sealabs-pays:
     get:
       security:
@@ -4681,7 +4749,76 @@ paths:
                     example: "INTERNAL_SERVER_ERROR"
                   message:
                     type: string
-                    example: "error message"                                
+                    example: "error message"     
+    post:
+      security:
+        - BearerAuth: []
+      tags:
+        - Seller
+      summary: Toggle seller shipment courier
+      description: Activate or deactivate shipment courier for seller
+      requestBody:
+        $ref: '#/components/requestBodies/ToggleSellerShipmenttBody'
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Response'
+                  - type: object
+                    properties:
+                      code:
+                        example: "OK"
+                      message:
+                        example: "success"
+                      data:
+                        type: object
+                        properties:
+                          courierId:
+                            type: integer
+                          isToggled:
+                            type: boolean
+        '401':
+          description: unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "UNAUTHORIZED"
+                  message:
+                    type: string
+                    example: "invalid credential"
+        '404':
+          description: not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "NOT_FOUND"
+                  message:
+                    type: string
+                    example: "shop not found"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "INTERNAL_SERVER_ERROR"
+                  message:
+                    type: string
+                    example: "error message"
   /v1/sellers/products:
     get:
       security:
@@ -4783,6 +4920,125 @@ paths:
                                                     type: array
                                                     items:
                                                       $ref: '#/components/schemas/Variant'
+        '401':
+          description: unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "UNAUTHORIZED"
+                  message:
+                    type: string
+                    example: "invalid credential"
+        '404':
+          description: not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "NOT_FOUND"
+                  message:
+                    type: string
+                    example: "error message"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "INTERNAL_SERVER_ERROR"
+                  message:
+                    type: string
+                    example: "error message"
+  /v1/sellers/products/{code}:
+    get:
+      security:
+        - BearerAuth: []
+      tags:
+        - Seller
+      summary: Get seller product detail
+      description: Get seller product detail by using product code
+      parameters:
+        - in: path
+          name: code
+          required: true
+          schema:
+            type: string
+            example: product-code
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - type: object
+                    properties:
+                      code:
+                        example: "OK"
+                      message:
+                        example: "ok"
+                      data:
+                        allOf:
+                          - $ref: '#/components/schemas/Product'
+                          - type: object
+                            properties:
+                              media:
+                                type: array
+                                items:
+                                  $ref: '#/components/schemas/ProductMedia'
+                          - type: object
+                            properties:
+                              bulk:
+                                $ref: '#/components/schemas/ProductBulkPrice'
+                          - type: object
+                            properties:
+                              couriers:
+                                type: array
+                                items:
+                                  $ref: '#/components/schemas/Courier'
+                          - type: object
+                            properties:
+                              variantGroups:
+                                type: array
+                                items:
+                                  allOf:
+                                    - $ref: '#/components/schemas/GroupVariant'
+                                    - type: object
+                                      properties:
+                                        variants:
+                                          type: array
+                                          items:
+                                            $ref: '#/components/schemas/Variant'
+                          - type: object
+                            properties:
+                              skus:
+                                type: array
+                                items:
+                                  allOf:
+                                    - $ref: '#/components/schemas/SKU'
+                                    - type: object
+                                      properties:
+                                        variants:
+                                          type: array
+                                          items:
+                                            $ref: '#/components/schemas/Variant'
+                          - type: object
+                            properties:
+                              categories:
+                                type: array
+                                items:
+                                  $ref: '#/components/schemas/Category'
+
         '401':
           description: unauthorized
           content:
@@ -6672,6 +6928,19 @@ components:
           type: integer
         categoryId:
           type: integer
+    ProductMedia:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        url:
+          type: string
+          format: url
+          example: image.png
+        productId:
+          type: integer
+          example: 1
     ProductBulkPrice:
       type: object
       properties:
@@ -6891,6 +7160,12 @@ components:
         courierId:
           type: integer
           example: 1
+        minDuration:
+          type: integer
+          example: 86400
+        maxDuration:
+          type: integer
+          example: 172800
     ShopGuest:
       type: object
       properties:
@@ -7853,6 +8128,37 @@ components:
                 minLength: 6
                 maxLength: 6
                 example: "123456"
+    UpdateShopProfileBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - name
+              - logoUrl
+              - bannerUrl
+              - description
+            properties:
+              name:
+                type: string
+              logoUrl:
+                type: string
+              bannerUrl:
+                type: string
+              description:
+                type: string
+    ToggleSellerShipmenttBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - courierId
+            properties:
+              courierId:
+                type: integer
   securitySchemes:
     BearerAuth:
       type: http

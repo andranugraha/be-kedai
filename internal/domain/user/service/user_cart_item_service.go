@@ -48,7 +48,6 @@ func (s *userCartItemServiceImpl) CreateCartItem(cartItemReq *dto.UserCartItemRe
 
 	result, sku, err := s.PreCheckCartItem(cartItemReq)
 
-	// create new cart item if existing cart item not found
 	if result == nil && sku != nil {
 		cartItem := cartItemReq.ToUserCartItem()
 		result, err = s.cartItemRepository.CreateCartItem(cartItem)
@@ -59,7 +58,6 @@ func (s *userCartItemServiceImpl) CreateCartItem(cartItemReq *dto.UserCartItemRe
 		return result, err
 	}
 
-	// update cart item quantity if existing cart item found
 	if result != nil && sku != nil {
 		result.Quantity += cartItemReq.Quantity
 		if cartItemReq.Notes != "" {
@@ -113,7 +111,6 @@ func (s *userCartItemServiceImpl) PreCheckCartItem(cartItemReq *dto.UserCartItem
 		return nil, nil, err
 	}
 
-	// check user not owner of shop
 	shop, err := s.shopService.FindShopByUserId(cartItemReq.UserId)
 
 	if err != nil && !errors.Is(err, errs.ErrShopNotFound) {
@@ -126,14 +123,12 @@ func (s *userCartItemServiceImpl) PreCheckCartItem(cartItemReq *dto.UserCartItem
 		}
 	}
 
-	// Check if cart item already exists
 	sameCartItem, err := s.cartItemRepository.GetCartItemByUserIdAndSkuId(cartItemReq.UserId, cartItemReq.SkuId)
 
 	if err != nil && !errors.Is(err, errs.ErrCartItemNotFound) {
 		return nil, nil, err
 	}
 
-	// update cart item quantity if existing cart item found
 	if err == nil {
 		if sameCartItem.Quantity+cartItemReq.Quantity > sku.Stock {
 			return nil, nil, errs.ErrProductQuantityNotEnough
@@ -178,7 +173,7 @@ func (s *userCartItemServiceImpl) validateProductSKU(skuID int) (*productModel.S
 		return nil, err
 	}
 
-	product, err := s.productService.GetByID(sku.ProductId)
+	product, err := s.productService.GetActiveByID(sku.ProductId)
 	if err != nil {
 		return nil, err
 	}

@@ -7,6 +7,7 @@ import (
 	"kedai/backend/be-kedai/internal/domain/shop/model"
 
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 type CourierRepository interface {
@@ -16,6 +17,8 @@ type CourierRepository interface {
 	GetByServiceIDAndShopID(courierID, shopID int) (*model.Courier, error)
 	GetByProductID(productID int) ([]*model.Courier, error)
 	GetMatchingCouriersByShopIDAndProductIDs(*dto.MatchingProductCourierRequest) ([]*model.Courier, error)
+	GetByID(id int) (*model.Courier, error)
+	ToggleShopCourier(shopCouriers []*model.ShopCourier) error
 }
 
 type courierRepositoryImpl struct {
@@ -136,4 +139,31 @@ func (r *courierRepositoryImpl) GetMatchingCouriersByShopIDAndProductIDs(req *dt
 	}
 
 	return couriers, nil
+}
+
+func (r *courierRepositoryImpl) GetByID(id int) (*model.Courier, error) {
+	var courier model.Courier
+
+	err := r.db.Preload("Services").First(&courier, id).Error
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, commonErr.ErrCourierNotFound
+		}
+
+		return nil, err
+	}
+
+	return &courier, nil
+}
+
+func (r *courierRepositoryImpl) ToggleShopCourier(shopCouriers []*model.ShopCourier) error {
+	return r.db.
+		Clauses(clause.OnConflict{
+			Columns:   []clause.Column{{Name: "courier_service_id"}, {Name: "shop_id"}},
+			DoUpdates: clause.Assignments(map[string]interface{}{"is_active": gorm.Expr("NOT shop_couriers.is_active")}),
+		}).
+		Clauses(clause.Returning{
+			Columns: []clause.Column{{Name: "is_active"}},
+		}).
+		Create(&shopCouriers).Error
 }

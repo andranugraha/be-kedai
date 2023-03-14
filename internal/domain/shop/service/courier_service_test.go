@@ -10,6 +10,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 )
 
 func TestGetCouriersByProductID(t *testing.T) {
@@ -262,5 +263,140 @@ func TestGetMatchingCouriersByShopIDAndProductIDs(t *testing.T) {
 			assert.Equal(t, tc.expected.err, err)
 		})
 	}
+}
 
+func TestToggleShopCourier(t *testing.T) {
+	type input struct {
+		shopId     int
+		courierId  int
+		beforeTest func(*mocks.CourierRepository, *mocks.ShopService)
+	}
+	type expected struct {
+		res *dto.ToggleShopCourierResponse
+		err error
+	}
+
+	tests := []struct {
+		description string
+		input
+		expected
+	}{
+		{
+			description: "should return error when shop not found",
+			input: input{
+				shopId:    1,
+				courierId: 1,
+				beforeTest: func(cr *mocks.CourierRepository, ss *mocks.ShopService) {
+					ss.On("FindShopByUserId", 1).Return(nil, errs.ErrShopNotFound)
+				},
+			},
+			expected: expected{
+				res: nil,
+				err: errs.ErrShopNotFound,
+			},
+		},
+		{
+			description: "should return error when courier not found",
+			input: input{
+				shopId:    1,
+				courierId: 1,
+				beforeTest: func(cr *mocks.CourierRepository, ss *mocks.ShopService) {
+					ss.On("FindShopByUserId", 1).Return(&model.Shop{ID: 1}, nil)
+					cr.On("GetByID", 1).Return(nil, errs.ErrCourierNotFound)
+				},
+			},
+			expected: expected{
+				res: nil,
+				err: errs.ErrCourierNotFound,
+			},
+		},
+		{
+			description: "should return error when failed to toggle shop courier",
+			input: input{
+				shopId:    1,
+				courierId: 1,
+				beforeTest: func(cr *mocks.CourierRepository, ss *mocks.ShopService) {
+					ss.On("FindShopByUserId", 1).Return(&model.Shop{ID: 1}, nil)
+					cr.On("GetByID", 1).Return(&model.Courier{
+						ID: 1,
+						Services: []*model.CourierService{
+							{
+								ID: 1,
+							},
+						},
+					}, nil)
+					cr.On("ToggleShopCourier", mock.Anything).Return(errs.ErrInternalServerError)
+				},
+			},
+			expected: expected{
+				res: nil,
+				err: errs.ErrInternalServerError,
+			},
+		},
+		{
+			description: "should return toggle shop courier response when success",
+			input: input{
+				shopId:    1,
+				courierId: 1,
+				beforeTest: func(cr *mocks.CourierRepository, ss *mocks.ShopService) {
+					ss.On("FindShopByUserId", 1).Return(&model.Shop{ID: 1}, nil)
+					cr.On("GetByID", 1).Return(&model.Courier{
+						ID:       1,
+						Services: []*model.CourierService{},
+					}, nil)
+					cr.On("ToggleShopCourier", mock.Anything).Return(nil)
+				},
+			},
+			expected: expected{
+				res: &dto.ToggleShopCourierResponse{
+					CourierId: 1,
+					IsToggled: false,
+				},
+				err: nil,
+			},
+		},
+		{
+			description: "should return toggle shop courier response when success",
+			input: input{
+				shopId:    1,
+				courierId: 1,
+				beforeTest: func(cr *mocks.CourierRepository, ss *mocks.ShopService) {
+					ss.On("FindShopByUserId", 1).Return(&model.Shop{ID: 1}, nil)
+					cr.On("GetByID", 1).Return(&model.Courier{
+						ID: 1,
+						Services: []*model.CourierService{
+							{
+								ID: 1,
+							},
+						},
+					}, nil)
+					cr.On("ToggleShopCourier", mock.Anything).Return(nil)
+				},
+			},
+			expected: expected{
+				res: &dto.ToggleShopCourierResponse{
+					CourierId: 1,
+					IsToggled: true,
+				},
+				err: nil,
+			},
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.description, func(t *testing.T) {
+			courierRepo := mocks.NewCourierRepository(t)
+			shopService := mocks.NewShopService(t)
+			tc.beforeTest(courierRepo, shopService)
+			courierService := service.NewCourierService(&service.CourierSConfig{
+				CourierRepository: courierRepo,
+				ShopService:       shopService,
+			})
+
+			got, err := courierService.ToggleShopCourier(tc.shopId, tc.courierId)
+
+			assert.Equal(t, tc.expected.res, got)
+			assert.ErrorIs(t, tc.expected.err, err)
+		})
+	}
 }

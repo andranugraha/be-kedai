@@ -9,6 +9,7 @@ import (
 	"kedai/backend/be-kedai/internal/domain/shop/handler"
 	"kedai/backend/be-kedai/internal/domain/shop/model"
 	"kedai/backend/be-kedai/internal/utils/response"
+	"kedai/backend/be-kedai/internal/utils/test"
 	"kedai/backend/be-kedai/mocks"
 	"net/http"
 	"net/http/httptest"
@@ -307,5 +308,131 @@ func TestGetMatchingCouriers(t *testing.T) {
 			assert.Equal(t, string(expectedRes), rec.Body.String())
 		})
 	}
+}
 
+func TestToggleShopCourier(t *testing.T) {
+	type input struct {
+		req        dto.ToggleShopCourierRequest
+		beforeTest func(*mocks.CourierService)
+	}
+	type expected struct {
+		statusCode int
+		response   response.Response
+	}
+
+	tests := []struct {
+		description string
+		input
+		expected
+	}{
+		{
+			description: "should return error with status code 400 when failed to bind request",
+			input: input{
+				req: dto.ToggleShopCourierRequest{},
+				beforeTest: func(courierService *mocks.CourierService) {
+				},
+			},
+			expected: expected{
+				statusCode: http.StatusBadRequest,
+				response: response.Response{
+					Code:    code.BAD_REQUEST,
+					Message: "CourierId is required",
+				},
+			},
+		},
+		{
+			description: "should return error with status code 404 when shop not found",
+			input: input{
+				req: dto.ToggleShopCourierRequest{
+					CourierId: 1,
+				},
+				beforeTest: func(courierService *mocks.CourierService) {
+					courierService.On("ToggleShopCourier", 1, 1).Return(nil, errs.ErrShopNotFound)
+				},
+			},
+			expected: expected{
+				statusCode: http.StatusNotFound,
+				response: response.Response{
+					Code:    code.SHOP_NOT_REGISTERED,
+					Message: errs.ErrShopNotFound.Error(),
+				},
+			},
+		},
+		{
+			description: "should return error with status code 404 when courier not found",
+			input: input{
+				req: dto.ToggleShopCourierRequest{
+					CourierId: 1,
+				},
+				beforeTest: func(courierService *mocks.CourierService) {
+					courierService.On("ToggleShopCourier", 1, 1).Return(nil, errs.ErrCourierNotFound)
+				},
+			},
+			expected: expected{
+				statusCode: http.StatusNotFound,
+				response: response.Response{
+					Code:    code.NOT_FOUND,
+					Message: errs.ErrCourierNotFound.Error(),
+				},
+			},
+		},
+		{
+			description: "should return error with status code 500 when failed to toggle shop courier",
+			input: input{
+				req: dto.ToggleShopCourierRequest{
+					CourierId: 1,
+				},
+				beforeTest: func(courierService *mocks.CourierService) {
+					courierService.On("ToggleShopCourier", 1, 1).Return(nil, errs.ErrInternalServerError)
+				},
+			},
+			expected: expected{
+				statusCode: http.StatusInternalServerError,
+				response: response.Response{
+					Code:    code.INTERNAL_SERVER_ERROR,
+					Message: errs.ErrInternalServerError.Error(),
+				},
+			},
+		},
+		{
+			description: "should return success with status code 200 when succeed to toggle shop courier",
+			input: input{
+				req: dto.ToggleShopCourierRequest{
+					CourierId: 1,
+				},
+				beforeTest: func(courierService *mocks.CourierService) {
+					courierService.On("ToggleShopCourier", 1, 1).Return(&dto.ToggleShopCourierResponse{}, nil)
+				},
+			},
+			expected: expected{
+				statusCode: http.StatusOK,
+				response: response.Response{
+					Code:    code.OK,
+					Message: "success",
+					Data:    &dto.ToggleShopCourierResponse{},
+				},
+			},
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.description, func(t *testing.T) {
+			expectedBody, _ := json.Marshal(tc.expected.response)
+			payload := test.MakeRequestBody(tc.input.req)
+			rec := httptest.NewRecorder()
+			c, _ := gin.CreateTestContext(rec)
+			mockService := new(mocks.CourierService)
+			tc.beforeTest(mockService)
+			handler := handler.New(&handler.HandlerConfig{
+				CourierService: mockService,
+			})
+			c.Set("userId", 1)
+
+			c.Request, _ = http.NewRequest("POST", "/v1/sellers/couriers", payload)
+			handler.ToggleShopCourier(c)
+
+			assert.Equal(t, tc.expected.statusCode, rec.Code)
+			assert.Equal(t, string(expectedBody), rec.Body.String())
+		})
+	}
 }
