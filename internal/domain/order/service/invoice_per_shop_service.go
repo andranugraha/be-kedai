@@ -178,12 +178,7 @@ func (s *invoicePerShopServiceImpl) UpdateStatusToCancelled(userId int, orderId 
 	return nil
 }
 
-func (s *invoicePerShopServiceImpl) UpdateStatusToReceived(userId int, orderId int) error {
-	shop, err := s.shopService.FindShopByUserId(userId)
-	if err != nil {
-		return err
-	}
-
+func (s *invoicePerShopServiceImpl) UpdateStatusToReceived(shopId int, orderId int) error {
 	var invoiceStatuses []*model.InvoiceStatus
 	var status = constant.TransactionStatusReceived
 
@@ -192,7 +187,7 @@ func (s *invoicePerShopServiceImpl) UpdateStatusToReceived(userId int, orderId i
 		Status:           status,
 	})
 
-	err = s.invoicePerShopRepo.UpdateStatusToReceived(shop.ID, orderId, invoiceStatuses)
+	err := s.invoicePerShopRepo.UpdateStatusToReceived(shopId, orderId, invoiceStatuses)
 	if err != nil {
 		return err
 	}
