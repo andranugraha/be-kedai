@@ -21,6 +21,7 @@ type InvoicePerShop struct {
 	VoucherAmount  *float64 `json:"voucherAmount,omitempty"`
 	VoucherType    *string  `json:"voucherType,omitempty"`
 	Status         string   `json:"status"`
+	IsReleased     bool     `json:"isReleased"`
 
 	UserID           int  `json:"userId"`
 	VoucherID        *int `json:"voucherId,omitempty"`
@@ -29,6 +30,7 @@ type InvoicePerShop struct {
 	CourierServiceID int  `json:"courierServiceId"`
 	InvoiceID        int  `json:"invoiceId"`
 
+	User           *userModel.User            `json:"user,omitempty"`
 	Voucher        *userModel.UserVoucher     `json:"voucher,omitempty" gorm:"foreignKey:VoucherID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE;"`
 	Transactions   []*Transaction             `json:"transactions" gorm:"foreignKey:InvoiceID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE;"`
 	Shop           *model.Shop                `json:"shop,omitempty"`

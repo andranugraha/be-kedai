@@ -20,6 +20,7 @@ type Shop struct {
 	Address        *locationModel.UserAddress `json:"address,omitempty"`
 	Slug           string                     `json:"slug"`
 	ShopCategory   []*ShopCategory            `json:"shopCategories,omitempty"`
+	BannerUrl      *string                    `json:"bannerUrl,omitempty"`
 	CourierService []*CourierService          `gorm:"many2many:shop_couriers"`
 
 	gorm.Model `json:"-"`

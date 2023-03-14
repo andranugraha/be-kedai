@@ -10,6 +10,7 @@ import (
 	"kedai/backend/be-kedai/internal/domain/product/dto"
 	"kedai/backend/be-kedai/internal/domain/product/handler"
 	"kedai/backend/be-kedai/internal/utils/response"
+	"kedai/backend/be-kedai/internal/utils/test"
 	"kedai/backend/be-kedai/mocks"
 	"net/http"
 	"net/http/httptest"
@@ -600,4 +601,116 @@ func TestGetSellerProduct(t *testing.T) {
 		assert.Equal(t, tc.expected.statusCode, rec.Code)
 		assert.Equal(t, string(expectedRes), rec.Body.String())
 	}
+}
+
+func TestAddProductView(t *testing.T) {
+	type input struct {
+		req        dto.AddProductViewRequest
+		beforeTest func(mockProductService *mocks.ProductService)
+	}
+	type expected struct {
+		statusCode int
+		response   response.Response
+	}
+
+	var (
+		productID = 1
+	)
+
+	tests := []struct {
+		description string
+		input
+		expected
+	}{
+		{
+			description: "should return error with status code 400 when request body is invalid",
+			input: input{
+				req: dto.AddProductViewRequest{},
+				beforeTest: func(mockProductService *mocks.ProductService) {
+				},
+			},
+			expected: expected{
+				statusCode: http.StatusBadRequest,
+				response: response.Response{
+					Code:    code.BAD_REQUEST,
+					Message: "ProductID is required",
+				},
+			},
+		},
+		{
+			description: "should return error with status code 500 when something went wrong",
+			input: input{
+				req: dto.AddProductViewRequest{
+					ProductID: productID,
+				},
+				beforeTest: func(mockProductService *mocks.ProductService) {
+					mockProductService.On("AddViewCount", productID).Return(errs.ErrInternalServerError)
+				},
+			},
+			expected: expected{
+				statusCode: http.StatusInternalServerError,
+				response: response.Response{
+					Code:    code.INTERNAL_SERVER_ERROR,
+					Message: errs.ErrInternalServerError.Error(),
+				},
+			},
+		},
+		{
+			description: "should return error with status code 404 when product not found",
+			input: input{
+				req: dto.AddProductViewRequest{
+					ProductID: productID,
+				},
+				beforeTest: func(mockProductService *mocks.ProductService) {
+					mockProductService.On("AddViewCount", productID).Return(errs.ErrProductDoesNotExist)
+				},
+			},
+			expected: expected{
+				statusCode: http.StatusNotFound,
+				response: response.Response{
+					Code:    code.PRODUCT_NOT_EXISTS,
+					Message: errs.ErrProductDoesNotExist.Error(),
+				},
+			},
+		},
+		{
+			description: "should return status code 200 when suceed adding product view",
+			input: input{
+				req: dto.AddProductViewRequest{
+					ProductID: productID,
+				},
+
+				beforeTest: func(mockProductService *mocks.ProductService) {
+					mockProductService.On("AddViewCount", productID).Return(nil)
+				},
+			},
+			expected: expected{
+				statusCode: http.StatusOK,
+				response: response.Response{
+					Code:    code.OK,
+					Message: "ok",
+				},
+			},
+		},
+	}
+
+	for _, tc := range tests {
+		expectedRes, _ := json.Marshal(tc.expected.response)
+		productService := mocks.NewProductService(t)
+		tc.beforeTest(productService)
+		rec := httptest.NewRecorder()
+		c, _ := gin.CreateTestContext(rec)
+
+		payload := test.MakeRequestBody(tc.input.req)
+		c.Request = httptest.NewRequest("POST", "/v1/products/views", payload)
+		h := handler.New(&handler.Config{
+			ProductService: productService,
+		})
+
+		h.AddProductView(c)
+
+		assert.Equal(t, tc.expected.statusCode, rec.Code)
+		assert.Equal(t, string(expectedRes), rec.Body.String())
+	}
+
 }

@@ -15,6 +15,9 @@ type ShopService interface {
 	FindShopBySlug(slug string) (*model.Shop, error)
 	FindShopByKeyword(req dto.FindShopRequest) (*commonDto.PaginationResponse, error)
 	GetShopFinanceOverview(userId int) (*dto.ShopFinanceOverviewResponse, error)
+	GetShopStats(userId int) (*dto.GetShopStatsResponse, error)
+	GetShopInsight(req dto.GetShopInsightRequest) (*dto.GetShopInsightResponse, error)
+	GetShopProfile(userId int) (*dto.GetShopProfileResponse, error)
 }
 
 type shopServiceImpl struct {
@@ -95,4 +98,31 @@ func (s *shopServiceImpl) CreateShop(userID int, request *dto.CreateShopRequest)
 	var shop model.Shop
 
 	return &shop, nil
+}
+
+func (s *shopServiceImpl) GetShopStats(userId int) (*dto.GetShopStatsResponse, error) {
+	shop, err := s.shopRepository.FindShopByUserId(userId)
+	if err != nil {
+		return nil, err
+	}
+
+	return s.shopRepository.GetShopStats(shop.ID)
+}
+
+func (s *shopServiceImpl) GetShopInsight(req dto.GetShopInsightRequest) (*dto.GetShopInsightResponse, error) {
+	shop, err := s.shopRepository.FindShopByUserId(req.UserId)
+	if err != nil {
+		return nil, err
+	}
+
+	return s.shopRepository.GetShopInsight(shop.ID, req)
+}
+
+func (s *shopServiceImpl) GetShopProfile(userId int) (*dto.GetShopProfileResponse, error) {
+	shop, err := s.shopRepository.FindShopByUserId(userId)
+	if err != nil {
+		return nil, err
+	}
+
+	return dto.ComposeShopProfileFromModel(shop), nil
 }
