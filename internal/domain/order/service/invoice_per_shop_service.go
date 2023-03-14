@@ -1,6 +1,7 @@
 package service
 
 import (
+	"kedai/backend/be-kedai/internal/common/constant"
 	commonDto "kedai/backend/be-kedai/internal/common/dto"
 	"kedai/backend/be-kedai/internal/domain/order/dto"
 	"kedai/backend/be-kedai/internal/domain/order/model"
@@ -20,6 +21,7 @@ type InvoicePerShopService interface {
 	GetShopOrder(userId int, req *dto.InvoicePerShopFilterRequest) (*commonDto.PaginationResponse, error)
 	UpdateStatusToDelivery(userId int, orderId int) error
 	UpdateStatusToCancelled(userId int, orderId int) error
+	UpdateStatusCRONJob() error
 }
 
 type invoicePerShopServiceImpl struct {
@@ -137,7 +139,7 @@ func (s *invoicePerShopServiceImpl) UpdateStatusToDelivery(userId int, orderId i
 	}
 
 	var invoiceStatuses []*model.InvoiceStatus
-	var status = "ON_DELIVERY"
+	var status = constant.TransactionStatusOnDelivery
 
 	invoiceStatuses = append(invoiceStatuses, &model.InvoiceStatus{
 		InvoicePerShopID: orderId,
@@ -159,7 +161,7 @@ func (s *invoicePerShopServiceImpl) UpdateStatusToCancelled(userId int, orderId 
 	}
 
 	var invoiceStatuses []*model.InvoiceStatus
-	var status = "CANCELLED"
+	var status = constant.TransactionStatusCancelled
 
 	invoiceStatuses = append(invoiceStatuses, &model.InvoiceStatus{
 		InvoicePerShopID: orderId,
@@ -172,4 +174,8 @@ func (s *invoicePerShopServiceImpl) UpdateStatusToCancelled(userId int, orderId 
 	}
 
 	return nil
+}
+
+func (s *invoicePerShopServiceImpl) UpdateStatusCRONJob() error {
+	return s.invoicePerShopRepo.UpdateStatusCRONJob()
 }
