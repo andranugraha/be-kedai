@@ -194,6 +194,12 @@ func (p *ProductSearchAutocomplete) Validate() {
 	}
 }
 
+type SellerProductDetail struct {
+	model.Product
+	Categories []*model.Category    `json:"categories"`
+	Couriers   []*shopModel.Courier `json:"couriers,omitempty"`
+}
+
 type AddProductViewRequest struct {
 	ProductID int `form:"productId" binding:"required"`
 }

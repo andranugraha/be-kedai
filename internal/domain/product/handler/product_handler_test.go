@@ -603,6 +603,117 @@ func TestGetSellerProduct(t *testing.T) {
 	}
 }
 
+func TestGetSellerProductDetailByCode(t *testing.T) {
+	type input struct {
+		userID      int
+		productCode string
+		mockData    *dto.SellerProductDetail
+		mockErr     error
+	}
+	type expected struct {
+		statusCode int
+		response   response.Response
+	}
+
+	var (
+		userID      = 1
+		productCode = "product-code"
+	)
+
+	tests := []struct {
+		description string
+		input
+		expected
+	}{
+		{
+			description: "should return error with status code 404 when shop not found",
+			input: input{
+				userID:      userID,
+				productCode: productCode,
+				mockData:    nil,
+				mockErr:     errs.ErrShopNotFound,
+			},
+			expected: expected{
+				statusCode: http.StatusNotFound,
+				response: response.Response{
+					Code:    code.SHOP_NOT_REGISTERED,
+					Message: errs.ErrShopNotFound.Error(),
+				},
+			},
+		},
+		{
+			description: "should return error with status code 404 when product not found",
+			input: input{
+				userID:      userID,
+				productCode: productCode,
+				mockData:    nil,
+				mockErr:     errs.ErrProductDoesNotExist,
+			},
+			expected: expected{
+				statusCode: http.StatusNotFound,
+				response: response.Response{
+					Code:    code.PRODUCT_NOT_EXISTS,
+					Message: errs.ErrProductDoesNotExist.Error(),
+				},
+			},
+		},
+		{
+			description: "should return error with status code 500 when something went wrong",
+			input: input{
+				userID:      userID,
+				productCode: productCode,
+				mockData:    nil,
+				mockErr:     errs.ErrInternalServerError,
+			},
+			expected: expected{
+				statusCode: http.StatusInternalServerError,
+				response: response.Response{
+					Code:    code.INTERNAL_SERVER_ERROR,
+					Message: errs.ErrInternalServerError.Error(),
+				},
+			},
+		},
+		{
+			description: "should return product detail with status code 200 when succeed to get product",
+			input: input{
+				userID:      userID,
+				productCode: productCode,
+				mockData:    &dto.SellerProductDetail{},
+				mockErr:     nil,
+			},
+			expected: expected{
+				statusCode: http.StatusOK,
+				response: response.Response{
+					Code:    code.OK,
+					Message: "success",
+					Data:    &dto.SellerProductDetail{},
+				},
+			},
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.description, func(t *testing.T) {
+			expectedRes, _ := json.Marshal(tc.expected.response)
+			productService := mocks.NewProductService(t)
+			productService.On("GetSellerProductByCode", tc.input.userID, tc.input.productCode).Return(tc.input.mockData, tc.input.mockErr)
+			rec := httptest.NewRecorder()
+			c, _ := gin.CreateTestContext(rec)
+			c.Set("userId", tc.input.userID)
+			c.AddParam("code", tc.input.productCode)
+			h := handler.New(&handler.Config{
+				ProductService: productService,
+			})
+			c.Request = httptest.NewRequest("GET", fmt.Sprintf("/sellers/products?%s", tc.input.productCode), nil)
+
+			h.GetSellerProductDetailByCode(c)
+
+			assert.Equal(t, tc.expected.statusCode, rec.Code)
+			assert.Equal(t, string(expectedRes), rec.Body.String())
+		})
+	}
+}
+
 func TestAddProductView(t *testing.T) {
 	type input struct {
 		req        dto.AddProductViewRequest

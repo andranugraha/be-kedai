@@ -218,6 +218,7 @@ func NewRouter(cfg *RouterConfig) *gin.Engine {
 				product := authenticated.Group("/products")
 				{
 					product.GET("", cfg.ProductHandler.GetSellerProducts)
+					product.GET("/:code", cfg.ProductHandler.GetSellerProductDetailByCode)
 					product.PUT("/:code/activations", cfg.ProductHandler.UpdateProductActivation)
 				}
 
