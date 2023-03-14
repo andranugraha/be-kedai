@@ -213,3 +213,19 @@ func (p *AddProductViewRequest) Validate() {
 type UpdateProductActivationRequest struct {
 	IsActive *bool `json:"isActive" binding:"required"`
 }
+
+type CreateProductRequest struct {
+	Name         string                   `json:"name" binding:"required"`
+	Description  string                   `json:"description" binding:"omitempty"`
+	IsHazardous  *bool                    `json:"isHazardous" binding:"required"`
+	Weight       float64                  `json:"weight" binding:"required,gt=0"`
+	Length       float64                  `json:"length" binding:"required,gt=0"`
+	Width        float64                  `json:"width" binding:"required,gt=0"`
+	Height       float64                  `json:"height" binding:"required,gt=0"`
+	PackagedSize float64                  `json:"packagedSize" binding:"required,gt=0"`
+	IsNew        *bool                    `json:"isNew" binding:"required"`
+	IsActive     *bool                    `json:"isActive" binding:"required"`
+	CategoryID   int                      `json:"categoryId" binding:"required,gte=1"`
+	BulkPrice    *ProductBulkPriceRequest `json:"bulkPrice" binding:"omitempty,dive"`
+	
+}
