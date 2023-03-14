@@ -775,3 +775,96 @@ func TestAddViewCount(t *testing.T) {
 	}
 
 }
+
+func TestUpdateProductActivation(t *testing.T) {
+	type input struct {
+		userID      int
+		productCode string
+		request     *dto.UpdateProductActivationRequest
+		mockErr     error
+	}
+	type expected struct {
+		err error
+	}
+
+	var (
+		userID      = 1
+		shopID      = 1
+		productCode = "product-code"
+		isActive    = false
+		request     = &dto.UpdateProductActivationRequest{
+			IsActive: &isActive,
+		}
+	)
+
+	tests := []struct {
+		description string
+		input
+		beforeTest func(*mocks.ProductRepository, *mocks.ShopService)
+		expected
+	}{
+		{
+			description: "should return error when failed to get shop",
+			input: input{
+				userID:      userID,
+				productCode: productCode,
+				request:     request,
+				mockErr:     errors.New("failed to update status"),
+			},
+			beforeTest: func(pr *mocks.ProductRepository, ss *mocks.ShopService) {
+				ss.On("FindShopByUserId", userID).Return(nil, errors.New("failed to get shop"))
+			},
+			expected: expected{
+				err: errors.New("failed to get shop"),
+			},
+		},
+		{
+			description: "should return error when failed to update activation status",
+			input: input{
+				userID:      userID,
+				productCode: productCode,
+				request:     request,
+				mockErr:     errors.New("failed to update status"),
+			},
+			beforeTest: func(pr *mocks.ProductRepository, ss *mocks.ShopService) {
+				ss.On("FindShopByUserId", userID).Return(&shopModel.Shop{ID: shopID, UserID: userID}, nil)
+				pr.On("UpdateActivation", shopID, productCode, isActive).Return(errors.New("failed to update status"))
+			},
+			expected: expected{
+				err: errors.New("failed to update status"),
+			},
+		},
+		{
+			description: "should return nil when update succeed",
+			input: input{
+				userID:      userID,
+				productCode: productCode,
+				request:     request,
+				mockErr:     nil,
+			},
+			beforeTest: func(pr *mocks.ProductRepository, ss *mocks.ShopService) {
+				ss.On("FindShopByUserId", userID).Return(&shopModel.Shop{ID: shopID, UserID: userID}, nil)
+				pr.On("UpdateActivation", shopID, productCode, isActive).Return(nil)
+			},
+			expected: expected{
+				err: nil,
+			},
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.description, func(t *testing.T) {
+			productRepo := mocks.NewProductRepository(t)
+			shopService := mocks.NewShopService(t)
+			tc.beforeTest(productRepo, shopService)
+			productService := service.NewProductService(&service.ProductSConfig{
+				ProductRepository: productRepo,
+				ShopService:       shopService,
+			})
+
+			err := productService.UpdateProductActivation(tc.input.userID, tc.input.productCode, tc.input.request)
+
+			assert.Equal(t, tc.expected.err, err)
+		})
+	}
+}

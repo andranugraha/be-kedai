@@ -209,3 +209,7 @@ func (p *AddProductViewRequest) Validate() {
 		p.ProductID = 0
 	}
 }
+
+type UpdateProductActivationRequest struct {
+	IsActive *bool `json:"isActive" binding:"required"`
+}

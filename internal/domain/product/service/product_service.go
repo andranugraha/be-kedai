@@ -20,6 +20,7 @@ type ProductService interface {
 	SearchAutocomplete(req dto.ProductSearchAutocomplete) ([]*dto.ProductResponse, error)
 	GetSellerProductByCode(userID int, productCode string) (*dto.SellerProductDetail, error)
 	AddViewCount(id int) error
+	UpdateProductActivation(userID int, code string, request *dto.UpdateProductActivationRequest) error
 }
 
 type productServiceImpl struct {
@@ -196,4 +197,13 @@ func (s *productServiceImpl) GetSellerProductByCode(userID int, productCode stri
 
 func (s *productServiceImpl) AddViewCount(id int) error {
 	return s.productRepository.AddViewCount(id)
+}
+
+func (s *productServiceImpl) UpdateProductActivation(userID int, code string, request *dto.UpdateProductActivationRequest) error {
+	shop, err := s.shopService.FindShopByUserId(userID)
+	if err != nil {
+		return err
+	}
+
+	return s.productRepository.UpdateActivation(shop.ID, code, *request.IsActive)
 }

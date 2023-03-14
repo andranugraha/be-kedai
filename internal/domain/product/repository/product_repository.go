@@ -23,6 +23,7 @@ type ProductRepository interface {
 	SearchAutocomplete(req dto.ProductSearchAutocomplete) ([]*dto.ProductResponse, error)
 	GetSellerProductByCode(shopID int, productCode string) (*model.Product, error)
 	AddViewCount(productID int) error
+	UpdateActivation(shopID int, code string, isActive bool) error
 }
 
 type productRepositoryImpl struct {
@@ -382,6 +383,20 @@ func (r *productRepositoryImpl) AddViewCount(productID int) error {
 		Where("id = ?", productID).
 		Where("is_active = ?", true).
 		Update("view", gorm.Expr("view + ?", 1))
+
+	if res.Error != nil {
+		return res.Error
+	}
+
+	if res.RowsAffected == 0 {
+		return errs.ErrProductDoesNotExist
+	}
+
+	return nil
+}
+
+func (r *productRepositoryImpl) UpdateActivation(shopID int, code string, isActive bool) error {
+	res := r.db.Model(&model.Product{}).Where("code = ?", code).Where("shop_id = ?", shopID).Update("is_active", isActive)
 
 	if res.Error != nil {
 		return res.Error
