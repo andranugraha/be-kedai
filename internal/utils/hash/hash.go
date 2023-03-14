@@ -1,6 +1,7 @@
 package hash
 
 import (
+	"crypto/hmac"
 	"crypto/sha256"
 	"encoding/hex"
 	"kedai/backend/be-kedai/config"
@@ -20,12 +21,12 @@ func ComparePassword(hashedPw string, inputPw string) bool {
 }
 
 func HashSHA256(word string) string {
-	h := sha256.New()
-	h.Write([]byte(word + config.HashKey))
-	hash := h.Sum(nil)
-	return hex.EncodeToString(hash)
+	key := []byte(config.HashKey)
+	h := hmac.New(sha256.New, key)
+	h.Write([]byte(word))
+	return hex.EncodeToString(h.Sum(nil))
 }
 
-func CompareSignature(apiSignature string, comparedSignature string) bool {
-	return apiSignature == comparedSignature
+func CompareSignature(apiSignature string, hashedSign string) bool {
+	return hmac.Equal([]byte(apiSignature), []byte(hashedSign))
 }

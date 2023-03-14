@@ -11,6 +11,7 @@ import (
 	"testing"
 
 	shopModel "kedai/backend/be-kedai/internal/domain/shop/model"
+	walletModel "kedai/backend/be-kedai/internal/domain/user/model"
 
 	commonErr "kedai/backend/be-kedai/internal/common/error"
 
@@ -300,6 +301,264 @@ func TestGetInvoicesByShopId(t *testing.T) {
 			})
 
 			result, err := invoicePerShopService.GetInvoicesByShopId(tc.input.userId, tc.input.req)
+
+			assert.Equal(t, tc.expected.result, result)
+			assert.Equal(t, tc.expected.err, err)
+		})
+	}
+}
+
+func TestGetInvoiceByUserIdAndId(t *testing.T) {
+	type input struct {
+		userID     int
+		id         int
+		beforeTest func(*mocks.InvoicePerShopRepository, *mocks.ShopService)
+	}
+	type expected struct {
+		data *dto.InvoicePerShopDetail
+		err  error
+	}
+
+	tests := []struct {
+		description string
+		input
+		expected
+	}{
+		{
+			description: "should return error when FindShopByUserId failed",
+			input: input{
+				userID: 1,
+				id:     1,
+				beforeTest: func(ipsr *mocks.InvoicePerShopRepository, ss *mocks.ShopService) {
+					ss.On("FindShopByUserId", 1).Return(nil, errors.New("failed to get shop"))
+				},
+			},
+			expected: expected{
+				data: nil,
+				err:  errors.New("failed to get shop"),
+			},
+		},
+		{
+			description: "should return error when GetByShopIdAndId failed",
+			input: input{
+				userID: 1,
+				id:     1,
+				beforeTest: func(ipsr *mocks.InvoicePerShopRepository, ss *mocks.ShopService) {
+					ss.On("FindShopByUserId", 1).Return(&shopModel.Shop{ID: 1}, nil)
+					ipsr.On("GetByShopIdAndId", 1, 1).Return(nil, errors.New("failed to get invoice"))
+				},
+			},
+			expected: expected{
+				data: nil,
+				err:  errors.New("failed to get invoice"),
+			},
+		},
+		{
+			description: "should return invoice detail and no error when success",
+			input: input{
+				userID: 1,
+				id:     1,
+				beforeTest: func(ipsr *mocks.InvoicePerShopRepository, ss *mocks.ShopService) {
+					ss.On("FindShopByUserId", 1).Return(&shopModel.Shop{ID: 1}, nil)
+					ipsr.On("GetByShopIdAndId", 1, 1).Return(&dto.InvoicePerShopDetail{}, nil)
+				},
+			},
+			expected: expected{
+				data: &dto.InvoicePerShopDetail{},
+				err:  nil,
+			},
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.description, func(t *testing.T) {
+			invoicePerShopRepo := mocks.NewInvoicePerShopRepository(t)
+			shopService := mocks.NewShopService(t)
+			tc.beforeTest(invoicePerShopRepo, shopService)
+			invoicePerShopService := service.NewInvoicePerShopService(&service.InvoicePerShopSConfig{
+				InvoicePerShopRepo: invoicePerShopRepo,
+				ShopService:        shopService,
+			})
+
+			data, err := invoicePerShopService.GetInvoiceByUserIdAndId(tc.input.userID, tc.input.id)
+
+			assert.Equal(t, tc.expected.data, data)
+			assert.Equal(t, tc.expected.err, err)
+		})
+	}
+
+}
+
+func TestWithdrawFromInvoice(t *testing.T) {
+	type input struct {
+		userID     int
+		id         int
+		beforeTest func(*mocks.InvoicePerShopRepository, *mocks.ShopService, *mocks.WalletService)
+	}
+	type expected struct {
+		data *dto.InvoicePerShopDetail
+		err  error
+	}
+
+	tests := []struct {
+		description string
+		input
+		expected
+	}{
+		{
+			description: "should return error when FindShopByUserId failed",
+			input: input{
+				userID: 1,
+				id:     1,
+				beforeTest: func(ipsr *mocks.InvoicePerShopRepository, ss *mocks.ShopService, ws *mocks.WalletService) {
+					ss.On("FindShopByUserId", 1).Return(nil, errors.New("failed to get shop"))
+				},
+			},
+			expected: expected{
+				data: nil,
+				err:  errors.New("failed to get shop"),
+			},
+		},
+		{
+			description: "should return error when GetWalletByUserID failed",
+			input: input{
+				userID: 1,
+				id:     1,
+				beforeTest: func(ipsr *mocks.InvoicePerShopRepository, ss *mocks.ShopService, ws *mocks.WalletService) {
+					ss.On("FindShopByUserId", 1).Return(&shopModel.Shop{ID: 1}, nil)
+					ws.On("GetWalletByUserID", 1).Return(nil, errors.New("failed to get wallet"))
+				},
+			},
+			expected: expected{
+				data: nil,
+				err:  errors.New("failed to get wallet"),
+			},
+		},
+		{
+			description: "should return error when WithdrawFromInvoice failed",
+			input: input{
+				userID: 1,
+				id:     1,
+				beforeTest: func(ipsr *mocks.InvoicePerShopRepository, ss *mocks.ShopService, ws *mocks.WalletService) {
+					ss.On("FindShopByUserId", 1).Return(&shopModel.Shop{ID: 1}, nil)
+					ws.On("GetWalletByUserID", 1).Return(&walletModel.Wallet{ID: 1}, nil)
+					ipsr.On("WithdrawFromInvoice", 1, 1, 1).Return(errors.New("failed to get invoice"))
+				},
+			},
+			expected: expected{
+				data: nil,
+				err:  errors.New("failed to get invoice"),
+			},
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.description, func(t *testing.T) {
+			invoicePerShopRepo := mocks.NewInvoicePerShopRepository(t)
+			shopService := mocks.NewShopService(t)
+			walletService := mocks.NewWalletService(t)
+			tc.beforeTest(invoicePerShopRepo, shopService, walletService)
+			invoicePerShopService := service.NewInvoicePerShopService(&service.InvoicePerShopSConfig{
+				InvoicePerShopRepo: invoicePerShopRepo,
+				ShopService:        shopService,
+				WalletService:      walletService,
+			})
+
+			err := invoicePerShopService.WithdrawFromInvoice(tc.input.id, tc.input.userID)
+
+			assert.Equal(t, tc.expected.err, err)
+		})
+	}
+
+}
+
+func TestGetShopOrder(t *testing.T) {
+	var(
+		shop = &shopModel.Shop{
+			ID: 1,
+		}
+		userId     = 1
+		invoice    = []*dto.InvoicePerShopDetail{}
+		req        = &dto.InvoicePerShopFilterRequest{}
+		pagination = &commonDto.PaginationResponse{
+			Data: invoice,
+		}
+	)
+	type input struct {
+		userId     int
+		req        *dto.InvoicePerShopFilterRequest
+		err        error
+		beforeTest func(*mocks.ShopService, *mocks.InvoicePerShopRepository)
+	}
+	type expected struct {
+		result *commonDto.PaginationResponse
+		err    error
+	}
+	type cases struct {
+		description string
+		input
+		expected
+	}
+
+	for _, tc := range []cases{
+		{
+			description: "should return list of shop invoices order when success",
+			input: input{
+				userId: userId,
+				req:    req,
+				err:    nil,
+				beforeTest: func(ss *mocks.ShopService, ipsr *mocks.InvoicePerShopRepository) {
+					ss.On("FindShopByUserId", userId).Return(shop, nil)
+					ipsr.On("GetShopOrder", shop.ID, req).Return(invoice, int64(0), 0, nil)
+				},
+			},
+			expected: expected{
+				result: pagination,
+				err:    nil,
+			},
+		},
+		{
+			description: "should return error when user shop not found",
+			input: input{
+				userId: userId,
+				req:    req,
+				err:    commonErr.ErrShopNotFound,
+				beforeTest: func(ss *mocks.ShopService, ipsr *mocks.InvoicePerShopRepository) {
+					ss.On("FindShopByUserId", userId).Return(nil, commonErr.ErrShopNotFound)
+				},
+			},
+			expected: expected{
+				result: nil,
+				err:    commonErr.ErrShopNotFound,
+			},
+		},
+		{
+			description: "should return error when internal server error",
+			input: input{
+				userId: userId,
+				req:    req,
+				err:    commonErr.ErrInternalServerError,
+				beforeTest: func(ss *mocks.ShopService, ipsr *mocks.InvoicePerShopRepository) {
+					ss.On("FindShopByUserId", userId).Return(shop, nil)
+					ipsr.On("GetShopOrder", shop.ID, req).Return(nil, int64(0), 0, commonErr.ErrInternalServerError)
+				},
+			},
+			expected: expected{
+				result: nil,
+				err:    commonErr.ErrInternalServerError,
+			},
+		},
+	} {
+		t.Run(tc.description, func(t *testing.T) {
+			invoicePerShopRepo := mocks.NewInvoicePerShopRepository(t)
+			shopService := mocks.NewShopService(t)
+			tc.beforeTest(shopService, invoicePerShopRepo)
+			invoicePerShopService := service.NewInvoicePerShopService(&service.InvoicePerShopSConfig{
+				InvoicePerShopRepo: invoicePerShopRepo,
+				ShopService:        shopService,
+			})
+
+			result, err := invoicePerShopService.GetShopOrder(tc.input.userId, tc.input.req)
 
 			assert.Equal(t, tc.expected.result, result)
 			assert.Equal(t, tc.expected.err, err)

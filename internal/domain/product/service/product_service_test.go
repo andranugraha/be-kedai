@@ -715,3 +715,63 @@ func TestGetSellerProductByCode(t *testing.T) {
 		})
 	}
 }
+
+func TestAddViewCount(t *testing.T) {
+	type input struct {
+		productID int
+	}
+	type expected struct {
+		err error
+	}
+
+	var (
+		productID = 1
+	)
+
+	tests := []struct {
+		description string
+		input
+		beforeTest func(*mocks.ProductRepository)
+		expected
+	}{
+		{
+			description: "should return error when failed to add view count",
+			input: input{
+				productID: productID,
+			},
+			beforeTest: func(pr *mocks.ProductRepository) {
+				pr.On("AddViewCount", productID).Return(errors.New("failed to add view count"))
+			},
+			expected: expected{
+				err: errors.New("failed to add view count"),
+			},
+		},
+		{
+			description: "should return nil when succeed to add view count",
+			input: input{
+				productID: productID,
+			},
+			beforeTest: func(pr *mocks.ProductRepository) {
+				pr.On("AddViewCount", productID).Return(nil)
+			},
+			expected: expected{
+				err: nil,
+			},
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.description, func(t *testing.T) {
+			productRepository := mocks.NewProductRepository(t)
+			tc.beforeTest(productRepository)
+			productService := service.NewProductService(&service.ProductSConfig{
+				ProductRepository: productRepository,
+			})
+
+			err := productService.AddViewCount(tc.input.productID)
+
+			assert.Equal(t, tc.expected.err, err)
+		})
+	}
+
+}

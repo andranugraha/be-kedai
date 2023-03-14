@@ -18,6 +18,7 @@ type ProductService interface {
 	GetSellerProducts(userID int, req *dto.SellerProductFilterRequest) (*commonDto.PaginationResponse, error)
 	SearchAutocomplete(req dto.ProductSearchAutocomplete) ([]*dto.ProductResponse, error)
 	GetSellerProductByCode(userID int, productCode string) (*dto.SellerProductDetail, error)
+	AddViewCount(id int) error
 }
 
 type productServiceImpl struct {
@@ -186,4 +187,8 @@ func (s *productServiceImpl) GetSellerProductByCode(userID int, productCode stri
 	}
 
 	return &res, nil
+}
+
+func (s *productServiceImpl) AddViewCount(id int) error {
+	return s.productRepository.AddViewCount(id)
 }

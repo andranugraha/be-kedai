@@ -199,3 +199,13 @@ type SellerProductDetail struct {
 	Categories []*model.Category    `json:"categories"`
 	Couriers   []*shopModel.Courier `json:"couriers,omitempty"`
 }
+
+type AddProductViewRequest struct {
+	ProductID int `form:"productId" binding:"required"`
+}
+
+func (p *AddProductViewRequest) Validate() {
+	if p.ProductID < 1 {
+		p.ProductID = 0
+	}
+}

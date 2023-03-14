@@ -21,6 +21,7 @@ type ProductRepository interface {
 	GetBySellerID(shopID int, request *dto.SellerProductFilterRequest) ([]*dto.SellerProduct, int64, int, error)
 	SearchAutocomplete(req dto.ProductSearchAutocomplete) ([]*dto.ProductResponse, error)
 	GetSellerProductByCode(shopID int, productCode string) (*model.Product, error)
+	AddViewCount(productID int) error
 }
 
 type productRepositoryImpl struct {
@@ -355,4 +356,22 @@ func (r *productRepositoryImpl) GetSellerProductByCode(shopID int, productCode s
 	}
 
 	return &product, nil
+}
+
+func (r *productRepositoryImpl) AddViewCount(productID int) error {
+	res := r.db.
+		Model(&model.Product{}).
+		Where("id = ?", productID).
+		Where("is_active = ?", true).
+		Update("view", gorm.Expr("view + ?", 1))
+
+	if res.Error != nil {
+		return res.Error
+	}
+
+	if res.RowsAffected == 0 {
+		return errs.ErrProductDoesNotExist
+	}
+
+	return nil
 }

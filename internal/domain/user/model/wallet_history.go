@@ -1,6 +1,7 @@
 package model
 
 import (
+	"kedai/backend/be-kedai/internal/utils/random"
 	"time"
 
 	"gorm.io/gorm"
@@ -18,6 +19,17 @@ type WalletHistory struct {
 }
 
 const (
-	WalletHistoryTypeTopup    = "Top-up"
-	WalletHistoryTypeCheckout = "Checkout"
+	WalletHistoryTypeTopup      = "Top-up"
+	WalletHistoryTypeCheckout   = "Checkout"
+	WalletHistoryTypeWithdrawal = "Withdrawal"
 )
+
+func (wh *WalletHistory) BeforeCreate(tx *gorm.DB) (err error) {
+
+	wh.Date = time.Now()
+	if wh.Reference == "" {
+		r := random.NewRandomUtils(&random.RandomUtilsConfig{})
+		wh.Reference = r.GenerateNumericString(5)
+	}
+	return
+}
