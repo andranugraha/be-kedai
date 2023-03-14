@@ -69,7 +69,7 @@ func TestGetUserWishlist(t *testing.T) {
 				err: errs.ErrProductDoesNotExist,
 				beforeTests: func(mockWishlistRepo *mocks.UserWishlistRepository, mockUserService *mocks.UserService, mockProductService *mocks.ProductService) {
 					mockUserService.On("GetByID", user.ID).Return(user, nil)
-					mockProductService.On("GetByID", product.ID).Return(nil, errs.ErrProductDoesNotExist)
+					mockProductService.On("GetActiveByID", product.ID).Return(nil, errs.ErrProductDoesNotExist)
 				},
 			},
 			expected: expected{
@@ -87,7 +87,7 @@ func TestGetUserWishlist(t *testing.T) {
 				err: errs.ErrProductNotInWishlist,
 				beforeTests: func(mockWishlistRepo *mocks.UserWishlistRepository, mockUserService *mocks.UserService, mockProductService *mocks.ProductService) {
 					mockUserService.On("GetByID", user.ID).Return(user, nil)
-					mockProductService.On("GetByID", product.ID).Return(product, nil)
+					mockProductService.On("GetActiveByID", product.ID).Return(product, nil)
 					mockWishlistRepo.On("GetUserWishlist", &model.UserWishlist{
 						UserID:    user.ID,
 						ProductID: product.ID,
@@ -110,7 +110,7 @@ func TestGetUserWishlist(t *testing.T) {
 				err: nil,
 				beforeTests: func(mockWishlistRepo *mocks.UserWishlistRepository, mockUserService *mocks.UserService, mockProductService *mocks.ProductService) {
 					mockUserService.On("GetByID", user.ID).Return(user, nil)
-					mockProductService.On("GetByID", product.ID).Return(product, nil)
+					mockProductService.On("GetActiveByID", product.ID).Return(product, nil)
 					mockWishlistRepo.On("GetUserWishlist", &model.UserWishlist{
 						UserID:    user.ID,
 						ProductID: product.ID,
@@ -202,7 +202,7 @@ func TestAddUserWishlist(t *testing.T) {
 				err: errs.ErrProductDoesNotExist,
 				beforeTests: func(mockWishlistRepo *mocks.UserWishlistRepository, mockUserService *mocks.UserService, mockProductService *mocks.ProductService) {
 					mockUserService.On("GetByID", user.ID).Return(user, nil)
-					mockProductService.On("GetByID", product.ID).Return(nil, errs.ErrProductDoesNotExist)
+					mockProductService.On("GetActiveByID", product.ID).Return(nil, errs.ErrProductDoesNotExist)
 				},
 			},
 			expected: expected{
@@ -220,7 +220,7 @@ func TestAddUserWishlist(t *testing.T) {
 				err: errs.ErrProductInWishlist,
 				beforeTests: func(mockWishlistRepo *mocks.UserWishlistRepository, mockUserService *mocks.UserService, mockProductService *mocks.ProductService) {
 					mockUserService.On("GetByID", user.ID).Return(user, nil)
-					mockProductService.On("GetByID", product.ID).Return(product, nil)
+					mockProductService.On("GetActiveByID", product.ID).Return(product, nil)
 					mockWishlistRepo.On("AddUserWishlist", wishlist).Return(nil, errs.ErrProductInWishlist)
 				},
 			},
@@ -239,7 +239,7 @@ func TestAddUserWishlist(t *testing.T) {
 				err: nil,
 				beforeTests: func(mockWishlistRepo *mocks.UserWishlistRepository, mockUserService *mocks.UserService, mockProductService *mocks.ProductService) {
 					mockUserService.On("GetByID", user.ID).Return(user, nil)
-					mockProductService.On("GetByID", product.ID).Return(product, nil)
+					mockProductService.On("GetActiveByID", product.ID).Return(product, nil)
 					mockWishlistRepo.On("AddUserWishlist", wishlist).Return(wishlist, nil)
 				},
 			},
@@ -326,7 +326,7 @@ func TestRemoveUserWishlist(t *testing.T) {
 				err: errs.ErrProductDoesNotExist,
 				beforeTests: func(mockWishlistRepo *mocks.UserWishlistRepository, mockUserService *mocks.UserService, mockProductService *mocks.ProductService) {
 					mockUserService.On("GetByID", user.ID).Return(user, nil)
-					mockProductService.On("GetByID", product.ID).Return(nil, errs.ErrProductDoesNotExist)
+					mockProductService.On("GetActiveByID", product.ID).Return(nil, errs.ErrProductDoesNotExist)
 				},
 			},
 			expected: expected{
@@ -343,7 +343,7 @@ func TestRemoveUserWishlist(t *testing.T) {
 				err: errs.ErrProductNotInWishlist,
 				beforeTests: func(mockWishlistRepo *mocks.UserWishlistRepository, mockUserService *mocks.UserService, mockProductService *mocks.ProductService) {
 					mockUserService.On("GetByID", user.ID).Return(user, nil)
-					mockProductService.On("GetByID", product.ID).Return(product, nil)
+					mockProductService.On("GetActiveByID", product.ID).Return(product, nil)
 					mockWishlistRepo.On("RemoveUserWishlist", wishlist).Return(errs.ErrProductNotInWishlist)
 				},
 			},
@@ -361,7 +361,7 @@ func TestRemoveUserWishlist(t *testing.T) {
 				err: nil,
 				beforeTests: func(mockWishlistRepo *mocks.UserWishlistRepository, mockUserService *mocks.UserService, mockProductService *mocks.ProductService) {
 					mockUserService.On("GetByID", user.ID).Return(user, nil)
-					mockProductService.On("GetByID", product.ID).Return(product, nil)
+					mockProductService.On("GetActiveByID", product.ID).Return(product, nil)
 					mockWishlistRepo.On("RemoveUserWishlist", wishlist).Return(nil)
 				},
 			},
