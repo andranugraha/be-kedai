@@ -29,6 +29,7 @@ type InvoicePerShopRepository interface {
 	GetShopOrder(shopId int, req *dto.InvoicePerShopFilterRequest) ([]*dto.InvoicePerShopDetail, int64, int, error)
 	UpdateStatusToDelivery(shopId int, orderId int, invoiceStatuses []*model.InvoiceStatus) error
 	UpdateStatusToCancelled(shopId int, orderId int, invoiceStatuses []*model.InvoiceStatus) error
+	UpdateStatusToReceived(shopId int, orderId int, invoiceStatuses []*model.InvoiceStatus) error
 	UpdateStatusCRONJob() error
 }
 
@@ -427,6 +428,30 @@ func (r *invoicePerShopRepositoryImpl) UpdateStatusToDelivery(shopId int, orderI
 func (r *invoicePerShopRepositoryImpl) UpdateStatusToCancelled(shopId int, orderId int, invoiceStatuses []*model.InvoiceStatus) error {
 	err := r.db.Transaction(func(tx *gorm.DB) error {
 		if err := tx.Model(&model.InvoicePerShop{}).Where("shop_id = ? AND id = ? AND status = ?", shopId, orderId, constant.TransactionStatusCreated).Update("status", constant.TransactionStatusCancelled).Error; err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				return commonErr.ErrInvoiceNotFound
+			}
+			return err
+		}
+
+		if err := r.invoiceStatusRepo.Create(tx, invoiceStatuses); err != nil {
+			return err
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+
+func (r *invoicePerShopRepositoryImpl) UpdateStatusToReceived(shopId int, orderId int, invoiceStatuses []*model.InvoiceStatus) error {
+	err := r.db.Transaction(func(tx *gorm.DB) error {
+		if err := tx.Model(&model.InvoicePerShop{}).Where("shop_id = ? AND id = ? AND status = ?", shopId, orderId, constant.TransactionStatusDelivered).Update("status", constant.TransactionStatusReceived).Error; err != nil {
 			if errors.Is(err, gorm.ErrRecordNotFound) {
 				return commonErr.ErrInvoiceNotFound
 			}
