@@ -7,6 +7,7 @@ import (
 	"kedai/backend/be-kedai/internal/domain/shop/dto"
 	"kedai/backend/be-kedai/internal/domain/shop/model"
 	"kedai/backend/be-kedai/internal/domain/shop/service"
+	stringUtils "kedai/backend/be-kedai/internal/utils/strings"
 	"kedai/backend/be-kedai/mocks"
 	"testing"
 
@@ -703,6 +704,177 @@ func TestUpdateShopProfile(t *testing.T) {
 			err := service.UpdateShopProfile(userId, tc.input.req)
 
 			assert.ErrorIs(t, tc.expected.err, err)
+		})
+	}
+}
+
+func TestCreateShop(t *testing.T) {
+	type input struct {
+		userID  int
+		request *dto.CreateShopRequest
+	}
+	type expected struct {
+		data *model.Shop
+		err  error
+	}
+
+	var (
+		userID          = 1
+		shopName        = "shop name 123"
+		AddressID       = 1
+		courierIDs      = []int{1, 2}
+		photoUrl        = "http://image.png"
+		courierServices = []*model.CourierService{}
+	)
+
+	tests := []struct {
+		description string
+		input
+		beforeTest func(*mocks.ShopRepository, *mocks.CourierServiceService)
+		expected
+	}{
+		{
+			description: "should return error when failed to get previous shop",
+			input: input{
+				userID: userID,
+				request: &dto.CreateShopRequest{
+					Name:       shopName,
+					AddressID:  AddressID,
+					CourierIDs: courierIDs,
+					PhotoUrl:   &photoUrl,
+				},
+			},
+			beforeTest: func(sr *mocks.ShopRepository, css *mocks.CourierServiceService) {
+				sr.On("FindShopByUserId", userID).Return(nil, errors.New("failed to get shop"))
+			},
+			expected: expected{
+				data: nil,
+				err:  errors.New("failed to get shop"),
+			},
+		},
+		{
+			description: "should return error when user already has shop",
+			input: input{
+				userID: userID,
+				request: &dto.CreateShopRequest{
+					Name:       shopName,
+					AddressID:  AddressID,
+					CourierIDs: courierIDs,
+					PhotoUrl:   &photoUrl,
+				},
+			},
+			beforeTest: func(sr *mocks.ShopRepository, css *mocks.CourierServiceService) {
+				sr.On("FindShopByUserId", userID).Return(&model.Shop{}, nil)
+			},
+			expected: expected{
+				data: nil,
+				err:  errs.ErrUserHasShop,
+			},
+		},
+		{
+			description: "should return error when shop name is invalid",
+			input: input{
+				userID: userID,
+				request: &dto.CreateShopRequest{
+					Name:       "invalid_shop_name",
+					AddressID:  AddressID,
+					CourierIDs: courierIDs,
+					PhotoUrl:   &photoUrl,
+				},
+			},
+			beforeTest: func(sr *mocks.ShopRepository, css *mocks.CourierServiceService) {
+				sr.On("FindShopByUserId", userID).Return(nil, errs.ErrShopNotFound)
+			},
+			expected: expected{
+				data: nil,
+				err:  errs.ErrInvalidShopName,
+			},
+		},
+		{
+			description: "should return error when failed to get courier services",
+			input: input{
+				userID: userID,
+				request: &dto.CreateShopRequest{
+					Name:       shopName,
+					AddressID:  AddressID,
+					CourierIDs: courierIDs,
+					PhotoUrl:   &photoUrl,
+				},
+			},
+			beforeTest: func(sr *mocks.ShopRepository, css *mocks.CourierServiceService) {
+				sr.On("FindShopByUserId", userID).Return(nil, errs.ErrShopNotFound)
+				css.On("GetCourierServicesByCourierIDs", courierIDs).Return(nil, errors.New("failed to get courier services"))
+			},
+			expected: expected{
+				data: nil,
+				err:  errors.New("failed to get courier services"),
+			},
+		},
+		{
+			description: "should return error when failed to create shop",
+			input: input{
+				userID: userID,
+				request: &dto.CreateShopRequest{
+					Name:       shopName,
+					AddressID:  AddressID,
+					CourierIDs: courierIDs,
+					PhotoUrl:   &photoUrl,
+				},
+			},
+			beforeTest: func(sr *mocks.ShopRepository, css *mocks.CourierServiceService) {
+				sr.On("FindShopByUserId", userID).Return(nil, errs.ErrShopNotFound)
+				css.On("GetCourierServicesByCourierIDs", courierIDs).Return(courierServices, nil)
+				sr.On("Create", mock.Anything).Return(errors.New("failed to create shop"))
+			},
+			expected: expected{
+				data: nil,
+				err:  errors.New("failed to create shop"),
+			},
+		},
+		{
+			description: "should return created shop when succeed to create shop",
+			input: input{
+				userID: userID,
+				request: &dto.CreateShopRequest{
+					Name:       shopName,
+					AddressID:  AddressID,
+					CourierIDs: courierIDs,
+					PhotoUrl:   &photoUrl,
+				},
+			},
+			beforeTest: func(sr *mocks.ShopRepository, css *mocks.CourierServiceService) {
+				sr.On("FindShopByUserId", userID).Return(nil, errs.ErrShopNotFound)
+				css.On("GetCourierServicesByCourierIDs", courierIDs).Return(courierServices, nil)
+				sr.On("Create", mock.Anything).Return(nil)
+			},
+			expected: expected{
+				data: &model.Shop{
+					UserID:         userID,
+					Name:           shopName,
+					AddressID:      AddressID,
+					CourierService: courierServices,
+					PhotoUrl:       &photoUrl,
+					Slug:           stringUtils.GenerateSlug(shopName),
+				},
+				err: nil,
+			},
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.description, func(t *testing.T) {
+			shopRepo := mocks.NewShopRepository(t)
+			courierServiceService := mocks.NewCourierServiceService(t)
+			tc.beforeTest(shopRepo, courierServiceService)
+			shopService := service.NewShopService(&service.ShopSConfig{
+				ShopRepository:        shopRepo,
+				CourierServiceService: courierServiceService,
+			})
+
+			data, err := shopService.CreateShop(tc.input.userID, tc.input.request)
+
+			assert.Equal(t, tc.expected.data, data)
+			assert.Equal(t, tc.expected.err, err)
 		})
 	}
 }
