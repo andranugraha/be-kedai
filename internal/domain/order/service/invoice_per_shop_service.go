@@ -25,6 +25,7 @@ type InvoicePerShopService interface {
 	UpdateStatusToCompleted(userId int, orderCode string) error
 	UpdateStatusCRONJob() error
 	AutoReceivedCRONJob() error
+	AutoCompletedCRONJob() error
 }
 
 type invoicePerShopServiceImpl struct {
@@ -185,7 +186,7 @@ func (s *invoicePerShopServiceImpl) UpdateStatusToReceived(userId int, orderCode
 	if err != nil {
 		return err
 	}
-	
+
 	var invoiceStatuses []*model.InvoiceStatus
 	var status = constant.TransactionStatusReceived
 
@@ -208,7 +209,7 @@ func (s *invoicePerShopServiceImpl) UpdateStatusToCompleted(userId int, orderCod
 	if err != nil {
 		return err
 	}
-	
+
 	var invoiceStatuses []*model.InvoiceStatus
 	var status = constant.TransactionStatusCompleted
 
@@ -231,4 +232,8 @@ func (s *invoicePerShopServiceImpl) UpdateStatusCRONJob() error {
 
 func (s *invoicePerShopServiceImpl) AutoReceivedCRONJob() error {
 	return s.invoicePerShopRepo.AutoReceivedCRONJob()
+}
+
+func (s *invoicePerShopServiceImpl) AutoCompletedCRONJob() error {
+	return s.invoicePerShopRepo.AutoCompletedCRONJob()
 }
