@@ -75,7 +75,7 @@ func TestPreCheckCartItem(t *testing.T) {
 				},
 				beforeTests: func(mockUserCartItemRepo *mocks.UserCartItemRepository, mockSkuService *mocks.SkuService, mockProductService *mocks.ProductService, shopService *mocks.ShopService) {
 					mockSkuService.On("GetByID", sku.ID).Return(sku, nil)
-					mockProductService.On("GetByID", product.ID).Return(nil, errs.ErrProductDoesNotExist)
+					mockProductService.On("GetActiveByID", product.ID).Return(nil, errs.ErrProductDoesNotExist)
 				},
 				err: errs.ErrProductDoesNotExist,
 			},
@@ -92,7 +92,7 @@ func TestPreCheckCartItem(t *testing.T) {
 				},
 				beforeTests: func(mockUserCartItemRepo *mocks.UserCartItemRepository, mockSkuService *mocks.SkuService, mockProductService *mocks.ProductService, shopService *mocks.ShopService) {
 					mockSkuService.On("GetByID", sku.ID).Return(sku, nil)
-					mockProductService.On("GetByID", product.ID).Return(&productModel.Product{
+					mockProductService.On("GetActiveByID", product.ID).Return(&productModel.Product{
 						ID:       product.ID,
 						IsActive: false,
 					}, nil)
@@ -113,7 +113,7 @@ func TestPreCheckCartItem(t *testing.T) {
 				},
 				beforeTests: func(mockUserCartItemRepo *mocks.UserCartItemRepository, mockSkuService *mocks.SkuService, mockProductService *mocks.ProductService, mockShopService *mocks.ShopService) {
 					mockSkuService.On("GetByID", sku.ID).Return(sku, nil)
-					mockProductService.On("GetByID", product.ID).Return(product, nil)
+					mockProductService.On("GetActiveByID", product.ID).Return(product, nil)
 					mockShopService.On("FindShopByUserId", req.UserId).Return(nil, errs.ErrInternalServerError)
 				},
 				err: errs.ErrInternalServerError,
@@ -134,7 +134,7 @@ func TestPreCheckCartItem(t *testing.T) {
 				},
 				beforeTests: func(mockUserCartItemRepo *mocks.UserCartItemRepository, mockSkuService *mocks.SkuService, mockProductService *mocks.ProductService, mockShopService *mocks.ShopService) {
 					mockSkuService.On("GetByID", sku.ID).Return(sku, nil)
-					mockProductService.On("GetByID", product.ID).Return(product, nil)
+					mockProductService.On("GetActiveByID", product.ID).Return(product, nil)
 					mockShopService.On("FindShopByUserId", req.UserId).Return(&shopModel.Shop{
 						ID:     1,
 						UserID: 1,
@@ -158,7 +158,7 @@ func TestPreCheckCartItem(t *testing.T) {
 				},
 				beforeTests: func(mockUserCartItemRepo *mocks.UserCartItemRepository, mockSkuService *mocks.SkuService, mockProductService *mocks.ProductService, mockShopService *mocks.ShopService) {
 					mockSkuService.On("GetByID", sku.ID).Return(sku, nil)
-					mockProductService.On("GetByID", product.ID).Return(product, nil)
+					mockProductService.On("GetActiveByID", product.ID).Return(product, nil)
 					mockShopService.On("FindShopByUserId", req.UserId).Return(&shopModel.Shop{
 						ID:     1,
 						UserID: 2,
@@ -182,7 +182,7 @@ func TestPreCheckCartItem(t *testing.T) {
 				},
 				beforeTests: func(mockUserCartItemRepo *mocks.UserCartItemRepository, mockSkuService *mocks.SkuService, mockProductService *mocks.ProductService, mockShopService *mocks.ShopService) {
 					mockSkuService.On("GetByID", sku.ID).Return(sku, nil)
-					mockProductService.On("GetByID", product.ID).Return(product, nil)
+					mockProductService.On("GetActiveByID", product.ID).Return(product, nil)
 					mockShopService.On("FindShopByUserId", req.UserId).Return(&shopModel.Shop{
 						ID:     1,
 						UserID: 2,
@@ -209,7 +209,7 @@ func TestPreCheckCartItem(t *testing.T) {
 				},
 				beforeTests: func(mockUserCartItemRepo *mocks.UserCartItemRepository, mockSkuService *mocks.SkuService, mockProductService *mocks.ProductService, mockShopService *mocks.ShopService) {
 					mockSkuService.On("GetByID", sku.ID).Return(sku, nil)
-					mockProductService.On("GetByID", product.ID).Return(product, nil)
+					mockProductService.On("GetActiveByID", product.ID).Return(product, nil)
 					mockShopService.On("FindShopByUserId", req.UserId).Return(&shopModel.Shop{
 						ID:     1,
 						UserID: 2,
@@ -237,7 +237,7 @@ func TestPreCheckCartItem(t *testing.T) {
 				},
 				beforeTests: func(mockUserCartItemRepo *mocks.UserCartItemRepository, mockSkuService *mocks.SkuService, mockProductService *mocks.ProductService, mockShopService *mocks.ShopService) {
 					mockSkuService.On("GetByID", sku.ID).Return(sku, nil)
-					mockProductService.On("GetByID", product.ID).Return(product, nil)
+					mockProductService.On("GetActiveByID", product.ID).Return(product, nil)
 					mockShopService.On("FindShopByUserId", req.UserId).Return(&shopModel.Shop{
 						ID:     1,
 						UserID: 2,
@@ -261,7 +261,7 @@ func TestPreCheckCartItem(t *testing.T) {
 				},
 				beforeTests: func(mockUserCartItemRepo *mocks.UserCartItemRepository, mockSkuService *mocks.SkuService, mockProductService *mocks.ProductService, mockShopService *mocks.ShopService) {
 					mockSkuService.On("GetByID", sku.ID).Return(sku, nil)
-					mockProductService.On("GetByID", product.ID).Return(product, nil)
+					mockProductService.On("GetActiveByID", product.ID).Return(product, nil)
 					mockShopService.On("FindShopByUserId", req.UserId).Return(&shopModel.Shop{
 						ID:     1,
 						UserID: 2,
@@ -345,7 +345,7 @@ func TestCreateCartItem(t *testing.T) {
 				},
 				beforeTests: func(mockUserCartItemRepo *mocks.UserCartItemRepository, mockSkuService *mocks.SkuService, mockProductService *mocks.ProductService, shopService *mocks.ShopService) {
 					mockSkuService.On("GetByID", sku.ID).Return(sku, nil)
-					mockProductService.On("GetByID", product.ID).Return(product, nil)
+					mockProductService.On("GetActiveByID", product.ID).Return(product, nil)
 					shopService.On("FindShopByUserId", req.UserId).Return(&shopModel.Shop{
 						ID:     1,
 						UserID: 2,
@@ -370,7 +370,7 @@ func TestCreateCartItem(t *testing.T) {
 				},
 				beforeTests: func(mockUserCartItemRepo *mocks.UserCartItemRepository, mockSkuService *mocks.SkuService, mockProductService *mocks.ProductService, shopService *mocks.ShopService) {
 					mockSkuService.On("GetByID", sku.ID).Return(sku, nil)
-					mockProductService.On("GetByID", product.ID).Return(product, nil)
+					mockProductService.On("GetActiveByID", product.ID).Return(product, nil)
 					shopService.On("FindShopByUserId", req.UserId).Return(&shopModel.Shop{
 						ID:     1,
 						UserID: 2,
@@ -399,7 +399,7 @@ func TestCreateCartItem(t *testing.T) {
 				},
 				beforeTests: func(mockUserCartItemRepo *mocks.UserCartItemRepository, mockSkuService *mocks.SkuService, mockProductService *mocks.ProductService, shopService *mocks.ShopService) {
 					mockSkuService.On("GetByID", sku.ID).Return(sku, nil)
-					mockProductService.On("GetByID", product.ID).Return(product, nil)
+					mockProductService.On("GetActiveByID", product.ID).Return(product, nil)
 					shopService.On("FindShopByUserId", req.UserId).Return(&shopModel.Shop{
 						ID:     1,
 						UserID: 2,
@@ -435,7 +435,7 @@ func TestCreateCartItem(t *testing.T) {
 				},
 				beforeTests: func(mockUserCartItemRepo *mocks.UserCartItemRepository, mockSkuService *mocks.SkuService, mockProductService *mocks.ProductService, shopService *mocks.ShopService) {
 					mockSkuService.On("GetByID", sku.ID).Return(sku, nil)
-					mockProductService.On("GetByID", product.ID).Return(product, nil)
+					mockProductService.On("GetActiveByID", product.ID).Return(product, nil)
 					shopService.On("FindShopByUserId", req.UserId).Return(&shopModel.Shop{
 						ID:     1,
 						UserID: 2,
@@ -473,7 +473,7 @@ func TestCreateCartItem(t *testing.T) {
 				},
 				beforeTests: func(mockUserCartItemRepo *mocks.UserCartItemRepository, mockSkuService *mocks.SkuService, mockProductService *mocks.ProductService, shopService *mocks.ShopService) {
 					mockSkuService.On("GetByID", sku.ID).Return(sku, nil)
-					mockProductService.On("GetByID", product.ID).Return(product, nil)
+					mockProductService.On("GetActiveByID", product.ID).Return(product, nil)
 					shopService.On("FindShopByUserId", req.UserId).Return(&shopModel.Shop{
 						ID:     1,
 						UserID: 2,
@@ -635,7 +635,7 @@ func TestUpdateCartItem(t *testing.T) {
 				request: &dto.UpdateCartItemRequest{SkuID: 1},
 				beforeTest: func(ucir *mocks.UserCartItemRepository, ss *mocks.SkuService, ps *mocks.ProductService) {
 					ss.On("GetByID", 1).Return(&productModel.Sku{ID: 1, ProductId: 1}, nil)
-					ps.On("GetByID", 1).Return(nil, errors.New("failed to get product"))
+					ps.On("GetActiveByID", 1).Return(nil, errors.New("failed to get product"))
 				},
 			},
 			expected: expected{
@@ -650,7 +650,7 @@ func TestUpdateCartItem(t *testing.T) {
 				request: &dto.UpdateCartItemRequest{SkuID: 1},
 				beforeTest: func(ucir *mocks.UserCartItemRepository, ss *mocks.SkuService, ps *mocks.ProductService) {
 					ss.On("GetByID", 1).Return(&productModel.Sku{ID: 1, ProductId: 1}, nil)
-					ps.On("GetByID", 1).Return(&productModel.Product{ID: 1, IsActive: false}, nil)
+					ps.On("GetActiveByID", 1).Return(&productModel.Product{ID: 1, IsActive: false}, nil)
 				},
 			},
 			expected: expected{
@@ -665,7 +665,7 @@ func TestUpdateCartItem(t *testing.T) {
 				request: &dto.UpdateCartItemRequest{SkuID: 1},
 				beforeTest: func(ucir *mocks.UserCartItemRepository, ss *mocks.SkuService, ps *mocks.ProductService) {
 					ss.On("GetByID", 1).Return(&productModel.Sku{ID: 1, ProductId: 1}, nil)
-					ps.On("GetByID", 1).Return(&productModel.Product{ID: 1, IsActive: true}, nil)
+					ps.On("GetActiveByID", 1).Return(&productModel.Product{ID: 1, IsActive: true}, nil)
 					ucir.On("GetCartItemByUserIdAndSkuId", 1, 1).Return(nil, errors.New("failed to get cart item"))
 				},
 			},
@@ -681,7 +681,7 @@ func TestUpdateCartItem(t *testing.T) {
 				request: &dto.UpdateCartItemRequest{SkuID: 1, Quantity: 3},
 				beforeTest: func(ucir *mocks.UserCartItemRepository, ss *mocks.SkuService, ps *mocks.ProductService) {
 					ss.On("GetByID", 1).Return(&productModel.Sku{ID: 1, ProductId: 1, Stock: 2}, nil)
-					ps.On("GetByID", 1).Return(&productModel.Product{ID: 1, IsActive: true}, nil)
+					ps.On("GetActiveByID", 1).Return(&productModel.Product{ID: 1, IsActive: true}, nil)
 				},
 			},
 			expected: expected{
@@ -696,7 +696,7 @@ func TestUpdateCartItem(t *testing.T) {
 				request: &dto.UpdateCartItemRequest{SkuID: 1, Quantity: 3},
 				beforeTest: func(ucir *mocks.UserCartItemRepository, ss *mocks.SkuService, ps *mocks.ProductService) {
 					ss.On("GetByID", 1).Return(&productModel.Sku{ID: 1, ProductId: 1, Stock: 10}, nil)
-					ps.On("GetByID", 1).Return(&productModel.Product{ID: 1, IsActive: true}, nil)
+					ps.On("GetActiveByID", 1).Return(&productModel.Product{ID: 1, IsActive: true}, nil)
 					ucir.On("GetCartItemByUserIdAndSkuId", 1, 1).Return(&model.CartItem{ID: 4, Quantity: 1}, nil)
 					ucir.On("UpdateCartItem", &model.CartItem{ID: 4, UserId: 1, SkuId: 1, Quantity: 3}).Return(nil, errors.New("failed to update cart"))
 				},
@@ -713,7 +713,7 @@ func TestUpdateCartItem(t *testing.T) {
 				request: &dto.UpdateCartItemRequest{SkuID: 1, Quantity: 3},
 				beforeTest: func(ucir *mocks.UserCartItemRepository, ss *mocks.SkuService, ps *mocks.ProductService) {
 					ss.On("GetByID", 1).Return(&productModel.Sku{ID: 1, ProductId: 1, Stock: 10}, nil)
-					ps.On("GetByID", 1).Return(&productModel.Product{ID: 1, IsActive: true}, nil)
+					ps.On("GetActiveByID", 1).Return(&productModel.Product{ID: 1, IsActive: true}, nil)
 					ucir.On("GetCartItemByUserIdAndSkuId", 1, 1).Return(&model.CartItem{ID: 4, Quantity: 1}, nil)
 					ucir.On("UpdateCartItem", &model.CartItem{ID: 4, UserId: 1, SkuId: 1, Quantity: 3}).Return(&model.CartItem{ID: 4, UserId: 1, SkuId: 1, Quantity: 3}, nil)
 				},
