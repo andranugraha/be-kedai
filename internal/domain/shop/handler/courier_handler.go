@@ -57,3 +57,29 @@ func (h *Handler) GetMatchingCouriers(c *gin.Context) {
 
 	response.Success(c, http.StatusOK, code.OK, "success", couriers)
 }
+
+func (h *Handler) ToggleShopCourier(c *gin.Context) {
+	var req dto.ToggleShopCourierRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.ErrorValidator(c, http.StatusBadRequest, err)
+		return
+	}
+
+	userId := c.GetInt("userId")
+
+	res, err := h.courierService.ToggleShopCourier(userId, req.CourierId)
+	if err != nil {
+		if errors.Is(err, errs.ErrShopNotFound) {
+			response.Error(c, http.StatusNotFound, code.SHOP_NOT_REGISTERED, err.Error())
+			return
+		}
+		if errors.Is(err, errs.ErrCourierNotFound) {
+			response.Error(c, http.StatusNotFound, code.NOT_FOUND, err.Error())
+			return
+		}
+		response.Error(c, http.StatusInternalServerError, code.INTERNAL_SERVER_ERROR, errs.ErrInternalServerError.Error())
+		return
+	}
+
+	response.Success(c, http.StatusOK, code.OK, "success", res)
+}
