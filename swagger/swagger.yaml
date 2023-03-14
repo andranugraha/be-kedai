@@ -4954,6 +4954,13 @@ paths:
         - Seller
       summary: Update product activation
       description: Update product activation (publish or delist)
+      parameters:
+        - in: path
+          name: code
+          required: true
+          schema:
+            type: string
+            example: 'product-code'
       requestBody:
         $ref: '#/components/requestBodies/UpdateActivationRequestBody'
       responses:
