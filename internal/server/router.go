@@ -178,6 +178,7 @@ func NewRouter(cfg *RouterConfig) *gin.Engine {
 					invoice.POST("/cancel", cfg.OrderHandler.CancelCheckout)
 					invoice.GET("", cfg.OrderHandler.GetInvoicePerShopsByUserID)
 					invoice.GET("/:code", cfg.OrderHandler.GetInvoiceByCode)
+					invoice.PUT("/:code/receive", cfg.OrderHandler.UpdateToReceived)
 				}
 
 				transaction := authenticated.Group("/transactions")
