@@ -593,14 +593,14 @@ func TestGetShopInsight(t *testing.T) {
 func TestGetShopProfile(t *testing.T) {
 	var (
 		userId = 1
-		shop   = &dto.GetShopProfileResponse{
+		shop   = &dto.ShopProfile{
 			Name: "shop name",
 		}
 	)
 
 	type input struct {
 		userId int
-		result *dto.GetShopProfileResponse
+		result *dto.ShopProfile
 		err    error
 	}
 
@@ -676,6 +676,126 @@ func TestGetShopProfile(t *testing.T) {
 
 			c.Request, _ = http.NewRequest("GET", "/v1/shops/profile", nil)
 			handler.GetShopProfile(c)
+
+			assert.Equal(t, tc.expected.statusCode, rec.Code)
+			assert.Equal(t, string(expectedBody), rec.Body.String())
+		})
+	}
+}
+
+func TestUpdateShopProfile(t *testing.T) {
+	var (
+		userId      = 1
+		logoUrl     = "https://logo.com"
+		bannerUrl   = "https://banner.com"
+		description = "description"
+		req         = dto.ShopProfile{
+			Name:        "shop name",
+			LogoUrl:     &logoUrl,
+			BannerUrl:   &bannerUrl,
+			Description: &description,
+		}
+	)
+
+	type input struct {
+		userId     int
+		req        dto.ShopProfile
+		beforeTest func(*mocks.ShopService)
+	}
+
+	type expected struct {
+		statusCode int
+		response   response.Response
+	}
+
+	type cases struct {
+		description string
+		input
+		expected
+	}
+
+	for _, tc := range []cases{
+		{
+			description: "should return shop profile with code 200 when success",
+			input: input{
+				userId: userId,
+				req:    req,
+				beforeTest: func(mockService *mocks.ShopService) {
+					mockService.On("UpdateShopProfile", userId, req).Return(nil)
+				},
+			},
+			expected: expected{
+				statusCode: http.StatusOK,
+				response: response.Response{
+					Code:    code.OK,
+					Message: "success",
+				},
+			},
+		},
+		{
+			description: "should return error with code 400 when request invalid",
+			input: input{
+				userId:     userId,
+				req:        dto.ShopProfile{},
+				beforeTest: func(mockService *mocks.ShopService) {},
+			},
+			expected: expected{
+				statusCode: http.StatusBadRequest,
+				response: response.Response{
+					Code:    code.BAD_REQUEST,
+					Message: "Description is required",
+				},
+			},
+		},
+		{
+			description: "should return error with code 404 when shop not found",
+			input: input{
+				userId: userId,
+				req:    req,
+				beforeTest: func(mockService *mocks.ShopService) {
+					mockService.On("UpdateShopProfile", userId, req).Return(errs.ErrShopNotFound)
+				},
+			},
+			expected: expected{
+				statusCode: http.StatusNotFound,
+				response: response.Response{
+					Code:    code.SHOP_NOT_REGISTERED,
+					Message: errs.ErrShopNotFound.Error(),
+				},
+			},
+		},
+		{
+			description: "should return error with code 500 when internal server error",
+			input: input{
+				userId: userId,
+				req:    req,
+				beforeTest: func(mockService *mocks.ShopService) {
+					mockService.On("UpdateShopProfile", userId, req).Return(errs.ErrInternalServerError)
+				},
+			},
+			expected: expected{
+				statusCode: http.StatusInternalServerError,
+				response: response.Response{
+					Code:    code.INTERNAL_SERVER_ERROR,
+					Message: errs.ErrInternalServerError.Error(),
+				},
+			},
+		},
+	} {
+		t.Run(tc.description, func(t *testing.T) {
+			expectedBody, _ := json.Marshal(tc.expected.response)
+			payload := test.MakeRequestBody(tc.input.req)
+			rec := httptest.NewRecorder()
+			c, _ := gin.CreateTestContext(rec)
+			mockService := new(mocks.ShopService)
+			tc.beforeTest(mockService)
+			handler := handler.New(&handler.HandlerConfig{
+				ShopService: mockService,
+			})
+			c.Set("userId", 1)
+
+			c.Request, _ = http.NewRequest("PUT", "/v1/shops/profile", payload)
+			handler.UpdateShopProfile(c)
 
 			assert.Equal(t, tc.expected.statusCode, rec.Code)
 			assert.Equal(t, string(expectedBody), rec.Body.String())

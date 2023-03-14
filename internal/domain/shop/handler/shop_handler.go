@@ -130,3 +130,24 @@ func (h *Handler) GetShopProfile(c *gin.Context) {
 
 	response.Success(c, http.StatusOK, code.OK, "success", result)
 }
+
+func (h *Handler) UpdateShopProfile(c *gin.Context) {
+	var req dto.ShopProfile
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.ErrorValidator(c, http.StatusBadRequest, err)
+		return
+	}
+	userId := c.GetInt("userId")
+
+	err := h.shopService.UpdateShopProfile(userId, req)
+	if err != nil {
+		if errors.Is(err, errs.ErrShopNotFound) {
+			response.Error(c, http.StatusNotFound, code.SHOP_NOT_REGISTERED, err.Error())
+			return
+		}
+		response.Error(c, http.StatusInternalServerError, code.INTERNAL_SERVER_ERROR, errs.ErrInternalServerError.Error())
+		return
+	}
+
+	response.Success(c, http.StatusOK, code.OK, "success", nil)
+}

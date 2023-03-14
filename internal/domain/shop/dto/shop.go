@@ -1,6 +1,10 @@
 package dto
 
-import "kedai/backend/be-kedai/internal/domain/shop/model"
+import (
+	"kedai/backend/be-kedai/internal/domain/shop/model"
+	stringsUtil "kedai/backend/be-kedai/internal/utils/strings"
+	"strings"
+)
 
 type FindShopRequest struct {
 	Keyword string `form:"keyword"`
@@ -78,18 +82,29 @@ func (req *GetShopInsightRequest) Validate() {
 	}
 }
 
-type GetShopProfileResponse struct {
-	Name        string  `json:"name"`
-	LogoUrl     *string `json:"logoUrl,omitempty"`
-	BannerUrl   *string `json:"bannerUrl,omitempty"`
-	Description *string `json:"description,omitempty"`
+type ShopProfile struct {
+	Name        string  `json:"name" binding:"required"`
+	LogoUrl     *string `json:"logoUrl,omitempty" binding:"required"`
+	BannerUrl   *string `json:"bannerUrl,omitempty" binding:"required"`
+	Description *string `json:"description,omitempty" binding:"required"`
 }
 
-func ComposeShopProfileFromModel(shop *model.Shop) *GetShopProfileResponse {
-	return &GetShopProfileResponse{
+func ComposeShopProfileFromModel(shop *model.Shop) *ShopProfile {
+	return &ShopProfile{
 		Name:        shop.Name,
 		LogoUrl:     shop.PhotoUrl,
 		BannerUrl:   shop.BannerUrl,
 		Description: shop.Description,
 	}
+}
+
+func (req *ShopProfile) ComposeToModel(shop *model.Shop) {
+	shopName := strings.TrimSpace(req.Name)
+	if shop.Name != shopName {
+		shop.Slug = stringsUtil.GenerateSlug(shopName)
+	}
+	shop.Name = shopName
+	shop.PhotoUrl = req.LogoUrl
+	shop.BannerUrl = req.BannerUrl
+	shop.Description = req.Description
 }
