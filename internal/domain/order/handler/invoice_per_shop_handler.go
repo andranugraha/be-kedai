@@ -220,6 +220,24 @@ func (h *Handler) UpdateToReceived(c *gin.Context) {
 	response.Success(c, http.StatusOK, code.OK, "ok", nil)
 }
 
+func (h *Handler) UpdateToCompleted(c *gin.Context) {
+	userId := c.GetInt("userId")
+	orderCode := c.Param("code")
+
+	err := h.invoicePerShopService.UpdateStatusToCompleted(userId, orderCode)
+	if err != nil {
+		if errors.Is(err, errs.ErrInvoiceNotFound) {
+			response.Error(c, http.StatusNotFound, code.INVOICE_NOT_FOUND, err.Error())
+			return
+		}
+
+		response.Error(c, http.StatusInternalServerError, code.INTERNAL_SERVER_ERROR, errs.ErrInternalServerError.Error())
+		return
+	}
+
+	response.Success(c, http.StatusOK, code.OK, "ok", nil)
+}
+
 func (h *Handler) UpdateCronJob(c *gin.Context) {
 	_ = h.invoicePerShopService.UpdateStatusCRONJob()
 	_ = h.invoicePerShopService.AutoReceivedCRONJob()
