@@ -178,6 +178,8 @@ func NewRouter(cfg *RouterConfig) *gin.Engine {
 					invoice.POST("/cancel", cfg.OrderHandler.CancelCheckout)
 					invoice.GET("", cfg.OrderHandler.GetInvoicePerShopsByUserID)
 					invoice.GET("/:code", cfg.OrderHandler.GetInvoiceByCode)
+					invoice.PUT("/:code/receive", cfg.OrderHandler.UpdateToReceived)
+					invoice.PUT("/:code/complete", cfg.OrderHandler.UpdateToCompleted)
 				}
 
 				transaction := authenticated.Group("/transactions")
@@ -224,6 +226,8 @@ func NewRouter(cfg *RouterConfig) *gin.Engine {
 				{
 					order.GET("", cfg.OrderHandler.GetShopOrder)
 					order.GET("/:orderId", cfg.OrderHandler.GetInvoiceByShopIdAndOrderId)
+					order.PUT("/:orderId/delivery", cfg.OrderHandler.UpdateToDelivery)
+					order.PUT("/:orderId/cancel", cfg.OrderHandler.UpdateToCanceled)
 				}
 			}
 		}
