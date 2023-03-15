@@ -215,16 +215,21 @@ type UpdateProductActivationRequest struct {
 }
 
 type CreateProductRequest struct {
-	Name         string                   `json:"name" binding:"required,min=5,max=255"`
-	Description  string                   `json:"description" binding:"required,min=20,max=3000"`
-	IsHazardous  *bool                    `json:"isHazardous" binding:"required"`
-	Weight       float64                  `json:"weight" binding:"required,gt=0"`
-	Length       float64                  `json:"length" binding:"required,gt=0"`
-	Width        float64                  `json:"width" binding:"required,gt=0"`
-	Height       float64                  `json:"height" binding:"required,gt=0"`
-	PackagedSize float64                  `json:"packagedSize" binding:"required,gt=0"`
-	IsNew        *bool                    `json:"isNew" binding:"required"`
-	IsActive     *bool                    `json:"isActive" binding:"required"`
-	CategoryID   int                      `json:"categoryId" binding:"required,gte=1"`
-	BulkPrice    *ProductBulkPriceRequest `json:"bulkPrice" binding:"omitempty,dive"`
+	Name          string                       `json:"name" binding:"required,min=5,max=255"`
+	Description   string                       `json:"description" binding:"required,min=20,max=3000"`
+	IsHazardous   *bool                        `json:"isHazardous" binding:"required"`
+	Weight        float64                      `json:"weight" binding:"required,gt=0"`
+	Length        float64                      `json:"length" binding:"required,gt=0"`
+	Width         float64                      `json:"width" binding:"required,gt=0"`
+	Height        float64                      `json:"height" binding:"required,gt=0"`
+	IsNew         *bool                        `json:"isNew" binding:"required"`
+	IsActive      *bool                        `json:"isActive" binding:"required"`
+	CategoryID    int                          `json:"categoryId" binding:"required,gte=1"`
+	BulkPrice     *ProductBulkPriceRequest     `json:"bulkPrice" binding:"omitempty,dive"`
+	Media         []string                     `json:"media" binding:"required,dive,url"`
+	CourierIDs    []int                        `json:"courierIds" binding:"required,dive,gte=1"`
+	Stock         int                          `json:"stock" binding:"required_without=VariantGroups,omitempty,gte=0"`
+	Price         float64                      `json:"price" binding:"required_without=VariantGroups,omitempty,gt=0"`
+	VariantGroups []*CreateVariantGroupRequest `json:"variantGroups" binding:"omitempty,max=2,dive"`
+	SKU           []*CreateSKURequest          `json:"sku" binding:"required_with=VariantGroups,dive"`
 }

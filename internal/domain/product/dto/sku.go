@@ -29,3 +29,10 @@ func (d *GetSKURequest) ToIntList() ([]int, error) {
 
 	return []int{variant1, variant2}, nil
 }
+
+type CreateSKURequest struct {
+	Sku        string  `json:"sku" binding:"omitempty,max=16"`
+	VariantIDs []int   `json:"variantIds" binding:"required,max=2,dive,gte=1"`
+	Price      float64 `json:"price" binding:"required,gt=0"`
+	Stock      int     `json:"stock" binding:"required,gte=0"`
+}
