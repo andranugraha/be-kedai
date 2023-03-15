@@ -24,19 +24,26 @@ type ProductRepository interface {
 	GetSellerProductByCode(shopID int, productCode string) (*model.Product, error)
 	AddViewCount(productID int) error
 	UpdateActivation(shopID int, code string, isActive bool) error
+	Create(shopID int, request *dto.CreateProductRequest) (*model.Product, error)
 }
 
 type productRepositoryImpl struct {
-	db *gorm.DB
+	db               *gorm.DB
+	variantGroupRepo VariantGroupRepository
+	skuRepository    SkuRepository
 }
 
 type ProductRConfig struct {
-	DB *gorm.DB
+	DB               *gorm.DB
+	VariantGroupRepo VariantGroupRepository
+	SkuRepository    SkuRepository
 }
 
 func NewProductRepository(cfg *ProductRConfig) ProductRepository {
 	return &productRepositoryImpl{
-		db: cfg.DB,
+		db:               cfg.DB,
+		variantGroupRepo: cfg.VariantGroupRepo,
+		skuRepository:    cfg.SkuRepository,
 	}
 }
 
@@ -407,4 +414,45 @@ func (r *productRepositoryImpl) UpdateActivation(shopID int, code string, isActi
 	}
 
 	return nil
+}
+
+func (r *productRepositoryImpl) Create(shopID int, request *dto.CreateProductRequest) (*model.Product, error) {
+	tx := r.db.Begin()
+	defer tx.Commit()
+
+	product := request.GenerateProduct()
+	product.ShopID = shopID
+
+	err := tx.Create(product).Error
+	if err != nil {
+		tx.Rollback()
+		return nil, err
+	}
+
+	variantGroups := request.GenerateVariantGroups()
+	for _, vg := range variantGroups {
+		vg.ProductID = product.ID
+	}
+
+	err = r.variantGroupRepo.Create(tx, variantGroups)
+	if err != nil {
+		tx.Rollback()
+		return nil, err
+	}
+
+	// skus := request.GenerateSKU(variantGroups)
+
+	product.VariantGroup = variantGroups
+
+	// res := r.db.Clauses(clause.OnConflict{DoNothing: true}).Create(product)
+
+	// if res.Error != nil {
+	// 	return res.Error
+	// }
+
+	// if res.RowsAffected == 0 {
+	// 	return errors.New("conflict happen")
+	// }
+
+	return product, nil
 }
