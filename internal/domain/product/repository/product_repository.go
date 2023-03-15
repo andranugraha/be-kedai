@@ -7,6 +7,7 @@ import (
 	errs "kedai/backend/be-kedai/internal/common/error"
 	"kedai/backend/be-kedai/internal/domain/product/dto"
 	model "kedai/backend/be-kedai/internal/domain/product/model"
+	shopModel "kedai/backend/be-kedai/internal/domain/shop/model"
 	"math"
 
 	"gorm.io/gorm"
@@ -24,26 +25,29 @@ type ProductRepository interface {
 	GetSellerProductByCode(shopID int, productCode string) (*model.Product, error)
 	AddViewCount(productID int) error
 	UpdateActivation(shopID int, code string, isActive bool) error
-	Create(shopID int, request *dto.CreateProductRequest) (*model.Product, error)
+	Create(shopID int, request *dto.CreateProductRequest, courierServices []*shopModel.CourierService) (*model.Product, error)
 }
 
 type productRepositoryImpl struct {
-	db               *gorm.DB
-	variantGroupRepo VariantGroupRepository
-	skuRepository    SkuRepository
+	db                       *gorm.DB
+	variantGroupRepo         VariantGroupRepository
+	skuRepository            SkuRepository
+	productVariantRepository ProductVariantRepository
 }
 
 type ProductRConfig struct {
-	DB               *gorm.DB
-	VariantGroupRepo VariantGroupRepository
-	SkuRepository    SkuRepository
+	DB                       *gorm.DB
+	VariantGroupRepo         VariantGroupRepository
+	SkuRepository            SkuRepository
+	ProductVariantRepository ProductVariantRepository
 }
 
 func NewProductRepository(cfg *ProductRConfig) ProductRepository {
 	return &productRepositoryImpl{
-		db:               cfg.DB,
-		variantGroupRepo: cfg.VariantGroupRepo,
-		skuRepository:    cfg.SkuRepository,
+		db:                       cfg.DB,
+		variantGroupRepo:         cfg.VariantGroupRepo,
+		skuRepository:            cfg.SkuRepository,
+		productVariantRepository: cfg.ProductVariantRepository,
 	}
 }
 
@@ -416,12 +420,13 @@ func (r *productRepositoryImpl) UpdateActivation(shopID int, code string, isActi
 	return nil
 }
 
-func (r *productRepositoryImpl) Create(shopID int, request *dto.CreateProductRequest) (*model.Product, error) {
+func (r *productRepositoryImpl) Create(shopID int, request *dto.CreateProductRequest, courierServices []*shopModel.CourierService) (*model.Product, error) {
 	tx := r.db.Begin()
 	defer tx.Commit()
 
 	product := request.GenerateProduct()
 	product.ShopID = shopID
+	product.CourierService = courierServices
 
 	err := tx.Create(product).Error
 	if err != nil {
@@ -434,25 +439,43 @@ func (r *productRepositoryImpl) Create(shopID int, request *dto.CreateProductReq
 		vg.ProductID = product.ID
 	}
 
-	err = r.variantGroupRepo.Create(tx, variantGroups)
+	if variantGroups != nil {
+		err = r.variantGroupRepo.Create(tx, variantGroups)
+		if err != nil {
+			tx.Rollback()
+			return nil, err
+		}
+	}
+
+	skus := request.GenerateSKU(variantGroups)
+
+	for _, s := range skus {
+		s.ProductId = product.ID
+	}
+
+	err = r.skuRepository.Create(tx, skus)
 	if err != nil {
 		tx.Rollback()
 		return nil, err
 	}
 
-	// skus := request.GenerateSKU(variantGroups)
+	productVariants := []*model.ProductVariant{}
+	for _, sku := range skus {
+		for _, v := range sku.Variants {
+			productVariants = append(productVariants, &model.ProductVariant{
+				SkuId:     sku.ID,
+				VariantId: v.ID,
+			})
+		}
+	}
+
+	err = r.productVariantRepository.Create(tx, productVariants)
+	if err != nil {
+		return nil, err
+	}
 
 	product.VariantGroup = variantGroups
-
-	// res := r.db.Clauses(clause.OnConflict{DoNothing: true}).Create(product)
-
-	// if res.Error != nil {
-	// 	return res.Error
-	// }
-
-	// if res.RowsAffected == 0 {
-	// 	return errors.New("conflict happen")
-	// }
+	product.SKUs = skus
 
 	return product, nil
 }
