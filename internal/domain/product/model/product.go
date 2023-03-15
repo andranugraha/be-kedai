@@ -22,14 +22,15 @@ type Product struct {
 	Rating      float64 `json:"rating"`
 	Sold        int     `json:"sold"`
 
-	ShopID       int               `json:"shopId"`
-	Shop         *shopModel.Shop   `json:"shop,omitempty"`
-	CategoryID   int               `json:"categoryId"`
-	Bulk         *ProductBulkPrice `json:"bulk,omitempty"`
-	VariantGroup []*VariantGroup   `json:"variantGroups,omitempty"`
-	Media        []*ProductMedia   `json:"media,omitempty"`
-	SKU          *Sku              `json:"sku,omitempty"`
-	SKUs         []*Sku            `json:"skus,omitempty"`
+	ShopID         int                         `json:"shopId"`
+	Shop           *shopModel.Shop             `json:"shop,omitempty"`
+	CategoryID     int                         `json:"categoryId"`
+	Bulk           *ProductBulkPrice           `json:"bulk,omitempty"`
+	VariantGroup   []*VariantGroup             `json:"variantGroups,omitempty"`
+	Media          []*ProductMedia             `json:"media,omitempty"`
+	SKU            *Sku                        `json:"sku,omitempty"`
+	SKUs           []*Sku                      `json:"skus,omitempty"`
+	CourierService []*shopModel.CourierService `json:"courierServices,omitempty" gorm:"many2many:product_couriers"`
 
 	gorm.Model `json:"-"`
 }
