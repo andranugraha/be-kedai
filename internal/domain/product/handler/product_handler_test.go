@@ -1081,6 +1081,23 @@ func TestCreateProduct(t *testing.T) {
 			},
 		},
 		{
+			description: "should return error with status code 422 when product name is invalid",
+			input: input{
+				userID:  userID,
+				request: request,
+			},
+			beforeTest: func(ps *mocks.ProductService) {
+				ps.On("CreateProduct", userID, request).Return(nil, errs.ErrInvalidProductNamePattern)
+			},
+			expected: expected{
+				statusCode: http.StatusUnprocessableEntity,
+				response: response.Response{
+					Code:    code.INVALID_PRODUCT_NAME,
+					Message: errs.ErrInvalidProductNamePattern.Error(),
+				},
+			},
+		},
+		{
 			description: "should return error with status code 500 when failed to create product",
 			input: input{
 				userID:  userID,

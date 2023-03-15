@@ -223,6 +223,11 @@ func (h *Handler) CreateProduct(c *gin.Context) {
 			return
 		}
 
+		if errors.Is(err, errs.ErrInvalidProductNamePattern) {
+			response.Error(c, http.StatusUnprocessableEntity, code.INVALID_PRODUCT_NAME, err.Error())
+			return
+		}
+
 		response.Error(c, http.StatusInternalServerError, code.INTERNAL_SERVER_ERROR, errs.ErrInternalServerError.Error())
 		return
 	}
