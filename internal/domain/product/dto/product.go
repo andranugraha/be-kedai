@@ -215,8 +215,8 @@ type UpdateProductActivationRequest struct {
 }
 
 type CreateProductRequest struct {
-	Name         string                   `json:"name" binding:"required"`
-	Description  string                   `json:"description" binding:"omitempty"`
+	Name         string                   `json:"name" binding:"required,min=5,max=255"`
+	Description  string                   `json:"description" binding:"required,min=20,max=3000"`
 	IsHazardous  *bool                    `json:"isHazardous" binding:"required"`
 	Weight       float64                  `json:"weight" binding:"required,gt=0"`
 	Length       float64                  `json:"length" binding:"required,gt=0"`
@@ -227,5 +227,4 @@ type CreateProductRequest struct {
 	IsActive     *bool                    `json:"isActive" binding:"required"`
 	CategoryID   int                      `json:"categoryId" binding:"required,gte=1"`
 	BulkPrice    *ProductBulkPriceRequest `json:"bulkPrice" binding:"omitempty,dive"`
-	
 }
