@@ -226,10 +226,40 @@ type CreateProductRequest struct {
 	IsActive      *bool                        `json:"isActive" binding:"required"`
 	CategoryID    int                          `json:"categoryId" binding:"required,gte=1"`
 	BulkPrice     *ProductBulkPriceRequest     `json:"bulkPrice" binding:"omitempty,dive"`
-	Media         []string                     `json:"media" binding:"required,dive,url"`
+	Media         []string                     `json:"media" binding:"required,min=1,max=10,dive,url"`
 	CourierIDs    []int                        `json:"courierIds" binding:"required,dive,gte=1"`
 	Stock         int                          `json:"stock" binding:"required_without=VariantGroups,omitempty,gte=0"`
 	Price         float64                      `json:"price" binding:"required_without=VariantGroups,omitempty,gt=0"`
 	VariantGroups []*CreateVariantGroupRequest `json:"variantGroups" binding:"omitempty,max=2,dive"`
 	SKU           []*CreateSKURequest          `json:"sku" binding:"required_with=VariantGroups,dive"`
+}
+
+func (d *CreateProductRequest) GenerateProduct() *model.Product {
+	product := model.Product{
+		Name:        d.Name,
+		Description: d.Description,
+		IsHazardous: *d.IsHazardous,
+		Weight:      d.Weight,
+		Length:      d.Length,
+		Width:       d.Width,
+		Height:      d.Height,
+		IsNew:       *d.IsNew,
+		IsActive:    *d.IsActive,
+		CategoryID:  d.CategoryID,
+	}
+
+	for _, medium := range d.Media {
+		product.Media = append(product.Media, &model.ProductMedia{
+			Url: medium,
+		})
+	}
+
+	if d.BulkPrice != nil {
+		product.Bulk = &model.ProductBulkPrice{
+			MinQuantity: d.BulkPrice.MinQuantity,
+			Price:       d.BulkPrice.Price,
+		}
+	}
+
+	return &product
 }
