@@ -13,6 +13,7 @@ type SkuRepository interface {
 	GetByVariantIDs(variantIDs []int) (*model.Sku, error)
 	ReduceStock(tx *gorm.DB, skuID int, quantity int) error
 	IncreaseStock(tx *gorm.DB, skuID int, quantity int) error
+	Create(tx *gorm.DB, skus []*model.Sku) error
 }
 
 type skuRepositoryImpl struct {
@@ -102,4 +103,8 @@ func (r *skuRepositoryImpl) IncreaseStock(tx *gorm.DB, skuID int, quantity int) 
 	}
 
 	return nil
+}
+
+func (r *skuRepositoryImpl) Create(tx *gorm.DB, skus []*model.Sku) error {
+	return tx.Omit("Variants").Create(&skus).Error
 }
