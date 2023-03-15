@@ -3884,7 +3884,14 @@ paths:
                       message:
                         example: "ok"
                       data:
-                        $ref: '#/components/schemas/Shop'
+                        allOf:
+                          - $ref: '#/components/schemas/Shop'
+                          - type: object
+                            properties:
+                              shopCategories:
+                                type: array
+                                items:
+                                  $ref: '#/components/schemas/ShopCategory'
         '404':
           description: shop not found
           content:
@@ -4686,6 +4693,104 @@ paths:
                   message:
                     type: string
                     example: "error message"       
+  /v1/sellers/register:
+    post:
+      security:
+        - BearerAuth: []
+      tags:
+        - Seller
+      summary: Register as a seller
+      description: Register a shop to become a seller
+      requestBody:
+        $ref: '#/components/requestBodies/CreateShopBody'
+      responses:
+        '201':
+          description: created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: CREATED
+                  message:
+                    type: string
+                    example: created
+                  data:
+                    allOf:
+                      - $ref: '#/components/schemas/Shop'
+                      - type: object
+                        properties:
+                          courierServices:
+                            type: array
+                            items:
+                              $ref: '#/components/schemas/CourierService'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "BAD_REQUEST"
+                  message:
+                    type: string
+                    example: "error message"
+        '401':
+          description: unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "UNAUTHORIZED"
+                  message:
+                    type: string
+                    example: "invalid credential"
+        '409':
+          description: Conflict
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: SHOP_REGISTERED
+                  message:
+                    type: string
+                    example: error message
+        '422':
+          description: invalid signature pattern
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "INVALID_SHOP_NAME"
+                  message:
+                    type: string
+                    example: "error message"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "INTERNAL_SERVER_ERROR"
+                  message:
+                    type: string
+                    example: "error message"
   /v1/sellers/couriers:
     get:
       security:
@@ -6716,16 +6821,19 @@ components:
           type: string
           format: datetime
           example: "2006-01-02T00:00:00Z"
+        description:
+          type: string
+          example: shop description
+        photoUrl:
+          type: string
+          format: url
+          example: image.png
         userId:
           type: integer
           example: 1
         slug:
           type: string
           example: "user-shop"
-        shopCategories:
-          type: array
-          items:
-            $ref: '#/components/schemas/ShopCategory'
     ShopCategory:
       type: object
       properties:
@@ -8222,6 +8330,35 @@ components:
                 minLength: 6
                 maxLength: 6
                 example: "123456"
+    CreateShopBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - name
+              - addressId
+              - courierIds
+            properties:
+              name:
+                type: string
+                minLength: 5
+                maxLength: 30
+                description: Alphanumeric with space (' ') included. Must at least has one letter
+                example: shop name
+              addressId:
+                type: integer
+                example: 1
+              courierIds:
+                type: array
+                items:
+                  type: integer
+                  example: 1
+              photoUrl:
+                type: string
+                format: url
+                example: image.png
     UpdateShopProfileBody:
       required: true
       content:
