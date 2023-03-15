@@ -833,7 +833,7 @@ func TestUpdateToDeliver(t *testing.T) {
 	}
 }
 
-func TestUpdateToCancelled(t *testing.T) {
+func TestUpdateToCanceled(t *testing.T) {
 	var (
 		userId  = 1
 		orderId = 1
@@ -918,7 +918,7 @@ func TestUpdateToCancelled(t *testing.T) {
 		t.Run(tc.description, func(t *testing.T) {
 			expectedJson, _ := json.Marshal(tc.expected.response)
 			invoicePerShopService := mocks.NewInvoicePerShopService(t)
-			invoicePerShopService.On("UpdateStatusToCancelled", tc.input.userId, tc.input.orderId).Return(tc.input.err)
+			invoicePerShopService.On("UpdateStatusToCanceled", tc.input.userId, tc.input.orderId).Return(tc.input.err)
 			rec := httptest.NewRecorder()
 			c, _ := gin.CreateTestContext(rec)
 			c.Set("userId", userId)
@@ -928,7 +928,7 @@ func TestUpdateToCancelled(t *testing.T) {
 				InvoicePerShopService: invoicePerShopService,
 			})
 
-			handler.UpdateToCancelled(c)
+			handler.UpdateToCanceled(c)
 
 			assert.Equal(t, tc.expected.statusCode, rec.Code)
 			assert.Equal(t, string(expectedJson), rec.Body.String())

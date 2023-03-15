@@ -12,5 +12,5 @@ const (
 	TransactionStatusComplaintRejected  = "COMPLAINT_REJECTED"
 	TransactionStatusCompleted          = "COMPLETED"
 	TransactionStatusRefunded           = "REFUNDED"
-	TransactionStatusCancelled          = "CANCELLED"
+	TransactionStatusCanceled           = "CANCELED"
 )

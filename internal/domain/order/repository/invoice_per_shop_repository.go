@@ -28,7 +28,7 @@ type InvoicePerShopRepository interface {
 	GetByShopIdAndId(shopId int, id int) (*dto.InvoicePerShopDetail, error)
 	GetShopOrder(shopId int, req *dto.InvoicePerShopFilterRequest) ([]*dto.InvoicePerShopDetail, int64, int, error)
 	UpdateStatusToDelivery(shopId int, orderId int, invoiceStatuses []*model.InvoiceStatus) error
-	UpdateStatusToCancelled(shopId int, orderId int, invoiceStatuses []*model.InvoiceStatus) error
+	UpdateStatusToCanceled(shopId int, orderId int, invoiceStatuses []*model.InvoiceStatus) error
 	UpdateStatusToReceived(shopId int, orderId int, invoiceStatuses []*model.InvoiceStatus) error
 	UpdateStatusToCompleted(shopId int, orderId int, invoiceStatuses []*model.InvoiceStatus) error
 	UpdateStatusCRONJob() error
@@ -428,9 +428,9 @@ func (r *invoicePerShopRepositoryImpl) UpdateStatusToDelivery(shopId int, orderI
 	return nil
 }
 
-func (r *invoicePerShopRepositoryImpl) UpdateStatusToCancelled(shopId int, orderId int, invoiceStatuses []*model.InvoiceStatus) error {
+func (r *invoicePerShopRepositoryImpl) UpdateStatusToCanceled(shopId int, orderId int, invoiceStatuses []*model.InvoiceStatus) error {
 	err := r.db.Transaction(func(tx *gorm.DB) error {
-		if err := tx.Model(&model.InvoicePerShop{}).Where("shop_id = ? AND id = ? AND status = ?", shopId, orderId, constant.TransactionStatusCreated).Update("status", constant.TransactionStatusCancelled).Error; err != nil {
+		if err := tx.Model(&model.InvoicePerShop{}).Where("shop_id = ? AND id = ? AND status = ?", shopId, orderId, constant.TransactionStatusCreated).Update("status", constant.TransactionStatusCanceled).Error; err != nil {
 			if errors.Is(err, gorm.ErrRecordNotFound) {
 				return commonErr.ErrInvoiceNotFound
 			}

@@ -59,7 +59,7 @@ func (d *InvoicePerShopFilterRequest) Validate() {
 		d.Status != constant.TransactionStatusCreated &&
 		d.Status != constant.TransactionStatusReceived &&
 		d.Status != constant.TransactionStatusSent &&
-		d.Status != constant.TransactionStatusCancelled {
+		d.Status != constant.TransactionStatusCanceled {
 		d.Status = ""
 	}
 }

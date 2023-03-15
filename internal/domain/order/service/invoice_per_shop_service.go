@@ -20,7 +20,7 @@ type InvoicePerShopService interface {
 	GetInvoiceByUserIdAndId(userId int, id int) (*dto.InvoicePerShopDetail, error)
 	GetShopOrder(userId int, req *dto.InvoicePerShopFilterRequest) (*commonDto.PaginationResponse, error)
 	UpdateStatusToDelivery(userId int, orderId int) error
-	UpdateStatusToCancelled(userId int, orderId int) error
+	UpdateStatusToCanceled(userId int, orderId int) error
 	UpdateStatusToReceived(userId int, orderCode string) error
 	UpdateStatusToCompleted(userId int, orderCode string) error
 	UpdateStatusCRONJob() error
@@ -158,21 +158,21 @@ func (s *invoicePerShopServiceImpl) UpdateStatusToDelivery(userId int, orderId i
 	return nil
 }
 
-func (s *invoicePerShopServiceImpl) UpdateStatusToCancelled(userId int, orderId int) error {
+func (s *invoicePerShopServiceImpl) UpdateStatusToCanceled(userId int, orderId int) error {
 	shop, err := s.shopService.FindShopByUserId(userId)
 	if err != nil {
 		return err
 	}
 
 	var invoiceStatuses []*model.InvoiceStatus
-	var status = constant.TransactionStatusCancelled
+	var status = constant.TransactionStatusCanceled
 
 	invoiceStatuses = append(invoiceStatuses, &model.InvoiceStatus{
 		InvoicePerShopID: orderId,
 		Status:           status,
 	})
 
-	err = s.invoicePerShopRepo.UpdateStatusToCancelled(shop.ID, orderId, invoiceStatuses)
+	err = s.invoicePerShopRepo.UpdateStatusToCanceled(shop.ID, orderId, invoiceStatuses)
 	if err != nil {
 		return err
 	}

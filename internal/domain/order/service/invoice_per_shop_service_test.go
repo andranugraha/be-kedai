@@ -654,7 +654,7 @@ func TestUpdateStatusToDelivery(t *testing.T) {
 	}
 }
 
-func TestUpdateStatusToCancelled(t *testing.T) {
+func TestUpdateStatusToCanceled(t *testing.T) {
 	var (
 		shop = &shopModel.Shop{
 			ID: 1,
@@ -662,7 +662,7 @@ func TestUpdateStatusToCancelled(t *testing.T) {
 		invoiceStatuses = []*model.InvoiceStatus{
 			{
 				InvoicePerShopID: 1,
-				Status:           "CANCELLED",
+				Status:           "CANCELED",
 			},
 		}
 		userId  = 1
@@ -690,7 +690,7 @@ func TestUpdateStatusToCancelled(t *testing.T) {
 				orderId: orderId,
 				beforeTest: func(ss *mocks.ShopService, ipsr *mocks.InvoicePerShopRepository) {
 					ss.On("FindShopByUserId", userId).Return(shop, nil)
-					ipsr.On("UpdateStatusToCancelled", shop.ID, orderId, invoiceStatuses).Return(nil)
+					ipsr.On("UpdateStatusToCanceled", shop.ID, orderId, invoiceStatuses).Return(nil)
 				},
 			},
 			expected: expected{
@@ -717,7 +717,7 @@ func TestUpdateStatusToCancelled(t *testing.T) {
 				orderId: orderId,
 				beforeTest: func(ss *mocks.ShopService, ipsr *mocks.InvoicePerShopRepository) {
 					ss.On("FindShopByUserId", userId).Return(shop, nil)
-					ipsr.On("UpdateStatusToCancelled", shop.ID, orderId, invoiceStatuses).Return(commonErr.ErrInternalServerError)
+					ipsr.On("UpdateStatusToCanceled", shop.ID, orderId, invoiceStatuses).Return(commonErr.ErrInternalServerError)
 				},
 			},
 			expected: expected{
@@ -734,7 +734,7 @@ func TestUpdateStatusToCancelled(t *testing.T) {
 				ShopService:        shopService,
 			})
 
-			err := invoicePerShopService.UpdateStatusToCancelled(tc.userId, tc.orderId)
+			err := invoicePerShopService.UpdateStatusToCanceled(tc.userId, tc.orderId)
 
 			assert.Equal(t, tc.expected.err, err)
 		})
