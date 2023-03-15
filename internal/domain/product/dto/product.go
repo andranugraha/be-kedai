@@ -230,7 +230,7 @@ type CreateProductRequest struct {
 	CategoryID    int                          `json:"categoryId" binding:"required,gte=1"`
 	BulkPrice     *ProductBulkPriceRequest     `json:"bulkPrice" binding:"omitempty,dive"`
 	Media         []string                     `json:"media" binding:"required,min=1,max=10,dive,url"`
-	CourierIDs    []int                        `json:"courierIds" binding:"required,dive,gte=1"`
+	CourierIDs    []int                        `json:"courierIds" binding:"required,min=1,dive,gte=1"`
 	Stock         int                          `json:"stock" binding:"required_without=VariantGroups,omitempty,gte=0"`
 	Price         float64                      `json:"price" binding:"required_without=VariantGroups,omitempty,gt=0"`
 	VariantGroups []*CreateVariantGroupRequest `json:"variantGroups" binding:"omitempty,max=2,dive"`
