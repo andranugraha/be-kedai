@@ -6,6 +6,7 @@ import (
 	"kedai/backend/be-kedai/internal/domain/product/model"
 
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 type SkuRepository interface {
@@ -106,5 +107,15 @@ func (r *skuRepositoryImpl) IncreaseStock(tx *gorm.DB, skuID int, quantity int) 
 }
 
 func (r *skuRepositoryImpl) Create(tx *gorm.DB, skus []*model.Sku) error {
-	return tx.Omit("Variants").Create(&skus).Error
+	res := tx.Omit("Variants").Clauses(clause.OnConflict{DoNothing: true}).Create(&skus)
+
+	if res.Error != nil {
+		return res.Error
+	}
+
+	if res.RowsAffected == 0 {
+		return errs.ErrSKUUsed
+	}
+
+	return nil
 }
