@@ -34,10 +34,9 @@ func (d *GetSKURequest) ToIntList() ([]int, error) {
 
 type CreateSKURequest struct {
 	Sku        string  `json:"sku" binding:"omitempty,max=16"`
-	VariantIDs []int   `json:"variantIds" binding:"required,max=2,dive,gte=1" gorm:"-"`
+	VariantIDs []int   `json:"variantIds" binding:"required,max=2,dive,gte=0" gorm:"-"`
 	Price      float64 `json:"price" binding:"required,gt=0"`
 	Stock      int     `json:"stock" binding:"required,gte=0"`
-	Variants   []*model.Variant
 }
 
 func (d *CreateProductRequest) GenerateSKU(variantGroup []*model.VariantGroup) []*model.Sku {
