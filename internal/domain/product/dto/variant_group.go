@@ -1,11 +1,12 @@
 package dto
 
-import "kedai/backend/be-kedai/internal/domain/product/model"
+import (
+	"kedai/backend/be-kedai/internal/domain/product/model"
+)
 
 type CreateVariantGroupRequest struct {
-	Name     string   `json:"name" binding:"required,max=14"`
-	Options  []string `json:"options" binding:"required,min=1,max=50,dive,max=20"`
-	MediaUrl string   `json:"mediaUrl" binding:"omitempty,url"`
+	Name    string               `json:"name" binding:"required,max=14"`
+	Variant []*AddVariantRequest `json:"variants" binding:"required,min=1,max=50,dive"`
 }
 
 func (d *CreateProductRequest) GenerateVariantGroups() []*model.VariantGroup {
@@ -16,13 +17,13 @@ func (d *CreateProductRequest) GenerateVariantGroups() []*model.VariantGroup {
 	variantGroups := []*model.VariantGroup{}
 	for _, req := range d.VariantGroups {
 		variants := []*model.Variant{}
-		for _, v := range req.Options {
+
+		for _, v := range req.Variant {
 			variants = append(variants, &model.Variant{
-				Value: v,
+				Value:    v.Name,
+				MediaUrl: v.MediaUrl,
 			})
 		}
-
-		variants[0].MediaUrl = req.MediaUrl
 
 		variantGroups = append(variantGroups, &model.VariantGroup{
 			Name:    req.Name,
