@@ -1,11 +1,14 @@
 package dto
 
 import (
+	"fmt"
 	"kedai/backend/be-kedai/internal/common/constant"
 	"kedai/backend/be-kedai/internal/domain/product/model"
 	shopModel "kedai/backend/be-kedai/internal/domain/shop/model"
+	stringUtils "kedai/backend/be-kedai/internal/utils/strings"
 	"strconv"
 	"strings"
+	"time"
 )
 
 type ProductDetail struct {
@@ -235,8 +238,11 @@ type CreateProductRequest struct {
 }
 
 func (d *CreateProductRequest) GenerateProduct() *model.Product {
+	code := time.Now().UnixMilli()
+
 	product := model.Product{
 		Name:        d.Name,
+		Code:        stringUtils.GenerateSlug(strings.ToLower(d.Name)) + fmt.Sprintf("-i%d", code),
 		Description: d.Description,
 		IsHazardous: *d.IsHazardous,
 		Weight:      d.Weight,
