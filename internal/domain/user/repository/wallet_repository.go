@@ -15,6 +15,7 @@ type WalletRepository interface {
 	GetByUserID(userID int) (*model.Wallet, error)
 	DeductBalanceByUserID(tx *gorm.DB, userID int, amount float64, txnID string) error
 	TopUp(history *model.WalletHistory, wallet *model.Wallet) (*model.WalletHistory, error)
+	MultipleTopUp(history []*model.WalletHistory, wallet *model.Wallet) ([]*model.WalletHistory, error)
 	ChangePin(userID int, pin string) error
 }
 
@@ -117,4 +118,28 @@ func (r *walletRepositoryImpl) TopUp(history *model.WalletHistory, wallet *model
 
 func (r *walletRepositoryImpl) ChangePin(userID int, pin string) error {
 	return r.db.Model(&model.Wallet{}).Where("user_id = ?", userID).Update("pin", pin).Error
+}
+
+func (r *walletRepositoryImpl) MultipleTopUp(history []*model.WalletHistory, wallet *model.Wallet) ([]*model.WalletHistory, error) {
+	err := r.db.Transaction(func(tx *gorm.DB) error {
+		var total float64
+		for _, h := range history {
+			total += h.Amount
+		}
+		if err := tx.Model(&model.Wallet{}).Where("id = ?", wallet.ID).Update("balance", gorm.Expr("balance + ?", total)).Error; err != nil {
+			return err
+		}
+
+		if err := r.walletHistoryRepo.CreateMultiple(tx, history); err != nil {
+			return err
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	return history, nil
 }

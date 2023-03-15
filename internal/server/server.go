@@ -2,6 +2,7 @@ package server
 
 import (
 	"log"
+	"time"
 
 	"kedai/backend/be-kedai/connection"
 	locationHandlerPackage "kedai/backend/be-kedai/internal/domain/location/handler"
@@ -32,6 +33,7 @@ import (
 	marketplaceServicePackage "kedai/backend/be-kedai/internal/domain/marketplace/service"
 
 	"github.com/gin-gonic/gin"
+	"github.com/go-co-op/gocron"
 )
 
 func createRouter() *gin.Engine {
@@ -100,9 +102,15 @@ func createRouter() *gin.Engine {
 	courierRepo := shopRepoPackage.NewCourierRepository(&shopRepoPackage.CourierRConfig{
 		DB: db,
 	})
+
+	invoiceStatusRepo := orderRepoPackage.NewInvoiceStatusRepository(&orderRepoPackage.InvoiceStatusRConfig{
+		DB: db,
+	})
+
 	invoicePerShopRepo := orderRepoPackage.NewInvoicePerShopRepository(&orderRepoPackage.InvoicePerShopRConfig{
-		DB:         db,
-		WalletRepo: walletRepo,
+		DB:                db,
+		WalletRepo:        walletRepo,
+		InvoiceStatusRepo: invoiceStatusRepo,
 	})
 
 	shopGuestRepo := shopRepoPackage.NewShopGuestRepository(&shopRepoPackage.ShopGuestRConfig{
@@ -317,9 +325,6 @@ func createRouter() *gin.Engine {
 		TransactionReviewService: transactionReviewService,
 	})
 
-	invoiceStatusRepo := orderRepoPackage.NewInvoiceStatusRepository(&orderRepoPackage.InvoiceStatusRConfig{
-		DB: db,
-	})
 	invoiceRepo := orderRepoPackage.NewInvoiceRepository(&orderRepoPackage.InvoiceRConfig{
 		DB:                db,
 		UserCartItemRepo:  userCartItemRepo,
@@ -354,6 +359,8 @@ func createRouter() *gin.Engine {
 		AddressService:     addressService,
 	})
 
+	startCron(orderHandler)
+
 	return NewRouter(&RouterConfig{
 		UserHandler:        userHandler,
 		LocationHandler:    locHandler,
@@ -372,4 +379,22 @@ func Init() {
 		log.Println("error while running server", err)
 		return
 	}
+}
+
+func startCron(handler *orderHandlerPackage.Handler) {
+
+	scheduler := gocron.NewScheduler(time.UTC)
+
+	_, err := scheduler.Every(1).Hours().Do(func() {
+		c := gin.Context{}
+
+		handler.UpdateCronJob(&c)
+	})
+
+	if err != nil {
+		log.Println(err)
+	}
+
+	scheduler.StartAsync()
+
 }

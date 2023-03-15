@@ -6,6 +6,7 @@ import (
 	errs "kedai/backend/be-kedai/internal/common/error"
 	"kedai/backend/be-kedai/internal/domain/order/dto"
 	"kedai/backend/be-kedai/internal/utils/response"
+	"log"
 	"net/http"
 	"strconv"
 
@@ -84,6 +85,7 @@ func (h *Handler) WithdrawFromInvoice(c *gin.Context) {
 		return
 	}
 	req.Validate()
+
 	userId := c.GetInt("userId")
 
 	err = h.invoicePerShopService.WithdrawFromInvoice(req.OrderID, userId)
@@ -153,4 +155,93 @@ func (h *Handler) GetShopOrder(c *gin.Context) {
 	}
 
 	response.Success(c, http.StatusOK, code.OK, "ok", result)
+}
+
+func (h *Handler) UpdateToDelivery(c *gin.Context) {
+	userId := c.GetInt("userId")
+	orderId, _ := strconv.Atoi(c.Param("orderId"))
+
+	err := h.invoicePerShopService.UpdateStatusToDelivery(userId, orderId)
+	if err != nil {
+		if errors.Is(err, errs.ErrShopNotFound) {
+			response.Error(c, http.StatusNotFound, code.SHOP_NOT_REGISTERED, err.Error())
+			return
+		}
+
+		if errors.Is(err, errs.ErrInvoiceNotFound) {
+			response.Error(c, http.StatusNotFound, code.INVOICE_NOT_FOUND, err.Error())
+			return
+		}
+
+		response.Error(c, http.StatusInternalServerError, code.INTERNAL_SERVER_ERROR, errs.ErrInternalServerError.Error())
+		return
+	}
+
+	response.Success(c, http.StatusOK, code.OK, "ok", nil)
+}
+
+func (h *Handler) UpdateToCanceled(c *gin.Context) {
+	userId := c.GetInt("userId")
+	orderId, _ := strconv.Atoi(c.Param("orderId"))
+
+	err := h.invoicePerShopService.UpdateStatusToCanceled(userId, orderId)
+	if err != nil {
+		if errors.Is(err, errs.ErrShopNotFound) {
+			response.Error(c, http.StatusNotFound, code.SHOP_NOT_REGISTERED, err.Error())
+			return
+		}
+
+		if errors.Is(err, errs.ErrInvoiceNotFound) {
+			response.Error(c, http.StatusNotFound, code.INVOICE_NOT_FOUND, err.Error())
+			return
+		}
+
+		response.Error(c, http.StatusInternalServerError, code.INTERNAL_SERVER_ERROR, errs.ErrInternalServerError.Error())
+		return
+	}
+
+	response.Success(c, http.StatusOK, code.OK, "ok", nil)
+}
+
+func (h *Handler) UpdateToReceived(c *gin.Context) {
+	userId := c.GetInt("userId")
+	orderCode := c.Param("code")
+
+	err := h.invoicePerShopService.UpdateStatusToReceived(userId, orderCode)
+	if err != nil {
+		if errors.Is(err, errs.ErrInvoiceNotFound) {
+			response.Error(c, http.StatusNotFound, code.INVOICE_NOT_FOUND, err.Error())
+			return
+		}
+
+		response.Error(c, http.StatusInternalServerError, code.INTERNAL_SERVER_ERROR, errs.ErrInternalServerError.Error())
+		return
+	}
+
+	response.Success(c, http.StatusOK, code.OK, "ok", nil)
+}
+
+func (h *Handler) UpdateToCompleted(c *gin.Context) {
+	userId := c.GetInt("userId")
+	orderCode := c.Param("code")
+
+	err := h.invoicePerShopService.UpdateStatusToCompleted(userId, orderCode)
+	if err != nil {
+		if errors.Is(err, errs.ErrInvoiceNotFound) {
+			response.Error(c, http.StatusNotFound, code.INVOICE_NOT_FOUND, err.Error())
+			return
+		}
+
+		response.Error(c, http.StatusInternalServerError, code.INTERNAL_SERVER_ERROR, errs.ErrInternalServerError.Error())
+		return
+	}
+
+	response.Success(c, http.StatusOK, code.OK, "ok", nil)
+}
+
+func (h *Handler) UpdateCronJob(c *gin.Context) {
+	_ = h.invoicePerShopService.UpdateStatusCRONJob()
+	_ = h.invoicePerShopService.AutoReceivedCRONJob()
+	_ = h.invoicePerShopService.AutoCompletedCRONJob()
+	log.Println("SHIPPING CRON JOB")
 }

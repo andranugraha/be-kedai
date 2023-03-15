@@ -1,6 +1,7 @@
 package service
 
 import (
+	"kedai/backend/be-kedai/internal/common/constant"
 	commonDto "kedai/backend/be-kedai/internal/common/dto"
 	"kedai/backend/be-kedai/internal/domain/order/dto"
 	"kedai/backend/be-kedai/internal/domain/order/model"
@@ -15,9 +16,16 @@ type InvoicePerShopService interface {
 	GetInvoicesByShopId(userId int, req *dto.InvoicePerShopFilterRequest) (*commonDto.PaginationResponse, error)
 	GetByID(id int) (*model.InvoicePerShop, error)
 	GetInvoicesByUserIDAndCode(userID int, code string) (*dto.InvoicePerShopDetail, error)
-	WithdrawFromInvoice(invoicePerShopId int, userId int) error
+	WithdrawFromInvoice(invoicePerShopIds []int, userId int) error
 	GetInvoiceByUserIdAndId(userId int, id int) (*dto.InvoicePerShopDetail, error)
 	GetShopOrder(userId int, req *dto.InvoicePerShopFilterRequest) (*commonDto.PaginationResponse, error)
+	UpdateStatusToDelivery(userId int, orderId int) error
+	UpdateStatusToCanceled(userId int, orderId int) error
+	UpdateStatusToReceived(userId int, orderCode string) error
+	UpdateStatusToCompleted(userId int, orderCode string) error
+	UpdateStatusCRONJob() error
+	AutoReceivedCRONJob() error
+	AutoCompletedCRONJob() error
 }
 
 type invoicePerShopServiceImpl struct {
@@ -85,7 +93,7 @@ func (s *invoicePerShopServiceImpl) GetInvoicesByUserIDAndCode(userID int, code 
 	return s.invoicePerShopRepo.GetByUserIDAndCode(userID, decoded)
 }
 
-func (s *invoicePerShopServiceImpl) WithdrawFromInvoice(invoicePerShopId int, userId int) error {
+func (s *invoicePerShopServiceImpl) WithdrawFromInvoice(invoicePerShopIds []int, userId int) error {
 	shop, err := s.shopService.FindShopByUserId(userId)
 	if err != nil {
 		return err
@@ -96,7 +104,7 @@ func (s *invoicePerShopServiceImpl) WithdrawFromInvoice(invoicePerShopId int, us
 		return err
 	}
 
-	return s.invoicePerShopRepo.WithdrawFromInvoice(invoicePerShopId, shop.ID, wallet.ID)
+	return s.invoicePerShopRepo.WithdrawFromInvoice(invoicePerShopIds, shop.ID, wallet.ID)
 }
 
 func (s *invoicePerShopServiceImpl) GetInvoiceByUserIdAndId(userId int, id int) (*dto.InvoicePerShopDetail, error) {
@@ -126,4 +134,106 @@ func (s *invoicePerShopServiceImpl) GetShopOrder(userId int, req *dto.InvoicePer
 		TotalPages: pages,
 		Data:       result,
 	}, nil
+}
+
+func (s *invoicePerShopServiceImpl) UpdateStatusToDelivery(userId int, orderId int) error {
+	shop, err := s.shopService.FindShopByUserId(userId)
+	if err != nil {
+		return err
+	}
+
+	var invoiceStatuses []*model.InvoiceStatus
+	var status = constant.TransactionStatusOnDelivery
+
+	invoiceStatuses = append(invoiceStatuses, &model.InvoiceStatus{
+		InvoicePerShopID: orderId,
+		Status:           status,
+	})
+
+	err = s.invoicePerShopRepo.UpdateStatusToDelivery(shop.ID, orderId, invoiceStatuses)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (s *invoicePerShopServiceImpl) UpdateStatusToCanceled(userId int, orderId int) error {
+	shop, err := s.shopService.FindShopByUserId(userId)
+	if err != nil {
+		return err
+	}
+
+	var invoiceStatuses []*model.InvoiceStatus
+	var status = constant.TransactionStatusCanceled
+
+	invoiceStatuses = append(invoiceStatuses, &model.InvoiceStatus{
+		InvoicePerShopID: orderId,
+		Status:           status,
+	})
+
+	err = s.invoicePerShopRepo.UpdateStatusToCanceled(shop.ID, orderId, invoiceStatuses)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (s *invoicePerShopServiceImpl) UpdateStatusToReceived(userId int, orderCode string) error {
+	decoded := strings.Replace(orderCode, "-", "/", -1)
+	order, err := s.invoicePerShopRepo.GetByUserIDAndCode(userId, decoded)
+	if err != nil {
+		return err
+	}
+
+	var invoiceStatuses []*model.InvoiceStatus
+	var status = constant.TransactionStatusReceived
+
+	invoiceStatuses = append(invoiceStatuses, &model.InvoiceStatus{
+		InvoicePerShopID: order.ID,
+		Status:           status,
+	})
+
+	err = s.invoicePerShopRepo.UpdateStatusToReceived(order.ShopID, order.ID, invoiceStatuses)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (s *invoicePerShopServiceImpl) UpdateStatusToCompleted(userId int, orderCode string) error {
+	decoded := strings.Replace(orderCode, "-", "/", -1)
+	order, err := s.invoicePerShopRepo.GetByUserIDAndCode(userId, decoded)
+	if err != nil {
+		return err
+	}
+
+	var invoiceStatuses []*model.InvoiceStatus
+	var status = constant.TransactionStatusCompleted
+
+	invoiceStatuses = append(invoiceStatuses, &model.InvoiceStatus{
+		InvoicePerShopID: order.ID,
+		Status:           status,
+	})
+
+	err = s.invoicePerShopRepo.UpdateStatusToCompleted(order.ShopID, order.ID, invoiceStatuses)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (s *invoicePerShopServiceImpl) UpdateStatusCRONJob() error {
+	return s.invoicePerShopRepo.UpdateStatusCRONJob()
+}
+
+func (s *invoicePerShopServiceImpl) AutoReceivedCRONJob() error {
+	return s.invoicePerShopRepo.AutoReceivedCRONJob()
+}
+
+func (s *invoicePerShopServiceImpl) AutoCompletedCRONJob() error {
+	return s.invoicePerShopRepo.AutoCompletedCRONJob()
 }
