@@ -29,7 +29,7 @@ func NewRouter(cfg *RouterConfig) *gin.Engine {
 
 	corsCfg := cors.DefaultConfig()
 	corsCfg.AllowOrigins = config.Origin
-	corsCfg.AllowMethods = []string{"GET", "POST", "PUT", "DELETE"}
+	corsCfg.AllowMethods = []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"}
 	corsCfg.AllowHeaders = []string{"Content-Type", "Authorization"}
 	corsCfg.ExposeHeaders = []string{"Content-Length"}
 	r.Use(cors.New(corsCfg))
