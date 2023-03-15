@@ -200,3 +200,32 @@ func (h *Handler) UpdateProductActivation(c *gin.Context) {
 
 	response.Success(c, http.StatusOK, code.UPDATED, "update successful", nil)
 }
+
+func (h *Handler) CreateProduct(c *gin.Context) {
+	var request dto.CreateProductRequest
+	err := c.ShouldBindJSON(&request)
+	if err != nil {
+		response.ErrorValidator(c, http.StatusBadRequest, err)
+		return
+	}
+
+	userID := c.GetInt("userId")
+
+	product, err := h.productService.CreateProduct(userID, &request)
+	if err != nil {
+		if errors.Is(err, errs.ErrShopNotFound) {
+			response.Error(c, http.StatusNotFound, code.SHOP_NOT_REGISTERED, err.Error())
+			return
+		}
+
+		if errors.Is(err, errs.ErrSKUUsed) {
+			response.Error(c, http.StatusConflict, code.SKU_USED, err.Error())
+			return
+		}
+
+		response.Error(c, http.StatusInternalServerError, code.INTERNAL_SERVER_ERROR, err.Error())
+		return
+	}
+
+	response.Success(c, http.StatusCreated, code.CREATED, "product created", product)
+}
