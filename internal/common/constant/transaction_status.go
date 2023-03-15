@@ -5,7 +5,6 @@ const (
 	TransactionStatusCreated            = "CREATED"
 	TransactionStatusOnDelivery         = "ON_DELIVERY"
 	TransactionStatusDelivered          = "DELIVERED"
-	TransactionStatusSent               = "SENT"
 	TransactionStatusReceived           = "RECEIVED"
 	TransactionStatusComplained         = "COMPLAINED"
 	TransactionStatusComplaintConfirmed = "COMPLAINT_CONFIRMED"

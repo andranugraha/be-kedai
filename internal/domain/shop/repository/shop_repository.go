@@ -161,7 +161,7 @@ func (r *shopRepositoryImpl) GetShopStats(shopId int) (*dto.GetShopStatsResponse
 				where p.shop_id = shops.id and p.is_active = true
 				group by p.id having sum(s.stock) = 0) as out_of_stock
 		`, constant.TransactionStatusCreated,
-			constant.TransactionStatusSent,
+			constant.TransactionStatusOnDelivery,
 			constant.TransactionStatusCompleted,
 			constant.TransactionStatusRefunded,
 		).
