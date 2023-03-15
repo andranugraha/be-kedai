@@ -137,6 +137,11 @@ func NewRouter(cfg *RouterConfig) *gin.Engine {
 				sku.GET("", cfg.ProductHandler.GetSKUByVariantIDs)
 			}
 
+			authenticated := product.Group("", middleware.JWTAuthorization, cfg.UserHandler.GetSession)
+			{
+				authenticated.POST("", cfg.ProductHandler.CreateProduct)
+			}
+
 		}
 
 		shop := v1.Group("/shops")
