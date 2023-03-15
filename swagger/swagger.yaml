@@ -6068,6 +6068,137 @@ paths:
                   message:
                     type: string
                     example: "error message"
+  /v1/sellers/orders/{orderId}/delivery:
+    put:
+      security:
+        - BearerAuth: []
+      tags:
+        - Seller
+      summary: Change invoice status to delivery
+      description: Change invoice status from created to delivery
+      parameters:
+        - in: path
+          name: orderId
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Response'
+                  - type: object
+                    properties:
+                      data:
+                        example: null
+        '404':
+          description: shop not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "NOT_FOUND"
+                  message:
+                    type: string
+                    example: "shop not found"
+        '401':
+          description: unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "UNAUTHORIZED"
+                  message:
+                    type: string
+                    example: "invalid credential"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "INTERNAL_SERVER_ERROR"
+                  message:
+                    type: string
+                    example: "error message"
+                  
+  /v1/sellers/orders/{orderId}/cancel:
+    put:
+      security:
+        - BearerAuth: []
+      tags:
+        - Seller
+      summary: Change invoice status to canceled
+      description: Change invoice status from created to canceled
+      parameters:
+        - in: path
+          name: orderId
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Response'
+                  - type: object
+                    properties:
+                      data:
+                        example: null
+        '404':
+          description: shop not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "NOT_FOUND"
+                  message:
+                    type: string
+                    example: "shop not found"
+        '401':
+          description: unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "UNAUTHORIZED"
+                  message:
+                    type: string
+                    example: "invalid credential"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "INTERNAL_SERVER_ERROR"
+                  message:
+                    type: string
+                    example: "error message"
   /v1/orders/invoices:
     post:
       security:
@@ -6170,7 +6301,7 @@ paths:
           schema:
             type: string
             default: ''
-            enum: ['', 'COMPLETED', 'CREATED', 'SENT', 'RECEIVED', 'COMPLAINED', 'COMPLAINT_CONFIRMED', 'COMPLAINT_REJECTED', 'CANCELLED']
+            enum: ['', 'COMPLETED', 'CREATED', 'SENT', 'RECEIVED', 'COMPLAINED', 'COMPLAINT_CONFIRMED', 'COMPLAINT_REJECTED', 'CANCELED']
         - in: query
           name: startDate
           description: startDate format is YYYY-MM-DD. If startDate is stated in the request, endDate should be stated as well
@@ -6529,7 +6660,141 @@ paths:
                     example: "INTERNAL_SERVER_ERROR"
                   message:
                     type: string
-                    example: "error message"    
+                    example: "error message"   
+  /v1/orders/invoices/{code}/receive:
+    put:
+      security:
+        - BearerAuth: []
+      tags:
+        - Order
+      summary: Change invoice status to received
+      description: Change invoice status from created to received
+      parameters:
+        - in: path
+          name: code
+          required: true
+          description: all slash (`/`) in invoice code should be encoded to hypen (`-`)
+          schema:
+            type: string
+            example: INV-XX-X
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Response'
+                  - type: object
+                    properties:
+                      data:
+                        example: null
+        '404':
+          description: invoice not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "NOT_FOUND"
+                  message:
+                    type: string
+                    example: "invoice not found"
+        '401':
+          description: unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "UNAUTHORIZED"
+                  message:
+                    type: string
+                    example: "invalid credential"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "INTERNAL_SERVER_ERROR"
+                  message:
+                    type: string
+                    example: "error message"
+  /v1/orders/invoices/{code}/complete:
+    put:
+      security:
+        - BearerAuth: []
+      tags:
+        - Order
+      summary: Change invoice status to completed
+      description: Change invoice status from created to completed
+      parameters:
+        - in: path
+          name: code
+          required: true
+          description: all slash (`/`) in invoice code should be encoded to hypen (`-`)
+          schema:
+            type: string
+            example: INV-XX-X
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Response'
+                  - type: object
+                    properties:
+                      data:
+                        example: null
+        '404':
+          description: invoice not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "NOT_FOUND"
+                  message:
+                    type: string
+                    example: "invoice not found"
+        '401':
+          description: unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "UNAUTHORIZED"
+                  message:
+                    type: string
+                    example: "invalid credential"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "INTERNAL_SERVER_ERROR"
+                  message:
+                    type: string
+                    example: "error message"
   /v1/orders:
     post:
       tags:
