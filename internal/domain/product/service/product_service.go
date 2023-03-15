@@ -2,10 +2,12 @@ package service
 
 import (
 	commonDto "kedai/backend/be-kedai/internal/common/dto"
+	commonErr "kedai/backend/be-kedai/internal/common/error"
 	"kedai/backend/be-kedai/internal/domain/product/dto"
 	"kedai/backend/be-kedai/internal/domain/product/model"
 	"kedai/backend/be-kedai/internal/domain/product/repository"
 	"kedai/backend/be-kedai/internal/domain/shop/service"
+	productUtils "kedai/backend/be-kedai/internal/utils/product"
 	"strings"
 )
 
@@ -21,6 +23,7 @@ type ProductService interface {
 	GetSellerProductByCode(userID int, productCode string) (*dto.SellerProductDetail, error)
 	AddViewCount(id int) error
 	UpdateProductActivation(userID int, code string, request *dto.UpdateProductActivationRequest) error
+	CreateProduct(userID int, request *dto.CreateProductRequest) (*model.Product, error)
 }
 
 type productServiceImpl struct {
@@ -206,4 +209,22 @@ func (s *productServiceImpl) UpdateProductActivation(userID int, code string, re
 	}
 
 	return s.productRepository.UpdateActivation(shop.ID, code, *request.IsActive)
+}
+
+func (s *productServiceImpl) CreateProduct(userID int, request *dto.CreateProductRequest) (*model.Product, error) {
+	if isProductNameValid := productUtils.ValidateProductName(request.Name); !isProductNameValid {
+		return nil, commonErr.ErrInvalidProductNamePattern
+	}
+
+	shop, err := s.shopService.FindShopByUserId(userID)
+	if err != nil {
+		return nil, err
+	}
+
+	product, err := s.productRepository.Create(shop.ID, request)
+	if err != nil {
+		return nil, err
+	}
+
+	return product, nil
 }
