@@ -7,12 +7,12 @@ import (
 )
 
 type RefundRequest struct {
-	ID            int       `json:"id"`
-	RequestDate   time.Time `json:"requestDate"`
-	Status        string    `json:"status"`
-	TransactionId int       `json:"transactionId"`
+	ID          int       `json:"id"`
+	RequestDate time.Time `json:"requestDate"`
+	Status      string    `json:"status"`
+	InvoiceId   int       `json:"invoiceId"`
 
-	Transaction *Transaction `json:"transaction"`
+	Invoice *InvoicePerShop `json:"invoice"`
 
 	gorm.Model `json:"-"`
 }
