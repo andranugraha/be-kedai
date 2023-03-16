@@ -9,6 +9,7 @@ import (
 	errs "kedai/backend/be-kedai/internal/common/error"
 	"kedai/backend/be-kedai/internal/domain/order/dto"
 	"kedai/backend/be-kedai/internal/domain/order/handler"
+	"kedai/backend/be-kedai/internal/domain/order/model"
 	"kedai/backend/be-kedai/internal/utils/response"
 	"kedai/backend/be-kedai/internal/utils/test"
 	"kedai/backend/be-kedai/mocks"
@@ -1105,6 +1106,98 @@ func TestUpdateToCompleted(t *testing.T) {
 			})
 
 			handler.UpdateToCompleted(c)
+
+			assert.Equal(t, tc.expected.statusCode, rec.Code)
+			assert.Equal(t, string(expectedJson), rec.Body.String())
+		})
+	}
+}
+
+func TestRefundRequest(t *testing.T) {
+	var (
+		userId    = 1
+		orderCode = "code"
+		refReq    = &model.RefundRequest{}
+	)
+	type input struct {
+		userId    int
+		orderCode string
+		result    *model.RefundRequest
+		err       error
+	}
+	type expected struct {
+		statusCode int
+		response   response.Response
+	}
+	type cases struct {
+		description string
+		input
+		expected
+	}
+
+	for _, tc := range []cases{
+		{
+			description: "should return nil error with code 200 when success",
+			input: input{
+				userId:    userId,
+				orderCode: orderCode,
+				result:    refReq,
+				err:       nil,
+			},
+			expected: expected{
+				statusCode: http.StatusCreated,
+				response: response.Response{
+					Code:    code.CREATED,
+					Message: "created",
+					Data:    refReq,
+				},
+			},
+		},
+		{
+			description: "should return error with code 404 when invoice not found",
+			input: input{
+				userId:    1,
+				orderCode: orderCode,
+				err:       errs.ErrInvoiceNotFound,
+			},
+			expected: expected{
+				statusCode: http.StatusNotFound,
+				response: response.Response{
+					Code:    code.INVOICE_NOT_FOUND,
+					Message: errs.ErrInvoiceNotFound.Error(),
+				},
+			},
+		},
+		{
+			description: "should return error with code 500 when internal server error",
+			input: input{
+				userId:    1,
+				orderCode: orderCode,
+				err:       errs.ErrInternalServerError,
+			},
+			expected: expected{
+				statusCode: http.StatusInternalServerError,
+				response: response.Response{
+					Code:    code.INTERNAL_SERVER_ERROR,
+					Message: errs.ErrInternalServerError.Error(),
+				},
+			},
+		},
+	} {
+		t.Run(tc.description, func(t *testing.T) {
+			expectedJson, _ := json.Marshal(tc.expected.response)
+			invoicePerShopService := mocks.NewInvoicePerShopService(t)
+			invoicePerShopService.On("RefundRequest", tc.input.orderCode, tc.input.userId).Return(refReq, tc.input.err)
+			rec := httptest.NewRecorder()
+			c, _ := gin.CreateTestContext(rec)
+			c.Set("userId", userId)
+			c.AddParam("code", orderCode)
+			c.Request, _ = http.NewRequest(http.MethodGet, fmt.Sprintf("/orders/invoices/{%s}/refund", tc.orderCode), nil)
+			handler := handler.New(&handler.Config{
+				InvoicePerShopService: invoicePerShopService,
+			})
+
+			handler.Refund(c)
 
 			assert.Equal(t, tc.expected.statusCode, rec.Code)
 			assert.Equal(t, string(expectedJson), rec.Body.String())

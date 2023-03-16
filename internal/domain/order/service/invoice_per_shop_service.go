@@ -19,6 +19,7 @@ type InvoicePerShopService interface {
 	WithdrawFromInvoice(invoicePerShopIds []int, userId int) error
 	GetInvoiceByUserIdAndId(userId int, id int) (*dto.InvoicePerShopDetail, error)
 	GetShopOrder(userId int, req *dto.InvoicePerShopFilterRequest) (*commonDto.PaginationResponse, error)
+	RefundRequest(invoiceCode string, userId int) (*model.RefundRequest, error)
 	UpdateStatusToDelivery(userId int, orderId int) error
 	UpdateStatusToCanceled(userId int, orderId int) error
 	UpdateStatusToReceived(userId int, orderCode string) error
@@ -136,6 +137,35 @@ func (s *invoicePerShopServiceImpl) GetShopOrder(userId int, req *dto.InvoicePer
 	}, nil
 }
 
+func (s *invoicePerShopServiceImpl) RefundRequest(invoiceCode string, userId int) (*model.RefundRequest, error) {
+	decoded := strings.Replace(invoiceCode, "-", "/", -1)
+	invoice, err := s.invoicePerShopRepo.GetByUserIDAndCode(userId, decoded)
+	if err != nil {
+		return nil, err
+	}
+
+	req := &model.RefundRequest{
+		Status:    constant.TransactionStatusComplained,
+		InvoiceId: invoice.ID,
+		Invoice:   &invoice.InvoicePerShop,
+	}
+
+	var invoiceStatuses []*model.InvoiceStatus
+	var status = constant.TransactionStatusComplained
+
+	invoiceStatuses = append(invoiceStatuses, &model.InvoiceStatus{
+		InvoicePerShopID: invoice.ID,
+		Status:           status,
+	})
+
+	result, err := s.invoicePerShopRepo.RefundRequest(req, invoiceStatuses)
+	if err != nil {
+		return nil, err
+	}
+
+	return result, nil
+}
+
 func (s *invoicePerShopServiceImpl) UpdateStatusToDelivery(userId int, orderId int) error {
 	shop, err := s.shopService.FindShopByUserId(userId)
 	if err != nil {
@@ -214,7 +244,7 @@ func (s *invoicePerShopServiceImpl) UpdateStatusToCompleted(userId int, orderCod
 	var status = constant.TransactionStatusCompleted
 
 	invoiceStatuses = append(invoiceStatuses, &model.InvoiceStatus{
-		InvoicePerShopID: order.ID,
+		InvoicePerShopID: order.InvoicePerShop.ID,
 		Status:           status,
 	})
 

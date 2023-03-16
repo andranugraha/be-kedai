@@ -27,6 +27,7 @@ type InvoicePerShopRepository interface {
 	WithdrawFromInvoice(invoicePerShopIds []int, shopId int, walletId int) error
 	GetByShopIdAndId(shopId int, id int) (*dto.InvoicePerShopDetail, error)
 	GetShopOrder(shopId int, req *dto.InvoicePerShopFilterRequest) ([]*dto.InvoicePerShopDetail, int64, int, error)
+	RefundRequest(ref *model.RefundRequest, invoiceStatus []*model.InvoiceStatus) (*model.RefundRequest, error)
 	UpdateStatusToDelivery(shopId int, orderId int, invoiceStatuses []*model.InvoiceStatus) error
 	UpdateStatusToCanceled(shopId int, orderId int, invoiceStatuses []*model.InvoiceStatus) error
 	UpdateStatusToReceived(shopId int, orderId int, invoiceStatuses []*model.InvoiceStatus) error
@@ -40,12 +41,16 @@ type invoicePerShopRepositoryImpl struct {
 	db                *gorm.DB
 	walletRepo        userRepo.WalletRepository
 	invoiceStatusRepo InvoiceStatusRepository
+	refundRequestRepo RefundRequestRepository
+	invoiceRepo       InvoiceRepository
 }
 
 type InvoicePerShopRConfig struct {
 	DB                *gorm.DB
 	WalletRepo        userRepo.WalletRepository
 	InvoiceStatusRepo InvoiceStatusRepository
+	RefundRequestRepo RefundRequestRepository
+	InvoiceRepo       InvoiceRepository
 }
 
 func NewInvoicePerShopRepository(cfg *InvoicePerShopRConfig) InvoicePerShopRepository {
@@ -53,6 +58,8 @@ func NewInvoicePerShopRepository(cfg *InvoicePerShopRConfig) InvoicePerShopRepos
 		db:                cfg.DB,
 		walletRepo:        cfg.WalletRepo,
 		invoiceStatusRepo: cfg.InvoiceStatusRepo,
+		refundRequestRepo: cfg.RefundRequestRepo,
+		invoiceRepo:       cfg.InvoiceRepo,
 	}
 }
 
@@ -401,6 +408,45 @@ func (r *invoicePerShopRepositoryImpl) GetShopOrder(shopId int, req *dto.Invoice
 	return invoices, totalRows, totalPages, nil
 }
 
+func (r *invoicePerShopRepositoryImpl) RefundRequest(ref *model.RefundRequest, invoiceStatus []*model.InvoiceStatus) (*model.RefundRequest, error) {
+	now := time.Now()
+	refundType := constant.RefundTypeComplain
+	ref.RequestDate = now
+	ref.Type = refundType
+
+	invoice, err := r.invoiceRepo.GetByIDAndUserID(ref.Invoice.InvoiceID, ref.Invoice.UserID)
+	if err != nil {
+		return nil, err
+	}
+
+	ref.RefundAmount = invoice.CalculateRefund(ref.Invoice)
+
+	err = r.db.Transaction(func(tx *gorm.DB) error {
+		if err := r.refundRequestRepo.PostComplain(tx, ref); err != nil {
+			return err
+		}
+
+		if err := r.invoiceStatusRepo.Create(tx, invoiceStatus); err != nil {
+			return err
+		}
+
+		if err := tx.Model(&model.InvoicePerShop{}).Where("id = ? AND status = ?", ref.InvoiceId, constant.TransactionStatusReceived).Update("status", constant.TransactionStatusComplained); err.Error != nil || err.RowsAffected == 0 {
+			if err.RowsAffected == 0 {
+				return commonErr.ErrInvoiceNotFound
+			}
+			return err.Error
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	return ref, nil
+}
+
 func (r *invoicePerShopRepositoryImpl) UpdateStatusToDelivery(shopId int, orderId int, invoiceStatuses []*model.InvoiceStatus) error {
 	var duration time.Duration
 
@@ -469,7 +515,7 @@ func (r *invoicePerShopRepositoryImpl) UpdateStatusToCanceled(shopId int, orderI
 
 func (r *invoicePerShopRepositoryImpl) UpdateStatusToReceived(shopId int, orderId int, invoiceStatuses []*model.InvoiceStatus) error {
 	err := r.db.Transaction(func(tx *gorm.DB) error {
-		if err := tx.Model(&model.InvoicePerShop{}).Where("shop_id = ? AND id = ? AND status = ?", shopId, orderId, constant.TransactionStatusDelivered).Update("status", constant.TransactionStatusReceived); err != nil || err.RowsAffected == 0 {
+		if err := tx.Model(&model.InvoicePerShop{}).Where("shop_id = ? AND id = ? AND status = ?", shopId, orderId, constant.TransactionStatusDelivered).Update("status", constant.TransactionStatusReceived); err.Error != nil || err.RowsAffected == 0 {
 			if errors.Is(err.Error, gorm.ErrRecordNotFound) {
 				return commonErr.ErrInvoiceNotFound
 			}
