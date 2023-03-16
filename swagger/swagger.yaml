@@ -5493,6 +5493,13 @@ paths:
             format: date
             example: 2006-01-02
         - in: query
+          name: status
+          description: withdraw status
+          schema:
+            type: string
+            enum: ['released', 'to_release']
+            example: released
+        - in: query
           name: s
           description: search query (can be either product name, or invoice code)
           schema:
