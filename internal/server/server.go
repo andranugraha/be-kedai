@@ -107,10 +107,15 @@ func createRouter() *gin.Engine {
 		DB: db,
 	})
 
+	refundRequestRepo := orderRepoPackage.NewRefundRequestRepository(&orderRepoPackage.RefundRequestRConfig{
+		DB: db,
+	})
+
 	invoicePerShopRepo := orderRepoPackage.NewInvoicePerShopRepository(&orderRepoPackage.InvoicePerShopRConfig{
 		DB:                db,
 		WalletRepo:        walletRepo,
 		InvoiceStatusRepo: invoiceStatusRepo,
+		RefundRequestRepo: refundRequestRepo,
 	})
 
 	shopGuestRepo := shopRepoPackage.NewShopGuestRepository(&shopRepoPackage.ShopGuestRConfig{
