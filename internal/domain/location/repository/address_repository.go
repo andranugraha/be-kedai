@@ -63,10 +63,32 @@ func (c *addressRepositoryImpl) SearchAddress(req *dto.SearchAddressRequest) (ad
 		Components: map[maps.Component][]string{
 			maps.ComponentCountry: {"id"},
 		},
+		Types:    "address",
 		Language: "id",
 	}
 
 	autocomplete, err := c.googleMaps.PlaceAutocomplete(ctx, autoCompleteRequest)
+	if err != nil {
+		return
+	}
+
+	for _, place := range autocomplete.Predictions {
+		addresses = append(addresses, &dto.SearchAddressResponse{
+			PlaceID:     place.PlaceID,
+			Description: place.Description,
+		})
+	}
+
+	autoCompleteRequest = &maps.PlaceAutocompleteRequest{
+		Input: req.Keyword,
+		Components: map[maps.Component][]string{
+			maps.ComponentCountry: {"id"},
+		},
+		Types:    "establishment",
+		Language: "id",
+	}
+
+	autocomplete, err = c.googleMaps.PlaceAutocomplete(ctx, autoCompleteRequest)
 	if err != nil {
 		return
 	}
