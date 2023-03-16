@@ -868,3 +868,137 @@ func TestUpdateProductActivation(t *testing.T) {
 		})
 	}
 }
+
+func TestCreateProduct(t *testing.T) {
+	type input struct {
+		userID  int
+		request *dto.CreateProductRequest
+	}
+	type expected struct {
+		data *model.Product
+		err  error
+	}
+
+	var (
+		userID          = 1
+		shopID          = 1
+		courierIDs      = []int{1}
+		productName     = "product name"
+		courierServices = []*shopModel.CourierService{}
+	)
+
+	tests := []struct {
+		description string
+		input
+		beforeTest func(*mocks.ShopService, *mocks.CourierServiceService, *mocks.ProductRepository)
+		expected
+	}{
+		{
+			description: "should return error when product name is invalid",
+			input: input{
+				userID: userID,
+				request: &dto.CreateProductRequest{
+					Name:       "127.0.0.1",
+					CourierIDs: courierIDs,
+				},
+			},
+			beforeTest: func(ss *mocks.ShopService, css *mocks.CourierServiceService, pr *mocks.ProductRepository) {},
+			expected: expected{
+				data: nil,
+				err:  errorResponse.ErrInvalidProductNamePattern,
+			},
+		},
+		{
+			description: "should return error when failed to get shop",
+			input: input{
+				userID: userID,
+				request: &dto.CreateProductRequest{
+					Name:       productName,
+					CourierIDs: courierIDs,
+				},
+			},
+			beforeTest: func(ss *mocks.ShopService, css *mocks.CourierServiceService, pr *mocks.ProductRepository) {
+				ss.On("FindShopByUserId", userID).Return(nil, errors.New("failed to get shop"))
+			},
+			expected: expected{
+				data: nil,
+				err:  errors.New("failed to get shop"),
+			},
+		},
+		{
+			description: "should return error when failed to get courier services",
+			input: input{
+				userID: userID,
+				request: &dto.CreateProductRequest{
+					Name:       productName,
+					CourierIDs: courierIDs,
+				},
+			},
+			beforeTest: func(ss *mocks.ShopService, css *mocks.CourierServiceService, pr *mocks.ProductRepository) {
+				ss.On("FindShopByUserId", userID).Return(&shopModel.Shop{ID: shopID}, nil)
+				css.On("GetCourierServicesByCourierIDs", courierIDs).Return(nil, errors.New("failed to get couriers"))
+			},
+			expected: expected{
+				data: nil,
+				err:  errors.New("failed to get couriers"),
+			},
+		},
+		{
+			description: "should return error when failed to create product",
+			input: input{
+				userID: userID,
+				request: &dto.CreateProductRequest{
+					Name:       productName,
+					CourierIDs: courierIDs,
+				},
+			},
+			beforeTest: func(ss *mocks.ShopService, css *mocks.CourierServiceService, pr *mocks.ProductRepository) {
+				ss.On("FindShopByUserId", userID).Return(&shopModel.Shop{ID: shopID}, nil)
+				css.On("GetCourierServicesByCourierIDs", courierIDs).Return(courierServices, nil)
+				pr.On("Create", shopID, &dto.CreateProductRequest{Name: productName, CourierIDs: courierIDs}, courierServices).Return(nil, errors.New("failed to create product"))
+			},
+			expected: expected{
+				data: nil,
+				err:  errors.New("failed to create product"),
+			},
+		},
+		{
+			description: "should return created product when succeed to create product",
+			input: input{
+				userID: userID,
+				request: &dto.CreateProductRequest{
+					Name:       productName,
+					CourierIDs: courierIDs,
+				},
+			},
+			beforeTest: func(ss *mocks.ShopService, css *mocks.CourierServiceService, pr *mocks.ProductRepository) {
+				ss.On("FindShopByUserId", userID).Return(&shopModel.Shop{ID: shopID}, nil)
+				css.On("GetCourierServicesByCourierIDs", courierIDs).Return(courierServices, nil)
+				pr.On("Create", shopID, &dto.CreateProductRequest{Name: productName, CourierIDs: courierIDs}, courierServices).Return(&model.Product{Name: productName}, nil)
+			},
+			expected: expected{
+				data: &model.Product{Name: productName},
+				err:  nil,
+			},
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.description, func(t *testing.T) {
+			shopService := mocks.NewShopService(t)
+			courierServiceService := mocks.NewCourierServiceService(t)
+			productRepo := mocks.NewProductRepository(t)
+			tc.beforeTest(shopService, courierServiceService, productRepo)
+			productService := service.NewProductService(&service.ProductSConfig{
+				ProductRepository:     productRepo,
+				CourierServiceService: courierServiceService,
+				ShopService:           shopService,
+			})
+
+			data, err := productService.CreateProduct(tc.input.userID, tc.input.request)
+
+			assert.Equal(t, tc.expected.data, data)
+			assert.Equal(t, tc.expected.err, err)
+		})
+	}
+}

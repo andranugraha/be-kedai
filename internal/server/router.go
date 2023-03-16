@@ -29,7 +29,7 @@ func NewRouter(cfg *RouterConfig) *gin.Engine {
 
 	corsCfg := cors.DefaultConfig()
 	corsCfg.AllowOrigins = config.Origin
-	corsCfg.AllowMethods = []string{"GET", "POST", "PUT", "DELETE"}
+	corsCfg.AllowMethods = []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"}
 	corsCfg.AllowHeaders = []string{"Content-Type", "Authorization"}
 	corsCfg.ExposeHeaders = []string{"Content-Length"}
 	r.Use(cors.New(corsCfg))
@@ -135,6 +135,11 @@ func NewRouter(cfg *RouterConfig) *gin.Engine {
 			sku := product.Group("/skus")
 			{
 				sku.GET("", cfg.ProductHandler.GetSKUByVariantIDs)
+			}
+
+			authenticated := product.Group("", middleware.JWTAuthorization, cfg.UserHandler.GetSession)
+			{
+				authenticated.POST("", cfg.ProductHandler.CreateProduct)
 			}
 
 		}

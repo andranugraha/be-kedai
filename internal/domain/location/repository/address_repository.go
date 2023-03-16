@@ -273,6 +273,7 @@ func (c *addressRepositoryImpl) GetSearchAddressDetail(placeId string) (address 
 	}
 
 	var (
+		cityName        string
 		districtName    string
 		subdistrictName string
 		postalCode      string
@@ -289,16 +290,18 @@ func (c *addressRepositoryImpl) GetSearchAddressDetail(placeId string) (address 
 				subdistrictName = addressComponent.LongName
 			case "administrative_area_level_3":
 				districtName = strings.ReplaceAll(addressComponent.LongName, "Kecamatan ", "")
+			case "administrative_area_level_2":
+				cityName = strings.ReplaceAll(addressComponent.LongName, "Kota ", "")
 			}
 
-			if subdistrictName != "" && postalCode != "" && districtName != "" {
+			if subdistrictName != "" && postalCode != "" && districtName != "" && cityName != "" {
 				break
 			}
 		}
 	}
 
 	if postalCode == "" {
-		subdistrict, err = c.subdistrictRepo.GetDetailByNameAndDistrictName(subdistrictName, districtName)
+		subdistrict, err = c.subdistrictRepo.GetDetailByNameAndDistrictCityName(subdistrictName, districtName, cityName)
 		if err != nil {
 			return
 		}

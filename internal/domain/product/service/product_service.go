@@ -2,10 +2,12 @@ package service
 
 import (
 	commonDto "kedai/backend/be-kedai/internal/common/dto"
+	commonErr "kedai/backend/be-kedai/internal/common/error"
 	"kedai/backend/be-kedai/internal/domain/product/dto"
 	"kedai/backend/be-kedai/internal/domain/product/model"
 	"kedai/backend/be-kedai/internal/domain/product/repository"
 	"kedai/backend/be-kedai/internal/domain/shop/service"
+	productUtils "kedai/backend/be-kedai/internal/utils/product"
 	"strings"
 )
 
@@ -21,31 +23,35 @@ type ProductService interface {
 	GetSellerProductByCode(userID int, productCode string) (*dto.SellerProductDetail, error)
 	AddViewCount(id int) error
 	UpdateProductActivation(userID int, code string, request *dto.UpdateProductActivationRequest) error
+	CreateProduct(userID int, request *dto.CreateProductRequest) (*model.Product, error)
 }
 
 type productServiceImpl struct {
-	productRepository  repository.ProductRepository
-	shopService        service.ShopService
-	shopVoucherService service.ShopVoucherService
-	courierService     service.CourierService
-	categoryService    CategoryService
+	productRepository     repository.ProductRepository
+	shopService           service.ShopService
+	shopVoucherService    service.ShopVoucherService
+	courierService        service.CourierService
+	courierServiceService service.CourierServiceService
+	categoryService       CategoryService
 }
 
 type ProductSConfig struct {
-	ProductRepository  repository.ProductRepository
-	ShopService        service.ShopService
-	ShopVoucherService service.ShopVoucherService
-	CourierService     service.CourierService
-	CategoryService    CategoryService
+	ProductRepository     repository.ProductRepository
+	ShopService           service.ShopService
+	ShopVoucherService    service.ShopVoucherService
+	CourierService        service.CourierService
+	CourierServiceService service.CourierServiceService
+	CategoryService       CategoryService
 }
 
 func NewProductService(cfg *ProductSConfig) ProductService {
 	return &productServiceImpl{
-		productRepository:  cfg.ProductRepository,
-		shopVoucherService: cfg.ShopVoucherService,
-		courierService:     cfg.CourierService,
-		shopService:        cfg.ShopService,
-		categoryService:    cfg.CategoryService,
+		productRepository:     cfg.ProductRepository,
+		shopVoucherService:    cfg.ShopVoucherService,
+		courierService:        cfg.CourierService,
+		shopService:           cfg.ShopService,
+		categoryService:       cfg.CategoryService,
+		courierServiceService: cfg.CourierServiceService,
 	}
 }
 
@@ -206,4 +212,27 @@ func (s *productServiceImpl) UpdateProductActivation(userID int, code string, re
 	}
 
 	return s.productRepository.UpdateActivation(shop.ID, code, *request.IsActive)
+}
+
+func (s *productServiceImpl) CreateProduct(userID int, request *dto.CreateProductRequest) (*model.Product, error) {
+	if isProductNameValid := productUtils.ValidateProductName(request.Name); !isProductNameValid {
+		return nil, commonErr.ErrInvalidProductNamePattern
+	}
+
+	shop, err := s.shopService.FindShopByUserId(userID)
+	if err != nil {
+		return nil, err
+	}
+
+	couriers, err := s.courierServiceService.GetCourierServicesByCourierIDs(request.CourierIDs)
+	if err != nil {
+		return nil, err
+	}
+
+	product, err := s.productRepository.Create(shop.ID, request, couriers)
+	if err != nil {
+		return nil, err
+	}
+
+	return product, nil
 }
