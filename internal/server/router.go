@@ -197,6 +197,7 @@ func NewRouter(cfg *RouterConfig) *gin.Engine {
 		{
 			authenticated := seller.Group("", middleware.JWTAuthorization, cfg.UserHandler.GetSession)
 			{
+				authenticated.POST("/register", cfg.ShopHandler.CreateShop)
 				authenticated.GET("/stats", cfg.ShopHandler.GetShopStats)
 				authenticated.GET("/insights", cfg.ShopHandler.GetShopInsights)
 				finance := authenticated.Group("/finances")
