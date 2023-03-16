@@ -409,11 +409,14 @@ func (r *invoicePerShopRepositoryImpl) UpdateStatusToDelivery(shopId int, orderI
 	arrivalDate := now.Add(duration * time.Second)
 
 	err := r.db.Transaction(func(tx *gorm.DB) error {
-		if err := tx.Model(&model.InvoicePerShop{}).Where("shop_id = ? AND id = ? AND status = ?", shopId, orderId, constant.TransactionStatusCreated).Updates(map[string]interface{}{"status": constant.TransactionStatusOnDelivery, "arrival_date": arrivalDate}).Error; err != nil {
-			if errors.Is(err, gorm.ErrRecordNotFound) {
+		if err := tx.Model(&model.InvoicePerShop{}).Where("shop_id = ? AND id = ? AND status = ?", shopId, orderId, constant.TransactionStatusCreated).Updates(map[string]interface{}{"status": constant.TransactionStatusOnDelivery, "arrival_date": arrivalDate}); err.Error != nil || err.RowsAffected == 0 {
+			if errors.Is(err.Error, gorm.ErrRecordNotFound) {
 				return commonErr.ErrInvoiceNotFound
 			}
-			return err
+			if err.RowsAffected == 0 {
+				return commonErr.ErrInvoiceNotFound
+			}
+			return err.Error
 		}
 
 		if err := r.invoiceStatusRepo.Create(tx, invoiceStatuses); err != nil {
@@ -432,11 +435,14 @@ func (r *invoicePerShopRepositoryImpl) UpdateStatusToDelivery(shopId int, orderI
 
 func (r *invoicePerShopRepositoryImpl) UpdateStatusToCanceled(shopId int, orderId int, invoiceStatuses []*model.InvoiceStatus) error {
 	err := r.db.Transaction(func(tx *gorm.DB) error {
-		if err := tx.Model(&model.InvoicePerShop{}).Where("shop_id = ? AND id = ? AND status = ?", shopId, orderId, constant.TransactionStatusCreated).Update("status", constant.TransactionStatusCanceled).Error; err != nil {
-			if errors.Is(err, gorm.ErrRecordNotFound) {
+		if err := tx.Model(&model.InvoicePerShop{}).Where("shop_id = ? AND id = ? AND status = ?", shopId, orderId, constant.TransactionStatusCreated).Update("status", constant.TransactionStatusCanceled); err.Error != nil || err.RowsAffected == 0 {
+			if errors.Is(err.Error, gorm.ErrRecordNotFound) {
 				return commonErr.ErrInvoiceNotFound
 			}
-			return err
+			if err.RowsAffected == 0 {
+				return commonErr.ErrInvoiceNotFound
+			}
+			return err.Error
 		}
 
 		if err := r.invoiceStatusRepo.Create(tx, invoiceStatuses); err != nil {
@@ -455,11 +461,14 @@ func (r *invoicePerShopRepositoryImpl) UpdateStatusToCanceled(shopId int, orderI
 
 func (r *invoicePerShopRepositoryImpl) UpdateStatusToReceived(shopId int, orderId int, invoiceStatuses []*model.InvoiceStatus) error {
 	err := r.db.Transaction(func(tx *gorm.DB) error {
-		if err := tx.Model(&model.InvoicePerShop{}).Where("shop_id = ? AND id = ? AND status = ?", shopId, orderId, constant.TransactionStatusDelivered).Update("status", constant.TransactionStatusReceived).Error; err != nil {
-			if errors.Is(err, gorm.ErrRecordNotFound) {
+		if err := tx.Model(&model.InvoicePerShop{}).Where("shop_id = ? AND id = ? AND status = ?", shopId, orderId, constant.TransactionStatusDelivered).Update("status", constant.TransactionStatusReceived); err != nil || err.RowsAffected == 0 {
+			if errors.Is(err.Error, gorm.ErrRecordNotFound) {
 				return commonErr.ErrInvoiceNotFound
 			}
-			return err
+			if err.RowsAffected == 0 {
+				return commonErr.ErrInvoiceNotFound
+			}
+			return err.Error
 		}
 
 		if err := r.invoiceStatusRepo.Create(tx, invoiceStatuses); err != nil {
@@ -478,11 +487,14 @@ func (r *invoicePerShopRepositoryImpl) UpdateStatusToReceived(shopId int, orderI
 
 func (r *invoicePerShopRepositoryImpl) UpdateStatusToCompleted(shopId int, orderId int, invoiceStatuses []*model.InvoiceStatus) error {
 	err := r.db.Transaction(func(tx *gorm.DB) error {
-		if err := tx.Model(&model.InvoicePerShop{}).Where("shop_id = ? AND id = ? AND status = ?", shopId, orderId, constant.TransactionStatusReceived).Update("status", constant.TransactionStatusCompleted).Error; err != nil {
-			if errors.Is(err, gorm.ErrRecordNotFound) {
+		if err := tx.Model(&model.InvoicePerShop{}).Where("shop_id = ? AND id = ? AND status = ?", shopId, orderId, constant.TransactionStatusReceived).Update("status", constant.TransactionStatusCompleted); err.Error != nil || err.RowsAffected == 0 {
+			if errors.Is(err.Error, gorm.ErrRecordNotFound) {
 				return commonErr.ErrInvoiceNotFound
 			}
-			return err
+			if err.RowsAffected == 0 {
+				return commonErr.ErrInvoiceNotFound
+			}
+			return err.Error
 		}
 
 		if err := r.invoiceStatusRepo.Create(tx, invoiceStatuses); err != nil {
@@ -512,11 +524,14 @@ func (r *invoicePerShopRepositoryImpl) UpdateStatusCRONJob() error {
 	}
 
 	err := r.db.Transaction(func(tx *gorm.DB) error {
-		if err := tx.Model(&model.InvoicePerShop{}).Where("status = ? AND arrival_date < ?", constant.TransactionStatusOnDelivery, now).Update("status", constant.TransactionStatusDelivered).Error; err != nil {
-			if errors.Is(err, gorm.ErrRecordNotFound) {
+		if err := tx.Model(&model.InvoicePerShop{}).Where("status = ? AND arrival_date < ?", constant.TransactionStatusOnDelivery, now).Update("status", constant.TransactionStatusDelivered); err.Error != nil || err.RowsAffected == 0 {
+			if errors.Is(err.Error, gorm.ErrRecordNotFound) {
 				return commonErr.ErrInvoiceNotFound
 			}
-			return err
+			if err.RowsAffected == 0 {
+				return commonErr.ErrInvoiceNotFound
+			}
+			return err.Error
 		}
 
 		if err := r.invoiceStatusRepo.Create(tx, invoiceStatuses); err != nil {
@@ -536,22 +551,25 @@ func (r *invoicePerShopRepositoryImpl) UpdateStatusCRONJob() error {
 func (r *invoicePerShopRepositoryImpl) AutoReceivedCRONJob() error {
 	var invoiceStatuses []*model.InvoiceStatus
 	now := time.Now()
-	duration := now.Add(constant.OneDayDuration * time.Hour)
+	duration := constant.OneDayDuration * time.Hour
 
 	if err := r.db.Select("invoice_statuses.invoice_per_shop_id").Joins("JOIN invoice_per_shops ip ON ip.id = invoice_statuses.invoice_per_shop_id AND invoice_statuses.status = ?", constant.TransactionStatusDelivered).Where("ip.status = ?", constant.TransactionStatusDelivered).Find(&invoiceStatuses).Error; err != nil {
 		return err
 	}
 
 	for _, is := range invoiceStatuses {
-		is.Status = constant.TransactionStatusDelivered
+		is.Status = constant.TransactionStatusReceived
 	}
 
 	err := r.db.Transaction(func(tx *gorm.DB) error {
-		if err := tx.Model(&model.InvoicePerShop{}).Where("status = ? AND (arrival_date + ?) < ?", constant.TransactionStatusDelivered, duration, now).Update("status", constant.TransactionStatusReceived).Error; err != nil {
-			if errors.Is(err, gorm.ErrRecordNotFound) {
+		if err := tx.Model(&model.InvoicePerShop{}).Where("status = ? AND (arrival_date + ?) < ?", constant.TransactionStatusDelivered, duration, now).Update("status", constant.TransactionStatusReceived); err.Error != nil || err.RowsAffected == 0 {
+			if errors.Is(err.Error, gorm.ErrRecordNotFound) {
 				return commonErr.ErrInvoiceNotFound
 			}
-			return err
+			if err.RowsAffected == 0 {
+				return commonErr.ErrInvoiceNotFound
+			}
+			return err.Error
 		}
 
 		if err := r.invoiceStatusRepo.Create(tx, invoiceStatuses); err != nil {
@@ -571,22 +589,25 @@ func (r *invoicePerShopRepositoryImpl) AutoReceivedCRONJob() error {
 func (r *invoicePerShopRepositoryImpl) AutoCompletedCRONJob() error {
 	var invoiceStatuses []*model.InvoiceStatus
 	now := time.Now()
-	duration := now.Add(constant.TwoDayDuration * time.Hour)
+	duration := constant.TwoDayDuration * time.Hour
 
 	if err := r.db.Select("invoice_statuses.invoice_per_shop_id").Joins("JOIN invoice_per_shops ip ON ip.id = invoice_statuses.invoice_per_shop_id AND invoice_statuses.status = ?", constant.TransactionStatusReceived).Where("ip.status = ?", constant.TransactionStatusReceived).Find(&invoiceStatuses).Error; err != nil {
 		return err
 	}
 
 	for _, is := range invoiceStatuses {
-		is.Status = constant.TransactionStatusDelivered
+		is.Status = constant.TransactionStatusCompleted
 	}
 
 	err := r.db.Transaction(func(tx *gorm.DB) error {
-		if err := tx.Model(&model.InvoicePerShop{}).Where("status = ? AND (arrival_date + ?) < ?", constant.TransactionStatusReceived, duration, now).Update("status", constant.TransactionStatusCompleted).Error; err != nil {
-			if errors.Is(err, gorm.ErrRecordNotFound) {
+		if err := tx.Model(&model.InvoicePerShop{}).Where("status = ? AND (arrival_date + ?) < ?", constant.TransactionStatusReceived, duration, now).Update("status", constant.TransactionStatusCompleted); err.Error != nil || err.RowsAffected == 0 {
+			if errors.Is(err.Error, gorm.ErrRecordNotFound) {
 				return commonErr.ErrInvoiceNotFound
 			}
-			return err
+			if err.RowsAffected == 0 {
+				return commonErr.ErrInvoiceNotFound
+			}
+			return err.Error
 		}
 
 		if err := r.invoiceStatusRepo.Create(tx, invoiceStatuses); err != nil {
