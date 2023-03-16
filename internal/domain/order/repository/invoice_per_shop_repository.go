@@ -407,8 +407,11 @@ func (r *invoicePerShopRepositoryImpl) RefundRequest(ref *model.RefundRequest, i
 			return err
 		}
 
-		if err := tx.Model(&model.InvoicePerShop{}).Where("id = ? AND status = ?", ref.InvoiceId, constant.TransactionStatusReceived).Update("status", constant.TransactionStatusComplained).Error; err != nil {
-			return err
+		if err := tx.Model(&model.InvoicePerShop{}).Where("id = ? AND status = ?", ref.InvoiceId, constant.TransactionStatusReceived).Update("status", constant.TransactionStatusComplained); err.Error != nil || err.RowsAffected == 0 {
+			if err.RowsAffected == 0 {
+				return commonErr.ErrInvoiceNotFound
+			}
+			return err.Error
 		}
 
 		return nil
