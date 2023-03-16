@@ -398,7 +398,35 @@ func (r *invoicePerShopRepositoryImpl) GetShopOrder(shopId int, req *dto.Invoice
 }
 
 func (r *invoicePerShopRepositoryImpl) RefundRequest(ref *model.RefundRequest, invoiceStatus []*model.InvoiceStatus) (*model.RefundRequest ,error) {
-	err := r.db.Transaction(func(tx *gorm.DB) error {
+	now := time.Now()
+	refundType := constant.RefundTypeComplain
+
+	ref.RequestDate = now
+	ref.Type = refundType
+
+	var count int64
+	err := r.db.Model(&model.InvoicePerShop{}).Where("invoice_id = ? and status = ?", ref.Invoice.InvoiceID, constant.TransactionStatusReceived).Count(&count).Error
+	if err != nil {
+		return nil, err
+	}
+	
+	if count < 2 {
+		amount, err := r.singularRefund(ref.Invoice.ID)
+		if err != nil {
+			return nil, err
+		}
+
+		ref.RefundAmount = amount
+	} else {
+		amount, err := r.multipleRefund(ref.Invoice.ID, ref.Invoice)
+		if err != nil {
+			return nil, err
+		}
+
+		ref.RefundAmount = amount
+	}
+
+	err = r.db.Transaction(func(tx *gorm.DB) error {
 		if err := r.refundRequestRepo.PostComplain(tx, ref); err != nil {
 			return err
 		}
@@ -422,6 +450,42 @@ func (r *invoicePerShopRepositoryImpl) RefundRequest(ref *model.RefundRequest, i
 	}
 
 	return ref, nil
+}
+
+func (r *invoicePerShopRepositoryImpl) singularRefund(id int) (float64, error) {
+	var amount float64
+
+	err := r.db.Model(&model.InvoicePerShop{}).Select("total - shipping_cost").Where("id = ?", id).Scan(&amount).Error
+	if err != nil {
+		return 0, err
+	}
+
+	return amount, nil
+}
+
+func (r *invoicePerShopRepositoryImpl) multipleRefund(id int, ref *model.InvoicePerShop) (float64, error) {
+	var(
+		amount float64
+		invoice *model.Invoice
+	)
+
+	err := r.db.First(&invoice, id).Error
+	if err != nil {
+		return 0, err
+	}
+
+	weight := ref.Total / (invoice.Total)
+	if *ref.VoucherType == marketplaceModel.VoucherTypeNominal {
+		amount = ref.Total - (weight * *invoice.VoucherAmount)
+	}
+	if *ref.VoucherType == marketplaceModel.VoucherTypePercent {
+		amount = ref.Total - (1 - *ref.VoucherAmount)
+	}
+	if *ref.VoucherType == marketplaceModel.VoucherTypeShipping {
+		amount = ref.Total
+	}
+
+	return amount, nil
 }
 
 func (r *invoicePerShopRepositoryImpl) UpdateStatusToDelivery(shopId int, orderId int, invoiceStatuses []*model.InvoiceStatus) error {
@@ -492,7 +556,7 @@ func (r *invoicePerShopRepositoryImpl) UpdateStatusToCanceled(shopId int, orderI
 
 func (r *invoicePerShopRepositoryImpl) UpdateStatusToReceived(shopId int, orderId int, invoiceStatuses []*model.InvoiceStatus) error {
 	err := r.db.Transaction(func(tx *gorm.DB) error {
-		if err := tx.Model(&model.InvoicePerShop{}).Where("shop_id = ? AND id = ? AND status = ?", shopId, orderId, constant.TransactionStatusDelivered).Update("status", constant.TransactionStatusReceived); err != nil || err.RowsAffected == 0 {
+		if err := tx.Model(&model.InvoicePerShop{}).Where("shop_id = ? AND id = ? AND status = ?", shopId, orderId, constant.TransactionStatusDelivered).Update("status", constant.TransactionStatusReceived); err.Error != nil || err.RowsAffected == 0 {
 			if errors.Is(err.Error, gorm.ErrRecordNotFound) {
 				return commonErr.ErrInvoiceNotFound
 			}
