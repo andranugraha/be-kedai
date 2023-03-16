@@ -216,6 +216,13 @@ func (r *invoicePerShopRepositoryImpl) GetByShopId(shopId int, req *dto.InvoiceP
 		Where("invoice_per_shops.shop_id = ? AND invoice_per_shops.status = ?", shopId, isCompleted).
 		Where("products.name ILIKE ? OR invoice_per_shops.code ILIKE ?", fmt.Sprintf("%%%s%%", req.S), fmt.Sprintf("%%%s%%", req.S))
 
+	if req.Status == constant.Released {
+		db.Where("is_released")
+	}
+	if req.Status == constant.ToRelease {
+		db.Not("is_released")
+	}
+
 	if req.StartDate != "" && req.EndDate != "" {
 		start, _ := time.Parse("2006-01-02", req.StartDate)
 		end, _ := time.Parse("2006-01-02", req.EndDate)
@@ -327,7 +334,8 @@ func (r *invoicePerShopRepositoryImpl) GetByShopIdAndId(shopId int, id int) (*dt
 		Preload("Address.District").
 		Preload("Address.Subdistrict").
 		Preload("User").
-		Preload("CourierService.Courier")
+		Preload("CourierService.Courier").
+		Preload("StatusList")
 
 	err := query.First(&invoice).Error
 	if err != nil {
