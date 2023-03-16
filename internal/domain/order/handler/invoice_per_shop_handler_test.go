@@ -1117,12 +1117,12 @@ func TestRefundRequest(t *testing.T) {
 	var (
 		userId    = 1
 		orderCode = "code"
-		refReq = &model.RefundRequest{}
+		refReq    = &model.RefundRequest{}
 	)
 	type input struct {
 		userId    int
 		orderCode string
-		result *model.RefundRequest
+		result    *model.RefundRequest
 		err       error
 	}
 	type expected struct {
@@ -1141,7 +1141,7 @@ func TestRefundRequest(t *testing.T) {
 			input: input{
 				userId:    userId,
 				orderCode: orderCode,
-				result: refReq,
+				result:    refReq,
 				err:       nil,
 			},
 			expected: expected{
@@ -1149,7 +1149,7 @@ func TestRefundRequest(t *testing.T) {
 				response: response.Response{
 					Code:    code.CREATED,
 					Message: "created",
-					Data: refReq,
+					Data:    refReq,
 				},
 			},
 		},
@@ -1187,7 +1187,7 @@ func TestRefundRequest(t *testing.T) {
 		t.Run(tc.description, func(t *testing.T) {
 			expectedJson, _ := json.Marshal(tc.expected.response)
 			invoicePerShopService := mocks.NewInvoicePerShopService(t)
-			invoicePerShopService.On("RefundRequest", tc.input.orderCode, tc.input.userId).Return(refReq ,tc.input.err)
+			invoicePerShopService.On("RefundRequest", tc.input.orderCode, tc.input.userId).Return(refReq, tc.input.err)
 			rec := httptest.NewRecorder()
 			c, _ := gin.CreateTestContext(rec)
 			c.Set("userId", userId)

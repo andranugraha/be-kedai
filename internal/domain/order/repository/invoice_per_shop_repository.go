@@ -27,7 +27,7 @@ type InvoicePerShopRepository interface {
 	WithdrawFromInvoice(invoicePerShopIds []int, shopId int, walletId int) error
 	GetByShopIdAndId(shopId int, id int) (*dto.InvoicePerShopDetail, error)
 	GetShopOrder(shopId int, req *dto.InvoicePerShopFilterRequest) ([]*dto.InvoicePerShopDetail, int64, int, error)
-	RefundRequest(ref *model.RefundRequest, invoiceStatus []*model.InvoiceStatus) (*model.RefundRequest ,error)
+	RefundRequest(ref *model.RefundRequest, invoiceStatus []*model.InvoiceStatus) (*model.RefundRequest, error)
 	UpdateStatusToDelivery(shopId int, orderId int, invoiceStatuses []*model.InvoiceStatus) error
 	UpdateStatusToCanceled(shopId int, orderId int, invoiceStatuses []*model.InvoiceStatus) error
 	UpdateStatusToReceived(shopId int, orderId int, invoiceStatuses []*model.InvoiceStatus) error
@@ -397,7 +397,7 @@ func (r *invoicePerShopRepositoryImpl) GetShopOrder(shopId int, req *dto.Invoice
 	return invoices, totalRows, totalPages, nil
 }
 
-func (r *invoicePerShopRepositoryImpl) RefundRequest(ref *model.RefundRequest, invoiceStatus []*model.InvoiceStatus) (*model.RefundRequest ,error) {
+func (r *invoicePerShopRepositoryImpl) RefundRequest(ref *model.RefundRequest, invoiceStatus []*model.InvoiceStatus) (*model.RefundRequest, error) {
 	now := time.Now()
 	refundType := constant.RefundTypeComplain
 
@@ -409,7 +409,7 @@ func (r *invoicePerShopRepositoryImpl) RefundRequest(ref *model.RefundRequest, i
 	if err != nil {
 		return nil, err
 	}
-	
+
 	if count < 2 {
 		amount, err := r.singularRefund(ref.Invoice.ID)
 		if err != nil {
@@ -430,8 +430,8 @@ func (r *invoicePerShopRepositoryImpl) RefundRequest(ref *model.RefundRequest, i
 		if err := r.refundRequestRepo.PostComplain(tx, ref); err != nil {
 			return err
 		}
-		
-		if err := r.invoiceStatusRepo.Create(tx ,invoiceStatus); err != nil {
+
+		if err := r.invoiceStatusRepo.Create(tx, invoiceStatus); err != nil {
 			return err
 		}
 
@@ -464,8 +464,8 @@ func (r *invoicePerShopRepositoryImpl) singularRefund(id int) (float64, error) {
 }
 
 func (r *invoicePerShopRepositoryImpl) multipleRefund(id int, ref *model.InvoicePerShop) (float64, error) {
-	var(
-		amount float64
+	var (
+		amount  float64
 		invoice *model.Invoice
 	)
 

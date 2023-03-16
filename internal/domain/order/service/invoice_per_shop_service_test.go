@@ -951,7 +951,7 @@ func TestRefundRequest(t *testing.T) {
 		{
 			description: "should return refund request when success",
 			input: input{
-				code: code,
+				code:   code,
 				userId: userId,
 				beforeTest: func(ipsr *mocks.InvoicePerShopRepository) {
 					ipsr.On("GetByUserIDAndCode", userId, code).Return(invoice, nil)
@@ -960,13 +960,13 @@ func TestRefundRequest(t *testing.T) {
 			},
 			expected: expected{
 				result: req,
-				err: nil,
+				err:    nil,
 			},
 		},
 		{
 			description: "should return error when invoice not found",
 			input: input{
-				code: code,
+				code:   code,
 				userId: userId,
 				beforeTest: func(ipsr *mocks.InvoicePerShopRepository) {
 					ipsr.On("GetByUserIDAndCode", userId, code).Return(nil, commonErr.ErrInvoiceNotFound)
@@ -974,13 +974,13 @@ func TestRefundRequest(t *testing.T) {
 			},
 			expected: expected{
 				result: nil,
-				err: commonErr.ErrInvoiceNotFound,
+				err:    commonErr.ErrInvoiceNotFound,
 			},
 		},
 		{
 			description: "should return error when internal server error",
 			input: input{
-				code: code,
+				code:   code,
 				userId: userId,
 				beforeTest: func(ipsr *mocks.InvoicePerShopRepository) {
 					ipsr.On("GetByUserIDAndCode", userId, code).Return(invoice, nil)
@@ -989,7 +989,7 @@ func TestRefundRequest(t *testing.T) {
 			},
 			expected: expected{
 				result: nil,
-				err: commonErr.ErrInternalServerError,
+				err:    commonErr.ErrInternalServerError,
 			},
 		},
 	} {

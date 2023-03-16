@@ -7,7 +7,7 @@ import (
 )
 
 type RefundRequestRepository interface {
-	PostComplain(tx *gorm.DB, ref *model.RefundRequest) (error)
+	PostComplain(tx *gorm.DB, ref *model.RefundRequest) error
 }
 
 type refundRequestRepositoryImpl struct {
@@ -24,8 +24,8 @@ func NewRefundRequestRepository(cfg *RefundRequestRConfig) RefundRequestReposito
 	}
 }
 
-func (refundRequestRepositoryImpl) PostComplain(tx *gorm.DB, ref *model.RefundRequest) (error) {
-	err := 	tx.Create(&ref).Error
+func (refundRequestRepositoryImpl) PostComplain(tx *gorm.DB, ref *model.RefundRequest) error {
+	err := tx.Create(&ref).Error
 	if err != nil {
 		return err
 	}

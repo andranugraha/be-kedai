@@ -25,7 +25,7 @@ func TestGetCourierServicesByCourierIDs(t *testing.T) {
 		courierIDs = []int{1, 2}
 	)
 
-	tests := []struct{
+	tests := []struct {
 		description string
 		input
 		expected
