@@ -151,3 +151,35 @@ func (h *Handler) UpdateShopProfile(c *gin.Context) {
 
 	response.Success(c, http.StatusOK, code.OK, "success", nil)
 }
+
+func (h *Handler) CreateShop(c *gin.Context) {
+	var req dto.CreateShopRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.ErrorValidator(c, http.StatusBadRequest, err)
+		return
+	}
+
+	userID := c.GetInt("userId")
+	shop, err := h.shopService.CreateShop(userID, &req)
+	if err != nil {
+		if errors.Is(err, errs.ErrShopRegistered) {
+			response.Error(c, http.StatusConflict, code.SHOP_REGISTERED, err.Error())
+			return
+		}
+
+		if errors.Is(err, errs.ErrUserHasShop) {
+			response.Error(c, http.StatusConflict, code.HAVE_SHOP, err.Error())
+			return
+		}
+
+		if errors.Is(err, errs.ErrInvalidShopName) {
+			response.Error(c, http.StatusUnprocessableEntity, code.INVALID_SHOP_NAME, err.Error())
+			return
+		}
+
+		response.Error(c, http.StatusInternalServerError, code.INTERNAL_SERVER_ERROR, errs.ErrInternalServerError.Error())
+		return
+	}
+
+	response.Success(c, http.StatusCreated, code.CREATED, "shop created", shop)
+}

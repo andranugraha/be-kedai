@@ -141,12 +141,17 @@ func (s *addressServiceImpl) UpdateUserAddress(updatedAddress *dto.AddressReques
 
 	if !*(updatedAddress.IsPickup) {
 		shop, err := s.shopService.FindShopByUserId(address.UserID)
-		if err != nil {
+		if err != nil && !errors.Is(err, errs.ErrShopNotFound) {
 			return nil, err
 		}
 
-		if shop.AddressID == updatedAddress.ID {
-			return nil, errs.ErrMustHaveAtLeastOnePickupAddress
+		if shop == nil {
+			falsePickup := false
+			updatedAddress.IsPickup = &falsePickup
+		} else {
+			if shop.AddressID == updatedAddress.ID {
+				return nil, errs.ErrMustHaveAtLeastOnePickupAddress
+			}
 		}
 	}
 

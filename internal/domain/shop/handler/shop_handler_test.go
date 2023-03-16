@@ -2,6 +2,7 @@ package handler_test
 
 import (
 	"encoding/json"
+	"errors"
 	"kedai/backend/be-kedai/internal/common/code"
 	commonDto "kedai/backend/be-kedai/internal/common/dto"
 	errs "kedai/backend/be-kedai/internal/common/error"
@@ -799,6 +800,196 @@ func TestUpdateShopProfile(t *testing.T) {
 
 			assert.Equal(t, tc.expected.statusCode, rec.Code)
 			assert.Equal(t, string(expectedBody), rec.Body.String())
+		})
+	}
+}
+
+func TestCreateShop(t *testing.T) {
+	type input struct {
+		userID  int
+		request *dto.CreateShopRequest
+	}
+	type expected struct {
+		statusCode int
+		response   response.Response
+	}
+
+	var (
+		userID     = 1
+		shopName   = "New shop"
+		addressID  = 1
+		courierIDs = []int{1, 2}
+		request    = &dto.CreateShopRequest{
+			Name:       shopName,
+			AddressID:  addressID,
+			CourierIDs: courierIDs,
+		}
+	)
+
+	tests := []struct {
+		description string
+		input
+		beforeTest func(*mocks.ShopService)
+		expected
+	}{
+		{
+			description: "should return error with status code 400 when given invalid request body",
+			input: input{
+				userID: userID,
+				request: &dto.CreateShopRequest{
+					Name:       "a",
+					AddressID:  addressID,
+					CourierIDs: courierIDs,
+				},
+			},
+			beforeTest: func(ss *mocks.ShopService) {},
+			expected: expected{
+				statusCode: http.StatusBadRequest,
+				response: response.Response{
+					Code:    code.BAD_REQUEST,
+					Message: "Name must be greater than 5",
+				},
+			},
+		},
+		{
+			description: "should return error with status code 409 when user already has shop",
+			input: input{
+				userID: userID,
+				request: &dto.CreateShopRequest{
+					Name:       shopName,
+					AddressID:  addressID,
+					CourierIDs: courierIDs,
+				},
+			},
+			beforeTest: func(ss *mocks.ShopService) {
+				ss.On("CreateShop", userID, request).Return(nil, errs.ErrUserHasShop)
+			},
+			expected: expected{
+				statusCode: http.StatusConflict,
+				response: response.Response{
+					Code:    code.HAVE_SHOP,
+					Message: errs.ErrUserHasShop.Error(),
+				},
+			},
+		},
+		{
+			description: "should return error with status code 409 when shop name already taken",
+			input: input{
+				userID: userID,
+				request: &dto.CreateShopRequest{
+					Name:       shopName,
+					AddressID:  addressID,
+					CourierIDs: courierIDs,
+				},
+			},
+			beforeTest: func(ss *mocks.ShopService) {
+				ss.On("CreateShop", userID, request).Return(nil, errs.ErrShopRegistered)
+			},
+			expected: expected{
+				statusCode: http.StatusConflict,
+				response: response.Response{
+					Code:    code.SHOP_REGISTERED,
+					Message: errs.ErrShopRegistered.Error(),
+				},
+			},
+		},
+		{
+			description: "should return error with status code 422 when shop name is invalid",
+			input: input{
+				userID: userID,
+				request: &dto.CreateShopRequest{
+					Name:       "invalid_shop_name",
+					AddressID:  addressID,
+					CourierIDs: courierIDs,
+				},
+			},
+			beforeTest: func(ss *mocks.ShopService) {
+				ss.On("CreateShop", userID, &dto.CreateShopRequest{
+					Name:       "invalid_shop_name",
+					AddressID:  addressID,
+					CourierIDs: courierIDs,
+				},
+				).Return(nil, errs.ErrInvalidShopName)
+			},
+			expected: expected{
+				statusCode: http.StatusUnprocessableEntity,
+				response: response.Response{
+					Code:    code.INVALID_SHOP_NAME,
+					Message: errs.ErrInvalidShopName.Error(),
+				},
+			},
+		},
+		{
+			description: "should return error with status code 500 when failed to create shop",
+			input: input{
+				userID: userID,
+				request: &dto.CreateShopRequest{
+					Name:       shopName,
+					AddressID:  addressID,
+					CourierIDs: courierIDs,
+				},
+			},
+			beforeTest: func(ss *mocks.ShopService) {
+				ss.On("CreateShop", userID, request).Return(nil, errors.New("failed to create shop"))
+			},
+			expected: expected{
+				statusCode: http.StatusInternalServerError,
+				response: response.Response{
+					Code:    code.INTERNAL_SERVER_ERROR,
+					Message: errs.ErrInternalServerError.Error(),
+				},
+			},
+		},
+		{
+			description: "should return error with status code 201 when succeed to create shop",
+			input: input{
+				userID: userID,
+				request: &dto.CreateShopRequest{
+					Name:       shopName,
+					AddressID:  addressID,
+					CourierIDs: courierIDs,
+				},
+			},
+			beforeTest: func(ss *mocks.ShopService) {
+				ss.On("CreateShop", userID, request).Return(&model.Shop{
+					Name:      shopName,
+					AddressID: addressID,
+					UserID:    userID,
+				}, nil)
+			},
+			expected: expected{
+				statusCode: http.StatusCreated,
+				response: response.Response{
+					Code:    code.CREATED,
+					Message: "shop created",
+					Data: &model.Shop{
+						Name:      shopName,
+						AddressID: addressID,
+						UserID:    userID,
+					},
+				},
+			},
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.description, func(t *testing.T) {
+			expectedRes, _ := json.Marshal(tc.expected.response)
+			payload := test.MakeRequestBody(tc.input.request)
+			rec := httptest.NewRecorder()
+			c, _ := gin.CreateTestContext(rec)
+			mockService := new(mocks.ShopService)
+			tc.beforeTest(mockService)
+			handler := handler.New(&handler.HandlerConfig{
+				ShopService: mockService,
+			})
+			c.Set("userId", tc.input.userID)
+
+			c.Request, _ = http.NewRequest("POST", "/v1/sellers/register", payload)
+			handler.CreateShop(c)
+
+			assert.Equal(t, tc.expected.statusCode, rec.Code)
+			assert.Equal(t, string(expectedRes), rec.Body.String())
 		})
 	}
 }
