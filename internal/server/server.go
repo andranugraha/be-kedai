@@ -111,11 +111,29 @@ func createRouter() *gin.Engine {
 		DB: db,
 	})
 
+	userCartItemRepo := userRepoPackage.NewUserCartItemRepository(&userRepoPackage.UserCartItemRConfig{
+		DB: db,
+	})
+
+	skuRepo := productRepoPackage.NewSkuRepository(&productRepoPackage.SkuRConfig{
+		DB: db,
+	})
+
+	invoiceRepo := orderRepoPackage.NewInvoiceRepository(&orderRepoPackage.InvoiceRConfig{
+		DB:                db,
+		UserCartItemRepo:  userCartItemRepo,
+		SkuRepo:           skuRepo,
+		UserWalletRepo:    walletRepo,
+		InvoiceStatusRepo: invoiceStatusRepo,
+		Redis:             userCache,
+	})
+
 	invoicePerShopRepo := orderRepoPackage.NewInvoicePerShopRepository(&orderRepoPackage.InvoicePerShopRConfig{
 		DB:                db,
 		WalletRepo:        walletRepo,
 		InvoiceStatusRepo: invoiceStatusRepo,
 		RefundRequestRepo: refundRequestRepo,
+		InvoiceRepo:       invoiceRepo,
 	})
 
 	shopGuestRepo := shopRepoPackage.NewShopGuestRepository(&shopRepoPackage.ShopGuestRConfig{
@@ -158,9 +176,6 @@ func createRouter() *gin.Engine {
 		ShopService:           shopService,
 	})
 
-	skuRepo := productRepoPackage.NewSkuRepository(&productRepoPackage.SkuRConfig{
-		DB: db,
-	})
 	skuService := productServicePackage.NewSkuService(&productServicePackage.SkuSConfig{
 		SkuRepository: skuRepo,
 	})
@@ -254,10 +269,6 @@ func createRouter() *gin.Engine {
 		ProductService:         productService,
 	})
 
-	userCartItemRepo := userRepoPackage.NewUserCartItemRepository(&userRepoPackage.UserCartItemRConfig{
-		DB: db,
-	})
-
 	addressRepo := locationRepoPackage.NewAddressRepository(&locationRepoPackage.AddressRConfig{
 		DB:              db,
 		GoogleMaps:      maps,
@@ -330,14 +341,6 @@ func createRouter() *gin.Engine {
 		TransactionReviewService: transactionReviewService,
 	})
 
-	invoiceRepo := orderRepoPackage.NewInvoiceRepository(&orderRepoPackage.InvoiceRConfig{
-		DB:                db,
-		UserCartItemRepo:  userCartItemRepo,
-		SkuRepo:           skuRepo,
-		UserWalletRepo:    walletRepo,
-		InvoiceStatusRepo: invoiceStatusRepo,
-		Redis:             userCache,
-	})
 	invoiceService := orderServicePackage.NewInvoiceService(&orderServicePackage.InvoiceSConfig{
 		InvoiceRepo:               invoiceRepo,
 		AddressService:            addressService,
