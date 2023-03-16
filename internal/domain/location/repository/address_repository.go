@@ -123,7 +123,7 @@ func (r *addressRepositoryImpl) AddUserAddress(newAddress *model.UserAddress) (*
 	tx := r.db.Begin()
 	defer tx.Commit()
 
-	err = r.db.Create(newAddress).Error
+	err = tx.Create(&newAddress).Error
 	if err != nil {
 		tx.Rollback()
 		return nil, err
@@ -143,6 +143,16 @@ func (r *addressRepositoryImpl) AddUserAddress(newAddress *model.UserAddress) (*
 			tx.Rollback()
 			return nil, err
 		}
+	}
+
+	err = tx.Preload("Subdistrict").
+		Preload("District").
+		Preload("City").
+		Preload("Province").
+		First(&newAddress, newAddress.ID).Error
+	if err != nil {
+		tx.Rollback()
+		return nil, err
 	}
 
 	return newAddress, nil
