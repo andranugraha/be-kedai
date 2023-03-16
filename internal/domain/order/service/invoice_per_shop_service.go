@@ -151,10 +151,10 @@ func (s *invoicePerShopServiceImpl) RefundRequest(invoiceCode string, userId int
 	}
 
 	var invoiceStatuses []*model.InvoiceStatus
-	var status = constant.TransactionStatusOnDelivery
+	var status = constant.TransactionStatusComplained
 
 	invoiceStatuses = append(invoiceStatuses, &model.InvoiceStatus{
-		InvoicePerShopID: invoice.InvoiceID,
+		InvoicePerShopID: invoice.ID,
 		Status:           status,
 	})
 
@@ -244,7 +244,7 @@ func (s *invoicePerShopServiceImpl) UpdateStatusToCompleted(userId int, orderCod
 	var status = constant.TransactionStatusCompleted
 
 	invoiceStatuses = append(invoiceStatuses, &model.InvoiceStatus{
-		InvoicePerShopID: order.ID,
+		InvoicePerShopID: order.InvoicePerShop.ID,
 		Status:           status,
 	})
 
