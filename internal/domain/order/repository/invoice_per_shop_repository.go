@@ -42,7 +42,7 @@ type invoicePerShopRepositoryImpl struct {
 	walletRepo        userRepo.WalletRepository
 	invoiceStatusRepo InvoiceStatusRepository
 	refundRequestRepo RefundRequestRepository
-	invoiceRepo InvoiceRepository
+	invoiceRepo       InvoiceRepository
 }
 
 type InvoicePerShopRConfig struct {
@@ -50,7 +50,7 @@ type InvoicePerShopRConfig struct {
 	WalletRepo        userRepo.WalletRepository
 	InvoiceStatusRepo InvoiceStatusRepository
 	RefundRequestRepo RefundRequestRepository
-	InvoiceRepo InvoiceRepository
+	InvoiceRepo       InvoiceRepository
 }
 
 func NewInvoicePerShopRepository(cfg *InvoicePerShopRConfig) InvoicePerShopRepository {
@@ -59,7 +59,7 @@ func NewInvoicePerShopRepository(cfg *InvoicePerShopRConfig) InvoicePerShopRepos
 		walletRepo:        cfg.WalletRepo,
 		invoiceStatusRepo: cfg.InvoiceStatusRepo,
 		refundRequestRepo: cfg.RefundRequestRepo,
-		invoiceRepo: cfg.InvoiceRepo,
+		invoiceRepo:       cfg.InvoiceRepo,
 	}
 }
 
@@ -412,7 +412,6 @@ func (r *invoicePerShopRepositoryImpl) RefundRequest(ref *model.RefundRequest, i
 	}
 
 	ref.RefundAmount = invoice.CalculateRefund(ref.Invoice)
-	
 
 	err = r.db.Transaction(func(tx *gorm.DB) error {
 		if err := r.refundRequestRepo.PostComplain(tx, ref); err != nil {
