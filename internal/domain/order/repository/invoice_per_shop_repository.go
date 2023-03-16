@@ -327,7 +327,8 @@ func (r *invoicePerShopRepositoryImpl) GetByShopIdAndId(shopId int, id int) (*dt
 		Preload("Address.District").
 		Preload("Address.Subdistrict").
 		Preload("User").
-		Preload("CourierService.Courier")
+		Preload("CourierService.Courier").
+		Preload("StatusList")
 
 	err := query.First(&invoice).Error
 	if err != nil {
