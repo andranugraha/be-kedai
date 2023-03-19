@@ -193,6 +193,15 @@ func NewRouter(cfg *RouterConfig) *gin.Engine {
 			}
 		}
 
+		// TODO ADD MIDLEWARE FOR AUTH ADMIN
+		admin := v1.Group("/admins")
+		{
+			order := admin.Group("/orders")
+			{
+				order.POST("/:orderId/cancel-commit", cfg.OrderHandler.UpdateToCanceled)
+			}
+		}
+
 		seller := v1.Group("/sellers")
 		{
 			authenticated := seller.Group("", middleware.JWTAuthorization, cfg.UserHandler.GetSession)
@@ -228,7 +237,7 @@ func NewRouter(cfg *RouterConfig) *gin.Engine {
 					order.GET("", cfg.OrderHandler.GetShopOrder)
 					order.GET("/:orderId", cfg.OrderHandler.GetInvoiceByShopIdAndOrderId)
 					order.PUT("/:orderId/delivery", cfg.OrderHandler.UpdateToDelivery)
-					order.PUT("/:orderId/cancel", cfg.OrderHandler.UpdateToCanceled)
+					order.POST("/:orderId/cancel-request", cfg.OrderHandler.UpdateToRefundPendingSellerCancel)
 				}
 			}
 		}
