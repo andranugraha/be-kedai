@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"errors"
 	"kedai/backend/be-kedai/internal/common/code"
 	commonErr "kedai/backend/be-kedai/internal/common/error"
 	"kedai/backend/be-kedai/internal/domain/location/dto"
@@ -31,6 +32,10 @@ func (h *Handler) SearchAddressDetail(c *gin.Context) {
 
 	address, err := h.addressService.GetSearchAddressDetail(placeId)
 	if err != nil {
+		if errors.Is(err, commonErr.ErrSubdistrictNotFound) {
+			response.Error(c, http.StatusNotFound, code.NOT_FOUND, err.Error())
+			return
+		}
 		response.Error(c, http.StatusInternalServerError, code.INTERNAL_SERVER_ERROR, commonErr.ErrInternalServerError.Error())
 		return
 	}

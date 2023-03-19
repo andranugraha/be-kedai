@@ -3413,6 +3413,150 @@ paths:
                     type: string
                     example: "error message"                    
   /v1/products:
+    post:
+      security:
+        - BearerAuth: []
+      tags:
+        - Product
+      summary: Create product
+      description: Create a new product
+      requestBody:
+        $ref: '#/components/requestBodies/CreateProductBody'
+      responses:
+        '201':
+          description: product created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: CREATED
+                  message:
+                    type: string
+                    example: success message
+                  data:
+                    allOf:
+                      - $ref: '#/components/schemas/Product'
+                      - type: object
+                        properties:
+                          bulk:
+                            $ref: '#/components/schemas/ProductBulkPrice'
+                      - type: object
+                        properties:
+                          media:
+                            $ref: '#/components/schemas/ProductMedia'
+                      - type: object
+                        properties:
+                          skus:
+                            type: array
+                            items:
+                              allOf:
+                                - $ref: '#/components/schemas/SKU'
+                                - type: object
+                                  properties:
+                                    variants:
+                                      type: array
+                                      items:
+                                        $ref: '#/components/schemas/Variant'
+                      - type: object
+                        properties:
+                          courierServices:
+                            type: array
+                            items:
+                              $ref: '#/components/schemas/CourierService'
+                      - type: object
+                        properties:
+                          variantGroups:
+                            type: array
+                            items:
+                              allOf:
+                                - $ref: '#/components/schemas/GroupVariant'
+                                - type: object
+                                  properties:
+                                    variant:
+                                      type: array
+                                      items:
+                                        $ref: '#/components/schemas/Variant'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "BAD_REQUEST"
+                  message:
+                    type: string
+                    example: "error message"
+        '401':
+          description: unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "UNAUTHORIZED"
+                  message:
+                    type: string
+                    example: "invalid credential"
+        '404':
+          description: not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "NOT_FOUND"
+                  message:
+                    type: string
+                    example: "error message"
+        '409':
+          description: sku used
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "SKU_USED"
+                  message:
+                    type: string
+                    example: "error message"
+        '422':
+          description: invalid product name pattern
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "INVALID_PRODUCT_NAME"
+                  message:
+                    type: string
+                    example: "error message"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "INTERNAL_SERVER_ERROR"
+                  message:
+                    type: string
+                    example: "error message"
     get:
       tags:
         - Product
@@ -4799,6 +4943,14 @@ paths:
         - Seller
       summary: Get all couriers
       description: Get all available couriers
+      parameters:
+        - in: query
+          name: status
+          description: courier status (activated or not). If empty, will get all couriers
+          schema:
+            type: string
+            enum: ['active', 'inactive']
+            example: active
       responses:
         '200':
           description: successful operation
@@ -5349,6 +5501,13 @@ paths:
             format: date
             example: 2006-01-02
         - in: query
+          name: status
+          description: withdraw status
+          schema:
+            type: string
+            enum: ['released', 'to_release']
+            example: released
+        - in: query
           name: s
           description: search query (can be either product name, or invoice code)
           schema:
@@ -5806,6 +5965,13 @@ paths:
           schema:
             type: string
             example: 87410023923
+        - in: query
+          name: status
+          description: invoice status. Any other value than those defined below will be set `''` (all)
+          schema:
+            type: string
+            default: ''
+            enum: ['', 'COMPLETED', 'WAITING_FOR_PAYMENT', 'ON_DELIVERY', 'DELIVERED', 'REFUND_PENDING', 'CREATED', 'RECEIVED', 'COMPLAINED', 'COMPLAINT_REJECTED', 'CANCELED', 'REFUNDED']
       responses:
         '200':
           description: operation successful
@@ -6092,6 +6258,12 @@ paths:
                                   type: string
                                   format: datetime
                                   example: "2006-01-02T00:00:00:000Z"
+                            - type: object
+                              properties:
+                                statusList:
+                                  type: array
+                                  items:
+                                    $ref: '#/components/schemas/InvoiceStatus'
                             - type: object
                               properties:
                                 transactionItems:
@@ -6406,7 +6578,7 @@ paths:
           schema:
             type: string
             default: ''
-            enum: ['', 'COMPLETED', 'CREATED', 'SENT', 'RECEIVED', 'COMPLAINED', 'COMPLAINT_CONFIRMED', 'COMPLAINT_REJECTED', 'CANCELED']
+            enum: ['', 'COMPLETED', 'WAITING_FOR_PAYMENT', 'ON_DELIVERY', 'DELIVERED', 'REFUND_PENDING', 'CREATED', 'RECEIVED', 'COMPLAINED', 'COMPLAINT_REJECTED', 'CANCELED', 'REFUNDED']
         - in: query
           name: startDate
           description: startDate format is YYYY-MM-DD. If startDate is stated in the request, endDate should be stated as well
@@ -6773,7 +6945,7 @@ paths:
       tags:
         - Order
       summary: Change invoice status to received
-      description: Change invoice status from created to received
+      description: Change invoice status from delivered to received
       parameters:
         - in: path
           name: code
@@ -6840,7 +7012,7 @@ paths:
       tags:
         - Order
       summary: Change invoice status to completed
-      description: Change invoice status from created to completed
+      description: Change invoice status from received to completed
       parameters:
         - in: path
           name: code
@@ -6861,6 +7033,122 @@ paths:
                     properties:
                       data:
                         example: null
+        '404':
+          description: invoice not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "NOT_FOUND"
+                  message:
+                    type: string
+                    example: "invoice not found"
+        '401':
+          description: unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "UNAUTHORIZED"
+                  message:
+                    type: string
+                    example: "invalid credential"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "INTERNAL_SERVER_ERROR"
+                  message:
+                    type: string
+                    example: "error message"
+  /v1/orders/invoices/{code}/refund:
+    post:
+      security:
+        - BearerAuth: []
+      tags:
+        - Order
+      summary: Change invoice status to complained
+      description: Change invoice status from received to complained
+      parameters:
+        - in: path
+          name: code
+          required: true
+          description: all slash (`/`) in invoice code should be encoded to hypen (`-`)
+          schema:
+            type: string
+            example: INV-XX-X
+      responses:
+        '201':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Response'
+                  - type: object
+                    properties:
+                      data:
+                        allOf:
+                          - $ref: '#/components/schemas/RefundRequest'
+                          - type: object
+                            properties:
+                              invoice:
+                                allOf:
+                                  - $ref: '#/components/schemas/InvoicePerShop'
+                                  - type: object
+                                    properties:
+                                      shop:
+                                        $ref: '#/components/schemas/Shop'
+                                  - type: object
+                                    properties:
+                                      statusList:
+                                        type: array
+                                        items:
+                                          $ref: '#/components/schemas/InvoiceStatus'
+                                  - type: object
+                                    properties:
+                                      marketplaceVoucherAmount:
+                                        type: number
+                                        nullable: true
+                                        format: float
+                                        example: 0.1
+                                  - type: object
+                                    properties:
+                                      marketplaceVoucherType:
+                                        type: string
+                                        nullable: true
+                                        example: percent
+                                  - type: object
+                                    properties:
+                                      paymentDate:
+                                        type: string
+                                        format: datetime
+                                        example: "2006-01-02T00:00:00:000Z"
+                                  - type: object
+                                    properties:
+                                      address:
+                                        $ref: '#/components/schemas/UserAddress'
+                                  - type: object
+                                    properties:
+                                      courierService:
+                                        allOf:
+                                          - $ref: '#/components/schemas/CourierService'
+                                          - type: object
+                                            properties:
+                                              courier:
+                                                $ref: '#/components/schemas/Courier'
+                        
         '404':
           description: invoice not found
           content:
@@ -7357,9 +7645,6 @@ components:
         height:
           type: number
           format: float
-        packagedSize:
-          type: number
-          format: float
         isNew:
           type: boolean
         isActive:
@@ -7793,6 +8078,31 @@ components:
         invoicePerShopId:
           type: integer
           example: 1
+    RefundRequest:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        requestDate:
+          type: string
+          format: datetime
+          example: "2006-01-02T00:00:00.000Z"
+        status:
+          type: string
+          example: "COMPLAINED"
+        type:
+          type: string
+          example: "COMPLAIN"
+        refundAmount:
+          type: number
+          format: float
+          example: 320000
+        invoiceId:
+          type: integer
+          example: 1
+        invoice:
+          $ref: '#/components/schemas/InvoicePerShop'
     UserReviewResponse:
       type: object
       properties:
@@ -8658,6 +8968,169 @@ components:
             properties:
               courierId:
                 type: integer
+    VariantBody:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          maxLength: 20
+          example: variant name
+        mediaUrl:
+          type: string
+          format: url
+          example: http://image.png
+    VariantGroupsBody:
+      type: object
+      required:
+        - name
+        - variants
+      properties:
+        name:
+          type: string
+          example: variant group name
+        variants:
+          type: array
+          minLength: 1
+          maxLength: 50
+          items:
+            $ref: '#/components/requestBodies/VariantBody'
+    SkuBody:
+      type: object
+      required:
+        - variantIds
+        - price
+        - stock
+      properties:
+        variantIds:
+          type: array
+          description: value in this properties refer to a index of a variant in variant group field
+          items:
+            type: integer
+            example: 1
+        price:
+          type: number
+          format: float
+          minimum: 0
+          exclusiveMinimum: true
+          example: 1000
+        stock:
+          type: integer
+          minimum: 0
+          example: 100
+        sku:
+          type: string
+          maxLength: 16
+          example: product sku
+    ProductBulkPriceBody:
+      type: object
+      required:
+        - minQuantity
+        - price
+      properties:
+        minQuantity:
+          type: integer
+          minimum: 1
+          example: 100
+        price:
+          type: number
+          format: float
+          example: 1000
+    CreateProductBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - name
+              - description
+              - isHazardous
+              - isActive
+              - isNew
+              - weight
+              - length
+              - width
+              - height
+              - categoryId
+              - media
+              - courierIds
+            properties:
+              name:
+                type: string
+                minLength: 5
+                maxLength: 255
+                example: product name
+              description:
+                type: string
+                minLength: 20
+                maxLength: 3000
+                example: product description goes here
+              isHazardous:
+                type: boolean
+                example: false
+              isActive:
+                type: boolean
+                example: true
+              isNew:
+                type: boolean
+                example: true
+              weight:
+                type: number
+                format: float
+                example: 10
+              length:
+                type: number
+                format: float
+                example: 10
+              width:
+                type: number
+                format: float
+                example: 10
+              height:
+                type: number
+                format: float
+                example: 10
+              categoryId:
+                type: number
+                example: 1
+              media:
+                type: array
+                minLength: 1
+                maxLength: 10
+                items:
+                  type: string
+                  format: url
+                  example: http://image.png
+              courierIds:
+                type: array
+                minLength: 1
+                items:
+                  type: integer
+                  minimum: 1
+                  example: 1
+              stock:
+                type: integer
+                minimum: 0
+                example: 1
+              price:
+                type: number
+                format: float
+                minimum: 0
+                exclusiveMinimum: true
+                example: 1000
+              bulkPrice:
+                $ref: '#/components/requestBodies/ProductBulkPriceBody'
+              variantGroups:
+                type: array
+                maxLength: 2
+                items:
+                  $ref: '#/components/requestBodies/VariantGroupsBody'
+              skus:
+                type: array
+                items:
+                  $ref: '#/components/requestBodies/SkuBody'
   securitySchemes:
     BearerAuth:
       type: http

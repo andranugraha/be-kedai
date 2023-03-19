@@ -29,7 +29,7 @@ func NewRouter(cfg *RouterConfig) *gin.Engine {
 
 	corsCfg := cors.DefaultConfig()
 	corsCfg.AllowOrigins = config.Origin
-	corsCfg.AllowMethods = []string{"GET", "POST", "PUT", "DELETE"}
+	corsCfg.AllowMethods = []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"}
 	corsCfg.AllowHeaders = []string{"Content-Type", "Authorization"}
 	corsCfg.ExposeHeaders = []string{"Content-Length"}
 	r.Use(cors.New(corsCfg))
@@ -137,6 +137,11 @@ func NewRouter(cfg *RouterConfig) *gin.Engine {
 				sku.GET("", cfg.ProductHandler.GetSKUByVariantIDs)
 			}
 
+			authenticated := product.Group("", middleware.JWTAuthorization, cfg.UserHandler.GetSession)
+			{
+				authenticated.POST("", cfg.ProductHandler.CreateProduct)
+			}
+
 		}
 
 		shop := v1.Group("/shops")
@@ -180,6 +185,7 @@ func NewRouter(cfg *RouterConfig) *gin.Engine {
 					invoice.GET("/:code", cfg.OrderHandler.GetInvoiceByCode)
 					invoice.PUT("/:code/receive", cfg.OrderHandler.UpdateToReceived)
 					invoice.PUT("/:code/complete", cfg.OrderHandler.UpdateToCompleted)
+					invoice.POST("/:code/refund", cfg.OrderHandler.Refund)
 				}
 
 				transaction := authenticated.Group("/transactions")

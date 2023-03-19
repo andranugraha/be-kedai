@@ -14,7 +14,7 @@ type RefundRequest struct {
 	RefundAmount float64   `json:"refundAmount"`
 	InvoiceID    int       `json:"invoiceId"`
 
-	InvoicePerShop InvoicePerShop `json:"invoicePerShop" gorm:"foreignKey:InvoiceID"`
+	Invoice *InvoicePerShop `json:"invoice" gorm:"foreignKey:InvoiceID"`
 
 	gorm.Model `json:"-"`
 }

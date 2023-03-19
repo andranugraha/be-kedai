@@ -10,6 +10,7 @@ import (
 type RefundRequestRepository interface {
 	Create(tx *gorm.DB, RefundRequest *model.RefundRequest) (*model.RefundRequest, error)
 	UpdateRefundStatus(tx *gorm.DB, invoiceId int, refundStatus string) error
+	PostComplain(tx *gorm.DB, ref *model.RefundRequest) error
 }
 
 type refundRequestRepositoryImpl struct {
@@ -27,7 +28,7 @@ func NewRefundRequestRepository(cfg *RefundRequestRConfig) RefundRequestReposito
 }
 
 func (r *refundRequestRepositoryImpl) Create(tx *gorm.DB, RefundRequest *model.RefundRequest) (*model.RefundRequest, error) {
-	err := tx.Create(RefundRequest).Error
+	err := tx.Create(&RefundRequest).Error
 	if err != nil {
 		return nil, err
 	}
@@ -45,6 +46,14 @@ func (r *refundRequestRepositoryImpl) UpdateRefundStatus(tx *gorm.DB, invoiceId 
 
 	if res.RowsAffected == 0 {
 		return commonErr.ErrRefundRequestNotFound
+	}
+	return nil
+}
+
+func (refundRequestRepositoryImpl) PostComplain(tx *gorm.DB, ref *model.RefundRequest) error {
+	err := tx.Create(&ref).Error
+	if err != nil {
+		return err
 	}
 
 	return nil

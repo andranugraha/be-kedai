@@ -9,6 +9,7 @@ import (
 	errs "kedai/backend/be-kedai/internal/common/error"
 	"kedai/backend/be-kedai/internal/domain/product/dto"
 	"kedai/backend/be-kedai/internal/domain/product/handler"
+	"kedai/backend/be-kedai/internal/domain/product/model"
 	"kedai/backend/be-kedai/internal/utils/response"
 	"kedai/backend/be-kedai/internal/utils/test"
 	"kedai/backend/be-kedai/mocks"
@@ -958,6 +959,196 @@ func TestXxx(t *testing.T) {
 			c.Request = httptest.NewRequest(http.MethodPut, fmt.Sprintf("/v1/sellers/products/%s/activations", tc.input.productCode), payload)
 
 			h.UpdateProductActivation(c)
+
+			assert.Equal(t, tc.expected.statusCode, rec.Code)
+			assert.Equal(t, string(expectedRes), rec.Body.String())
+		})
+	}
+}
+
+func TestCreateProduct(t *testing.T) {
+	type input struct {
+		userID  int
+		request *dto.CreateProductRequest
+	}
+	type expected struct {
+		statusCode int
+		response   response.Response
+	}
+
+	var (
+		userID              = 1
+		productName         = "product name"
+		description         = "product description. Fill the rest here..."
+		isHazardous         = false
+		isActive            = false
+		isNew               = true
+		weight      float64 = 1
+		length      float64 = 1
+		height      float64 = 1
+		width       float64 = 1
+		categoryID          = 1
+		media               = []string{"http://test.image.png"}
+		courierIDs          = []int{1}
+		stock               = 1
+		price       float64 = 1
+		request             = &dto.CreateProductRequest{
+			Name:        productName,
+			Description: description,
+			IsHazardous: &isHazardous,
+			IsActive:    &isActive,
+			IsNew:       &isNew,
+			Weight:      weight,
+			Width:       width,
+			Height:      height,
+			Length:      length,
+			CategoryID:  categoryID,
+			Media:       media,
+			CourierIDs:  courierIDs,
+			Stock:       stock,
+			Price:       price,
+		}
+	)
+
+	tests := []struct {
+		description string
+		input
+		beforeTest func(*mocks.ProductService)
+		expected
+	}{
+		{
+			description: "should return error with status code 400 when given invalid request body",
+			input: input{
+				userID: userID,
+				request: &dto.CreateProductRequest{
+					Name:        "a",
+					Description: description,
+					IsHazardous: &isHazardous,
+					IsActive:    &isActive,
+					IsNew:       &isNew,
+					Weight:      weight,
+					Width:       width,
+					Height:      height,
+					Length:      length,
+					CategoryID:  categoryID,
+					Media:       media,
+					CourierIDs:  courierIDs,
+					Stock:       stock,
+					Price:       price,
+				},
+			},
+			beforeTest: func(ps *mocks.ProductService) {},
+			expected: expected{
+				statusCode: http.StatusBadRequest,
+				response: response.Response{
+					Code:    code.BAD_REQUEST,
+					Message: "Name must be greater than 5",
+				},
+			},
+		},
+		{
+			description: "should return error with status code 404 when failed to get shop",
+			input: input{
+				userID:  userID,
+				request: request,
+			},
+			beforeTest: func(ps *mocks.ProductService) {
+				ps.On("CreateProduct", userID, request).Return(nil, errs.ErrShopNotFound)
+			},
+			expected: expected{
+				statusCode: http.StatusNotFound,
+				response: response.Response{
+					Code:    code.SHOP_NOT_REGISTERED,
+					Message: errs.ErrShopNotFound.Error(),
+				},
+			},
+		},
+		{
+			description: "should return error with status code 409 when sku already used",
+			input: input{
+				userID:  userID,
+				request: request,
+			},
+			beforeTest: func(ps *mocks.ProductService) {
+				ps.On("CreateProduct", userID, request).Return(nil, errs.ErrSKUUsed)
+			},
+			expected: expected{
+				statusCode: http.StatusConflict,
+				response: response.Response{
+					Code:    code.SKU_USED,
+					Message: errs.ErrSKUUsed.Error(),
+				},
+			},
+		},
+		{
+			description: "should return error with status code 422 when product name is invalid",
+			input: input{
+				userID:  userID,
+				request: request,
+			},
+			beforeTest: func(ps *mocks.ProductService) {
+				ps.On("CreateProduct", userID, request).Return(nil, errs.ErrInvalidProductNamePattern)
+			},
+			expected: expected{
+				statusCode: http.StatusUnprocessableEntity,
+				response: response.Response{
+					Code:    code.INVALID_PRODUCT_NAME,
+					Message: errs.ErrInvalidProductNamePattern.Error(),
+				},
+			},
+		},
+		{
+			description: "should return error with status code 500 when failed to create product",
+			input: input{
+				userID:  userID,
+				request: request,
+			},
+			beforeTest: func(ps *mocks.ProductService) {
+				ps.On("CreateProduct", userID, request).Return(nil, errors.New("failed to create product"))
+			},
+			expected: expected{
+				statusCode: http.StatusInternalServerError,
+				response: response.Response{
+					Code:    code.INTERNAL_SERVER_ERROR,
+					Message: errs.ErrInternalServerError.Error(),
+				},
+			},
+		},
+		{
+			description: "should return error with status code 201 when succeed to create product",
+			input: input{
+				userID:  userID,
+				request: request,
+			},
+			beforeTest: func(ps *mocks.ProductService) {
+				ps.On("CreateProduct", userID, request).Return(&model.Product{}, nil)
+			},
+			expected: expected{
+				statusCode: http.StatusCreated,
+				response: response.Response{
+					Code:    code.CREATED,
+					Message: "product created",
+					Data:    &model.Product{},
+				},
+			},
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.description, func(t *testing.T) {
+			expectedRes, _ := json.Marshal(tc.expected.response)
+			productService := mocks.NewProductService(t)
+			tc.beforeTest(productService)
+			rec := httptest.NewRecorder()
+			c, _ := gin.CreateTestContext(rec)
+			c.Set("userId", tc.input.userID)
+			h := handler.New(&handler.Config{
+				ProductService: productService,
+			})
+			payload := test.MakeRequestBody(tc.input.request)
+			c.Request = httptest.NewRequest(http.MethodPost, "/v1/products", payload)
+
+			h.CreateProduct(c)
 
 			assert.Equal(t, tc.expected.statusCode, rec.Code)
 			assert.Equal(t, string(expectedRes), rec.Body.String())

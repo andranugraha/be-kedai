@@ -2,6 +2,7 @@ package repository
 
 import (
 	"errors"
+	"kedai/backend/be-kedai/internal/common/constant"
 	commonErr "kedai/backend/be-kedai/internal/common/error"
 	"kedai/backend/be-kedai/internal/domain/shop/dto"
 	"kedai/backend/be-kedai/internal/domain/shop/model"
@@ -12,7 +13,7 @@ import (
 
 type CourierRepository interface {
 	GetAll() ([]*model.Courier, error)
-	GetShipmentList(shopId int) ([]*dto.ShipmentCourierResponse, error)
+	GetShipmentList(shopId int, request *dto.ShipmentCourierFilterRequest) ([]*dto.ShipmentCourierResponse, error)
 	GetByShopID(shopID int) ([]*model.Courier, error)
 	GetByServiceIDAndShopID(courierID, shopID int) (*model.Courier, error)
 	GetByProductID(productID int) ([]*model.Courier, error)
@@ -46,12 +47,19 @@ func (r *courierRepositoryImpl) GetAll() ([]*model.Courier, error) {
 	return couriers, nil
 }
 
-func (r *courierRepositoryImpl) GetShipmentList(shopId int) ([]*dto.ShipmentCourierResponse, error) {
+func (r *courierRepositoryImpl) GetShipmentList(shopId int, request *dto.ShipmentCourierFilterRequest) ([]*dto.ShipmentCourierResponse, error) {
 	var couriers []*dto.ShipmentCourierResponse
 
 	db := r.db.Select(`DISTINCT ON (couriers.id) couriers.*, COALESCE(sc.is_active, false) as is_active`).
 		Joins("JOIN courier_services cs ON cs.courier_id = couriers.id").
 		Joins("LEFT JOIN shop_couriers sc ON sc.courier_service_id = cs.id AND sc.shop_id = ?", shopId)
+
+	if request.Status == constant.CourierStatusActive {
+		db = db.Where("is_active")
+	}
+	if request.Status == constant.CourierStatusInactive {
+		db = db.Not("is_active")
+	}
 
 	err := db.Model(&model.Courier{}).Find(&couriers).Error
 	if err != nil {

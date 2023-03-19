@@ -63,10 +63,32 @@ func (c *addressRepositoryImpl) SearchAddress(req *dto.SearchAddressRequest) (ad
 		Components: map[maps.Component][]string{
 			maps.ComponentCountry: {"id"},
 		},
+		Types:    "address",
 		Language: "id",
 	}
 
 	autocomplete, err := c.googleMaps.PlaceAutocomplete(ctx, autoCompleteRequest)
+	if err != nil {
+		return
+	}
+
+	for _, place := range autocomplete.Predictions {
+		addresses = append(addresses, &dto.SearchAddressResponse{
+			PlaceID:     place.PlaceID,
+			Description: place.Description,
+		})
+	}
+
+	autoCompleteRequest = &maps.PlaceAutocompleteRequest{
+		Input: req.Keyword,
+		Components: map[maps.Component][]string{
+			maps.ComponentCountry: {"id"},
+		},
+		Types:    "establishment",
+		Language: "id",
+	}
+
+	autocomplete, err = c.googleMaps.PlaceAutocomplete(ctx, autoCompleteRequest)
 	if err != nil {
 		return
 	}
@@ -101,7 +123,7 @@ func (r *addressRepositoryImpl) AddUserAddress(newAddress *model.UserAddress) (*
 	tx := r.db.Begin()
 	defer tx.Commit()
 
-	err = r.db.Create(newAddress).Error
+	err = tx.Create(&newAddress).Error
 	if err != nil {
 		tx.Rollback()
 		return nil, err
@@ -121,6 +143,16 @@ func (r *addressRepositoryImpl) AddUserAddress(newAddress *model.UserAddress) (*
 			tx.Rollback()
 			return nil, err
 		}
+	}
+
+	err = tx.Preload("Subdistrict").
+		Preload("District").
+		Preload("City").
+		Preload("Province").
+		First(&newAddress, newAddress.ID).Error
+	if err != nil {
+		tx.Rollback()
+		return nil, err
 	}
 
 	return newAddress, nil
@@ -251,6 +283,7 @@ func (c *addressRepositoryImpl) GetSearchAddressDetail(placeId string) (address 
 	}
 
 	var (
+		cityName        string
 		districtName    string
 		subdistrictName string
 		postalCode      string
@@ -267,16 +300,18 @@ func (c *addressRepositoryImpl) GetSearchAddressDetail(placeId string) (address 
 				subdistrictName = addressComponent.LongName
 			case "administrative_area_level_3":
 				districtName = strings.ReplaceAll(addressComponent.LongName, "Kecamatan ", "")
+			case "administrative_area_level_2":
+				cityName = strings.ReplaceAll(addressComponent.LongName, "Kota ", "")
 			}
 
-			if subdistrictName != "" && postalCode != "" && districtName != "" {
+			if subdistrictName != "" && postalCode != "" && districtName != "" && cityName != "" {
 				break
 			}
 		}
 	}
 
 	if postalCode == "" {
-		subdistrict, err = c.subdistrictRepo.GetDetailByNameAndDistrictName(subdistrictName, districtName)
+		subdistrict, err = c.subdistrictRepo.GetDetailByNameAndDistrictCityName(subdistrictName, districtName, cityName)
 		if err != nil {
 			return
 		}
