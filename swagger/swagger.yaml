@@ -4943,6 +4943,14 @@ paths:
         - Seller
       summary: Get all couriers
       description: Get all available couriers
+      parameters:
+        - in: query
+          name: status
+          description: courier status (activated or not). If empty, will get all couriers
+          schema:
+            type: string
+            enum: ['active', 'inactive']
+            example: active
       responses:
         '200':
           description: successful operation

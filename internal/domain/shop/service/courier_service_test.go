@@ -76,10 +76,12 @@ func TestGetShipmentList(t *testing.T) {
 		shop = &model.Shop{
 			ID: 1,
 		}
-		list = []*dto.ShipmentCourierResponse{}
+		list    = []*dto.ShipmentCourierResponse{}
+		request = &dto.ShipmentCourierFilterRequest{}
 	)
 	type input struct {
 		shopId     int
+		request    *dto.ShipmentCourierFilterRequest
 		err        error
 		beforeTest func(*mocks.CourierRepository, *mocks.ShopService)
 	}
@@ -97,11 +99,12 @@ func TestGetShipmentList(t *testing.T) {
 		{
 			description: "should return shipment list when success",
 			input: input{
-				shopId: 1,
-				err:    nil,
+				shopId:  1,
+				err:     nil,
+				request: request,
 				beforeTest: func(cr *mocks.CourierRepository, ss *mocks.ShopService) {
 					ss.On("FindShopByUserId", 1).Return(shop, nil)
-					cr.On("GetShipmentList", shop.ID).Return(list, nil)
+					cr.On("GetShipmentList", shop.ID, request).Return(list, nil)
 				},
 			},
 			expected: expected{
@@ -112,8 +115,9 @@ func TestGetShipmentList(t *testing.T) {
 		{
 			description: "should return error when user shop not found",
 			input: input{
-				shopId: 1,
-				err:    errs.ErrShopNotFound,
+				shopId:  1,
+				request: request,
+				err:     errs.ErrShopNotFound,
 				beforeTest: func(cr *mocks.CourierRepository, ss *mocks.ShopService) {
 					ss.On("FindShopByUserId", 1).Return(nil, errs.ErrShopNotFound)
 				},
@@ -133,7 +137,7 @@ func TestGetShipmentList(t *testing.T) {
 				ShopService:       shopService,
 			})
 
-			result, err := courierService.GetShipmentList(tc.shopId)
+			result, err := courierService.GetShipmentList(tc.shopId, tc.request)
 
 			assert.Equal(t, tc.expected.result, result)
 			assert.Equal(t, tc.expected.err, err)
