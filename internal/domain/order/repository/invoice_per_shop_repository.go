@@ -8,6 +8,7 @@ import (
 	marketplaceModel "kedai/backend/be-kedai/internal/domain/marketplace/model"
 	"kedai/backend/be-kedai/internal/domain/order/dto"
 	"kedai/backend/be-kedai/internal/domain/order/model"
+	productRepo "kedai/backend/be-kedai/internal/domain/product/repository"
 	userModel "kedai/backend/be-kedai/internal/domain/user/model"
 	userRepo "kedai/backend/be-kedai/internal/domain/user/repository"
 	"math"
@@ -28,9 +29,10 @@ type InvoicePerShopRepository interface {
 	GetByShopIdAndId(shopId int, id int) (*dto.InvoicePerShopDetail, error)
 	GetShopOrder(shopId int, req *dto.InvoicePerShopFilterRequest) ([]*dto.InvoicePerShopDetail, int64, int, error)
 	UpdateStatusToDelivery(shopId int, orderId int, invoiceStatuses []*model.InvoiceStatus) error
-	UpdateStatusToCanceled(shopId int, orderId int, invoiceStatuses []*model.InvoiceStatus) error
+	UpdateStatusToCanceled(orderId int, invoiceStatuses []*model.InvoiceStatus) error
 	UpdateStatusToReceived(shopId int, orderId int, invoiceStatuses []*model.InvoiceStatus) error
 	UpdateStatusToCompleted(shopId int, orderId int, invoiceStatuses []*model.InvoiceStatus) error
+	UpdateStatusToRefundPending(shopId int, orderId int, invoiceStatuses []*model.InvoiceStatus, refundType string) error
 	UpdateStatusCRONJob() error
 	AutoReceivedCRONJob() error
 	AutoCompletedCRONJob() error
@@ -40,12 +42,20 @@ type invoicePerShopRepositoryImpl struct {
 	db                *gorm.DB
 	walletRepo        userRepo.WalletRepository
 	invoiceStatusRepo InvoiceStatusRepository
+	refundRequestRepo RefundRequestRepository
+	skuRepo           productRepo.SkuRepository
+	userVoucherRepo   userRepo.UserVoucherRepository
+	invoiceRepo       InvoiceRepository
 }
 
 type InvoicePerShopRConfig struct {
 	DB                *gorm.DB
 	WalletRepo        userRepo.WalletRepository
 	InvoiceStatusRepo InvoiceStatusRepository
+	RefundRequestRepo RefundRequestRepository
+	SkuRepo           productRepo.SkuRepository
+	UserVoucherRepo   userRepo.UserVoucherRepository
+	InvoiceRepo       InvoiceRepository
 }
 
 func NewInvoicePerShopRepository(cfg *InvoicePerShopRConfig) InvoicePerShopRepository {
@@ -53,6 +63,10 @@ func NewInvoicePerShopRepository(cfg *InvoicePerShopRConfig) InvoicePerShopRepos
 		db:                cfg.DB,
 		walletRepo:        cfg.WalletRepo,
 		invoiceStatusRepo: cfg.InvoiceStatusRepo,
+		refundRequestRepo: cfg.RefundRequestRepo,
+		skuRepo:           cfg.SkuRepo,
+		userVoucherRepo:   cfg.UserVoucherRepo,
+		invoiceRepo:       cfg.InvoiceRepo,
 	}
 }
 
@@ -430,12 +444,25 @@ func (r *invoicePerShopRepositoryImpl) UpdateStatusToDelivery(shopId int, orderI
 	return nil
 }
 
-func (r *invoicePerShopRepositoryImpl) UpdateStatusToCanceled(shopId int, orderId int, invoiceStatuses []*model.InvoiceStatus) error {
+func (r *invoicePerShopRepositoryImpl) UpdateStatusToCanceled(orderId int, invoiceStatuses []*model.InvoiceStatus) error {
 	err := r.db.Transaction(func(tx *gorm.DB) error {
-		if err := tx.Model(&model.InvoicePerShop{}).Where("shop_id = ? AND id = ? AND status = ?", shopId, orderId, constant.TransactionStatusCreated).Update("status", constant.TransactionStatusCanceled).Error; err != nil {
-			if errors.Is(err, gorm.ErrRecordNotFound) {
+		var invoicePerShop model.InvoicePerShop
+		if res := tx.
+			Clauses(clause.Returning{}).
+			Preload("Transactions").
+			Model(&invoicePerShop).
+			Where("id = ? AND status = ?", orderId, constant.TransactionStatusRefundPending).
+			Update("status", constant.TransactionStatusCanceled); res != nil {
+			if res.Error != nil {
+				return res.Error
+			}
+			if res.RowsAffected == 0 {
 				return commonErr.ErrInvoiceNotFound
 			}
+		}
+
+		wallet, err := r.walletRepo.GetByUserID(invoicePerShop.UserID)
+		if err != nil {
 			return err
 		}
 
@@ -443,6 +470,48 @@ func (r *invoicePerShopRepositoryImpl) UpdateStatusToCanceled(shopId int, orderI
 			return err
 		}
 
+		for _, transaction := range invoicePerShop.Transactions {
+			if err := r.skuRepo.IncreaseStock(tx, transaction.SkuID, transaction.Quantity); err != nil {
+				return err
+			}
+		}
+
+		if invoicePerShop.Voucher != nil {
+			if err := r.userVoucherRepo.UpdateShopVoucherToUnused(tx, invoicePerShop.UserID, invoicePerShop.Voucher.ID); err != nil {
+				return err
+			}
+		}
+
+		invoice, err := r.invoiceRepo.GetByIDAndUserID(invoicePerShop.InvoiceID, invoicePerShop.UserID)
+		if err != nil {
+			return err
+		}
+
+		if invoice.Voucher != nil {
+			if len(invoice.InvoicePerShops) == 1 {
+				if err := r.userVoucherRepo.UpdateMarketplaceVoucherToUnused(tx, invoice.UserID, invoice.Voucher.ID); err != nil {
+					return err
+				}
+				invoice.VoucherAmount = nil
+				invoice.VoucherType = nil
+				invoice.VoucherID = nil
+				if err := r.invoiceRepo.UpdateInvoice(tx, invoice); err != nil {
+					return err
+				}
+			}
+		}
+
+		if err := r.refundRequestRepo.UpdateRefundStatus(tx, invoicePerShop.ID, constant.RefundStatusRefunded); err != nil {
+			return err
+		}
+
+		if _, err := r.walletRepo.TopUp(&userModel.WalletHistory{
+			Type:     userModel.WalletHistoryTypeRefund,
+			Amount:   invoice.CalculateRefund(&invoicePerShop),
+			WalletId: wallet.ID,
+		}, wallet); err != nil {
+			return err
+		}
 		return nil
 	})
 
@@ -486,6 +555,57 @@ func (r *invoicePerShopRepositoryImpl) UpdateStatusToCompleted(shopId int, order
 		}
 
 		if err := r.invoiceStatusRepo.Create(tx, invoiceStatuses); err != nil {
+			return err
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (r *invoicePerShopRepositoryImpl) UpdateStatusToRefundPending(shopId int, orderId int, invoiceStatuses []*model.InvoiceStatus, refundType string) error {
+	var invoiceStatus string
+	var invoicePerShop model.InvoicePerShop
+	if refundType == constant.RefundTypeCancel {
+		invoiceStatus = constant.TransactionStatusCreated
+	} else {
+		invoiceStatus = constant.TransactionStatusComplained
+	}
+	err := r.db.Transaction(func(tx *gorm.DB) error {
+		if res := tx.
+			Model(&invoicePerShop).
+			Clauses(clause.Returning{}).
+			Where("shop_id = ? AND id = ? AND status = ?", shopId, orderId, invoiceStatus).
+			Update("status", constant.TransactionStatusRefundPending); res != nil {
+			if res.Error != nil {
+				return res.Error
+			}
+			if res.RowsAffected == 0 {
+				return commonErr.ErrInvoiceNotFound
+			}
+		}
+
+		if err := r.invoiceStatusRepo.Create(tx, invoiceStatuses); err != nil {
+			return err
+		}
+
+		invoice, err := r.invoiceRepo.GetByIDAndUserID(invoicePerShop.InvoiceID, invoicePerShop.UserID)
+		if err != nil {
+			return err
+		}
+
+		if _, err := r.refundRequestRepo.Create(tx, &model.RefundRequest{
+			InvoiceID:    orderId,
+			RequestDate:  time.Now(),
+			Status:       constant.RefundStatusPending,
+			Type:         refundType,
+			RefundAmount: invoice.CalculateRefund(&invoicePerShop),
+		}); err != nil {
 			return err
 		}
 
