@@ -734,7 +734,7 @@ func TestUpdateStatusToCanceled(t *testing.T) {
 				ShopService:        shopService,
 			})
 
-			err := invoicePerShopService.UpdateStatusToCanceled(tc.userId, tc.orderId)
+			err := invoicePerShopService.UpdateStatusToCanceled(tc.orderId)
 
 			assert.Equal(t, tc.expected.err, err)
 		})
