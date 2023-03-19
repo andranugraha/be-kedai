@@ -5965,6 +5965,13 @@ paths:
           schema:
             type: string
             example: 87410023923
+        - in: query
+          name: status
+          description: invoice status. Any other value than those defined below will be set `''` (all)
+          schema:
+            type: string
+            default: ''
+            enum: ['', 'COMPLETED', 'WAITING_FOR_PAYMENT', 'ON_DELIVERY', 'DELIVERED', 'REFUND_PENDING', 'CREATED', 'RECEIVED', 'COMPLAINED', 'COMPLAINT_REJECTED', 'CANCELED', 'REFUNDED']
       responses:
         '200':
           description: operation successful
@@ -6571,7 +6578,7 @@ paths:
           schema:
             type: string
             default: ''
-            enum: ['', 'COMPLETED', 'CREATED', 'SENT', 'RECEIVED', 'COMPLAINED', 'COMPLAINT_CONFIRMED', 'COMPLAINT_REJECTED', 'CANCELED']
+            enum: ['', 'COMPLETED', 'WAITING_FOR_PAYMENT', 'ON_DELIVERY', 'DELIVERED', 'REFUND_PENDING', 'CREATED', 'RECEIVED', 'COMPLAINED', 'COMPLAINT_REJECTED', 'CANCELED', 'REFUNDED']
         - in: query
           name: startDate
           description: startDate format is YYYY-MM-DD. If startDate is stated in the request, endDate should be stated as well

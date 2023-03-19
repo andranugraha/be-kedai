@@ -380,6 +380,10 @@ func (r *invoicePerShopRepositoryImpl) GetShopOrder(shopId int, req *dto.Invoice
 		db = db.Where("u.username ILIKE ?", "%"+req.Username+"%")
 	}
 
+	if req.Status != "" {
+		db = db.Where("invoice_per_shops.status = ?", req.Status)
+	}
+
 	if req.StartDate != "" && req.EndDate != "" {
 		start, _ := time.Parse("2006-01-02", req.StartDate)
 		end, _ := time.Parse("2006-01-02", req.EndDate)
