@@ -8,7 +8,6 @@ import (
 )
 
 type RefundRequestRepository interface {
-	Create(tx *gorm.DB, RefundRequest *model.RefundRequest) (*model.RefundRequest, error)
 	UpdateRefundStatus(tx *gorm.DB, invoiceId int, refundStatus string) error
 	PostComplain(tx *gorm.DB, ref *model.RefundRequest) error
 }
@@ -25,15 +24,6 @@ func NewRefundRequestRepository(cfg *RefundRequestRConfig) RefundRequestReposito
 	return &refundRequestRepositoryImpl{
 		db: cfg.DB,
 	}
-}
-
-func (r *refundRequestRepositoryImpl) Create(tx *gorm.DB, RefundRequest *model.RefundRequest) (*model.RefundRequest, error) {
-	err := tx.Create(&RefundRequest).Error
-	if err != nil {
-		return nil, err
-	}
-
-	return RefundRequest, nil
 }
 
 func (r *refundRequestRepositoryImpl) UpdateRefundStatus(tx *gorm.DB, invoiceId int, refundStatus string) error {
