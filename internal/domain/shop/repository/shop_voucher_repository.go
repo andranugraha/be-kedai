@@ -2,9 +2,12 @@ package repository
 
 import (
 	"errors"
+	"fmt"
+	"kedai/backend/be-kedai/internal/common/constant"
 	errs "kedai/backend/be-kedai/internal/common/error"
 	"kedai/backend/be-kedai/internal/domain/shop/dto"
 	"kedai/backend/be-kedai/internal/domain/shop/model"
+	"math"
 	"time"
 
 	userRepo "kedai/backend/be-kedai/internal/domain/user/repository"
@@ -14,6 +17,7 @@ import (
 
 type ShopVoucherRepository interface {
 	GetShopVoucher(shopId int) ([]*model.ShopVoucher, error)
+	GetSellerVoucher(shopId int, request *dto.SellerVoucherFilterRequest) ([]*dto.SellerVoucher, int64, int, error)
 	GetValidByIdAndUserId(id, userId int) (*model.ShopVoucher, error)
 	GetValidByUserIDAndShopID(dto.GetValidShopVoucherRequest, int) ([]*model.ShopVoucher, error)
 }
@@ -47,15 +51,54 @@ func (r *shopVoucherRepositoryImpl) GetShopVoucher(shopId int) ([]*model.ShopVou
 	return shopVoucher, nil
 }
 
-func (r *shopVoucherRepositoryImpl) GetSellerVoucher(shopId int) ([]*model.ShopVoucher, error) {
-	var shopVoucher []*model.ShopVoucher
+func (r *shopVoucherRepositoryImpl) GetSellerVoucher(shopId int, request *dto.SellerVoucherFilterRequest) ([]*dto.SellerVoucher, int64, int, error) {
+	var (
+		vouchers   []*dto.SellerVoucher
+		totalRows  int64
+		totalPages int
+	)
+
 	now := time.Now()
-	err := r.db.Where("shop_id = ?", shopId).Where("? < expired_at", now).Find(&shopVoucher).Error
-	if err != nil {
-		return nil, err
+	query := r.db.Where("shop_id = ?", shopId)
+
+	if request.Name != "" {
+		query = query.Where("shop_vouchers.name ILIKE ?", fmt.Sprintf("%%%s%%", request.Name))
+	}
+	if request.Code != "" {
+		query = query.Where("shop_vouchers.code ILIKE ?", fmt.Sprintf("%%%s%%", request.Code))
 	}
 
-	return shopVoucher, nil
+	switch request.Status {
+	case constant.VoucherPromotionStatusOngoing:
+		query = query.Where("shop_vouchers.start_from <= ? < shop_vouchers.expired_at", now)
+	case constant.VoucherPromotionStatusUpcoming:
+		query = query.Not("? < shop_vouchers.start_from", now)
+	case constant.VoucherPromotionStatusExpired:
+		query = query.Where("shop_vouchers.expired_at => ?", now)
+	}
+
+	query = query.Select("shop_vouchers.*, "+
+		"CASE WHEN start_from <= ? AND expired_at >= ? THEN ? "+
+		"WHEN start_from > ? THEN ? "+
+		"ELSE ? "+
+		"END as status", now, now, constant.VoucherPromotionStatusOngoing, now, constant.VoucherPromotionStatusUpcoming, constant.VoucherPromotionStatusExpired)
+
+	query = query.Session(&gorm.Session{})
+
+	err := query.Model(&model.ShopVoucher{}).Distinct("shop_vouchers.id").Count(&totalRows).Error
+	if err != nil {
+		return nil, 0, 0, err
+	}
+
+	totalPages = int(math.Ceil(float64(totalRows) / float64(request.Limit)))
+
+	err = query.
+		Order("shop_vouchers.created_at desc").Limit(request.Limit).Offset(request.Offset()).Find(&vouchers).Error
+	if err != nil {
+		return nil, 0, 0, err
+	}
+
+	return vouchers, totalRows, totalPages, nil
 }
 
 func (r *shopVoucherRepositoryImpl) GetValidByIdAndUserId(id, userId int) (*model.ShopVoucher, error) {
