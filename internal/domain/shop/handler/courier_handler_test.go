@@ -3,6 +3,7 @@ package handler_test
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"kedai/backend/be-kedai/internal/common/code"
 	errs "kedai/backend/be-kedai/internal/common/error"
 	"kedai/backend/be-kedai/internal/domain/shop/dto"
@@ -21,10 +22,18 @@ import (
 )
 
 func TestGetShipmentList(t *testing.T) {
-	var shopId = 1
+	var (
+		status  = "active"
+		shopId  = 1
+		request = &dto.ShipmentCourierFilterRequest{
+			Status: status,
+		}
+	)
+
 	type input struct {
-		result []*dto.ShipmentCourierResponse
-		err    error
+		request *dto.ShipmentCourierFilterRequest
+		result  []*dto.ShipmentCourierResponse
+		err     error
 	}
 	type expected struct {
 		statusCode int
@@ -40,8 +49,9 @@ func TestGetShipmentList(t *testing.T) {
 		{
 			description: "should return list of couriers with code 200 when success",
 			input: input{
-				result: []*dto.ShipmentCourierResponse{},
-				err:    nil,
+				result:  []*dto.ShipmentCourierResponse{},
+				request: request,
+				err:     nil,
 			},
 			expected: expected{
 				statusCode: http.StatusOK,
@@ -55,8 +65,9 @@ func TestGetShipmentList(t *testing.T) {
 		{
 			description: "should return error with code 404 when shop not found",
 			input: input{
-				result: nil,
-				err:    errs.ErrShopNotFound,
+				result:  nil,
+				request: request,
+				err:     errs.ErrShopNotFound,
 			},
 			expected: expected{
 				statusCode: http.StatusNotFound,
@@ -69,8 +80,9 @@ func TestGetShipmentList(t *testing.T) {
 		{
 			description: "should return error with code 500 when internal server error",
 			input: input{
-				result: nil,
-				err:    errs.ErrInternalServerError,
+				result:  nil,
+				request: request,
+				err:     errs.ErrInternalServerError,
 			},
 			expected: expected{
 				statusCode: http.StatusInternalServerError,
@@ -87,11 +99,11 @@ func TestGetShipmentList(t *testing.T) {
 			c, _ := gin.CreateTestContext(rec)
 			c.Set("userId", 1)
 			mockService := new(mocks.CourierService)
-			mockService.On("GetShipmentList", shopId).Return(tc.input.result, tc.input.err)
+			mockService.On("GetShipmentList", shopId, tc.request).Return(tc.input.result, tc.input.err)
 			handler := handler.New(&handler.HandlerConfig{
 				CourierService: mockService,
 			})
-			c.Request, _ = http.NewRequest("GET", "/sellers/couriers?shopId=1", nil)
+			c.Request, _ = http.NewRequest("GET", fmt.Sprintf("/sellers/couriers?status=%s", tc.request.Status), nil)
 
 			handler.GetShipmentList(c)
 

@@ -12,9 +12,12 @@ import (
 )
 
 func (h *Handler) GetShipmentList(c *gin.Context) {
+	var request dto.ShipmentCourierFilterRequest
+	_ = c.ShouldBindQuery(&request)
+
 	userId := c.GetInt("userId")
 
-	result, err := h.courierService.GetShipmentList(userId)
+	result, err := h.courierService.GetShipmentList(userId, &request)
 	if err != nil {
 		if errors.Is(err, errs.ErrShopNotFound) {
 			response.Error(c, http.StatusNotFound, code.SHOP_NOT_REGISTERED, err.Error())

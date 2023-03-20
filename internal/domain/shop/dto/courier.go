@@ -1,5 +1,9 @@
 package dto
 
+type ShipmentCourierFilterRequest struct {
+	Status string `form:"status"`
+}
+
 type ShipmentCourierResponse struct {
 	ID       int    `json:"id"`
 	Name     string `json:"name"`
