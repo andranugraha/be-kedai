@@ -177,7 +177,7 @@ func TestGetSellerVoucher(t *testing.T) {
 			},
 		},
 		{
-			description: "should return error with status code 200 when suceed fetching products",
+			description: "should return error with status code 200 when suceed fetching vouchers",
 			input: input{
 				userID:  userID,
 				request: request,
