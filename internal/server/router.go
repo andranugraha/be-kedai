@@ -2,6 +2,7 @@ package server
 
 import (
 	"kedai/backend/be-kedai/config"
+	"kedai/backend/be-kedai/connection"
 	"kedai/backend/be-kedai/internal/server/middleware"
 
 	locationHandler "kedai/backend/be-kedai/internal/domain/location/handler"
@@ -239,6 +240,11 @@ func NewRouter(cfg *RouterConfig) *gin.Engine {
 			}
 		}
 	}
+
+	server := connection.SocketIO()
+
+	r.GET("/socket.io/*any", gin.WrapH(server))
+	r.POST("/socket.io/*any", gin.WrapH(server))
 
 	return r
 }
