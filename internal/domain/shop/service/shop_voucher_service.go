@@ -50,7 +50,7 @@ func (s *shopVoucherServiceImpl) GetSellerVoucher(userID int, req *dto.SellerVou
 		return nil, err
 	}
 
-	sellerVouchers, totalRows, totalPages, err := s.shopVoucherRepository.GetSellerVoucher(shop.ID, req)
+	vouchers, totalRows, totalPages, err := s.shopVoucherRepository.GetSellerVoucher(shop.ID, req)
 	if err != nil {
 		return nil, err
 	}
@@ -60,7 +60,7 @@ func (s *shopVoucherServiceImpl) GetSellerVoucher(userID int, req *dto.SellerVou
 		TotalPages: totalPages,
 		Page:       req.Page,
 		Limit:      req.Limit,
-		Data:       sellerVouchers,
+		Data:       vouchers,
 	}, nil
 }
 
