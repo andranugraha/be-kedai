@@ -32,6 +32,10 @@ import (
 	marketplaceRepoPackage "kedai/backend/be-kedai/internal/domain/marketplace/repository"
 	marketplaceServicePackage "kedai/backend/be-kedai/internal/domain/marketplace/service"
 
+	chatHandlerPackage "kedai/backend/be-kedai/internal/domain/chat/handler"
+	chatRepoPackage "kedai/backend/be-kedai/internal/domain/chat/repository"
+	chatServicePackage "kedai/backend/be-kedai/internal/domain/chat/service"
+
 	"github.com/gin-gonic/gin"
 	"github.com/go-co-op/gocron"
 )
@@ -367,6 +371,14 @@ func createRouter() *gin.Engine {
 		AddressService:     addressService,
 	})
 
+	chatHandler := chatHandlerPackage.New(&chatHandlerPackage.Config{
+		ChatService: chatServicePackage.NewChatService(&chatServicePackage.ChatConfig{
+			ChatRepo: chatRepoPackage.NewAddressRepository(&chatRepoPackage.ChatRConfig{
+				DB: db,
+			}),
+		}),
+	})
+
 	startCron(orderHandler)
 
 	return NewRouter(&RouterConfig{
@@ -376,6 +388,7 @@ func createRouter() *gin.Engine {
 		ShopHandler:        shopHandler,
 		MarketplaceHandler: marketplaceHandler,
 		OrderHandler:       orderHandler,
+		ChatHandler:        chatHandler,
 	})
 }
 

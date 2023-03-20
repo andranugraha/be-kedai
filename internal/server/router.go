@@ -5,6 +5,7 @@ import (
 	"kedai/backend/be-kedai/connection"
 	"kedai/backend/be-kedai/internal/server/middleware"
 
+	chatHandler "kedai/backend/be-kedai/internal/domain/chat/handler"
 	locationHandler "kedai/backend/be-kedai/internal/domain/location/handler"
 	marketplaceHandler "kedai/backend/be-kedai/internal/domain/marketplace/handler"
 	orderHandler "kedai/backend/be-kedai/internal/domain/order/handler"
@@ -23,6 +24,7 @@ type RouterConfig struct {
 	ShopHandler        *shopHandler.Handler
 	OrderHandler       *orderHandler.Handler
 	MarketplaceHandler *marketplaceHandler.Handler
+	ChatHandler        *chatHandler.Handler
 }
 
 func NewRouter(cfg *RouterConfig) *gin.Engine {
@@ -38,6 +40,11 @@ func NewRouter(cfg *RouterConfig) *gin.Engine {
 	v1 := r.Group("/v1")
 	{
 		v1.Static("/docs", "swagger")
+
+		chat := v1.Group("/chats")
+		{
+			chat.POST("/", middleware.JWTAuthorization, cfg.UserHandler.GetSession, cfg.ChatHandler.AddChat)
+		}
 
 		user := v1.Group("/users")
 		{
