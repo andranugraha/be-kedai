@@ -47,6 +47,17 @@ func (r *shopVoucherRepositoryImpl) GetShopVoucher(shopId int) ([]*model.ShopVou
 	return shopVoucher, nil
 }
 
+func (r *shopVoucherRepositoryImpl) GetSellerVoucher(shopId int) ([]*model.ShopVoucher, error) {
+	var shopVoucher []*model.ShopVoucher
+	now := time.Now()
+	err := r.db.Where("shop_id = ?", shopId).Where("? < expired_at", now).Find(&shopVoucher).Error
+	if err != nil {
+		return nil, err
+	}
+
+	return shopVoucher, nil
+}
+
 func (r *shopVoucherRepositoryImpl) GetValidByIdAndUserId(id, userId int) (*model.ShopVoucher, error) {
 	var (
 		shopVoucher      model.ShopVoucher

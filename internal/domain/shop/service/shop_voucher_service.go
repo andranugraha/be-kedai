@@ -42,6 +42,16 @@ func (s *shopVoucherServiceImpl) GetShopVoucher(slug string) ([]*model.ShopVouch
 	return s.shopVoucherRepository.GetShopVoucher(shop.ID)
 }
 
+func (s *shopVoucherServiceImpl) GetSellerVoucher(slug string) ([]*model.ShopVoucher, error) {
+	shop, err := s.shopService.FindShopBySlug(slug)
+	if err != nil {
+		return nil, err
+	}
+
+	return s.shopVoucherRepository.GetShopVoucher(shop.ID)
+}
+
+
 func (s *shopVoucherServiceImpl) GetValidShopVoucherByUserIDAndSlug(req dto.GetValidShopVoucherRequest) ([]*model.ShopVoucher, error) {
 	shop, err := s.shopService.FindShopBySlug(req.Slug)
 	if err != nil {
