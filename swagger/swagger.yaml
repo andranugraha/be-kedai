@@ -5208,6 +5208,108 @@ paths:
                   message:
                     type: string
                     example: "error message"
+  /v1/sellers/vouchers:
+    get:
+      security:
+        - BearerAuth: []
+      tags:
+        - Seller
+      summary: Get seller's vouchers
+      description: Get all seller's vouchers
+      parameters:
+        - in: query
+          name: page
+          schema:
+            type: integer
+            default: 1
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            default: 10
+        - in: query
+          name: status
+          description: voucher status. Will return all vouchers regardless of status when not given
+          schema:
+            type: string
+            enum: [ongoing, upcoming, expired]
+        - in: query
+          name: name
+          schema:
+            type: string
+            example: voucher name
+        - in: query
+          name: code
+          schema:
+            type: string
+            example: voucher code
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - type: object
+                    properties:
+                      code:
+                        example: "OK"
+                      message:
+                        example: "ok"
+                      data:
+                        allOf:
+                          - $ref: '#/components/schemas/PaginationResponse'
+                          - type: object
+                            properties:
+                              data:
+                                type: array
+                                items:
+                                  allOf:
+                                    - $ref: '#/components/schemas/ShopVoucher'
+                                    - type: object
+                                      properties:
+                                        status:
+                                          type: string
+                                          example: "ongoing"
+        '401':
+          description: unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "UNAUTHORIZED"
+                  message:
+                    type: string
+                    example: "invalid credential"
+        '404':
+          description: not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "NOT_FOUND"
+                  message:
+                    type: string
+                    example: "error message"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "INTERNAL_SERVER_ERROR"
+                  message:
+                    type: string
+                    example: "error message"
   /v1/sellers/products/{code}:
     get:
       security:
@@ -7413,10 +7515,20 @@ components:
           type: number
           format: float
           example: 100000
+        usedQuota:
+          type: number
+          example: 5
+        totalQuota:
+          type: number
+          example: 50
+        startFrom:
+          type: string
+          format: dateTime
+          example: "2006-03-19T00:00:00Z"
         expiredAt:
           type: string
           format: dateTime
-          example: "2006-01-02T00:00:00Z"
+          example: "2023-03-20T00:00:00Z"
         shopId:
           type: number
           example: 1
