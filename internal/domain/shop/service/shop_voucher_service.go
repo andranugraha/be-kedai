@@ -69,7 +69,7 @@ func (s *shopVoucherServiceImpl) GetSellerVoucher(userID int, req *dto.SellerVou
 
 func (s *shopVoucherServiceImpl) CreateVoucher(userID int, request *dto.CreateVoucherRequest) (*model.ShopVoucher, error) {
 	if isProductNameValid := productUtils.ValidateProductName(request.Name); !isProductNameValid {
-		return nil, commonErr.ErrInvalidProductNamePattern
+		return nil, commonErr.ErrInvalidVoucherNamePattern
 	}
 
 	shop, err := s.shopService.FindShopByUserId(userID)

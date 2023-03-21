@@ -111,7 +111,7 @@ func (r *shopVoucherRepositoryImpl) Create(shopId int, request *dto.CreateVouche
 		Code:         request.Code,
 		Amount:       request.Amount,
 		Type:         request.Type,
-		IsHidden:     request.IsHidden,
+		IsHidden:     *request.IsHidden,
 		Description:  request.Description,
 		MinimumSpend: request.MinimumSpend,
 		UsedQuota:    0,
