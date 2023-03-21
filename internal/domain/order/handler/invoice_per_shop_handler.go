@@ -199,10 +199,28 @@ func (h *Handler) UpdateToDelivery(c *gin.Context) {
 }
 
 func (h *Handler) UpdateToCanceled(c *gin.Context) {
+	orderId, _ := strconv.Atoi(c.Param("orderId"))
+
+	err := h.invoicePerShopService.UpdateStatusToCanceled(orderId)
+	if err != nil {
+
+		if errors.Is(err, errs.ErrInvoiceNotFound) {
+			response.Error(c, http.StatusNotFound, code.INVOICE_NOT_FOUND, err.Error())
+			return
+		}
+
+		response.Error(c, http.StatusInternalServerError, code.INTERNAL_SERVER_ERROR, errs.ErrInternalServerError.Error())
+		return
+	}
+
+	response.Success(c, http.StatusOK, code.OK, "ok", nil)
+}
+
+func (h *Handler) UpdateToRefundPendingSellerCancel(c *gin.Context) {
 	userId := c.GetInt("userId")
 	orderId, _ := strconv.Atoi(c.Param("orderId"))
 
-	err := h.invoicePerShopService.UpdateStatusToCanceled(userId, orderId)
+	err := h.invoicePerShopService.UpdateStatusToRefundPendingSellerCancel(userId, orderId)
 	if err != nil {
 		if errors.Is(err, errs.ErrShopNotFound) {
 			response.Error(c, http.StatusNotFound, code.SHOP_NOT_REGISTERED, err.Error())

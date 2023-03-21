@@ -836,11 +836,9 @@ func TestUpdateToDeliver(t *testing.T) {
 
 func TestUpdateToCanceled(t *testing.T) {
 	var (
-		userId  = 1
 		orderId = 1
 	)
 	type input struct {
-		userId  int
 		orderId int
 		err     error
 	}
@@ -858,7 +856,6 @@ func TestUpdateToCanceled(t *testing.T) {
 		{
 			description: "should return nil error with code 200 when success",
 			input: input{
-				userId:  userId,
 				orderId: orderId,
 				err:     nil,
 			},
@@ -871,24 +868,8 @@ func TestUpdateToCanceled(t *testing.T) {
 			},
 		},
 		{
-			description: "should return error with code 404 when shop not found",
-			input: input{
-				userId:  userId,
-				orderId: orderId,
-				err:     errs.ErrShopNotFound,
-			},
-			expected: expected{
-				statusCode: http.StatusNotFound,
-				response: response.Response{
-					Code:    code.SHOP_NOT_REGISTERED,
-					Message: errs.ErrShopNotFound.Error(),
-				},
-			},
-		},
-		{
 			description: "should return error with code 404 when invoice not found",
 			input: input{
-				userId:  1,
 				orderId: 1,
 				err:     errs.ErrInvoiceNotFound,
 			},
@@ -903,7 +884,6 @@ func TestUpdateToCanceled(t *testing.T) {
 		{
 			description: "should return error with code 500 when internal server error",
 			input: input{
-				userId:  1,
 				orderId: 1,
 				err:     errs.ErrInternalServerError,
 			},
@@ -919,10 +899,10 @@ func TestUpdateToCanceled(t *testing.T) {
 		t.Run(tc.description, func(t *testing.T) {
 			expectedJson, _ := json.Marshal(tc.expected.response)
 			invoicePerShopService := mocks.NewInvoicePerShopService(t)
-			invoicePerShopService.On("UpdateStatusToCanceled", tc.input.userId, tc.input.orderId).Return(tc.input.err)
+			invoicePerShopService.On("UpdateStatusToCanceled", tc.input.orderId).Return(tc.input.err)
+
 			rec := httptest.NewRecorder()
 			c, _ := gin.CreateTestContext(rec)
-			c.Set("userId", userId)
 			c.AddParam("orderId", "1")
 			c.Request, _ = http.NewRequest(http.MethodGet, fmt.Sprintf("/sellers/orders/{%d}/cancel", tc.orderId), nil)
 			handler := handler.New(&handler.Config{
@@ -1022,6 +1002,110 @@ func TestUpdateToReceived(t *testing.T) {
 			assert.Equal(t, tc.expected.statusCode, rec.Code)
 			assert.Equal(t, string(expectedJson), rec.Body.String())
 		})
+	}
+}
+
+func TestUpdateToRefundPendingSellerCancel(t *testing.T) {
+	var (
+		userId  = 1
+		orderId = 1
+	)
+	type input struct {
+		userId  int
+		orderId int
+		err     error
+	}
+	type expected struct {
+		statusCode int
+		response   response.Response
+	}
+
+	for _, tc := range []struct {
+		description string
+		input
+		expected
+	}{
+		{
+			description: "should return nil error with code 200 when success",
+			input: input{
+				userId:  userId,
+				orderId: orderId,
+				err:     nil,
+			},
+			expected: expected{
+				statusCode: http.StatusOK,
+				response: response.Response{
+					Code:    code.OK,
+					Message: "ok",
+				},
+			},
+		},
+		{
+			description: "should return error with code 404 when invoice not found",
+			input: input{
+				userId:  userId,
+				orderId: orderId,
+				err:     errs.ErrInvoiceNotFound,
+			},
+			expected: expected{
+				statusCode: http.StatusNotFound,
+				response: response.Response{
+					Code:    code.INVOICE_NOT_FOUND,
+					Message: errs.ErrInvoiceNotFound.Error(),
+				},
+			},
+		},
+		{
+			description: "should return error with code 500 when internal server error",
+			input: input{
+				userId:  userId,
+				orderId: orderId,
+				err:     errs.ErrInternalServerError,
+			},
+			expected: expected{
+				statusCode: http.StatusInternalServerError,
+				response: response.Response{
+					Code:    code.INTERNAL_SERVER_ERROR,
+					Message: errs.ErrInternalServerError.Error(),
+				},
+			},
+		},
+		{
+			description: "should return error with code 404 when shop not found",
+			input: input{
+				userId:  userId,
+				orderId: orderId,
+				err:     errs.ErrShopNotFound,
+			},
+			expected: expected{
+				statusCode: http.StatusNotFound,
+				response: response.Response{
+					Code:    code.SHOP_NOT_REGISTERED,
+					Message: errs.ErrShopNotFound.Error(),
+				},
+			},
+		},
+	} {
+		t.Run(tc.description, func(t *testing.T) {
+			expectedJson, _ := json.Marshal(tc.expected.response)
+			invoicePerShopService := mocks.NewInvoicePerShopService(t)
+			invoicePerShopService.On("UpdateStatusToRefundPendingSellerCancel", tc.input.userId, tc.input.orderId).Return(tc.input.err)
+
+			rec := httptest.NewRecorder()
+			c, _ := gin.CreateTestContext(rec)
+			c.Set("userId", userId)
+			c.AddParam("orderId", "1")
+			c.Request, _ = http.NewRequest(http.MethodGet, fmt.Sprintf("/admins/orders/{%d}/cancel-request", tc.orderId), nil)
+			handler := handler.New(&handler.Config{
+				InvoicePerShopService: invoicePerShopService,
+			})
+
+			handler.UpdateToRefundPendingSellerCancel(c)
+
+			assert.Equal(t, tc.expected.statusCode, rec.Code)
+			assert.Equal(t, string(expectedJson), rec.Body.String())
+		})
+
 	}
 }
 
