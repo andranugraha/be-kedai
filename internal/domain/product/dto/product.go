@@ -232,7 +232,7 @@ type CreateProductRequest struct {
 	Media         []string                     `json:"media" binding:"required,min=1,max=10,dive,url"`
 	CourierIDs    []int                        `json:"courierIds" binding:"required,min=1,dive,gte=1"`
 	Stock         int                          `json:"stock" binding:"required_without=VariantGroups,omitempty,gte=0"`
-	Price         float64                      `json:"price" binding:"required_without=VariantGroups,omitempty,gt=0"`
+	Price         float64                      `json:"price" binding:"required_without=VariantGroups,omitempty,gt=0,lte=500000000"`
 	VariantGroups []*CreateVariantGroupRequest `json:"variantGroups" binding:"omitempty,max=2,dive"`
 	SKU           []*CreateSKURequest          `json:"sku" binding:"required_with=VariantGroups,dive"`
 }

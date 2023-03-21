@@ -1,6 +1,8 @@
 package service_test
 
 import (
+	"errors"
+	commonDto "kedai/backend/be-kedai/internal/common/dto"
 	errs "kedai/backend/be-kedai/internal/common/error"
 	"kedai/backend/be-kedai/internal/domain/shop/dto"
 	"kedai/backend/be-kedai/internal/domain/shop/model"
@@ -91,6 +93,103 @@ func TestGetShopVoucher(t *testing.T) {
 			result, err := service.GetShopVoucher(tc.input.slug)
 
 			assert.Equal(t, tc.expected.result, result)
+			assert.Equal(t, tc.expected.err, err)
+		})
+	}
+}
+
+func TestGetSellerVoucher(t *testing.T) {
+	type input struct {
+		userID  int
+		request *dto.SellerVoucherFilterRequest
+	}
+	type expected struct {
+		data *commonDto.PaginationResponse
+		err  error
+	}
+
+	var (
+		userID     = 1
+		shopID     = 1
+		limit      = 20
+		page       = 1
+		request    = &dto.SellerVoucherFilterRequest{Limit: limit, Page: page}
+		vouchers   = []*dto.SellerVoucher{}
+		totalRows  = int64(0)
+		totalPages = 0
+	)
+
+	tests := []struct {
+		description string
+		input
+		beforeTest func(*mocks.ShopService, *mocks.ShopVoucherRepository)
+		expected
+	}{
+		{
+			description: "should return error when failed to get shop",
+			input: input{
+				userID:  userID,
+				request: request,
+			},
+			beforeTest: func(ss *mocks.ShopService, pr *mocks.ShopVoucherRepository) {
+				ss.On("FindShopByUserId", userID).Return(nil, errors.New("failed to get shop"))
+			},
+			expected: expected{
+				data: nil,
+				err:  errors.New("failed to get shop"),
+			},
+		},
+		{
+			description: "should return error when failed to get vouchers",
+			input: input{
+				userID:  userID,
+				request: request,
+			},
+			beforeTest: func(ss *mocks.ShopService, pr *mocks.ShopVoucherRepository) {
+				ss.On("FindShopByUserId", userID).Return(&model.Shop{UserID: userID, ID: shopID}, nil)
+				pr.On("GetSellerVoucher", shopID, request).Return(nil, int64(0), 0, errors.New("failed to get vouchers"))
+			},
+			expected: expected{
+				data: nil,
+				err:  errors.New("failed to get vouchers"),
+			},
+		},
+		{
+			description: "should return voucher data when succeed to get vouchers",
+			input: input{
+				userID:  userID,
+				request: request,
+			},
+			beforeTest: func(ss *mocks.ShopService, pr *mocks.ShopVoucherRepository) {
+				ss.On("FindShopByUserId", userID).Return(&model.Shop{UserID: userID, ID: shopID}, nil)
+				pr.On("GetSellerVoucher", shopID, request).Return(vouchers, totalRows, totalPages, nil)
+			},
+			expected: expected{
+				data: &commonDto.PaginationResponse{
+					TotalRows:  totalRows,
+					TotalPages: totalPages,
+					Page:       page,
+					Limit:      limit,
+					Data:       vouchers,
+				},
+				err: nil,
+			},
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.description, func(t *testing.T) {
+			shopService := mocks.NewShopService(t)
+			shopVoucherRepository := mocks.NewShopVoucherRepository(t)
+			tc.beforeTest(shopService, shopVoucherRepository)
+			shopVoucherService := service.NewShopVoucherService(&service.ShopVoucherSConfig{
+				ShopService:           shopService,
+				ShopVoucherRepository: shopVoucherRepository,
+			})
+
+			data, err := shopVoucherService.GetSellerVoucher(tc.input.userID, tc.input.request)
+
+			assert.Equal(t, tc.expected.data, data)
 			assert.Equal(t, tc.expected.err, err)
 		})
 	}
