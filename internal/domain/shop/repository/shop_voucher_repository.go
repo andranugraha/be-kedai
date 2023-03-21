@@ -20,6 +20,7 @@ type ShopVoucherRepository interface {
 	GetSellerVoucher(shopId int, request *dto.SellerVoucherFilterRequest) ([]*dto.SellerVoucher, int64, int, error)
 	GetValidByIdAndUserId(id, userId int) (*model.ShopVoucher, error)
 	GetValidByUserIDAndShopID(dto.GetValidShopVoucherRequest, int) ([]*model.ShopVoucher, error)
+	Create(shopId int, request *dto.CreateVoucherRequest) (*model.ShopVoucher, error)
 }
 
 type shopVoucherRepositoryImpl struct {
@@ -101,7 +102,7 @@ func (r *shopVoucherRepositoryImpl) GetSellerVoucher(shopId int, request *dto.Se
 	return vouchers, totalRows, totalPages, nil
 }
 
-func (r *shopVoucherRepositoryImpl) CreateVoucher(shopId int, request *dto.CreateVoucherRequest) (*model.ShopVoucher, error) {
+func (r *shopVoucherRepositoryImpl) Create(shopId int, request *dto.CreateVoucherRequest) (*model.ShopVoucher, error) {
 	tx := r.db.Begin()
 	defer tx.Commit()
 

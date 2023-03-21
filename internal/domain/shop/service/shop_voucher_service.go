@@ -2,9 +2,11 @@ package service
 
 import (
 	commonDto "kedai/backend/be-kedai/internal/common/dto"
+	commonErr "kedai/backend/be-kedai/internal/common/error"
 	"kedai/backend/be-kedai/internal/domain/shop/dto"
 	"kedai/backend/be-kedai/internal/domain/shop/model"
 	"kedai/backend/be-kedai/internal/domain/shop/repository"
+	productUtils "kedai/backend/be-kedai/internal/utils/product"
 )
 
 type ShopVoucherService interface {
@@ -62,6 +64,24 @@ func (s *shopVoucherServiceImpl) GetSellerVoucher(userID int, req *dto.SellerVou
 		Limit:      req.Limit,
 		Data:       vouchers,
 	}, nil
+}
+
+func (s *shopVoucherServiceImpl) CreateVoucher(userID int, request *dto.CreateVoucherRequest) (*model.ShopVoucher, error) {
+	if isProductNameValid := productUtils.ValidateProductName(request.Name); !isProductNameValid {
+		return nil, commonErr.ErrInvalidProductNamePattern
+	}
+
+	shop, err := s.shopService.FindShopByUserId(userID)
+	if err != nil {
+		return nil, err
+	}
+
+	voucher, err := s.shopVoucherRepository.Create(shop.ID, request)
+	if err != nil {
+		return nil, err
+	}
+
+	return voucher, nil
 }
 
 func (s *shopVoucherServiceImpl) GetValidShopVoucherByUserIDAndSlug(req dto.GetValidShopVoucherRequest) ([]*model.ShopVoucher, error) {
