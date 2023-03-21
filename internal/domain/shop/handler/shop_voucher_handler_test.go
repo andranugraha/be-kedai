@@ -349,7 +349,7 @@ func TestCreateVoucher(t *testing.T) {
 			},
 		},
 		{
-			description: "should return error with status code 201 when succeed to create voucher",
+			description: "should return voucher data with status code 201 when succeed to create voucher",
 			input: input{
 				userID:  userID,
 				request: request,
