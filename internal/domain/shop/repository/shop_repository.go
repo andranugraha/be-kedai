@@ -9,6 +9,7 @@ import (
 	"kedai/backend/be-kedai/internal/domain/shop/model"
 	userRepo "kedai/backend/be-kedai/internal/domain/user/repository"
 	"math"
+	"strings"
 	"time"
 
 	"gorm.io/gorm"
@@ -27,6 +28,7 @@ type ShopRepository interface {
 	FindShopByUserIdForUpdate(userId int) (*model.Shop, error)
 	UpdateShop(shop *model.Shop) error
 	Create(shop *model.Shop) error
+	GetShopRating(userId int, filter dto.GetShopRatingFilterRequest) (*dto.ShopRatingResponse, int64, int, error)
 }
 
 type shopRepositoryImpl struct {
@@ -320,4 +322,75 @@ func (r *shopRepositoryImpl) Create(shop *model.Shop) error {
 	}
 
 	return nil
+}
+
+func (r *shopRepositoryImpl) GetShopRating(userId int, filter dto.GetShopRatingFilterRequest) (*dto.ShopRatingResponse, int64, int, error) {
+	whereClause := "s.user_id = ?"
+	values := []interface{}{userId}
+
+	if filter.Search != "" {
+		whereClause += " AND p.name ILIKE ?"
+		values = append(values, "%"+filter.Search+"%")
+	}
+
+	if filter.StartDate != "" && filter.EndDate != "" {
+		whereClause += " AND tr.review_date BETWEEN ? AND ?"
+		values = append(values, filter.StartDate, filter.EndDate)
+	}
+
+	if filter.Filter != 0 {
+		whereClause += " AND tr.rating = ?"
+		values = append(values, filter.Filter)
+	}
+
+	var results []*dto.ProductItem
+	var ShopRating dto.ShopRatingResponse
+	var totalRows int64
+	var totalPages int
+
+	query := r.db.Table("products p").
+		Joins("JOIN product_medias pm ON p.id = pm.product_id").
+		Joins("JOIN shops s ON s.id = p.shop_id").
+		Joins("JOIN skus s2 ON s2.product_id = p.id").
+		Joins("JOIN transactions t ON t.sku_id = s2.id").
+		Joins("JOIN transaction_reviews tr ON tr.transaction_id = t.id").
+		Joins("LEFT JOIN review_medias rm ON rm.review_id = tr.id").
+		Joins("JOIN invoice_per_shops ips ON ips.id = t.invoice_id").
+		Joins("JOIN users u ON u.id = t.user_id").
+		Joins("JOIN user_profiles up ON up.user_id = u.id").
+		Where(whereClause, values...).Distinct().
+		Select(" t.id as transactionId, u.username as username, up.photo_url as user_url, ips.id as order_id, " +
+			"(select url from product_medias pm2 where product_id =pm2.product_id limit 1) as product_url, " +
+			"p.name as product_name, tr.rating as product_rating, tr.description as product_review, " +
+			"string_agg(DISTINCT rm.url, ',') as review_medias, s.rating as shop_rating").
+		Group("t.id, u.username, ips.id, up.photo_url, p.name, tr.rating, tr.description, s.rating ")
+
+	r1 := query.Count(&totalRows)
+	totalRows = r1.RowsAffected
+	if r1.Error != nil {
+		return nil, 0, 0, r1.Error
+	}
+
+	r2 := query.Limit(filter.Limit).Offset(filter.Limit * (filter.Page - 1)).Find(&results)
+	if r2.Error != nil {
+		return nil, 0, 0, r2.Error
+	}
+
+	for _, item := range results {
+		if item.ReviewMedias != "" {
+			item.ReviewMedia = strings.Split(item.ReviewMedias, ",")
+			item.ReviewMedias = ""
+		}
+	}
+
+	if len(results) == 0 {
+		ShopRating.ShopRating = 0
+	} else {
+		ShopRating.ShopRating = results[0].ShopRating
+	}
+
+	totalPages = int(math.Ceil(float64(totalRows) / float64(filter.Limit)))
+	ShopRating.ProductItem = results
+
+	return &ShopRating, totalRows, totalPages, nil
 }

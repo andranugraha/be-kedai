@@ -1,6 +1,7 @@
 package service
 
 import (
+	commonDto "kedai/backend/be-kedai/internal/common/dto"
 	"kedai/backend/be-kedai/internal/domain/shop/dto"
 	"kedai/backend/be-kedai/internal/domain/shop/model"
 	"kedai/backend/be-kedai/internal/domain/shop/repository"
@@ -8,6 +9,7 @@ import (
 
 type ShopVoucherService interface {
 	GetValidShopVoucherByIdAndUserId(id, userId int) (*model.ShopVoucher, error)
+	GetSellerVoucher(userID int, req *dto.SellerVoucherFilterRequest) (*commonDto.PaginationResponse, error)
 	GetShopVoucher(slug string) ([]*model.ShopVoucher, error)
 	GetValidShopVoucherByUserIDAndSlug(dto.GetValidShopVoucherRequest) ([]*model.ShopVoucher, error)
 }
@@ -40,6 +42,26 @@ func (s *shopVoucherServiceImpl) GetShopVoucher(slug string) ([]*model.ShopVouch
 	}
 
 	return s.shopVoucherRepository.GetShopVoucher(shop.ID)
+}
+
+func (s *shopVoucherServiceImpl) GetSellerVoucher(userID int, req *dto.SellerVoucherFilterRequest) (*commonDto.PaginationResponse, error) {
+	shop, err := s.shopService.FindShopByUserId(userID)
+	if err != nil {
+		return nil, err
+	}
+
+	vouchers, totalRows, totalPages, err := s.shopVoucherRepository.GetSellerVoucher(shop.ID, req)
+	if err != nil {
+		return nil, err
+	}
+
+	return &commonDto.PaginationResponse{
+		TotalRows:  totalRows,
+		TotalPages: totalPages,
+		Page:       req.Page,
+		Limit:      req.Limit,
+		Data:       vouchers,
+	}, nil
 }
 
 func (s *shopVoucherServiceImpl) GetValidShopVoucherByUserIDAndSlug(req dto.GetValidShopVoucherRequest) ([]*model.ShopVoucher, error) {
