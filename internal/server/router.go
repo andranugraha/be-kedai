@@ -37,14 +37,16 @@ func NewRouter(cfg *RouterConfig) *gin.Engine {
 	corsCfg.ExposeHeaders = []string{"Content-Length"}
 	r.Use(cors.New(corsCfg))
 
+	socketServer := connection.SocketIO()
+	socket := r.Group("/socket.io")
+	{
+		socket.GET("/*any", gin.WrapH(socketServer))
+		socket.POST("/*any", gin.WrapH(socketServer))
+	}
+
 	v1 := r.Group("/v1")
 	{
 		v1.Static("/docs", "swagger")
-
-		chat := v1.Group("/chats")
-		{
-			chat.POST("/", middleware.JWTAuthorization, cfg.UserHandler.GetSession, cfg.ChatHandler.AddChat)
-		}
 
 		user := v1.Group("/users")
 		{
@@ -112,6 +114,10 @@ func NewRouter(cfg *RouterConfig) *gin.Engine {
 				{
 					sealabsPay.GET("", cfg.UserHandler.GetSealabsPaysByUserID)
 					sealabsPay.POST("", cfg.UserHandler.RegisterSealabsPay)
+				}
+				chat := userAuthenticated.Group("/chats")
+				{
+					chat.POST("/:shopSlug", cfg.ChatHandler.UserAddChat)
 				}
 			}
 		}
@@ -244,14 +250,13 @@ func NewRouter(cfg *RouterConfig) *gin.Engine {
 					order.PUT("/:orderId/delivery", cfg.OrderHandler.UpdateToDelivery)
 					order.PUT("/:orderId/cancel", cfg.OrderHandler.UpdateToCanceled)
 				}
+				chat := authenticated.Group("/chats")
+				{
+					chat.POST("/:username", cfg.ChatHandler.SellerAddChat)
+				}
 			}
 		}
 	}
-
-	server := connection.SocketIO()
-
-	r.GET("/socket.io/*any", gin.WrapH(server))
-	r.POST("/socket.io/*any", gin.WrapH(server))
 
 	return r
 }

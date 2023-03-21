@@ -373,9 +373,11 @@ func createRouter() *gin.Engine {
 
 	chatHandler := chatHandlerPackage.New(&chatHandlerPackage.Config{
 		ChatService: chatServicePackage.NewChatService(&chatServicePackage.ChatConfig{
-			ChatRepo: chatRepoPackage.NewAddressRepository(&chatRepoPackage.ChatRConfig{
+			ChatRepo: chatRepoPackage.NewChatRepository(&chatRepoPackage.ChatRConfig{
 				DB: db,
 			}),
+			ShopService: shopService,
+			UserService: userService,
 		}),
 	})
 

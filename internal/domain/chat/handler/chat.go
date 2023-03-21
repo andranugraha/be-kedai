@@ -10,20 +10,50 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func (h *Handler) AddChat(c *gin.Context) {
+func (h *Handler) UserAddChat(c *gin.Context) {
 	userID := c.GetInt("userId")
 
-	var req dto.ChatRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
+	shopSlug := c.Param("shopSlug")
+
+	var body *dto.SendChatBodyRequest
+	if err := c.ShouldBindJSON(&body); err != nil {
 		response.ErrorValidator(c, http.StatusBadRequest, err)
 		return
 	}
 
-	chat, err := h.chatService.AddChat(req.RoomId, req.Message, req.Type, userID)
+	chat, err := h.chatService.UserAddChat(body, userID, shopSlug)
 	if err != nil {
+		if err == spErr.ErrShopNotFound || err == spErr.ErrUserDoesNotExist {
+			response.Error(c, http.StatusBadRequest, code.BAD_REQUEST, err.Error())
+			return
+		}
 		response.Error(c, http.StatusInternalServerError, code.INTERNAL_SERVER_ERROR, spErr.ErrInternalServerError.Error())
 		return
 	}
 
-	response.Success(c, http.StatusOK, code.OK, "success", chat)
+	response.Success(c, http.StatusCreated, code.CREATED, "success", chat)
+}
+
+func (h *Handler) SellerAddChat(c *gin.Context) {
+	userID := c.GetInt("userId")
+
+	username := c.Param("username")
+
+	var body *dto.SendChatBodyRequest
+	if err := c.ShouldBindJSON(&body); err != nil {
+		response.ErrorValidator(c, http.StatusBadRequest, err)
+		return
+	}
+
+	chat, err := h.chatService.SellerAddChat(body, userID, username)
+	if err != nil {
+		if err == spErr.ErrShopNotFound || err == spErr.ErrUserDoesNotExist {
+			response.Error(c, http.StatusBadRequest, code.BAD_REQUEST, err.Error())
+			return
+		}
+		response.Error(c, http.StatusInternalServerError, code.INTERNAL_SERVER_ERROR, spErr.ErrInternalServerError.Error())
+		return
+	}
+
+	response.Success(c, http.StatusCreated, code.CREATED, "success", chat)
 }

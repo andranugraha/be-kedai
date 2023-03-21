@@ -3,15 +3,19 @@ package repository
 import (
 	"kedai/backend/be-kedai/internal/domain/chat/dto"
 	"kedai/backend/be-kedai/internal/domain/chat/model"
+	shopModel "kedai/backend/be-kedai/internal/domain/shop/model"
+	userModel "kedai/backend/be-kedai/internal/domain/user/model"
 
 	"gorm.io/gorm"
 )
 
 type ChatRepository interface {
-	GetAllRoom(userId int, page int, limit int) []*dto.ChatListResponse
-	GetAllChat(roomId string, page int, limit int) []*dto.ChatDetailResponse
-	AddChat(roomId string, msg string, chatType string, userId int) (*dto.ChatDetailResponse, error)
-	ForceReadRoom(roomId string) *dto.ChatListResponse
+	UserGetListOfChats(param *dto.ListOfChatsParamRequest, userId int) ([]*dto.UserListOfChatResponse, error)
+	SellerGetListOfChats(param *dto.ListOfChatsParamRequest, userId int) ([]*dto.SellerListOfChatResponse, error)
+	UserGetChat(param *dto.ChatParamRequest, userId int, shopSlug string) ([]*dto.ChatResponse, error)
+	SellerGetChat(param *dto.ChatParamRequest, userId int, username string) ([]*dto.ChatResponse, error)
+	UserAddChat(body *dto.SendChatBodyRequest, userId int, shop *shopModel.Shop) (*dto.ChatResponse, error)
+	SellerAddChat(body *dto.SendChatBodyRequest, shop *shopModel.Shop, user *userModel.User) (*dto.ChatResponse, error)
 }
 
 type chatRepositoryImpl struct {
@@ -22,40 +26,69 @@ type ChatRConfig struct {
 	DB *gorm.DB
 }
 
-func NewAddressRepository(cfg *ChatRConfig) ChatRepository {
+func NewChatRepository(cfg *ChatRConfig) ChatRepository {
 	return &chatRepositoryImpl{
 		db: cfg.DB,
 	}
 }
 
 func (r *chatRepositoryImpl) Last(chat *model.Chat) (*model.Chat, error) {
-	result := r.db.Preload("User.Profile").Last(&chat)
+	result := r.db.Last(&chat)
 	return chat, result.Error
 }
 
-func (r *chatRepositoryImpl) GetAllRoom(userId int, page int, limit int) []*dto.ChatListResponse {
-	return []*dto.ChatListResponse{}
+func (r *chatRepositoryImpl) UserGetListOfChats(param *dto.ListOfChatsParamRequest, userId int) ([]*dto.UserListOfChatResponse, error) {
+	return []*dto.UserListOfChatResponse{}, nil
 }
 
-func (r *chatRepositoryImpl) GetAllChat(roomId string, page int, limit int) []*dto.ChatDetailResponse {
-	return []*dto.ChatDetailResponse{}
+func (r *chatRepositoryImpl) SellerGetListOfChats(param *dto.ListOfChatsParamRequest, userId int) ([]*dto.SellerListOfChatResponse, error) {
+	return []*dto.SellerListOfChatResponse{}, nil
 }
 
-func (r *chatRepositoryImpl) AddChat(roomId string, msg string, chatType string, userId int) (*dto.ChatDetailResponse, error) {
+func (r *chatRepositoryImpl) UserGetChat(param *dto.ChatParamRequest, userId int, shopSlug string) ([]*dto.ChatResponse, error) {
+	return []*dto.ChatResponse{}, nil
+}
+
+func (r *chatRepositoryImpl) SellerGetChat(param *dto.ChatParamRequest, userId int, username string) ([]*dto.ChatResponse, error) {
+	return []*dto.ChatResponse{}, nil
+}
+
+func (r *chatRepositoryImpl) UserAddChat(body *dto.SendChatBodyRequest, userId int, shop *shopModel.Shop) (*dto.ChatResponse, error) {
+	if body.Type == "" {
+		body.Type = "normal"
+	}
+
 	chat := &model.Chat{
-		RoomId:  roomId,
-		Message: msg,
-		Type:    chatType,
+		Message: body.Message,
+		Type:    body.Type,
+		ShopId:  shop.ID,
 		UserId:  userId,
+		Issuer:  "user",
 	}
 	result := r.db.Create(&chat)
 	if result.Error != nil {
 		return nil, result.Error
 	}
 	chat, _ = r.Last(chat)
-	return dto.ConvertChatDetailToOutput(chat), nil
+	return dto.ConvertChatToOutput(chat, "user"), nil
 }
 
-func (r *chatRepositoryImpl) ForceReadRoom(roomId string) *dto.ChatListResponse {
-	return nil
+func (r *chatRepositoryImpl) SellerAddChat(body *dto.SendChatBodyRequest, shop *shopModel.Shop, user *userModel.User) (*dto.ChatResponse, error) {
+	if body.Type == "" {
+		body.Type = "normal"
+	}
+
+	chat := &model.Chat{
+		Message: body.Message,
+		Type:    body.Type,
+		ShopId:  shop.ID,
+		UserId:  user.ID,
+		Issuer:  "seller",
+	}
+	result := r.db.Create(&chat)
+	if result.Error != nil {
+		return nil, result.Error
+	}
+	chat, _ = r.Last(chat)
+	return dto.ConvertChatToOutput(chat, "seller"), nil
 }
