@@ -244,6 +244,7 @@ func NewRouter(cfg *RouterConfig) *gin.Engine {
 					order.GET("/:orderId", cfg.OrderHandler.GetInvoiceByShopIdAndOrderId)
 					order.PUT("/:orderId/delivery", cfg.OrderHandler.UpdateToDelivery)
 					order.POST("/:orderId/cancel-request", cfg.OrderHandler.UpdateToRefundPendingSellerCancel)
+					order.PUT("/:orderId/refund", cfg.OrderHandler.UpdateRefundStatus)
 				}
 			}
 		}
