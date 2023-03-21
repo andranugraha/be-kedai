@@ -242,6 +242,7 @@ func NewRouter(cfg *RouterConfig) *gin.Engine {
 				voucher := authenticated.Group("/vouchers")
 				{
 					voucher.GET("", cfg.ShopHandler.GetSellerVoucher)
+					voucher.POST("", cfg.ShopHandler.CreateVoucher)
 				}
 
 				order := authenticated.Group("/orders")
