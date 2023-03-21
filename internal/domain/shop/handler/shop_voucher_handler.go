@@ -49,6 +49,34 @@ func (h *Handler) GetSellerVoucher(c *gin.Context) {
 	response.Success(c, http.StatusOK, code.OK, "success", res)
 }
 
+func (h *Handler) GetVoucherByCodeAndShopId(c *gin.Context) {
+	userId := c.GetInt("userId")
+	voucherCode := c.Param("voucherCode")
+
+	res, err := h.shopVoucherService.GetVoucherByCodeAndShopId(voucherCode, userId)
+	if err != nil {
+		if errors.Is(err, commonErr.ErrShopNotFound) {
+			response.Error(c, http.StatusNotFound, code.SHOP_NOT_REGISTERED, err.Error())
+			return
+		}
+
+		if errors.Is(err, commonErr.ErrVoucherNotFound) {
+			response.Error(c, http.StatusNotFound, code.VOUCHER_NOT_FOUND, err.Error())
+			return
+		}
+
+		if errors.Is(err, commonErr.ErrFailedToDeleteVoucher) {
+			response.Error(c, http.StatusNotFound, code.FAILED_TO_DELETE_VOUCHER, err.Error())
+			return
+		}
+
+		response.Error(c, http.StatusInternalServerError, code.INTERNAL_SERVER_ERROR, commonErr.ErrInternalServerError.Error())
+		return
+	}
+
+	response.Success(c, http.StatusOK, code.OK, "success", res)
+}
+
 func (h *Handler) CreateVoucher(c *gin.Context) {
 	var request dto.CreateVoucherRequest
 	err := c.ShouldBindJSON(&request)

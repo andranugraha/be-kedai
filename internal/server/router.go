@@ -242,6 +242,7 @@ func NewRouter(cfg *RouterConfig) *gin.Engine {
 				voucher := authenticated.Group("/vouchers")
 				{
 					voucher.GET("", cfg.ShopHandler.GetSellerVoucher)
+					voucher.GET("/:voucherCode", cfg.ShopHandler.GetVoucherByCodeAndShopId)
 					voucher.POST("", cfg.ShopHandler.CreateVoucher)
 					voucher.DELETE("/:voucherCode", cfg.ShopHandler.DeleteVoucher)
 				}

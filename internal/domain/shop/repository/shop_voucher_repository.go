@@ -20,6 +20,7 @@ type ShopVoucherRepository interface {
 	GetSellerVoucher(shopId int, request *dto.SellerVoucherFilterRequest) ([]*dto.SellerVoucher, int64, int, error)
 	GetValidByIdAndUserId(id, userId int) (*model.ShopVoucher, error)
 	GetValidByUserIDAndShopID(dto.GetValidShopVoucherRequest, int) ([]*model.ShopVoucher, error)
+	GetVoucherByCodeAndShopId(voucherCode string, shopId int) (*dto.SellerVoucher, error)
 	Create(shopId int, request *dto.CreateVoucherRequest) (*model.ShopVoucher, error)
 	Delete(shopId int, voucherCode string) error
 }
@@ -51,29 +52,6 @@ func (r *shopVoucherRepositoryImpl) GetShopVoucher(shopId int) ([]*model.ShopVou
 	}
 
 	return shopVoucher, nil
-}
-
-func (r *shopVoucherRepositoryImpl) GetVoucherByCodeAndShopId(voucherCode string, shopId int) (*dto.SellerVoucher, error) {
-	var voucher dto.SellerVoucher
-
-	now := time.Now()
-	query := r.db.Where("shop_id = ? AND code = ?", shopId, voucherCode)
-
-	query = query.Select("shop_vouchers.*, "+
-		"CASE WHEN start_from <= ? AND expired_at >= ? THEN ? "+
-		"WHEN start_from > ? THEN ? "+
-		"ELSE ? "+
-		"END as status", now, now, constant.VoucherPromotionStatusOngoing, now, constant.VoucherPromotionStatusUpcoming, constant.VoucherPromotionStatusExpired)
-
-	err := query.First(&voucher).Error
-	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, errs.ErrVoucherNotFound
-		}
-		return nil, err
-	}
-
-	return &voucher, nil
 }
 
 func (r *shopVoucherRepositoryImpl) GetSellerVoucher(shopId int, request *dto.SellerVoucherFilterRequest) ([]*dto.SellerVoucher, int64, int, error) {
@@ -124,6 +102,29 @@ func (r *shopVoucherRepositoryImpl) GetSellerVoucher(shopId int, request *dto.Se
 	}
 
 	return vouchers, totalRows, totalPages, nil
+}
+
+func (r *shopVoucherRepositoryImpl) GetVoucherByCodeAndShopId(voucherCode string, shopId int) (*dto.SellerVoucher, error) {
+	var voucher dto.SellerVoucher
+
+	now := time.Now()
+	query := r.db.Where("shop_id = ? AND code = ?", shopId, voucherCode)
+
+	query = query.Select("shop_vouchers.*, "+
+		"CASE WHEN start_from <= ? AND expired_at >= ? THEN ? "+
+		"WHEN start_from > ? THEN ? "+
+		"ELSE ? "+
+		"END as status", now, now, constant.VoucherPromotionStatusOngoing, now, constant.VoucherPromotionStatusUpcoming, constant.VoucherPromotionStatusExpired)
+
+	err := query.First(&voucher).Error
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, errs.ErrVoucherNotFound
+		}
+		return nil, err
+	}
+
+	return &voucher, nil
 }
 
 func (r *shopVoucherRepositoryImpl) Create(shopId int, request *dto.CreateVoucherRequest) (*model.ShopVoucher, error) {

@@ -14,6 +14,7 @@ type ShopVoucherService interface {
 	GetSellerVoucher(userID int, req *dto.SellerVoucherFilterRequest) (*commonDto.PaginationResponse, error)
 	GetShopVoucher(slug string) ([]*model.ShopVoucher, error)
 	GetValidShopVoucherByUserIDAndSlug(dto.GetValidShopVoucherRequest) ([]*model.ShopVoucher, error)
+	GetVoucherByCodeAndShopId(voucherCode string, userID int) (*dto.SellerVoucher, error)
 	CreateVoucher(userID int, request *dto.CreateVoucherRequest) (*model.ShopVoucher, error)
 	DeleteVoucher(userID int, voucherCode string) error
 }
@@ -66,6 +67,20 @@ func (s *shopVoucherServiceImpl) GetSellerVoucher(userID int, req *dto.SellerVou
 		Limit:      req.Limit,
 		Data:       vouchers,
 	}, nil
+}
+
+func (s *shopVoucherServiceImpl) GetVoucherByCodeAndShopId(voucherCode string, userID int) (*dto.SellerVoucher, error) {
+	shop, err := s.shopService.FindShopByUserId(userID)
+	if err != nil {
+		return nil, err
+	}
+
+	voucher, err := s.shopVoucherRepository.GetVoucherByCodeAndShopId(voucherCode, shop.ID)
+	if err != nil {
+		return nil, err
+	}
+
+	return voucher, nil
 }
 
 func (s *shopVoucherServiceImpl) CreateVoucher(userID int, request *dto.CreateVoucherRequest) (*model.ShopVoucher, error) {
