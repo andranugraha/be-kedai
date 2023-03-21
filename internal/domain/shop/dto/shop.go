@@ -77,6 +77,43 @@ type GetShopInsightSale struct {
 	Value int    `json:"value"`
 }
 
+type ShopRatingResponse struct {
+	ShopRating  float64        `json:"shopRating"`
+	ProductItem []*ProductItem `json:"productItem"`
+}
+
+type ProductItem struct {
+	ShopRating    float64  `json:"-"`
+	Username      string   `json:"username"`
+	UserUrl       string   `json:"userUrl"`
+	OrderId       int      `json:"orderId"`
+	ProductUrl    string   `json:"productUrl"`
+	ProductName   string   `json:"productName"`
+	ProductRating float64  `json:"productRating"`
+	ProductReview string   `json:"productReview"`
+	ReviewMedias  string   `json:"reviewMedias,omitempty"`
+	ReviewMedia   []string `json:"reviewMedia"`
+}
+
+type GetShopRatingFilterRequest struct {
+	Search    string `form:"search"`
+	StartDate string `form:"startDate" binding:"required_with=EndDate,omitempty,datetime=2006-01-02"`
+	EndDate   string `form:"endDate" binding:"required_with=StartDate,omitempty,datetime=2006-01-02"`
+	Limit     int    `form:"limit"`
+	Page      int    `form:"page"`
+	Filter    int    `form:"filter"`
+}
+
+func (req *GetShopRatingFilterRequest) Validate() {
+	if req.Page < 1 {
+		req.Page = 1
+	}
+
+	if req.Limit < 1 {
+		req.Limit = 5
+	}
+}
+
 const (
 	ShopInsightTimeframeDay   = "day"
 	ShopInsightTimeframeWeek  = "week"
