@@ -70,11 +70,11 @@ func (r *shopVoucherRepositoryImpl) GetSellerVoucher(shopId int, request *dto.Se
 
 	switch request.Status {
 	case constant.VoucherPromotionStatusOngoing:
-		query = query.Where("shop_vouchers.start_from <= ? < shop_vouchers.expired_at", now)
+		query = query.Where("shop_vouchers.start_from <= ? AND ? < shop_vouchers.expired_at", now, now)
 	case constant.VoucherPromotionStatusUpcoming:
-		query = query.Not("? < shop_vouchers.start_from", now)
+		query = query.Where("? < shop_vouchers.start_from", now)
 	case constant.VoucherPromotionStatusExpired:
-		query = query.Where("shop_vouchers.expired_at => ?", now)
+		query = query.Where("shop_vouchers.expired_at <= ?", now)
 	}
 
 	query = query.Select("shop_vouchers.*, "+
