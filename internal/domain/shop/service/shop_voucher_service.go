@@ -14,6 +14,7 @@ type ShopVoucherService interface {
 	GetSellerVoucher(userID int, req *dto.SellerVoucherFilterRequest) (*commonDto.PaginationResponse, error)
 	GetShopVoucher(slug string) ([]*model.ShopVoucher, error)
 	GetValidShopVoucherByUserIDAndSlug(dto.GetValidShopVoucherRequest) ([]*model.ShopVoucher, error)
+	CreateVoucher(userID int, request *dto.CreateVoucherRequest) (*model.ShopVoucher, error)
 }
 
 type shopVoucherServiceImpl struct {
