@@ -20,6 +20,93 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func TestGetShopRating(t *testing.T) {
+	var (
+		userId     = 1
+		shopRating = &commonDto.PaginationResponse{
+			Data: dto.ShopRatingResponse{
+				ShopRating:  1,
+				ProductItem: []*dto.ProductItem{},
+			},
+		}
+		filter = &dto.GetShopRatingFilterRequest{}
+	)
+
+	type input struct {
+		userId int
+		filter *dto.GetShopRatingFilterRequest
+		result *commonDto.PaginationResponse
+		err    error
+	}
+
+	type expected struct {
+		statusCode int
+		response   response.Response
+	}
+
+	type cases struct {
+		description string
+		input
+		expected
+	}
+
+	for _, tc := range []cases{
+		{
+			description: "should return shop rating information with code 200 when success",
+			input: input{
+				userId: userId,
+				filter: filter,
+				result: shopRating,
+				err:    nil},
+			expected: expected{
+				statusCode: http.StatusOK,
+				response: response.Response{
+					Code:    code.OK,
+					Message: "success",
+					Data:    shopRating,
+				},
+			},
+		},
+		{
+			description: "should return error with code 500 when error",
+			input: input{
+				userId: userId,
+				filter: filter,
+				result: nil,
+				err:    errors.New("error"),
+			},
+			expected: expected{
+				statusCode: http.StatusInternalServerError,
+				response: response.Response{
+					Code:    code.INTERNAL_SERVER_ERROR,
+					Message: errs.ErrInternalServerError.Error(),
+				},
+			},
+		},
+	} {
+
+		t.Run(tc.description, func(t *testing.T) {
+			expectedBody, _ := json.Marshal(tc.expected.response)
+			rec := httptest.NewRecorder()
+			c, _ := gin.CreateTestContext(rec)
+			mockService := new(mocks.ShopService)
+			mockService.On("GetShopRating", tc.input.userId, *tc.input.filter).Return(tc.input.result, tc.input.err)
+			handler := handler.New(&handler.HandlerConfig{
+				ShopService: mockService,
+			})
+			c.Set("userId", 1)
+
+			c.Request, _ = http.NewRequest("GET", "/sellers/ratings", nil)
+
+			handler.GetShopRating(c)
+
+			assert.Equal(t, tc.expected.statusCode, rec.Code)
+			assert.Equal(t, string(expectedBody), rec.Body.String())
+		})
+	}
+
+}
+
 func TestFindShopBySlug(t *testing.T) {
 	var (
 		slug       = "shop"

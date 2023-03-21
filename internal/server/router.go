@@ -216,6 +216,7 @@ func NewRouter(cfg *RouterConfig) *gin.Engine {
 				authenticated.POST("/register", cfg.ShopHandler.CreateShop)
 				authenticated.GET("/stats", cfg.ShopHandler.GetShopStats)
 				authenticated.GET("/insights", cfg.ShopHandler.GetShopInsights)
+				authenticated.GET("/ratings", cfg.ShopHandler.GetShopRating)
 				finance := authenticated.Group("/finances")
 				{
 					income := finance.Group("/incomes")
@@ -242,6 +243,7 @@ func NewRouter(cfg *RouterConfig) *gin.Engine {
 				voucher := authenticated.Group("/vouchers")
 				{
 					voucher.GET("", cfg.ShopHandler.GetSellerVoucher)
+					voucher.POST("", cfg.ShopHandler.CreateVoucher)
 				}
 
 				order := authenticated.Group("/orders")
