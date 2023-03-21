@@ -6927,6 +6927,87 @@ paths:
                     example: "INTERNAL_SERVER_ERROR"
                   message:
                     type: string
+                    example: "error message"
+  /v1/sellers/orders/{orderId}/refund:
+    put:
+      security:
+        - BearerAuth: []
+      tags:
+        - Order
+      summary: Approve or reject refund request
+      parameters:
+        - in: path
+          name: orderId
+          required: true
+          schema:
+            type: integer
+            example: 1
+      description: Update refund status to 'SELLER_APPROVED' or 'REJECTED'
+      requestBody: 
+        $ref: '#/components/requestBodies/UpdateRefundStatusBody'
+      responses:
+        '200':
+          description: Successful operation
+          content: 
+            application/json:
+              schema:
+                  type: object
+                  properties:
+                      code:
+                        example: 'OK'
+                      message:
+                        example: 'refund status updated'             
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "BAD_REQUEST"
+                  message:
+                    type: string
+                    example: "error message"
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "UNAUTHORIZED"
+                  message:
+                    type: string
+                    example: "invalid credential"  
+        '404':
+          description: Record not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "NOT_FOUND"
+                  message:
+                    type: string
+                    example: "error message"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "INTERNAL_SERVER_ERROR"
+                  message:
+                    type: string
                     example: "error message"                                    
   /v1/orders/invoices:
     post:
@@ -9430,6 +9511,19 @@ components:
             properties:
               courierId:
                 type: integer
+    UpdateRefundStatusBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required:   
+              - refundStatus
+            properties:
+              refundStatus:
+                type: string
+                enum: [SELLER_APPROVED, REJECTED]
+                example: SELLER_APPROVED 
     VariantBody:
       type: object
       required:
