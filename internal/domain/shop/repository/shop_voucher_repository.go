@@ -21,7 +21,7 @@ type ShopVoucherRepository interface {
 	GetValidByIdAndUserId(id, userId int) (*model.ShopVoucher, error)
 	GetValidByUserIDAndShopID(dto.GetValidShopVoucherRequest, int) ([]*model.ShopVoucher, error)
 	Create(shopId int, request *dto.CreateVoucherRequest) (*model.ShopVoucher, error)
-	Delete(voucherId int, shopId int) error
+	Delete(shopId int, voucherCode string) error
 }
 
 type shopVoucherRepositoryImpl struct {
@@ -51,6 +51,29 @@ func (r *shopVoucherRepositoryImpl) GetShopVoucher(shopId int) ([]*model.ShopVou
 	}
 
 	return shopVoucher, nil
+}
+
+func (r *shopVoucherRepositoryImpl) GetVoucherByCodeAndShopId(voucherCode string, shopId int) (*dto.SellerVoucher, error) {
+	var voucher dto.SellerVoucher
+
+	now := time.Now()
+	query := r.db.Where("shop_id = ? AND code = ?", shopId, voucherCode)
+
+	query = query.Select("shop_vouchers.*, "+
+		"CASE WHEN start_from <= ? AND expired_at >= ? THEN ? "+
+		"WHEN start_from > ? THEN ? "+
+		"ELSE ? "+
+		"END as status", now, now, constant.VoucherPromotionStatusOngoing, now, constant.VoucherPromotionStatusUpcoming, constant.VoucherPromotionStatusExpired)
+
+	err := query.First(&voucher).Error
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, errs.ErrVoucherNotFound
+		}
+		return nil, err
+	}
+
+	return &voucher, nil
 }
 
 func (r *shopVoucherRepositoryImpl) GetSellerVoucher(shopId int, request *dto.SellerVoucherFilterRequest) ([]*dto.SellerVoucher, int64, int, error) {
@@ -131,9 +154,17 @@ func (r *shopVoucherRepositoryImpl) Create(shopId int, request *dto.CreateVouche
 	return voucher, nil
 }
 
-func (r *shopVoucherRepositoryImpl) Delete(shopId int, voucherId int) error {
+func (r *shopVoucherRepositoryImpl) Delete(shopId int, voucherCode string) error {
+	voucher, err := r.GetVoucherByCodeAndShopId(voucherCode, shopId)
+	if err != nil {
+		return err
+	}
 
-	res := r.db.Delete(&model.ShopVoucher{}, "id = ? AND shop_id = ?", voucherId, shopId)
+	if voucher.Status == constant.VoucherPromotionStatusUpcoming || voucher.Status == constant.VoucherPromotionStatusExpired {
+		return errs.ErrFailedToDeleteVoucher
+	}
+
+	res := r.db.Delete(&model.ShopVoucher{}, "code = ? AND shop_id = ?", voucherCode, shopId)
 	if err := res.Error; err != nil {
 		return err
 	}

@@ -15,7 +15,7 @@ type ShopVoucherService interface {
 	GetShopVoucher(slug string) ([]*model.ShopVoucher, error)
 	GetValidShopVoucherByUserIDAndSlug(dto.GetValidShopVoucherRequest) ([]*model.ShopVoucher, error)
 	CreateVoucher(userID int, request *dto.CreateVoucherRequest) (*model.ShopVoucher, error)
-	DeleteVoucher(voucherID int, userID int) error
+	DeleteVoucher(userID int, voucherCode string) error
 }
 
 type shopVoucherServiceImpl struct {
@@ -86,13 +86,13 @@ func (s *shopVoucherServiceImpl) CreateVoucher(userID int, request *dto.CreateVo
 	return voucher, nil
 }
 
-func (s *shopVoucherServiceImpl) DeleteVoucher(voucherID int, userID int) error {
+func (s *shopVoucherServiceImpl) DeleteVoucher(userID int, voucherCode string) error {
 	shop, err := s.shopService.FindShopByUserId(userID)
 	if err != nil {
 		return err
 	}
 
-	err = s.shopVoucherRepository.Delete(shop.ID, voucherID)
+	err = s.shopVoucherRepository.Delete(shop.ID, voucherCode)
 	if err != nil {
 		return err
 	}

@@ -7,7 +7,6 @@ import (
 	"kedai/backend/be-kedai/internal/domain/shop/dto"
 	"kedai/backend/be-kedai/internal/utils/response"
 	"net/http"
-	"strconv"
 
 	"github.com/gin-gonic/gin"
 )
@@ -81,13 +80,22 @@ func (h *Handler) CreateVoucher(c *gin.Context) {
 
 func (h *Handler) DeleteVoucher(c *gin.Context) {
 	userId := c.GetInt("userId")
-	voucherId := c.Param("voucherId")
-	voucherIdInt, _ := strconv.Atoi(voucherId)
+	voucherCode := c.Param("voucherCode")
 
-	err := h.shopVoucherService.DeleteVoucher(voucherIdInt, userId)
+	err := h.shopVoucherService.DeleteVoucher(userId, voucherCode)
 	if err != nil {
 		if errors.Is(err, commonErr.ErrShopNotFound) {
 			response.Error(c, http.StatusNotFound, code.SHOP_NOT_REGISTERED, err.Error())
+			return
+		}
+
+		if errors.Is(err, commonErr.ErrVoucherNotFound) {
+			response.Error(c, http.StatusNotFound, code.VOUCHER_NOT_FOUND, err.Error())
+			return
+		}
+
+		if errors.Is(err, commonErr.ErrFailedToDeleteVoucher) {
+			response.Error(c, http.StatusNotFound, code.FAILED_TO_DELETE_VOUCHER, err.Error())
 			return
 		}
 
