@@ -65,11 +65,6 @@ func (h *Handler) GetVoucherByCodeAndShopId(c *gin.Context) {
 			return
 		}
 
-		if errors.Is(err, commonErr.ErrFailedToDeleteVoucher) {
-			response.Error(c, http.StatusNotFound, code.FAILED_TO_DELETE_VOUCHER, err.Error())
-			return
-		}
-
 		response.Error(c, http.StatusInternalServerError, code.INTERNAL_SERVER_ERROR, commonErr.ErrInternalServerError.Error())
 		return
 	}
@@ -122,8 +117,8 @@ func (h *Handler) DeleteVoucher(c *gin.Context) {
 			return
 		}
 
-		if errors.Is(err, commonErr.ErrFailedToDeleteVoucher) {
-			response.Error(c, http.StatusNotFound, code.FAILED_TO_DELETE_VOUCHER, err.Error())
+		if errors.Is(err, commonErr.ErrVoucherIsOngoing) {
+			response.Error(c, http.StatusConflict, code.VOUCHER_IS_ONGOING, err.Error())
 			return
 		}
 

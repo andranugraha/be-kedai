@@ -7,5 +7,5 @@ var (
 	ErrTotalSpentBelowMinimumSpendingRequirement = errors.New("total spent below minimum spending requirement")
 	ErrVoucherNotFound                           = errors.New("voucher not found")
 	ErrInvalidVoucherNamePattern                 = errors.New("invalid voucher name pattern")
-	ErrFailedToDeleteVoucher                     = errors.New("failed to delete voucher")
+	ErrVoucherIsOngoing                          = errors.New("voucher is ongoing")
 )

@@ -390,6 +390,130 @@ func TestCreateVoucher(t *testing.T) {
 	}
 }
 
+func TestDeleteVoucher(t *testing.T) {
+	type input struct {
+		beforeTests func(mockShopVoucherService *mocks.ShopVoucherService)
+	}
+
+	type expected struct {
+		data       *response.Response
+		statusCode int
+	}
+
+	type testCase struct {
+		description string
+		input       input
+		expected    expected
+	}
+
+	cases := []testCase{
+		{
+			description: "should return error with status code 404 when failed to get shop",
+			input: input{
+				beforeTests: func(vs *mocks.ShopVoucherService) {
+					vs.On("DeleteVoucher", 1, "BAKM12a").Return(errs.ErrShopNotFound)
+				},
+			},
+			expected: expected{
+				data: &response.Response{
+					Code:    code.SHOP_NOT_REGISTERED,
+					Message: errs.ErrShopNotFound.Error(),
+				},
+				statusCode: http.StatusNotFound,
+			},
+		},
+		{
+			description: "response status not found when error ErrVoucherNotFound when delete voucher",
+			input: input{
+				beforeTests: func(vs *mocks.ShopVoucherService) {
+					vs.On("DeleteVoucher", 1, "BAKM12a").Return(errs.ErrVoucherNotFound)
+				},
+			},
+			expected: expected{
+				data: &response.Response{
+					Code:    code.VOUCHER_NOT_FOUND,
+					Message: errs.ErrVoucherNotFound.Error(),
+				},
+				statusCode: http.StatusNotFound,
+			},
+		},
+		{
+			description: "response status conflict when error ErrVoucherIsOngoing when delete voucher",
+			input: input{
+				beforeTests: func(vs *mocks.ShopVoucherService) {
+					vs.On("DeleteVoucher", 1, "BAKM12a").Return(errs.ErrVoucherIsOngoing)
+				},
+			},
+			expected: expected{
+				data: &response.Response{
+					Code:    code.VOUCHER_IS_ONGOING,
+					Message: errs.ErrVoucherIsOngoing.Error(),
+				},
+				statusCode: http.StatusConflict,
+			},
+		},
+		{
+			description: "response status Internal Server Error when DeleteUserAddress return other error",
+			input: input{
+				beforeTests: func(vs *mocks.ShopVoucherService) {
+					vs.On("DeleteVoucher", 1, "BAKM12a").Return(errs.ErrInternalServerError)
+				},
+			},
+			expected: expected{
+				data: &response.Response{
+					Code:    code.INTERNAL_SERVER_ERROR,
+					Message: errs.ErrInternalServerError.Error(),
+				},
+				statusCode: http.StatusInternalServerError,
+			},
+		},
+		{
+			description: "response status OK when delete voucher success",
+			input: input{
+				beforeTests: func(vs *mocks.ShopVoucherService) {
+					vs.On("DeleteVoucher", 1, "BAKM12a").Return(nil)
+				},
+			},
+			expected: expected{
+				data: &response.Response{
+					Code:    code.OK,
+					Message: "success",
+				},
+				statusCode: http.StatusOK,
+			},
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.description, func(t *testing.T) {
+			rec := httptest.NewRecorder()
+			c, _ := gin.CreateTestContext(rec)
+			c.Set("userId", 1)
+			c.Params = gin.Params{
+				{
+					Key:   "voucherCode",
+					Value: "BAKM12a",
+				},
+			}
+
+			c.Request, _ = http.NewRequest(http.MethodDelete, "/selleres/vouchers", nil)
+
+			mockShopVoucherService := new(mocks.ShopVoucherService)
+			tc.input.beforeTests(mockShopVoucherService)
+
+			handler := handler.New(&handler.HandlerConfig{
+				ShopVoucherService: mockShopVoucherService,
+			})
+			handler.DeleteVoucher(c)
+
+			expectedJson, _ := json.Marshal(tc.expected.data)
+			assert.Equal(t, tc.expected.statusCode, rec.Code)
+			assert.Equal(t, string(expectedJson), rec.Body.String())
+
+		})
+	}
+}
+
 func TestGetValidShopVoucher(t *testing.T) {
 	var (
 		slug    = "shop"

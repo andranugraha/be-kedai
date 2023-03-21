@@ -162,7 +162,7 @@ func (r *shopVoucherRepositoryImpl) Delete(shopId int, voucherCode string) error
 	}
 
 	if voucher.Status == constant.VoucherPromotionStatusUpcoming || voucher.Status == constant.VoucherPromotionStatusExpired {
-		return errs.ErrFailedToDeleteVoucher
+		return errs.ErrVoucherIsOngoing
 	}
 
 	res := r.db.Delete(&model.ShopVoucher{}, "code = ? AND shop_id = ?", voucherCode, shopId)
