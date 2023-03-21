@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"kedai/backend/be-kedai/internal/common/constant"
 	commonErr "kedai/backend/be-kedai/internal/common/error"
 	"kedai/backend/be-kedai/internal/domain/order/model"
 
@@ -10,6 +11,7 @@ import (
 type RefundRequestRepository interface {
 	UpdateRefundStatus(tx *gorm.DB, invoiceId int, refundStatus string) error
 	PostComplain(tx *gorm.DB, ref *model.RefundRequest) error
+	ApproveRejectRefund(invoiceId int, refundStatus string) error
 }
 
 type refundRequestRepositoryImpl struct {
@@ -30,6 +32,7 @@ func (r *refundRequestRepositoryImpl) UpdateRefundStatus(tx *gorm.DB, invoiceId 
 	res := tx.Model(&model.RefundRequest{}).
 		Where("invoice_id = ?", invoiceId).
 		Update("status", refundStatus)
+
 	if err := res.Error; err != nil {
 		return err
 	}
@@ -37,6 +40,22 @@ func (r *refundRequestRepositoryImpl) UpdateRefundStatus(tx *gorm.DB, invoiceId 
 	if res.RowsAffected == 0 {
 		return commonErr.ErrRefundRequestNotFound
 	}
+	return nil
+}
+
+func (r *refundRequestRepositoryImpl) ApproveRejectRefund(invoiceId int, refundStatus string) error {
+
+	res := r.db.Model(&model.RefundRequest{}).
+		Where("invoice_id = ? AND status = ?", invoiceId, constant.RefundStatusPending).
+		Update("status", refundStatus)
+
+	if err := res.Error; err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return commonErr.ErrRefundRequestNotFound
+		}
+		return err
+	}
+
 	return nil
 }
 
