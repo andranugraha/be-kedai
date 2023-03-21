@@ -6629,6 +6629,142 @@ paths:
                   message:
                     type: string
                     example: "error message"
+  /v1/sellers/ratings:
+    get:
+      security:
+        - BearerAuth: []
+      tags:
+        - Seller
+      summary: Get shop rating
+      description: Get shop rating from the product that has been reviewed
+      parameters:
+        - in: query
+          name: search
+          required: false
+          schema:
+            type: string
+            example: "VGA"
+        - in: query
+          name: page
+          required: false
+          schema:
+            type: integer
+            example: 1
+        - in: query
+          name: limit
+          required: false
+          schema:
+            type: integer
+            example: 10
+        - in: query
+          name: filter
+          required: false
+          schema:
+            type: integer
+            example: 1
+        - in: query
+          name: startDate
+          required: false
+          schema:
+            type: string
+            example: "2020-01-01"
+        - in: query
+          name: endDate
+          required: false
+          schema:
+            type: string
+            example: "2020-01-01"
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Response'
+                  - type: object
+                    properties:
+                      data:
+                        type : object
+                        properties:
+                          shopRating:
+                            type: integer
+                            example: 1
+                          data:
+                            type: array
+                            items:
+                              allOf:
+                                - type: object
+                                  properties:
+                                    userName:
+                                      type: string
+                                      example: "user name"
+                                - type: object
+                                  properties:
+                                    userUrl:
+                                      type: string
+                                      format: url
+                                      example: http://example.user/test.png
+                                - type: object
+                                  properties:
+                                    orderId:
+                                      type: string
+                                      example: "345678"
+                                - type: object
+                                  properties:
+                                    productUrl:
+                                      type: string
+                                      format: url
+                                      example: http://example.product/test.png
+                                - type: object
+                                  properties:
+                                    productName:
+                                      type: string
+                                      example: "product name"
+                                - type: object
+                                  properties:
+                                    productRating:
+                                      type: integer
+                                      example: 1
+                                - type: object
+                                  properties:
+                                    productReview:
+                                      type: string
+                                      example: "product review"
+                                - type: object
+                                  properties:
+                                    reviewMedia:
+                                      type: array
+                                      items:
+                                        type: string
+                                        example: ["http://example.review/test1.png", "http://example.review/test2.png"]
+        '401':
+          description: unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "UNAUTHORIZED"
+                  message:
+                    type: string
+                    example: "invalid credential"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "INTERNAL_SERVER_ERROR"
+                  message:
+                    type: string
+                    example: "error message"
+
   /v1/sellers/orders/{orderId}/cancel-request:
     post:
       security:
