@@ -21,6 +21,7 @@ type ShopVoucherRepository interface {
 	GetValidByIdAndUserId(id, userId int) (*model.ShopVoucher, error)
 	GetValidByUserIDAndShopID(dto.GetValidShopVoucherRequest, int) ([]*model.ShopVoucher, error)
 	Create(shopId int, request *dto.CreateVoucherRequest) (*model.ShopVoucher, error)
+	Delete(voucherId int, shopId int) error
 }
 
 type shopVoucherRepositoryImpl struct {
@@ -128,6 +129,20 @@ func (r *shopVoucherRepositoryImpl) Create(shopId int, request *dto.CreateVouche
 	}
 
 	return voucher, nil
+}
+
+func (r *shopVoucherRepositoryImpl) Delete(shopId int, voucherId int) error {
+
+	res := r.db.Delete(&model.ShopVoucher{}, "id = ? AND shop_id = ?", voucherId, shopId)
+	if err := res.Error; err != nil {
+		return err
+	}
+
+	if res.RowsAffected == 0 {
+		return errs.ErrVoucherNotFound
+	}
+
+	return nil
 }
 
 func (r *shopVoucherRepositoryImpl) GetValidByIdAndUserId(id, userId int) (*model.ShopVoucher, error) {
