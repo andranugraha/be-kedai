@@ -5310,6 +5310,103 @@ paths:
                   message:
                     type: string
                     example: "error message"
+    post:
+      security:
+        - BearerAuth: []
+      tags:
+        - Seller
+      summary: Create seller's voucher
+      description: Create a new seller's voucher
+      requestBody:
+        $ref: '#/components/requestBodies/CreateVoucherBody'
+      responses:
+        '201':
+          description: voucher created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: CREATED
+                  message:
+                    type: string
+                    example: success message
+                  data:
+                    allOf:
+                      - $ref: '#/components/schemas/ShopVoucher'
+                        properties:
+                          variantGroups:
+                            type: array
+                            items:
+                              allOf:
+                                - $ref: '#/components/schemas/GroupVariant'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "BAD_REQUEST"
+                  message:
+                    type: string
+                    example: "error message"
+        '401':
+          description: unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "UNAUTHORIZED"
+                  message:
+                    type: string
+                    example: "invalid credential"
+        '404':
+          description: not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "NOT_FOUND"
+                  message:
+                    type: string
+                    example: "error message"
+        '422':
+          description: invalid voucher name pattern
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "INVALID_VOUCHER_NAME"
+                  message:
+                    type: string
+                    example: "error message"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "INTERNAL_SERVER_ERROR"
+                  message:
+                    type: string
+                    example: "error message" 
   /v1/sellers/products/{code}:
     get:
       security:
@@ -9360,6 +9457,68 @@ components:
                 type: array
                 items:
                   $ref: '#/components/requestBodies/SkuBody'
+    CreateVoucherBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - name
+              - code
+              - amount
+              - type
+              - isHidden
+              - description
+              - minimumSpend
+              - totalQuota
+              - startFrom
+              - expiredAt
+            properties:
+              name:
+                type: string
+                minLength: 1
+                maxLength: 100
+                example: voucher name
+              code:
+                type: string
+                minLength: 1
+                maxLength: 9
+                example: BAKM1234A
+              amount:
+                type: integer
+                minimum: 0
+                maximum: 500000000
+                example: 1000
+              type:
+                type: string
+                example: nominal
+              isHidden:
+                type: boolean
+                example: false
+              description:
+                type: string
+                minLength: 5
+                maxLength: 1000
+                example: voucher bakmi kejaksaan enak
+              minimumSpend:
+                type: integer
+                minimum: 0
+                maximum: 500000000
+                example: 1000
+              totalQuota:
+                type: integer
+                minimum: 1
+                maximum: 200000
+                example: 10
+              startFrom:
+                type: string
+                format: datetime
+                example: "2006-01-02T00:00:00.000Z"
+              expiredAt:
+                type: string
+                format: datetime
+                example: "2006-01-02T00:00:00.000Z"
   securitySchemes:
     BearerAuth:
       type: http
