@@ -161,7 +161,7 @@ func (r *shopVoucherRepositoryImpl) Delete(shopId int, voucherCode string) error
 		return err
 	}
 
-	if voucher.Status == constant.VoucherPromotionStatusUpcoming || voucher.Status == constant.VoucherPromotionStatusExpired {
+	if voucher.Status == constant.VoucherPromotionStatusOngoing || voucher.Status == constant.VoucherPromotionStatusExpired {
 		return errs.ErrVoucherIsOngoing
 	}
 
