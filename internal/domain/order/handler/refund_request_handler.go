@@ -14,6 +14,7 @@ import (
 
 func (h *Handler) UpdateRefundStatus(c *gin.Context) {
 	var req dto.RefundRequest
+	userId := c.GetInt("userId")
 	invoiceId, _ := strconv.Atoi(c.Param("orderId"))
 
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -26,7 +27,7 @@ func (h *Handler) UpdateRefundStatus(c *gin.Context) {
 		return
 	}
 
-	err := h.refundRequestService.UpdateRefundStatus(invoiceId, req.RefundStatus)
+	err := h.refundRequestService.UpdateRefundStatus(userId, invoiceId, req.RefundStatus)
 
 	if err != nil {
 		if errors.Is(err, commonErr.ErrRefundRequestNotFound) {

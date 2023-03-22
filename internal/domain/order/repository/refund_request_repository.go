@@ -11,7 +11,7 @@ import (
 type RefundRequestRepository interface {
 	UpdateRefundStatus(tx *gorm.DB, invoiceId int, refundStatus string) error
 	PostComplain(tx *gorm.DB, ref *model.RefundRequest) error
-	ApproveRejectRefund(invoiceId int, refundStatus string) error
+	ApproveRejectRefund(shopId int, invoiceId int, refundStatus string) error
 }
 
 type refundRequestRepositoryImpl struct {
@@ -43,10 +43,11 @@ func (r *refundRequestRepositoryImpl) UpdateRefundStatus(tx *gorm.DB, invoiceId 
 	return nil
 }
 
-func (r *refundRequestRepositoryImpl) ApproveRejectRefund(invoiceId int, refundStatus string) error {
+func (r *refundRequestRepositoryImpl) ApproveRejectRefund(shopId int, invoiceId int, refundStatus string) error {
 
 	res := r.db.Model(&model.RefundRequest{}).
 		Where("invoice_id = ? AND status = ?", invoiceId, constant.RefundStatusPending).
+		Joins("JOIN invoice_per_shops ON invoice_per_shops.shop_id = ?", shopId).
 		Update("status", refundStatus)
 
 	if err := res.Error; err != nil {

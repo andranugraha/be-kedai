@@ -110,10 +110,6 @@ func createRouter() *gin.Engine {
 		DB: db,
 	})
 
-	refundRequestService := orderServicePackage.NewRefundRequestService(&orderServicePackage.RefundRequestSConfig{
-		RefundRequestRepo: refundRequestRepo,
-	})
-
 	skuRepo := productRepoPackage.NewSkuRepository(&productRepoPackage.SkuRConfig{
 		DB: db})
 
@@ -220,6 +216,11 @@ func createRouter() *gin.Engine {
 		ShopVoucherService: shopVoucherService,
 		CourierService:     courierService,
 		ShopGuestService:   shopGuestService,
+	})
+
+	refundRequestService := orderServicePackage.NewRefundRequestService(&orderServicePackage.RefundRequestSConfig{
+		RefundRequestRepo: refundRequestRepo,
+		ShopService:       shopService,
 	})
 
 	userProfileRepo := userRepoPackage.NewUserProfileRepository(&userRepoPackage.UserProfileRConfig{
