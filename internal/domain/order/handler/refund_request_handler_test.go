@@ -74,7 +74,7 @@ func TestUpdateRefundStatus(t *testing.T) {
 					RefundStatus: "SELLER_APPROVED",
 				},
 				beforeTest: func(m *mocks.RefundRequestService) {
-					m.On("UpdateRefundStatus", 1, "SELLER_APPROVED").Return(commonErr.ErrRefundRequestNotFound)
+					m.On("UpdateRefundStatus", 1, 1, "SELLER_APPROVED").Return(commonErr.ErrRefundRequestNotFound)
 				},
 			},
 			expected: expected{
@@ -93,7 +93,7 @@ func TestUpdateRefundStatus(t *testing.T) {
 					RefundStatus: "SELLER_APPROVED",
 				},
 				beforeTest: func(m *mocks.RefundRequestService) {
-					m.On("UpdateRefundStatus", 1, "SELLER_APPROVED").Return(commonErr.ErrInternalServerError)
+					m.On("UpdateRefundStatus", 1, 1, "SELLER_APPROVED").Return(commonErr.ErrInternalServerError)
 				},
 			},
 			expected: expected{
@@ -112,7 +112,7 @@ func TestUpdateRefundStatus(t *testing.T) {
 					RefundStatus: "SELLER_APPROVED",
 				},
 				beforeTest: func(m *mocks.RefundRequestService) {
-					m.On("UpdateRefundStatus", 1, "SELLER_APPROVED").Return(nil)
+					m.On("UpdateRefundStatus", 1, 1, "SELLER_APPROVED").Return(nil)
 				},
 			},
 			expected: expected{
@@ -131,7 +131,7 @@ func TestUpdateRefundStatus(t *testing.T) {
 					RefundStatus: "REJECTED",
 				},
 				beforeTest: func(m *mocks.RefundRequestService) {
-					m.On("UpdateRefundStatus", 1, "REJECTED").Return(nil)
+					m.On("UpdateRefundStatus", 1, 1, "REJECTED").Return(nil)
 				},
 			},
 			expected: expected{
@@ -153,6 +153,7 @@ func TestUpdateRefundStatus(t *testing.T) {
 			rec := httptest.NewRecorder()
 			c, _ := gin.CreateTestContext(rec)
 
+			c.Set("userId", 1)
 			c.AddParam("orderId", "1")
 			c.Request, _ = http.NewRequest(http.MethodPut, fmt.Sprintf("/sellers/orders/{%d}/refund", tc.input.invoiceId), inputBody)
 			handler := handler.New(&handler.Config{
