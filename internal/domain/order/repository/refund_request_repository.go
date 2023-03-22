@@ -51,10 +51,11 @@ func (r *refundRequestRepositoryImpl) ApproveRejectRefund(shopId int, invoiceId 
 		Update("status", refundStatus)
 
 	if err := res.Error; err != nil {
-		if err == gorm.ErrRecordNotFound {
-			return commonErr.ErrRefundRequestNotFound
-		}
 		return err
+	}
+
+	if res.RowsAffected == 0 {
+		return commonErr.ErrRefundRequestNotFound
 	}
 
 	return nil
