@@ -388,6 +388,88 @@ func TestCreateVoucher(t *testing.T) {
 	}
 }
 
+func TestDeleteVoucher(t *testing.T) {
+	type input struct {
+		voucherCode string
+		userID      int
+	}
+	type expected struct {
+		err error
+	}
+
+	var (
+		userID      = 1
+		shopID      = 1
+		voucherCode = "voucher-code"
+	)
+
+	tests := []struct {
+		description string
+		input
+		beforeTest func(*mocks.ShopService, *mocks.ShopVoucherRepository)
+		expected
+	}{
+		{
+			description: "should return error when failed to get shop",
+			input: input{
+				userID:      userID,
+				voucherCode: voucherCode,
+			},
+			beforeTest: func(ss *mocks.ShopService, vr *mocks.ShopVoucherRepository) {
+				ss.On("FindShopByUserId", userID).Return(nil, errors.New("failed to get shop"))
+			},
+			expected: expected{
+				err: errors.New("failed to get shop"),
+			},
+		}, {
+			description: "should return error when failed to delete voucher",
+			input: input{
+				userID:      userID,
+				voucherCode: voucherCode,
+			},
+			beforeTest: func(ss *mocks.ShopService, vr *mocks.ShopVoucherRepository) {
+				shop := &model.Shop{ID: shopID}
+				ss.On("FindShopByUserId", userID).Return(shop, nil)
+				vr.On("Delete", shopID, voucherCode).Return(errors.New("failed to delete voucher"))
+			},
+			expected: expected{
+				err: errors.New("failed to delete voucher"),
+			},
+		},
+		{
+			description: "should return nil when voucher is successfully deleted",
+			input: input{
+				userID:      userID,
+				voucherCode: voucherCode,
+			},
+			beforeTest: func(ss *mocks.ShopService, vr *mocks.ShopVoucherRepository) {
+				shop := &model.Shop{ID: shopID}
+				ss.On("FindShopByUserId", userID).Return(shop, nil)
+				vr.On("Delete", shopID, voucherCode).Return(nil)
+			},
+			expected: expected{
+				err: nil,
+			},
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.description, func(t *testing.T) {
+			shopVoucherRepo := mocks.NewShopVoucherRepository(t)
+			shopService := mocks.NewShopService(t)
+			tc.beforeTest(shopService, shopVoucherRepo)
+			shopVoucherService := service.NewShopVoucherService(&service.ShopVoucherSConfig{
+				ShopVoucherRepository: shopVoucherRepo,
+				ShopService:           shopService,
+			})
+
+			err := shopVoucherService.DeleteVoucher(tc.input.userID, tc.input.voucherCode)
+
+			assert.Equal(t, tc.expected.err, err)
+		})
+	}
+}
+
 func TestGetValidShopVoucherByUserIDAndSlug(t *testing.T) {
 	var (
 		slug    = "shop"
