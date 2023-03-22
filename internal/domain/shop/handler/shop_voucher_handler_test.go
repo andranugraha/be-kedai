@@ -179,7 +179,7 @@ func TestGetSellerVoucher(t *testing.T) {
 			},
 		},
 		{
-			description: "should return error with status code 200 when suceed fetching vouchers",
+			description: "should return data with status code 200 when succeed fetching vouchers",
 			input: input{
 				userID:  userID,
 				request: request,
@@ -225,6 +225,117 @@ func TestGetSellerVoucher(t *testing.T) {
 
 		assert.Equal(t, tc.expected.statusCode, rec.Code)
 		assert.Equal(t, string(expectedRes), rec.Body.String())
+	}
+}
+
+func TestGetVoucherByCodeAndShopId(t *testing.T) {
+	type input struct {
+		userID      int
+		voucherCode string
+		mockData    *dto.SellerVoucher
+		mockErr     error
+	}
+	type expected struct {
+		statusCode int
+		response   response.Response
+	}
+
+	var (
+		userID      = 1
+		voucherCode = "voucher-code"
+	)
+
+	tests := []struct {
+		description string
+		input
+		expected
+	}{
+		{
+			description: "should return error with status code 404 when shop not found",
+			input: input{
+				userID:      userID,
+				voucherCode: voucherCode,
+				mockData:    nil,
+				mockErr:     errs.ErrShopNotFound,
+			},
+			expected: expected{
+				statusCode: http.StatusNotFound,
+				response: response.Response{
+					Code:    code.SHOP_NOT_REGISTERED,
+					Message: errs.ErrShopNotFound.Error(),
+				},
+			},
+		},
+		{
+			description: "should return error with status code 404 when voucher not found",
+			input: input{
+				userID:      userID,
+				voucherCode: voucherCode,
+				mockData:    nil,
+				mockErr:     errs.ErrVoucherNotFound,
+			},
+			expected: expected{
+				statusCode: http.StatusNotFound,
+				response: response.Response{
+					Code:    code.VOUCHER_NOT_FOUND,
+					Message: errs.ErrVoucherNotFound.Error(),
+				},
+			},
+		},
+		{
+			description: "should return error with status code 500 when something went wrong",
+			input: input{
+				userID:      userID,
+				voucherCode: voucherCode,
+				mockData:    nil,
+				mockErr:     errs.ErrInternalServerError,
+			},
+			expected: expected{
+				statusCode: http.StatusInternalServerError,
+				response: response.Response{
+					Code:    code.INTERNAL_SERVER_ERROR,
+					Message: errs.ErrInternalServerError.Error(),
+				},
+			},
+		},
+		{
+			description: "should return voucher detail with status code 200 when succeed to get voucher",
+			input: input{
+				userID:      userID,
+				voucherCode: voucherCode,
+				mockData:    &dto.SellerVoucher{},
+				mockErr:     nil,
+			},
+			expected: expected{
+				statusCode: http.StatusOK,
+				response: response.Response{
+					Code:    code.OK,
+					Message: "success",
+					Data:    &dto.SellerVoucher{},
+				},
+			},
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.description, func(t *testing.T) {
+			expectedRes, _ := json.Marshal(tc.expected.response)
+			shopVoucherService := mocks.NewShopVoucherService(t)
+			shopVoucherService.On("GetVoucherByCodeAndShopId", tc.input.voucherCode, tc.input.userID).Return(tc.input.mockData, tc.input.mockErr)
+			rec := httptest.NewRecorder()
+			c, _ := gin.CreateTestContext(rec)
+			c.Set("userId", tc.input.userID)
+			c.AddParam("voucherCode", tc.input.voucherCode)
+			h := handler.New(&handler.HandlerConfig{
+				ShopVoucherService: shopVoucherService,
+			})
+			c.Request = httptest.NewRequest("GET", fmt.Sprintf("/sellers/vouchers?%s", tc.input.voucherCode), nil)
+
+			h.GetVoucherByCodeAndShopId(c)
+
+			assert.Equal(t, tc.expected.statusCode, rec.Code)
+			assert.Equal(t, string(expectedRes), rec.Body.String())
+		})
 	}
 }
 
