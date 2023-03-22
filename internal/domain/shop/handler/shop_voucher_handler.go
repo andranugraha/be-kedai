@@ -51,7 +51,7 @@ func (h *Handler) GetSellerVoucher(c *gin.Context) {
 
 func (h *Handler) GetVoucherByCodeAndShopId(c *gin.Context) {
 	userId := c.GetInt("userId")
-	voucherCode := c.Param("voucherCode")
+	voucherCode := c.Param("code")
 
 	res, err := h.shopVoucherService.GetVoucherByCodeAndShopId(voucherCode, userId)
 	if err != nil {
@@ -103,7 +103,7 @@ func (h *Handler) CreateVoucher(c *gin.Context) {
 
 func (h *Handler) DeleteVoucher(c *gin.Context) {
 	userId := c.GetInt("userId")
-	voucherCode := c.Param("voucherCode")
+	voucherCode := c.Param("code")
 
 	err := h.shopVoucherService.DeleteVoucher(userId, voucherCode)
 	if err != nil {

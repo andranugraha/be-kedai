@@ -325,7 +325,7 @@ func TestGetVoucherByCodeAndShopId(t *testing.T) {
 			rec := httptest.NewRecorder()
 			c, _ := gin.CreateTestContext(rec)
 			c.Set("userId", tc.input.userID)
-			c.AddParam("voucherCode", tc.input.voucherCode)
+			c.AddParam("code", tc.input.voucherCode)
 			h := handler.New(&handler.HandlerConfig{
 				ShopVoucherService: shopVoucherService,
 			})
@@ -602,7 +602,7 @@ func TestDeleteVoucher(t *testing.T) {
 			c.Set("userId", 1)
 			c.Params = gin.Params{
 				{
-					Key:   "voucherCode",
+					Key:   "code",
 					Value: "BAKM12a",
 				},
 			}
