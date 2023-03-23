@@ -5125,10 +5125,24 @@ paths:
             example: product name
         - in: query
           name: isPromoted
-          description: if true show only promoted products. default: all products
+          description: use `false` to return products that is not being promoted in a range of date (please input the date range using `startPeriod` and `endPeriod` query)
           schema:
             type: boolean
-            example: true
+            example: false
+        - in: query
+          name: startPeriod
+          description: start period of a promotion
+          schema:
+            type: string
+            default: "current time"
+            example: "2023-03-23"
+        - in: query
+          name: endPeriod
+          description: end period of a promotion
+          schema:
+            type: string
+            default: "current time"
+            example: "2023-03-23"
       responses:
         '200':
           description: successful operation
