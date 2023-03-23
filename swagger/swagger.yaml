@@ -5407,6 +5407,175 @@ paths:
                   message:
                     type: string
                     example: "error message"                
+  /v1/sellers/vouchers/{code}:
+    get:
+      security:
+        - BearerAuth: []
+      tags:
+        - Seller
+      summary: Get seller voucher detail
+      description: Get seller voucher detail by using voucher code
+      parameters:
+        - in: path
+          name: code
+          required: true
+          schema:
+            type: string
+            example: voucher-code
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - type: object
+                    properties:
+                      code:
+                        example: "OK"
+                      message:
+                        example: "ok"
+                      data:
+                        allOf:
+                          - $ref: '#/components/schemas/ShopVoucher'
+                          - type: object
+                            properties:
+                              status:
+                                type: string
+                                example: "ongoing"
+        '401':
+          description: unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "UNAUTHORIZED"
+                  message:
+                    type: string
+                    example: "invalid credential"
+        '404':
+          description: not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "NOT_FOUND"
+                  message:
+                    type: string
+                    example: "error message"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "INTERNAL_SERVER_ERROR"
+                  message:
+                    type: string
+                    example: "error message"
+    delete:
+      security:
+        - BearerAuth: []
+      tags:
+        - Seller
+      summary: Delete seller's voucher
+      description: Delete seller's voucher using voucher code. Cannot delete voucher that has an ongoing or expired status.
+      parameters:
+        - in: path
+          name: code
+          required: true
+          description: Voucher Code of the voucher to be deleted
+          schema:
+            type: string
+            example: "voucher-code"
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "OK"
+                  message:
+                    type: string
+                    example: "success"
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "BAD_REQUEST"
+                  message:
+                    type: string
+                    example: "error message"
+        '401':
+          description: unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "UNAUTHORIZED"
+                  message:
+                    type: string
+                    example: "invalid credential"            
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "NOT_FOUND"
+                  message:
+                    type: string
+                    example: "error message"         
+        '409':
+          description: Conflict
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "VOUCHER_IS_EXPIRED_OR_ONGOING"
+                  message:
+                    type: string
+                    example: "voucher status is either expired or ongoing"            
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "INTERNAL_SERVER_ERROR"
+                  message:
+                    type: string
+                    example: "error message"  
   /v1/sellers/products/{code}:
     get:
       security:
