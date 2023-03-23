@@ -19,7 +19,7 @@ type ChatParamRequest struct {
 
 func (cpr *ChatParamRequest) Validate() {
 	if cpr.LimitByDay < 1 {
-		cpr.LimitByDay = 100
+		cpr.LimitByDay = 366
 	}
 	if cpr.Page < 1 {
 		cpr.Page = 1
