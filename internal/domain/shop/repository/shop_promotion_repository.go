@@ -12,6 +12,7 @@ import (
 )
 
 type ShopPromotionRepository interface {
+	GetSellerPromotions(shopId int, request *dto.SellerPromotionFilterRequest) ([]*dto.SellerPromotion, int64, int, error)
 }
 
 type shopPromotionRepositoryImpl struct {
