@@ -23,6 +23,10 @@ type Product struct {
 	SKUs     []*productModel.Sku `json:"skus,omitempty"`
 }
 
+func (Product) TableName() string {
+	return "products"
+}
+
 type SellerPromotionFilterRequest struct {
 	Limit  int    `form:"limit"`
 	Page   int    `form:"page"`

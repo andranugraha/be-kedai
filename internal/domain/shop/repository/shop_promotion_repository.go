@@ -42,9 +42,7 @@ func (r *shopPromotionRepositoryImpl) GetSellerPromotions(shopId int, request *d
 			"CASE WHEN start_period <= ? AND end_period >= ? THEN ? "+
 			"WHEN start_from > ? THEN ? "+
 			"ELSE ? "+
-			"END as status, "+
-			"products.id as product_id, products.name as product_name, products.code as product_code, "+
-			"(SELECT url FROM product_medias pm WHERE pm.product_id = products.id LIMIT 1) AS image_url").
+			"END as status, ").
 		Joins("JOIN shops ON shops.id = shop_promotions.shop_id").
 		Joins("JOIN skus ON skus.id = shop_promotions.sku_id").
 		Joins("JOIN products ON products.id = skus.product_id").
@@ -79,7 +77,20 @@ func (r *shopPromotionRepositoryImpl) GetSellerPromotions(shopId int, request *d
 	totalPages = int(math.Ceil(float64(totalRows) / float64(request.Limit)))
 
 	err = query.
-		Order("shop_promotions.created_at desc").Preload("SKUs.Variants").Preload("SKUs.Promotion").Limit(request.Limit).Offset(request.Offset()).Find(&promotions).Error
+		Order("shop_promotions.created_at desc").
+		Preload("Product", func(query *gorm.DB) *gorm.DB {
+			return query.Select(`
+				product.id,
+				product.name,
+				product.code,
+				(SELECT url FROM product_medias pm WHERE pm.product_id = products.id LIMIT 1) AS image_url")
+			`)
+		}).
+		Preload("SKUs.Variants").
+		Preload("SKUs.Promotion").
+		Limit(request.Limit).
+		Offset(request.Offset()).Find(&promotions).Error
+
 	if err != nil {
 		return nil, 0, 0, err
 	}
