@@ -9,6 +9,7 @@ import (
 	model "kedai/backend/be-kedai/internal/domain/product/model"
 	shopModel "kedai/backend/be-kedai/internal/domain/shop/model"
 	"math"
+	"time"
 
 	"gorm.io/gorm"
 )
@@ -289,12 +290,7 @@ func (r *productRepositoryImpl) GetBySellerID(shopID int, request *dto.SellerPro
 		(SELECT url FROM product_medias pm WHERE pm.product_id = products.id LIMIT 1) AS image_url
 	`).
 		Joins("JOIN skus ON skus.product_id = products.id").
-		Joins("LEFT JOIN product_promotions ON skus.id = product_promotions.sku_id").
 		Group("products.id")
-
-	if request.IsPromoted {
-		query = query.Where("product_promotions.sku_id IS NOT NULL")
-	}
 
 	query = query.Where("products.shop_id = ?", shopID)
 	if request.Name != "" {
@@ -317,6 +313,27 @@ func (r *productRepositoryImpl) GetBySellerID(shopID int, request *dto.SellerPro
 		query = query.Not("products.is_active")
 	case constant.ProductStatusSoldOut:
 		query = query.Where("skus.stock = 0")
+	}
+
+	if request.IsPromoted != nil && !*request.IsPromoted {
+		if request.StartPeriod != "" && request.EndPeriod != "" {
+			query = query.Where(`products.id NOT IN
+			(SELECT skus.product_id
+			FROM skus 
+			JOIN product_promotions ON product_promotions.sku_id = skus.id 
+			JOIN shop_promotions ON shop_promotions.id = product_promotions.promotion_id 
+			WHERE shop_promotions.start_period <= ? AND shop_promotions.end_period >= ?)`,
+				request.StartPeriod, request.EndPeriod)
+		} else {
+			now := time.Now()
+			query = query.Where(`products.id NOT IN
+			(SELECT skus.product_id
+			FROM skus
+			JOIN product_promotions ON product_promotions.sku_id = skus.id
+			JOIN shop_promotions ON shop_promotions.id = product_promotions.promotion_id 
+			WHERE shop_promotions.start_period <= ? AND shop_promotions.end_period >= ?)`,
+				now, now)
+		}
 	}
 
 	query = query.Session(&gorm.Session{})
