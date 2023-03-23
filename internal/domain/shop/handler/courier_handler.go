@@ -40,6 +40,22 @@ func (h *Handler) GetAllCouriers(c *gin.Context) {
 	response.Success(c, http.StatusOK, code.OK, "success", couriers)
 }
 
+func (h *Handler) AddCourier (c *gin.Context){
+	var req dto.ShipmentCourierRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.ErrorValidator(c, http.StatusBadRequest, err)
+		return
+	}
+
+	res, err := h.courierService.AddCourier(&req)
+	if err != nil {
+		response.Error(c, http.StatusInternalServerError, code.INTERNAL_SERVER_ERROR, errs.ErrInternalServerError.Error())
+		return
+	}
+
+	response.Success(c, http.StatusOK, code.OK, "success", res)
+}
+
 func (h *Handler) GetMatchingCouriers(c *gin.Context) {
 	var req dto.MatchingProductCourierRequest
 	if err := c.ShouldBindQuery(&req); err != nil {
