@@ -53,6 +53,7 @@ func TestUserAddChat(t *testing.T) {
 	type cases struct {
 		description string
 		input
+		beforeTests func(cs *mocks.ChatService)
 		expected
 	}
 
@@ -65,6 +66,9 @@ func TestUserAddChat(t *testing.T) {
 				body:     body,
 				result:   chat,
 				err:      nil,
+			},
+			beforeTests: func(cs *mocks.ChatService) {
+				cs.On("UserAddChat", body, userId, shopSlug).Return(chat, nil)
 			},
 			expected: expected{
 				statusCode: http.StatusCreated,
@@ -84,11 +88,32 @@ func TestUserAddChat(t *testing.T) {
 				result:   nil,
 				err:      errs.ErrShopNotFound,
 			},
+			beforeTests: func(cs *mocks.ChatService) {
+				cs.On("UserAddChat", body, userId, shopSlug).Return(nil, errs.ErrShopNotFound)
+			},
 			expected: expected{
 				statusCode: http.StatusBadRequest,
 				response: response.Response{
 					Code:    code.BAD_REQUEST,
 					Message: errs.ErrShopNotFound.Error(),
+				},
+			},
+		},
+		{
+			description: "should return error with code 400 when bad params",
+			input: input{
+				userId:   userId,
+				shopSlug: shopSlug,
+				body:     &dto.SendChatBodyRequest{},
+				result:   nil,
+				err:      errs.ErrShopNotFound,
+			},
+			beforeTests: func(cs *mocks.ChatService) {},
+			expected: expected{
+				statusCode: http.StatusBadRequest,
+				response: response.Response{
+					Code:    code.BAD_REQUEST,
+					Message: errors.New("Message is required").Error(),
 				},
 			},
 		},
@@ -100,6 +125,9 @@ func TestUserAddChat(t *testing.T) {
 				body:     body,
 				result:   nil,
 				err:      errors.New("error"),
+			},
+			beforeTests: func(cs *mocks.ChatService) {
+				cs.On("UserAddChat", body, userId, shopSlug).Return(nil, errors.New("error"))
 			},
 			expected: expected{
 				statusCode: http.StatusInternalServerError,
@@ -115,7 +143,7 @@ func TestUserAddChat(t *testing.T) {
 			rec := httptest.NewRecorder()
 			c, _ := gin.CreateTestContext(rec)
 			mockChatService := mocks.NewChatService(t)
-			mockChatService.On("UserAddChat", tc.input.body, tc.input.userId, tc.input.shopSlug).Return(tc.input.result, tc.input.err)
+			tc.beforeTests(mockChatService)
 			handler := handler.New(&handler.Config{
 				ChatService: mockChatService,
 			})
@@ -172,6 +200,7 @@ func TestSellerAddChat(t *testing.T) {
 		description string
 		input
 		expected
+		beforeTests func(cs *mocks.ChatService)
 	}
 
 	for _, tc := range []cases{
@@ -183,6 +212,9 @@ func TestSellerAddChat(t *testing.T) {
 				body:     body,
 				result:   chat,
 				err:      nil,
+			},
+			beforeTests: func(cs *mocks.ChatService) {
+				cs.On("SellerAddChat", body, userId, username).Return(chat, nil)
 			},
 			expected: expected{
 				statusCode: http.StatusCreated,
@@ -202,11 +234,32 @@ func TestSellerAddChat(t *testing.T) {
 				result:   nil,
 				err:      errs.ErrShopNotFound,
 			},
+			beforeTests: func(cs *mocks.ChatService) {
+				cs.On("SellerAddChat", body, userId, username).Return(nil, errs.ErrShopNotFound)
+			},
 			expected: expected{
 				statusCode: http.StatusBadRequest,
 				response: response.Response{
 					Code:    code.BAD_REQUEST,
 					Message: errs.ErrShopNotFound.Error(),
+				},
+			},
+		},
+		{
+			description: "should return error with code 400 when bad params",
+			input: input{
+				userId:   userId,
+				username: username,
+				body:     &dto.SendChatBodyRequest{},
+				result:   nil,
+				err:      errs.ErrShopNotFound,
+			},
+			beforeTests: func(cs *mocks.ChatService) {},
+			expected: expected{
+				statusCode: http.StatusBadRequest,
+				response: response.Response{
+					Code:    code.BAD_REQUEST,
+					Message: errors.New("Message is required").Error(),
 				},
 			},
 		},
@@ -218,6 +271,9 @@ func TestSellerAddChat(t *testing.T) {
 				body:     body,
 				result:   nil,
 				err:      errors.New("error"),
+			},
+			beforeTests: func(cs *mocks.ChatService) {
+				cs.On("SellerAddChat", body, userId, username).Return(nil, errors.New("error"))
 			},
 			expected: expected{
 				statusCode: http.StatusInternalServerError,
@@ -233,7 +289,7 @@ func TestSellerAddChat(t *testing.T) {
 			rec := httptest.NewRecorder()
 			c, _ := gin.CreateTestContext(rec)
 			mockChatService := mocks.NewChatService(t)
-			mockChatService.On("SellerAddChat", tc.input.body, tc.input.userId, tc.input.username).Return(tc.input.result, tc.input.err)
+			tc.beforeTests(mockChatService)
 			handler := handler.New(&handler.Config{
 				ChatService: mockChatService,
 			})
