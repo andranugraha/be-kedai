@@ -36,14 +36,15 @@ func (SellerProduct) TableName() string {
 }
 
 type SellerProductFilterRequest struct {
-	Limit  int    `form:"limit"`
-	Page   int    `form:"page"`
-	Sales  int    `form:"sales"`
-	Stock  int    `form:"stock"`
-	Sort   string `form:"sort"`
-	Status string `form:"status"`
-	Sku    string `form:"sku"`
-	Name   string `form:"name"`
+	Limit      int    `form:"limit"`
+	Page       int    `form:"page"`
+	Sales      int    `form:"sales"`
+	Stock      int    `form:"stock"`
+	Sort       string `form:"sort"`
+	Status     string `form:"status"`
+	Sku        string `form:"sku"`
+	Name       string `form:"name"`
+	IsPromoted bool   `form:"isPromoted"`
 }
 
 func (r *SellerProductFilterRequest) Validate() {

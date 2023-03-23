@@ -289,7 +289,12 @@ func (r *productRepositoryImpl) GetBySellerID(shopID int, request *dto.SellerPro
 		(SELECT url FROM product_medias pm WHERE pm.product_id = products.id LIMIT 1) AS image_url
 	`).
 		Joins("JOIN skus ON skus.product_id = products.id").
+		Joins("LEFT JOIN product_promotions ON skus.id = product_promotions.sku_id").
 		Group("products.id")
+
+	if request.IsPromoted {
+		query = query.Where("product_promotions.sku_id IS NOT NULL")
+	}
 
 	query = query.Where("products.shop_id = ?", shopID)
 	if request.Name != "" {
