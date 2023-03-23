@@ -45,11 +45,23 @@ func (s *chatServiceImpl) SellerGetListOfChats(param *dto.ListOfChatsParamReques
 }
 
 func (s *chatServiceImpl) UserGetChat(param *dto.ChatParamRequest, userId int, shopSlug string) ([]*dto.ChatResponse, error) {
-	return s.chatRepo.UserGetChat(param, userId, shopSlug)
+	shop, err := s.shopService.FindShopBySlug(shopSlug)
+	if err != nil {
+		return nil, err
+	}
+	return s.chatRepo.UserGetChat(param, userId, shop)
 }
 
 func (s *chatServiceImpl) SellerGetChat(param *dto.ChatParamRequest, userId int, username string) ([]*dto.ChatResponse, error) {
-	return s.chatRepo.SellerGetChat(param, userId, username)
+	shop, err := s.shopService.FindShopByUserId(userId)
+	if err != nil {
+		return nil, err
+	}
+	user, err := s.userService.GetByUsername(username)
+	if err != nil {
+		return nil, err
+	}
+	return s.chatRepo.SellerGetChat(param, shop, user)
 }
 
 func (s *chatServiceImpl) UserAddChat(body *dto.SendChatBodyRequest, userId int, shopSlug string) (*dto.ChatResponse, error) {

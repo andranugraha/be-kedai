@@ -12,8 +12,8 @@ import (
 type ChatRepository interface {
 	UserGetListOfChats(param *dto.ListOfChatsParamRequest, userId int) ([]*dto.UserListOfChatResponse, error)
 	SellerGetListOfChats(param *dto.ListOfChatsParamRequest, userId int) ([]*dto.SellerListOfChatResponse, error)
-	UserGetChat(param *dto.ChatParamRequest, userId int, shopSlug string) ([]*dto.ChatResponse, error)
-	SellerGetChat(param *dto.ChatParamRequest, userId int, username string) ([]*dto.ChatResponse, error)
+	UserGetChat(param *dto.ChatParamRequest, userId int, shop *shopModel.Shop) ([]*dto.ChatResponse, error)
+	SellerGetChat(param *dto.ChatParamRequest, shop *shopModel.Shop, user *userModel.User) ([]*dto.ChatResponse, error)
 	UserAddChat(body *dto.SendChatBodyRequest, userId int, shop *shopModel.Shop) (*dto.ChatResponse, error)
 	SellerAddChat(body *dto.SendChatBodyRequest, shop *shopModel.Shop, user *userModel.User) (*dto.ChatResponse, error)
 }
@@ -45,11 +45,11 @@ func (r *chatRepositoryImpl) SellerGetListOfChats(param *dto.ListOfChatsParamReq
 	return []*dto.SellerListOfChatResponse{}, nil
 }
 
-func (r *chatRepositoryImpl) UserGetChat(param *dto.ChatParamRequest, userId int, shopSlug string) ([]*dto.ChatResponse, error) {
+func (r *chatRepositoryImpl) UserGetChat(param *dto.ChatParamRequest, userId int, shop *shopModel.Shop) ([]*dto.ChatResponse, error) {
 	return []*dto.ChatResponse{}, nil
 }
 
-func (r *chatRepositoryImpl) SellerGetChat(param *dto.ChatParamRequest, userId int, username string) ([]*dto.ChatResponse, error) {
+func (r *chatRepositoryImpl) SellerGetChat(param *dto.ChatParamRequest, shop *shopModel.Shop, user *userModel.User) ([]*dto.ChatResponse, error) {
 	return []*dto.ChatResponse{}, nil
 }
 

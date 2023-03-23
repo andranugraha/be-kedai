@@ -10,6 +10,27 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+func (h *Handler) UserGetChat(c *gin.Context) {
+	userID := c.GetInt("userId")
+
+	shopSlug := c.Param("shopSlug")
+
+	var param *dto.ChatParamRequest
+	c.ShouldBindQuery(&param)
+
+	chat, err := h.chatService.UserAddChat(param, userID, shopSlug)
+	if err != nil {
+		if err == spErr.ErrShopNotFound || err == spErr.ErrUserDoesNotExist {
+			response.Error(c, http.StatusBadRequest, code.BAD_REQUEST, err.Error())
+			return
+		}
+		response.Error(c, http.StatusInternalServerError, code.INTERNAL_SERVER_ERROR, spErr.ErrInternalServerError.Error())
+		return
+	}
+
+	response.Success(c, http.StatusCreated, code.CREATED, "success", chat)
+}
+
 func (h *Handler) UserAddChat(c *gin.Context) {
 	userID := c.GetInt("userId")
 
