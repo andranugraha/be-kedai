@@ -6,7 +6,6 @@ import (
 	commonErr "kedai/backend/be-kedai/internal/common/error"
 	"kedai/backend/be-kedai/internal/domain/shop/dto"
 	"kedai/backend/be-kedai/internal/domain/shop/model"
-	"log"
 
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
@@ -25,18 +24,18 @@ type CourierRepository interface {
 }
 
 type courierRepositoryImpl struct {
-	db *gorm.DB
+	db                       *gorm.DB
 	courierServiceRepository CourierServiceRepository
 }
 
 type CourierRConfig struct {
-	DB *gorm.DB
+	DB                       *gorm.DB
 	CourierServiceRepository CourierServiceRepository
 }
 
 func NewCourierRepository(cfg *CourierRConfig) CourierRepository {
 	return &courierRepositoryImpl{
-		db: cfg.DB,
+		db:                       cfg.DB,
 		courierServiceRepository: cfg.CourierServiceRepository,
 	}
 }
@@ -54,15 +53,14 @@ func (r *courierRepositoryImpl) AddCourier(req *dto.ShipmentCourierRequest) (*mo
 		}
 
 		var serviceCouriers []*model.CourierService
-		log.Println(req.Service)
 
 		for _, service := range req.Service {
 			serviceCouriers = append(serviceCouriers, &model.CourierService{
-				CourierID:    courier.ID,
-				Name:         service.Name,
-				Code:         service.Code,
-				MinDuration:  service.MinDuration,
-				MaxDuration:  service.MaxDuration,
+				CourierID:   courier.ID,
+				Name:        service.Name,
+				Code:        service.Code,
+				MinDuration: service.MinDuration,
+				MaxDuration: service.MaxDuration,
 			})
 		}
 
