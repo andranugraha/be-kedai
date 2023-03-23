@@ -4,6 +4,7 @@ import (
 	errorResponse "kedai/backend/be-kedai/internal/common/error"
 	"kedai/backend/be-kedai/internal/domain/product/dto"
 	"kedai/backend/be-kedai/internal/domain/product/service"
+	"kedai/backend/be-kedai/internal/domain/shop/model"
 	"kedai/backend/be-kedai/mocks"
 	"testing"
 
@@ -134,40 +135,82 @@ func TestGetChildDiscussionByParentID(t *testing.T) {
 
 }
 
-// func TestPostDiscussion(t *testing.T) {
-// 	var(
-// 		IsSeller = false
-// 	)
+func TestPostDiscussion(t *testing.T) {
 
-// 	type input struct {
-// 		discussion *dto.DiscussionReq
-// 		err        error
-// 	}
+	var(
+		IsSellerTrue = true
+		shop = model.Shop{}
+	)
 
-// 	type expected struct {
-// 		err error
-// 	}
+	type input struct {
+		discussion *dto.DiscussionReq
+		err        error
+		beforeTest func(*mocks.ShopService)
+	}
 
-// 	tests := []struct {
-// 		description string
-// 		input
-// 		expected
-// 	}{
-// 		{
-// 			description: "should return success when success",
-// 			input: input{
-// 				discussion: &dto.DiscussionReq{
-// 					ProductID: 1,
-// 					UserID:    1,
-// 					Message:   "test",
-// 					IsSeller:  &IsSeller,
-// 				},
-// 				err: nil,
-// 			},
-// 			expected: expected{
-// 				err: nil,
-// 			},
-// 		},
-// 	}
+	type expected struct {
+		err error
+	}
 
-// }
+	tests := []struct {
+		description string
+		input
+		expected
+	}{
+		{
+			description: "should return success when success",
+			input: input{
+				beforeTest: func(ss *mocks.ShopService) {
+					ss.On("FindShopByUserId", 1).Return(&shop, nil)
+				},
+				discussion: &dto.DiscussionReq{
+					ProductID: 1,
+					UserID:    1,
+					Message:   "test",
+					IsSeller:  &IsSellerTrue,
+				},
+				err: nil,
+			},
+			expected: expected{
+				err: nil,
+			},
+		},
+		{
+			description: "should return error when failed shop not found",
+			input: input{
+				beforeTest: func(ss *mocks.ShopService) {
+					ss.On("FindShopByUserId", 1).Return(&shop, errorResponse.ErrInternalServerError)
+				}	,
+				discussion: &dto.DiscussionReq{
+					ProductID: 1,
+					UserID:    1,
+					Message:   "test",
+					IsSeller:  &IsSellerTrue,
+				},
+				err: errorResponse.ErrInternalServerError,
+			},
+			expected: expected{
+				err: errorResponse.ErrInternalServerError,
+			},
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.description, func(t *testing.T) {
+			mockDiscussionRepository := new(mocks.DiscussionRepository)
+			mockDiscussionRepository.On("PostDiscussion", tc.input.discussion).Return(tc.input.err)
+
+			mockShopService := new(mocks.ShopService)
+			tc.input.beforeTest(mockShopService)
+
+			discussionService := service.NewDiscussionService(&service.DiscussionSConfig{
+				DiscussionRepository: mockDiscussionRepository,
+				ShopService: mockShopService,
+			})
+
+			err := discussionService.PostDiscussion(tc.input.discussion)
+			assert.Equal(t, tc.expected.err, err)
+		})
+	}
+
+}

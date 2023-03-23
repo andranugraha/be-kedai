@@ -48,10 +48,10 @@ type DiscussionReply struct {
 type DiscussionReq struct {
 	ID        int       `json:"id"`
 	UserID    int       `json:"-"`
-	ProductID int       `json:"productId"`
-	Message   string    `json:"message"`
+	ProductID int       `json:"productId" binding:"required"`
+	Message   string    `json:"message" binding:"required"`
 	Date      time.Time `json:"date"`
-	ParentID  *int       `json:"parentId"`
+	ParentID  *int      `json:"parentId"`
 	ShopID    int       `json:"-"`
-	IsSeller  *bool      `json:"isSeller"`
+	IsSeller  *bool     `json:"isSeller"`
 }

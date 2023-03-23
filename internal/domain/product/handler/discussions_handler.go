@@ -11,11 +11,7 @@ import (
 )
 
 func (h *Handler) GetDiscussionByProductID(c *gin.Context) {
-	productId, err := strconv.Atoi(c.Param("productId"))
-	if err != nil {
-		response.Error(c, http.StatusBadRequest, code.BAD_REQUEST, err.Error())
-		return
-	}
+	productId, _ := strconv.Atoi(c.Param("productId"))
 
 	result, err := h.discussionService.GetDiscussionByProductID(productId)
 	if err != nil {
@@ -28,11 +24,8 @@ func (h *Handler) GetDiscussionByProductID(c *gin.Context) {
 }
 
 func (h *Handler) GetDiscussionByParentID(c *gin.Context) {
-	parentId, err := strconv.Atoi(c.Param("parentId"))
-	if err != nil {
-		response.Error(c, http.StatusBadRequest, code.BAD_REQUEST, err.Error())
-		return
-	}
+	parentId, _ := strconv.Atoi(c.Param("parentId"))
+
 
 	result, err := h.discussionService.GetChildDiscussionByParentID(parentId)
 	if err != nil {
@@ -48,7 +41,7 @@ func (h *Handler) PostDiscussion(c *gin.Context) {
 	userId := c.GetInt("userId")
 	var discussionDto dto.DiscussionReq
 	if err := c.ShouldBindJSON(&discussionDto); err != nil {
-		response.Error(c, http.StatusBadRequest, code.BAD_REQUEST, err.Error())
+		response.ErrorValidator(c, http.StatusBadRequest, err)
 		return
 	}
 
