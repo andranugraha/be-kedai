@@ -39,7 +39,7 @@ func (d *discussionServiceImpl) GetChildDiscussionByParentID(parentID int) ([]*d
 
 func (d *discussionServiceImpl) PostDiscussion(discussion *dto.DiscussionReq) error {
 
-	if discussion.IsSeller {
+	if discussion.IsSeller != nil && *discussion.IsSeller {
 		shop, err := d.shopService.FindShopByUserId(discussion.UserID)
 		if err != nil {
 			return err
