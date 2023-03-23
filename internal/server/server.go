@@ -196,11 +196,20 @@ func createRouter() *gin.Engine {
 		DB: db,
 	})
 
+	discussionRepo := productRepoPackage.NewDiscussionRepository(&productRepoPackage.DiscussionRConfig{
+		DB: db,
+	})
+	discussionService := productServicePackage.NewDiscussionService(&productServicePackage.DiscussionSConfig{
+		DiscussionRepository: discussionRepo,
+		ShopService: 				shopService,
+	})
+
 	productRepo := productRepoPackage.NewProductRepository(&productRepoPackage.ProductRConfig{
 		DB:                       db,
 		VariantGroupRepo:         variantGroupRepo,
 		SkuRepository:            skuRepo,
 		ProductVariantRepository: productVariantRepo,
+		DiscussionRepository:     discussionRepo,
 	})
 	productService := productServicePackage.NewProductService(&productServicePackage.ProductSConfig{
 		ProductRepository:     productRepo,
@@ -209,6 +218,7 @@ func createRouter() *gin.Engine {
 		CourierService:        courierService,
 		CategoryService:       categoryService,
 		CourierServiceService: courierServiceService,
+		DiscussionService:     discussionService,
 	})
 
 	shopHandler := shopHandlerPackage.New(&shopHandlerPackage.HandlerConfig{
@@ -332,11 +342,13 @@ func createRouter() *gin.Engine {
 		InvoicePerShopService: invoicePerShopService,
 		ProductService:        productService,
 	})
+
 	productHandler := productHandlerPackage.New(&productHandlerPackage.Config{
 		CategoryService:          categoryService,
 		ProductService:           productService,
 		SkuService:               skuService,
 		TransactionReviewService: transactionReviewService,
+		DiscussionService: 			discussionService,
 	})
 
 	invoiceService := orderServicePackage.NewInvoiceService(&orderServicePackage.InvoiceSConfig{

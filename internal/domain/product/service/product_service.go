@@ -33,6 +33,7 @@ type productServiceImpl struct {
 	courierService        service.CourierService
 	courierServiceService service.CourierServiceService
 	categoryService       CategoryService
+	DiscussionService     DiscussionService
 }
 
 type ProductSConfig struct {
@@ -42,6 +43,7 @@ type ProductSConfig struct {
 	CourierService        service.CourierService
 	CourierServiceService service.CourierServiceService
 	CategoryService       CategoryService
+	DiscussionService     DiscussionService
 }
 
 func NewProductService(cfg *ProductSConfig) ProductService {
@@ -52,6 +54,7 @@ func NewProductService(cfg *ProductSConfig) ProductService {
 		shopService:           cfg.ShopService,
 		categoryService:       cfg.CategoryService,
 		courierServiceService: cfg.CourierServiceService,
+		DiscussionService:     cfg.DiscussionService,
 	}
 }
 

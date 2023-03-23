@@ -33,6 +33,7 @@ type productRepositoryImpl struct {
 	variantGroupRepo         VariantGroupRepository
 	skuRepository            SkuRepository
 	productVariantRepository ProductVariantRepository
+	discussionRepository     DiscussionRepository
 }
 
 type ProductRConfig struct {
@@ -40,6 +41,7 @@ type ProductRConfig struct {
 	VariantGroupRepo         VariantGroupRepository
 	SkuRepository            SkuRepository
 	ProductVariantRepository ProductVariantRepository
+	DiscussionRepository     DiscussionRepository
 }
 
 func NewProductRepository(cfg *ProductRConfig) ProductRepository {
@@ -48,6 +50,7 @@ func NewProductRepository(cfg *ProductRConfig) ProductRepository {
 		variantGroupRepo:         cfg.VariantGroupRepo,
 		skuRepository:            cfg.SkuRepository,
 		productVariantRepository: cfg.ProductVariantRepository,
+		discussionRepository:     cfg.DiscussionRepository,
 	}
 }
 
