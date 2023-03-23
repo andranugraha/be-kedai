@@ -218,6 +218,11 @@ func createRouter() *gin.Engine {
 		ShopGuestService:   shopGuestService,
 	})
 
+	refundRequestService := orderServicePackage.NewRefundRequestService(&orderServicePackage.RefundRequestSConfig{
+		RefundRequestRepo: refundRequestRepo,
+		ShopService:       shopService,
+	})
+
 	userProfileRepo := userRepoPackage.NewUserProfileRepository(&userRepoPackage.UserProfileRConfig{
 		DB: db,
 	})
@@ -355,6 +360,7 @@ func createRouter() *gin.Engine {
 		InvoiceService:           invoiceService,
 		TransactionReviewService: transactionReviewService,
 		InvoicePerShopService:    invoicePerShopService,
+		RefundRequestService:     refundRequestService,
 	})
 
 	locHandler := locationHandlerPackage.New(&locationHandlerPackage.Config{
