@@ -179,6 +179,7 @@ func NewRouter(cfg *RouterConfig) *gin.Engine {
 		marketplace := v1.Group("/marketplaces")
 		{
 			marketplace.GET("/vouchers", cfg.MarketplaceHandler.GetMarketplaceVoucher)
+			marketplace.POST("/couriers", cfg.ShopHandler.AddCourier)
 			authenticated := marketplace.Group("", middleware.JWTAuthorization, cfg.UserHandler.GetSession)
 			{
 				authenticated.GET("/vouchers/valid", cfg.MarketplaceHandler.GetValidMarketplaceVoucher)
@@ -256,7 +257,9 @@ func NewRouter(cfg *RouterConfig) *gin.Engine {
 				voucher := authenticated.Group("/vouchers")
 				{
 					voucher.GET("", cfg.ShopHandler.GetSellerVoucher)
+					voucher.GET("/:code", cfg.ShopHandler.GetVoucherByCodeAndShopId)
 					voucher.POST("", cfg.ShopHandler.CreateVoucher)
+					voucher.DELETE("/:code", cfg.ShopHandler.DeleteVoucher)
 				}
 
 				order := authenticated.Group("/orders")
