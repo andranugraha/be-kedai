@@ -1,6 +1,7 @@
 package service
 
 import (
+	commonDto "kedai/backend/be-kedai/internal/common/dto"
 	"kedai/backend/be-kedai/internal/domain/chat/dto"
 	"kedai/backend/be-kedai/internal/domain/chat/repository"
 	shopService "kedai/backend/be-kedai/internal/domain/shop/service"
@@ -10,8 +11,8 @@ import (
 type ChatService interface {
 	UserGetListOfChats(param *dto.ListOfChatsParamRequest, userId int) ([]*dto.UserListOfChatResponse, error)
 	SellerGetListOfChats(param *dto.ListOfChatsParamRequest, userId int) ([]*dto.SellerListOfChatResponse, error)
-	UserGetChat(param *dto.ChatParamRequest, userId int, shopSlug string) ([]*dto.ChatResponse, error)
-	SellerGetChat(param *dto.ChatParamRequest, userId int, username string) ([]*dto.ChatResponse, error)
+	UserGetChat(param *dto.ChatParamRequest, userId int, shopSlug string) (*commonDto.PaginationResponse, error)
+	SellerGetChat(param *dto.ChatParamRequest, userId int, username string) (*commonDto.PaginationResponse, error)
 	UserAddChat(body *dto.SendChatBodyRequest, userId int, shopSlug string) (*dto.ChatResponse, error)
 	SellerAddChat(body *dto.SendChatBodyRequest, userId int, username string) (*dto.ChatResponse, error)
 }
@@ -44,7 +45,7 @@ func (s *chatServiceImpl) SellerGetListOfChats(param *dto.ListOfChatsParamReques
 	return s.chatRepo.SellerGetListOfChats(param, userId)
 }
 
-func (s *chatServiceImpl) UserGetChat(param *dto.ChatParamRequest, userId int, shopSlug string) ([]*dto.ChatResponse, error) {
+func (s *chatServiceImpl) UserGetChat(param *dto.ChatParamRequest, userId int, shopSlug string) (*commonDto.PaginationResponse, error) {
 	shop, err := s.shopService.FindShopBySlug(shopSlug)
 	if err != nil {
 		return nil, err
@@ -52,7 +53,7 @@ func (s *chatServiceImpl) UserGetChat(param *dto.ChatParamRequest, userId int, s
 	return s.chatRepo.UserGetChat(param, userId, shop)
 }
 
-func (s *chatServiceImpl) SellerGetChat(param *dto.ChatParamRequest, userId int, username string) ([]*dto.ChatResponse, error) {
+func (s *chatServiceImpl) SellerGetChat(param *dto.ChatParamRequest, userId int, username string) (*commonDto.PaginationResponse, error) {
 	shop, err := s.shopService.FindShopByUserId(userId)
 	if err != nil {
 		return nil, err

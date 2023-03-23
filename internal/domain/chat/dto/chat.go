@@ -17,6 +17,19 @@ type ChatParamRequest struct {
 	LimitByDay int `form:"limitByDay"`
 }
 
+func (cpr *ChatParamRequest) Validate() {
+	if cpr.LimitByDay < 1 {
+		cpr.LimitByDay = 100
+	}
+	if cpr.Page < 1 {
+		cpr.Page = 1
+	}
+}
+
+func (cpr *ChatParamRequest) Offset() int {
+	return int((cpr.Page - 1) * cpr.LimitByDay)
+}
+
 type SendChatBodyRequest struct {
 	Message string `json:"message" binding:"required"`
 	Type    string `json:"type"`
