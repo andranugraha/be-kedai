@@ -213,6 +213,15 @@ func NewRouter(cfg *RouterConfig) *gin.Engine {
 			}
 		}
 
+		// TODO ADD MIDLEWARE FOR AUTH ADMIN
+		admin := v1.Group("/admins")
+		{
+			order := admin.Group("/orders")
+			{
+				order.POST("/:orderId/cancel-commit", cfg.OrderHandler.UpdateToCanceled)
+			}
+		}
+
 		seller := v1.Group("/sellers")
 		{
 			authenticated := seller.Group("", middleware.JWTAuthorization, cfg.UserHandler.GetSession)
@@ -220,6 +229,7 @@ func NewRouter(cfg *RouterConfig) *gin.Engine {
 				authenticated.POST("/register", cfg.ShopHandler.CreateShop)
 				authenticated.GET("/stats", cfg.ShopHandler.GetShopStats)
 				authenticated.GET("/insights", cfg.ShopHandler.GetShopInsights)
+				authenticated.GET("/ratings", cfg.ShopHandler.GetShopRating)
 				finance := authenticated.Group("/finances")
 				{
 					income := finance.Group("/incomes")
@@ -243,12 +253,19 @@ func NewRouter(cfg *RouterConfig) *gin.Engine {
 					product.PUT("/:code/activations", cfg.ProductHandler.UpdateProductActivation)
 				}
 
+				voucher := authenticated.Group("/vouchers")
+				{
+					voucher.GET("", cfg.ShopHandler.GetSellerVoucher)
+					voucher.POST("", cfg.ShopHandler.CreateVoucher)
+				}
+
 				order := authenticated.Group("/orders")
 				{
 					order.GET("", cfg.OrderHandler.GetShopOrder)
 					order.GET("/:orderId", cfg.OrderHandler.GetInvoiceByShopIdAndOrderId)
 					order.PUT("/:orderId/delivery", cfg.OrderHandler.UpdateToDelivery)
-					order.PUT("/:orderId/cancel", cfg.OrderHandler.UpdateToCanceled)
+					order.POST("/:orderId/cancel-request", cfg.OrderHandler.UpdateToRefundPendingSellerCancel)
+					order.PUT("/:orderId/refund", cfg.OrderHandler.UpdateRefundStatus)
 				}
 				chat := authenticated.Group("/chats")
 				{

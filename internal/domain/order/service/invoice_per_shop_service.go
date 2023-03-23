@@ -21,7 +21,8 @@ type InvoicePerShopService interface {
 	GetShopOrder(userId int, req *dto.InvoicePerShopFilterRequest) (*commonDto.PaginationResponse, error)
 	RefundRequest(invoiceCode string, userId int) (*model.RefundRequest, error)
 	UpdateStatusToDelivery(userId int, orderId int) error
-	UpdateStatusToCanceled(userId int, orderId int) error
+	UpdateStatusToRefundPendingSellerCancel(userId int, orderId int) error
+	UpdateStatusToCanceled(orderId int) error
 	UpdateStatusToReceived(userId int, orderCode string) error
 	UpdateStatusToCompleted(userId int, orderCode string) error
 	UpdateStatusCRONJob() error
@@ -146,7 +147,7 @@ func (s *invoicePerShopServiceImpl) RefundRequest(invoiceCode string, userId int
 
 	req := &model.RefundRequest{
 		Status:    constant.TransactionStatusComplained,
-		InvoiceId: invoice.ID,
+		InvoiceID: invoice.ID,
 		Invoice:   &invoice.InvoicePerShop,
 	}
 
@@ -188,12 +189,8 @@ func (s *invoicePerShopServiceImpl) UpdateStatusToDelivery(userId int, orderId i
 	return nil
 }
 
-func (s *invoicePerShopServiceImpl) UpdateStatusToCanceled(userId int, orderId int) error {
-	shop, err := s.shopService.FindShopByUserId(userId)
-	if err != nil {
-		return err
-	}
-
+// TODO: change this method to admin only
+func (s *invoicePerShopServiceImpl) UpdateStatusToCanceled(orderId int) error {
 	var invoiceStatuses []*model.InvoiceStatus
 	var status = constant.TransactionStatusCanceled
 
@@ -202,7 +199,7 @@ func (s *invoicePerShopServiceImpl) UpdateStatusToCanceled(userId int, orderId i
 		Status:           status,
 	})
 
-	err = s.invoicePerShopRepo.UpdateStatusToCanceled(shop.ID, orderId, invoiceStatuses)
+	err := s.invoicePerShopRepo.UpdateStatusToCanceled(orderId, invoiceStatuses)
 	if err != nil {
 		return err
 	}
@@ -249,6 +246,27 @@ func (s *invoicePerShopServiceImpl) UpdateStatusToCompleted(userId int, orderCod
 	})
 
 	err = s.invoicePerShopRepo.UpdateStatusToCompleted(order.ShopID, order.ID, invoiceStatuses)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (s *invoicePerShopServiceImpl) UpdateStatusToRefundPendingSellerCancel(userId int, orderId int) error {
+	shop, err := s.shopService.FindShopByUserId(userId)
+	if err != nil {
+		return err
+	}
+
+	var invoiceStatuses []*model.InvoiceStatus
+
+	invoiceStatuses = append(invoiceStatuses, &model.InvoiceStatus{
+		InvoicePerShopID: orderId,
+		Status:           constant.TransactionStatusRefundPending,
+	})
+
+	err = s.invoicePerShopRepo.UpdateStatusToRefundPending(shop.ID, orderId, invoiceStatuses, constant.RefundTypeCancel)
 	if err != nil {
 		return err
 	}

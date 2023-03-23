@@ -22,6 +22,7 @@ const (
 	WalletHistoryTypeTopup      = "Top-up"
 	WalletHistoryTypeCheckout   = "Checkout"
 	WalletHistoryTypeWithdrawal = "Withdrawal"
+	WalletHistoryTypeRefund     = "Refund"
 )
 
 func (wh *WalletHistory) BeforeCreate(tx *gorm.DB) (err error) {

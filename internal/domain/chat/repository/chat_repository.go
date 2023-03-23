@@ -55,7 +55,7 @@ func (r *chatRepositoryImpl) SellerGetChat(param *dto.ChatParamRequest, userId i
 
 func (r *chatRepositoryImpl) UserAddChat(body *dto.SendChatBodyRequest, userId int, shop *shopModel.Shop) (*dto.ChatResponse, error) {
 	if body.Type == "" {
-		body.Type = "normal"
+		body.Type = "text"
 	}
 
 	chat := &model.Chat{
@@ -75,7 +75,7 @@ func (r *chatRepositoryImpl) UserAddChat(body *dto.SendChatBodyRequest, userId i
 
 func (r *chatRepositoryImpl) SellerAddChat(body *dto.SendChatBodyRequest, shop *shopModel.Shop, user *userModel.User) (*dto.ChatResponse, error) {
 	if body.Type == "" {
-		body.Type = "normal"
+		body.Type = "text"
 	}
 
 	chat := &model.Chat{
