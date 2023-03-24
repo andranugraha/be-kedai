@@ -126,6 +126,7 @@ func NewRouter(cfg *RouterConfig) *gin.Engine {
 			product.GET("/:code/reviews/stats", cfg.ProductHandler.GetProductReviewStats)
 			product.GET("/recommendations/categories", cfg.ProductHandler.GetRecommendationByCategory)
 			product.GET("/autocompletes", cfg.ProductHandler.SearchAutocomplete)
+			product.GET("/recommended", cfg.ProductHandler.GetRecommendedProducts)
 			product.POST("/views", cfg.ProductHandler.AddProductView)
 
 			category := product.Group("/categories")
