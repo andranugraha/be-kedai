@@ -25,3 +25,16 @@ type ToggleShopCourierResponse struct {
 	CourierId int  `json:"courierId"`
 	IsToggled bool `json:"isToggled"`
 }
+
+type ShipmentCourierRequest struct {
+	Name    string                   `json:"name" binding:"required"`
+	Code    string                   `json:"code" binding:"required"`
+	Service []ShipmentCourierService `json:"service" binding:"required"`
+}
+
+type ShipmentCourierService struct {
+	Name        string `json:"name"`
+	Code        string `json:"code"`
+	MinDuration int    `json:"minDuration"`
+	MaxDuration int    `json:"maxDuration"`
+}
