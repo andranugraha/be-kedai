@@ -2,6 +2,7 @@ package service_test
 
 import (
 	"errors"
+	commonDto "kedai/backend/be-kedai/internal/common/dto"
 	"kedai/backend/be-kedai/internal/domain/chat/dto"
 	"kedai/backend/be-kedai/internal/domain/chat/service"
 	"kedai/backend/be-kedai/internal/domain/shop/model"
@@ -11,6 +12,197 @@ import (
 
 	"github.com/stretchr/testify/assert"
 )
+
+func TestUserGetChat(t *testing.T) {
+	type input struct {
+		param    *dto.ChatParamRequest
+		userId   int
+		shopSlug string
+		mockData *commonDto.PaginationResponse
+		mockErr  error
+	}
+	type expected struct {
+		shop *model.Shop
+		data *commonDto.PaginationResponse
+		err  error
+	}
+
+	var (
+		param = &dto.ChatParamRequest{
+			LimitByDay: 366,
+			Page:       1,
+		}
+		userId   = 1
+		shopSlug = "shop-A"
+		shop     = &model.Shop{}
+	)
+
+	tests := []struct {
+		description string
+		input
+		beforeTest func(*mocks.ChatRepository, *mocks.ShopService)
+		expected
+	}{
+		{
+			description: "should return error when failed to find shop slug",
+			input: input{
+				param:    param,
+				userId:   userId,
+				shopSlug: shopSlug,
+				mockData: nil,
+				mockErr:  errors.New("failed to find shop"),
+			},
+			beforeTest: func(cr *mocks.ChatRepository, ss *mocks.ShopService) {
+				ss.On("FindShopBySlug", shopSlug).Return(shop, errors.New("failed to find shop"))
+			},
+			expected: expected{
+				shop: shop,
+				data: nil,
+				err:  errors.New("failed to find shop"),
+			},
+		},
+		{
+			description: "should return data when succeed to send message",
+			input: input{
+				param:    param,
+				userId:   userId,
+				shopSlug: shopSlug,
+				mockData: &commonDto.PaginationResponse{Data: &dto.ChatResponse{}},
+				mockErr:  nil,
+			},
+			beforeTest: func(cr *mocks.ChatRepository, ss *mocks.ShopService) {
+				ss.On("FindShopBySlug", shopSlug).Return(shop, nil)
+				cr.On("UserGetChat", param, userId, shop).Return(&commonDto.PaginationResponse{Data: &dto.ChatResponse{}}, nil)
+			},
+			expected: expected{
+				data: &commonDto.PaginationResponse{Data: &dto.ChatResponse{}},
+				err:  nil,
+			},
+		},
+	}
+
+	for _, tc := range tests {
+		mockShopService := mocks.NewShopService(t)
+		mockChatRepo := mocks.NewChatRepository(t)
+		tc.beforeTest(mockChatRepo, mockShopService)
+		chatService := service.NewChatService(&service.ChatConfig{
+			ChatRepo:    mockChatRepo,
+			ShopService: mockShopService,
+		})
+
+		data, err := chatService.UserGetChat(tc.input.param, tc.input.userId, tc.input.shopSlug)
+
+		assert.Equal(t, tc.expected.data, data)
+		assert.Equal(t, tc.expected.err, err)
+	}
+}
+
+func TestSellerGetChat(t *testing.T) {
+	type input struct {
+		param    *dto.ChatParamRequest
+		userId   int
+		username string
+		mockData *commonDto.PaginationResponse
+		mockErr  error
+	}
+	type expected struct {
+		shop *model.Shop
+		data *commonDto.PaginationResponse
+		err  error
+	}
+
+	var (
+		param = &dto.ChatParamRequest{
+			LimitByDay: 366,
+			Page:       1,
+		}
+		userId   = 1
+		username = "usernameA"
+		shop     = &model.Shop{}
+		user     = &userModel.User{}
+	)
+
+	tests := []struct {
+		description string
+		input
+		beforeTest func(*mocks.ChatRepository, *mocks.ShopService, *mocks.UserService)
+		expected
+	}{
+		{
+			description: "should return error when failed to find shop slug",
+			input: input{
+				param:    param,
+				userId:   userId,
+				username: username,
+				mockData: nil,
+				mockErr:  errors.New("failed to find shop"),
+			},
+			beforeTest: func(cr *mocks.ChatRepository, ss *mocks.ShopService, us *mocks.UserService) {
+				ss.On("FindShopByUserId", userId).Return(shop, errors.New("failed to find shop"))
+			},
+			expected: expected{
+				shop: shop,
+				data: nil,
+				err:  errors.New("failed to find shop"),
+			},
+		},
+		{
+			description: "should return error when failed to find username",
+			input: input{
+				param:    param,
+				userId:   userId,
+				username: username,
+				mockData: nil,
+				mockErr:  errors.New("failed to find user"),
+			},
+			beforeTest: func(cr *mocks.ChatRepository, ss *mocks.ShopService, us *mocks.UserService) {
+				ss.On("FindShopByUserId", userId).Return(shop, nil)
+				us.On("GetByUsername", username).Return(user, errors.New("failed to find user"))
+			},
+			expected: expected{
+				shop: shop,
+				data: nil,
+				err:  errors.New("failed to find user"),
+			},
+		},
+		{
+			description: "should return data when succeed to send message",
+			input: input{
+				param:    param,
+				userId:   userId,
+				username: username,
+				mockData: &commonDto.PaginationResponse{Data: &dto.ChatResponse{}},
+				mockErr:  nil,
+			},
+			beforeTest: func(cr *mocks.ChatRepository, ss *mocks.ShopService, us *mocks.UserService) {
+				ss.On("FindShopByUserId", userId).Return(shop, nil)
+				us.On("GetByUsername", username).Return(user, nil)
+				cr.On("SellerGetChat", param, shop, user).Return(&commonDto.PaginationResponse{Data: &dto.ChatResponse{}}, nil)
+			},
+			expected: expected{
+				data: &commonDto.PaginationResponse{Data: &dto.ChatResponse{}},
+				err:  nil,
+			},
+		},
+	}
+
+	for _, tc := range tests {
+		mockUserService := mocks.NewUserService(t)
+		mockShopService := mocks.NewShopService(t)
+		mockChatRepo := mocks.NewChatRepository(t)
+		tc.beforeTest(mockChatRepo, mockShopService, mockUserService)
+		chatService := service.NewChatService(&service.ChatConfig{
+			ChatRepo:    mockChatRepo,
+			ShopService: mockShopService,
+			UserService: mockUserService,
+		})
+
+		data, err := chatService.SellerGetChat(tc.input.param, tc.input.userId, tc.input.username)
+
+		assert.Equal(t, tc.expected.data, data)
+		assert.Equal(t, tc.expected.err, err)
+	}
+}
 
 func TestUserAddChat(t *testing.T) {
 	type input struct {

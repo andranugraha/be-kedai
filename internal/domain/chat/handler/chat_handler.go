@@ -10,6 +10,50 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+func (h *Handler) UserGetChat(c *gin.Context) {
+	userID := c.GetInt("userId")
+
+	shopSlug := c.Param("shopSlug")
+
+	var param dto.ChatParamRequest
+	c.ShouldBindQuery(&param)
+	param.Validate()
+
+	paginatedChats, err := h.chatService.UserGetChat(&param, userID, shopSlug)
+	if err != nil {
+		if err == spErr.ErrShopNotFound || err == spErr.ErrUserDoesNotExist {
+			response.Error(c, http.StatusBadRequest, code.BAD_REQUEST, err.Error())
+			return
+		}
+		response.Error(c, http.StatusInternalServerError, code.INTERNAL_SERVER_ERROR, spErr.ErrInternalServerError.Error())
+		return
+	}
+
+	response.Success(c, http.StatusOK, code.OK, "success", paginatedChats)
+}
+
+func (h *Handler) SellerGetChat(c *gin.Context) {
+	userID := c.GetInt("userId")
+
+	username := c.Param("username")
+
+	var param dto.ChatParamRequest
+	c.ShouldBindQuery(&param)
+	param.Validate()
+
+	paginatedChats, err := h.chatService.SellerGetChat(&param, userID, username)
+	if err != nil {
+		if err == spErr.ErrShopNotFound || err == spErr.ErrUserDoesNotExist {
+			response.Error(c, http.StatusBadRequest, code.BAD_REQUEST, err.Error())
+			return
+		}
+		response.Error(c, http.StatusInternalServerError, code.INTERNAL_SERVER_ERROR, spErr.ErrInternalServerError.Error())
+		return
+	}
+
+	response.Success(c, http.StatusOK, code.OK, "success", paginatedChats)
+}
+
 func (h *Handler) UserAddChat(c *gin.Context) {
 	userID := c.GetInt("userId")
 
