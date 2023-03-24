@@ -70,6 +70,19 @@ func (s *chatServiceImpl) UserAddChat(body *dto.SendChatBodyRequest, userId int,
 	if err != nil {
 		return nil, err
 	}
+
+	if shop.UserID == userId {
+		// ErrSelfMessaging
+	}
+
+	if body.Type == "product" {
+		// Check Message as ProductCode: ErrProductNotFound
+	}
+
+	if body.Type == "invoice" || body.Type == "complaint" {
+		// Check Message as InvoiceCode: ErrInvoiceNotFound
+	}
+
 	return s.chatRepo.UserAddChat(body, userId, shop)
 }
 
@@ -82,5 +95,18 @@ func (s *chatServiceImpl) SellerAddChat(body *dto.SendChatBodyRequest, userId in
 	if err != nil {
 		return nil, err
 	}
+
+	if shop.UserID == user.ID {
+		// ErrSelfMessaging
+	}
+
+	if body.Type == "product" {
+		// Check Message as ProductCode: ErrProductNotFound
+	}
+
+	if body.Type == "invoice" || body.Type == "complaint" {
+		// Check Message as InvoiceCode: ErrInvoiceNotFound
+	}
+
 	return s.chatRepo.SellerAddChat(body, shop, user)
 }
