@@ -13,7 +13,20 @@ import (
 func (h *Handler) GetDiscussionByProductID(c *gin.Context) {
 	productId, _ := strconv.Atoi(c.Param("productId"))
 
-	result, err := h.discussionService.GetDiscussionByProductID(productId)
+	var limit, page int
+	if c.Query("limit") != "" {
+		limit, _ = strconv.Atoi(c.Query("limit"))
+	} else {
+		limit = 10
+	}
+
+	if c.Query("page") != "" {
+		page, _ = strconv.Atoi(c.Query("page"))
+	} else {
+		page = 1
+	}
+
+	result, err := h.discussionService.GetDiscussionByProductID(productId, limit, page)
 	if err != nil {
 		response.Error(c, http.StatusInternalServerError, code.INTERNAL_SERVER_ERROR, err.Error())
 		return
@@ -25,7 +38,6 @@ func (h *Handler) GetDiscussionByProductID(c *gin.Context) {
 
 func (h *Handler) GetDiscussionByParentID(c *gin.Context) {
 	parentId, _ := strconv.Atoi(c.Param("parentId"))
-
 
 	result, err := h.discussionService.GetChildDiscussionByParentID(parentId)
 	if err != nil {

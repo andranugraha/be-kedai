@@ -1,6 +1,7 @@
 package service_test
 
 import (
+	commonDto "kedai/backend/be-kedai/internal/common/dto"
 	errorResponse "kedai/backend/be-kedai/internal/common/error"
 	"kedai/backend/be-kedai/internal/domain/product/dto"
 	"kedai/backend/be-kedai/internal/domain/product/service"
@@ -14,16 +15,20 @@ import (
 func TestGetDisscussionByProductID(t *testing.T) {
 	var (
 		productID  = 1
-		discussion = []*dto.Discussion{}
+		discussion = commonDto.PaginationResponse{}
+		limit      = 10
+		page       = 1
 	)
 
 	type input struct {
 		productID int
+		limit     int
+		page      int
 		err       error
 	}
 
 	type expected struct {
-		discussion []*dto.Discussion
+		discussion *commonDto.PaginationResponse
 		err        error
 	}
 
@@ -38,10 +43,12 @@ func TestGetDisscussionByProductID(t *testing.T) {
 			description: "should return discussion when success",
 			input: input{
 				productID: productID,
+				limit:     limit,
+				page:      page,
 				err:       nil,
 			},
 			expected: expected{
-				discussion: discussion,
+				discussion: &discussion,
 				err:        nil,
 			},
 		},
@@ -49,6 +56,8 @@ func TestGetDisscussionByProductID(t *testing.T) {
 			description: "should return error when failed",
 			input: input{
 				productID: productID,
+				limit:     limit,
+				page:      page,
 				err:       errorResponse.ErrInternalServerError,
 			},
 			expected: expected{
@@ -59,13 +68,13 @@ func TestGetDisscussionByProductID(t *testing.T) {
 	} {
 		t.Run(tc.description, func(t *testing.T) {
 			mockDiscussionRepository := new(mocks.DiscussionRepository)
-			mockDiscussionRepository.On("GetDiscussionByProductID", tc.input.productID).Return(tc.expected.discussion, tc.input.err)
+			mockDiscussionRepository.On("GetDiscussionByProductID", tc.input.productID, tc.input.limit, tc.input.page).Return(tc.expected.discussion, tc.expected.err)
 
 			discussionService := service.NewDiscussionService(&service.DiscussionSConfig{
 				DiscussionRepository: mockDiscussionRepository,
 			})
 
-			discussion, err := discussionService.GetDiscussionByProductID(tc.input.productID)
+			discussion, err := discussionService.GetDiscussionByProductID(tc.input.productID, tc.input.limit, tc.input.page)
 			assert.Equal(t, tc.expected.err, err)
 			assert.Equal(t, tc.expected.discussion, discussion)
 		})
@@ -137,9 +146,9 @@ func TestGetChildDiscussionByParentID(t *testing.T) {
 
 func TestPostDiscussion(t *testing.T) {
 
-	var(
+	var (
 		IsSellerTrue = true
-		shop = model.Shop{}
+		shop         = model.Shop{}
 	)
 
 	type input struct {
@@ -180,7 +189,7 @@ func TestPostDiscussion(t *testing.T) {
 			input: input{
 				beforeTest: func(ss *mocks.ShopService) {
 					ss.On("FindShopByUserId", 1).Return(&shop, errorResponse.ErrInternalServerError)
-				}	,
+				},
 				discussion: &dto.DiscussionReq{
 					ProductID: 1,
 					UserID:    1,
@@ -205,7 +214,7 @@ func TestPostDiscussion(t *testing.T) {
 
 			discussionService := service.NewDiscussionService(&service.DiscussionSConfig{
 				DiscussionRepository: mockDiscussionRepository,
-				ShopService: mockShopService,
+				ShopService:          mockShopService,
 			})
 
 			err := discussionService.PostDiscussion(tc.input.discussion)

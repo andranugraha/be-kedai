@@ -1,14 +1,16 @@
 package repository
 
 import (
+	commonDto "kedai/backend/be-kedai/internal/common/dto"
 	"kedai/backend/be-kedai/internal/domain/product/dto"
 	"log"
+	"math"
 
 	"gorm.io/gorm"
 )
 
 type DiscussionRepository interface {
-	GetDiscussionByProductID(productID int) ([]*dto.Discussion, error)
+	GetDiscussionByProductID(productID int, limit int, page int) (*commonDto.PaginationResponse, error)
 	GetChildDiscussionByParentID(parentID int) ([]*dto.DiscussionReply, error)
 	PostDiscussion(discussion *dto.DiscussionReq) error
 }
@@ -27,9 +29,16 @@ func NewDiscussionRepository(cfg *DiscussionRConfig) DiscussionRepository {
 	}
 }
 
-func (d *discussionRepositoryImpl) GetDiscussionByProductID(productID int) ([]*dto.Discussion, error) {
+func (d *discussionRepositoryImpl) GetDiscussionByProductID(productID int, limit int, page int) (*commonDto.PaginationResponse, error) {
+
 	var discussions []*dto.Discussion
-	err := d.db.Where("product_id = ? AND parent_id IS NULL", productID).Preload("User").Preload("User.Profile").Preload("Shop").Find(&discussions).Error
+	var count int64
+	err := d.db.Model(&dto.Discussion{}).Where("product_id = ? AND parent_id IS NULL", productID).Count(&count).Error
+	if err != nil {
+		return nil, err
+	}
+
+	err = d.db.Where("product_id = ? AND parent_id IS NULL", productID).Preload("User").Preload("User.Profile").Preload("Shop").Limit(limit).Offset((page - 1) * limit).Find(&discussions).Error
 	if err != nil {
 		return nil, err
 	}
@@ -66,7 +75,14 @@ func (d *discussionRepositoryImpl) GetDiscussionByProductID(productID int) ([]*d
 		discussions[i].ReplyCount = repliesCount
 	}
 
-	return discussions, nil
+	var response commonDto.PaginationResponse
+	response.Data = discussions
+	response.Limit = limit
+	response.Page = page
+	response.TotalRows = count
+	response.TotalPages = int(math.Ceil(float64(count) / float64(limit)))
+
+	return &response, nil
 }
 
 func (d *discussionRepositoryImpl) GetChildDiscussionByParentID(parentID int) ([]*dto.DiscussionReply, error) {

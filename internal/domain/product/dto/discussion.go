@@ -55,3 +55,4 @@ type DiscussionReq struct {
 	ShopID    int       `json:"-"`
 	IsSeller  *bool     `json:"isSeller"`
 }
+

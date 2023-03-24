@@ -3588,38 +3588,23 @@ paths:
                     type: string
                     example: "ok"
                   data:
-                    type: array
-                    items:
-                      type: object
-                      properties:
-                        id:
-                          type: integer
-                          example: 1
-                        username:
-                          type: string
-                          example: "username"
-                        userUrl:
-                          type: string
-                          example: "https://www.example.com"
-                        shopName:
-                          type: string
-                          example: "shop name"
-                        shopUrl:
-                          type: string
-                          example: "https://www.example.com"
-                        productId:
-                          type: integer
-                          example: 1
-                        message:
-                          type: string
-                          example: "message"
-                        date:
-                          type: string
-                          example: "2020-01-01 00:00:00"
-                        replyCount:
-                          type: integer
-                          example: 1
-                        reply:
+                    type: object
+                    properties:
+                      limit:
+                        type: integer
+                        example: 1
+                      page:
+                        type: integer
+                        example: 1
+                      totalRows:
+                        type: integer
+                        example: 1
+                      totalPages:
+                        type: integer
+                        example: 1
+                      Data:
+                        type: array
+                        items:
                           type: object
                           properties:
                             id:
@@ -3646,6 +3631,36 @@ paths:
                             date:
                               type: string
                               example: "2020-01-01 00:00:00"
+                            replyCount:
+                              type: integer
+                              example: 1
+                            reply:
+                              type: object
+                              properties:
+                                id:
+                                  type: integer
+                                  example: 1
+                                username:
+                                  type: string
+                                  example: "username"
+                                userUrl:
+                                  type: string
+                                  example: "https://www.example.com"
+                                shopName:
+                                  type: string
+                                  example: "shop name"
+                                shopUrl:
+                                  type: string
+                                  example: "https://www.example.com"
+                                productId:
+                                  type: integer
+                                  example: 1
+                                message:
+                                  type: string
+                                  example: "message"
+                                date:
+                                  type: string
+                                  example: "2020-01-01 00:00:00"
 
         '400':
           description: Bad request

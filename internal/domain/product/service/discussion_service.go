@@ -4,10 +4,11 @@ import (
 	"kedai/backend/be-kedai/internal/domain/product/dto"
 	"kedai/backend/be-kedai/internal/domain/product/repository"
 	"kedai/backend/be-kedai/internal/domain/shop/service"
+	commonDto "kedai/backend/be-kedai/internal/common/dto"
 )
 
 type DiscussionService interface {
-	GetDiscussionByProductID(productID int) ([]*dto.Discussion, error)
+	GetDiscussionByProductID(productID int, limit int, page int) (*commonDto.PaginationResponse, error)
 	GetChildDiscussionByParentID(parentID int) ([]*dto.DiscussionReply, error)
 	PostDiscussion(discussion *dto.DiscussionReq) error
 }
@@ -29,8 +30,8 @@ func NewDiscussionService(cfg *DiscussionSConfig) DiscussionService {
 	}
 }
 
-func (d *discussionServiceImpl) GetDiscussionByProductID(productID int) ([]*dto.Discussion, error) {
-	return d.discussionRepository.GetDiscussionByProductID(productID)
+func (d *discussionServiceImpl) GetDiscussionByProductID(productID int, limit int, page int) (*commonDto.PaginationResponse, error) {
+	return d.discussionRepository.GetDiscussionByProductID(productID, limit, page)
 }
 
 func (d *discussionServiceImpl) GetChildDiscussionByParentID(parentID int) ([]*dto.DiscussionReply, error) {
