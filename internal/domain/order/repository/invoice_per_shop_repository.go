@@ -689,20 +689,24 @@ func (r *invoicePerShopRepositoryImpl) UpdateRefundStatus(tx *gorm.DB, shopId in
 	} else {
 		invoiceStatus = constant.TransactionStatusComplaintRejected
 	}
+
 	if res := tx.
 		Model(&invoicePerShop).
 		Clauses(clause.Returning{}).
 		Where("shop_id = ? AND id = ? AND status = ?", shopId, orderId, constant.TransactionStatusComplained).
 		Update("status", invoiceStatus); res != nil {
 		if res.Error != nil {
+			tx.Rollback()
 			return res.Error
 		}
 		if res.RowsAffected == 0 {
+			tx.Rollback()
 			return commonErr.ErrInvoiceNotFound
 		}
 	}
 
 	if err := r.invoiceStatusRepo.Create(tx, invoiceStatuses); err != nil {
+		tx.Rollback()
 		return err
 	}
 
