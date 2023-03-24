@@ -2,6 +2,7 @@ package service
 
 import (
 	commonDto "kedai/backend/be-kedai/internal/common/dto"
+	errs "kedai/backend/be-kedai/internal/common/error"
 	"kedai/backend/be-kedai/internal/domain/chat/dto"
 	"kedai/backend/be-kedai/internal/domain/chat/repository"
 	shopService "kedai/backend/be-kedai/internal/domain/shop/service"
@@ -72,7 +73,7 @@ func (s *chatServiceImpl) UserAddChat(body *dto.SendChatBodyRequest, userId int,
 	}
 
 	if shop.UserID == userId {
-		// ErrSelfMessaging
+		return nil, errs.ErrSelfMessaging
 	}
 
 	if body.Type == "product" {
@@ -97,7 +98,7 @@ func (s *chatServiceImpl) SellerAddChat(body *dto.SendChatBodyRequest, userId in
 	}
 
 	if shop.UserID == user.ID {
-		// ErrSelfMessaging
+		return nil, errs.ErrSelfMessaging
 	}
 
 	if body.Type == "product" {
