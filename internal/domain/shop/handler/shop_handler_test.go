@@ -22,20 +22,26 @@ import (
 
 func TestGetShopRating(t *testing.T) {
 	var (
-		userId     = 1
-		shopRating = &commonDto.PaginationResponse{
-			Data: dto.ShopRatingResponse{
-				ShopRating:  1,
-				ProductItem: []*dto.ProductItem{},
+		userId           = 1
+		filter           = &dto.GetShopRatingFilterRequest{
+
+		}
+		shopRating = dto.GetShopRatingResponse{
+			ShopRating: 1,
+			Data: &commonDto.PaginationResponse{
+				Data:       []dto.ProductItem{},
+				TotalRows:  0,
+				TotalPages: 0,
+				Limit:      0,
+				Page:       0,
 			},
 		}
-		filter = &dto.GetShopRatingFilterRequest{}
 	)
 
 	type input struct {
 		userId int
 		filter *dto.GetShopRatingFilterRequest
-		result *commonDto.PaginationResponse
+		result *dto.GetShopRatingResponse
 		err    error
 	}
 
@@ -56,7 +62,7 @@ func TestGetShopRating(t *testing.T) {
 			input: input{
 				userId: userId,
 				filter: filter,
-				result: shopRating,
+				result: &shopRating,
 				err:    nil},
 			expected: expected{
 				statusCode: http.StatusOK,
@@ -82,7 +88,7 @@ func TestGetShopRating(t *testing.T) {
 					Message: errs.ErrInternalServerError.Error(),
 				},
 			},
-		},
+		}, 
 	} {
 
 		t.Run(tc.description, func(t *testing.T) {
@@ -90,7 +96,7 @@ func TestGetShopRating(t *testing.T) {
 			rec := httptest.NewRecorder()
 			c, _ := gin.CreateTestContext(rec)
 			mockService := new(mocks.ShopService)
-			mockService.On("GetShopRating", tc.input.userId, *tc.input.filter).Return(tc.input.result, tc.input.err)
+			mockService.On("GetShopRating", tc.input.userId,*tc.input.filter).Return(tc.input.result, tc.input.err)
 			handler := handler.New(&handler.HandlerConfig{
 				ShopService: mockService,
 			})

@@ -4,6 +4,7 @@ import (
 	"kedai/backend/be-kedai/internal/domain/shop/model"
 	stringsUtil "kedai/backend/be-kedai/internal/utils/strings"
 	"strings"
+	commonDto "kedai/backend/be-kedai/internal/common/dto"
 )
 
 type FindShopRequest struct {
@@ -95,6 +96,10 @@ type ProductItem struct {
 	ReviewMedia   []string `json:"reviewMedia"`
 }
 
+type GetShopRatingResponse struct {
+	ShopRating float64                       `json:"shopRating"`
+	Data       *commonDto.PaginationResponse `json:"data"`
+}
 type GetShopRatingFilterRequest struct {
 	Search    string `form:"search"`
 	StartDate string `form:"startDate" binding:"required_with=EndDate,omitempty,datetime=2006-01-02"`
