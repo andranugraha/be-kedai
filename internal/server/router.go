@@ -2,8 +2,10 @@ package server
 
 import (
 	"kedai/backend/be-kedai/config"
+	"kedai/backend/be-kedai/connection"
 	"kedai/backend/be-kedai/internal/server/middleware"
 
+	chatHandler "kedai/backend/be-kedai/internal/domain/chat/handler"
 	locationHandler "kedai/backend/be-kedai/internal/domain/location/handler"
 	marketplaceHandler "kedai/backend/be-kedai/internal/domain/marketplace/handler"
 	orderHandler "kedai/backend/be-kedai/internal/domain/order/handler"
@@ -22,6 +24,7 @@ type RouterConfig struct {
 	ShopHandler        *shopHandler.Handler
 	OrderHandler       *orderHandler.Handler
 	MarketplaceHandler *marketplaceHandler.Handler
+	ChatHandler        *chatHandler.Handler
 }
 
 func NewRouter(cfg *RouterConfig) *gin.Engine {
@@ -33,6 +36,13 @@ func NewRouter(cfg *RouterConfig) *gin.Engine {
 	corsCfg.AllowHeaders = []string{"Content-Type", "Authorization"}
 	corsCfg.ExposeHeaders = []string{"Content-Length"}
 	r.Use(cors.New(corsCfg))
+
+	socketServer := connection.SocketIO()
+	socket := r.Group("/socket.io")
+	{
+		socket.GET("/*any", gin.WrapH(socketServer))
+		socket.POST("/*any", gin.WrapH(socketServer))
+	}
 
 	v1 := r.Group("/v1")
 	{
@@ -104,6 +114,10 @@ func NewRouter(cfg *RouterConfig) *gin.Engine {
 				{
 					sealabsPay.GET("", cfg.UserHandler.GetSealabsPaysByUserID)
 					sealabsPay.POST("", cfg.UserHandler.RegisterSealabsPay)
+				}
+				chat := userAuthenticated.Group("/chats")
+				{
+					chat.POST("/:shopSlug", cfg.ChatHandler.UserAddChat)
 				}
 			}
 		}
@@ -255,6 +269,10 @@ func NewRouter(cfg *RouterConfig) *gin.Engine {
 					order.PUT("/:orderId/delivery", cfg.OrderHandler.UpdateToDelivery)
 					order.POST("/:orderId/cancel-request", cfg.OrderHandler.UpdateToRefundPendingSellerCancel)
 					order.PUT("/:orderId/refund", cfg.OrderHandler.UpdateRefundStatus)
+				}
+				chat := authenticated.Group("/chats")
+				{
+					chat.POST("/:username", cfg.ChatHandler.SellerAddChat)
 				}
 			}
 		}
