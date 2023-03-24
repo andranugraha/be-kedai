@@ -71,6 +71,83 @@ func TestGetCouriersByProductID(t *testing.T) {
 	}
 }
 
+func TestAddCourier(t *testing.T) {
+	var (
+		courierName       = "JNE"
+		courierCode       = "jne"
+		courierServiceVar = []dto.ShipmentCourierService{
+			{
+				Name: "REG",
+				Code: "REG",
+			},
+		}
+		courier = &dto.ShipmentCourierRequest{
+			Name:    courierName,
+			Code:    courierCode,
+			Service: courierServiceVar,
+		}
+		courierResponse = &model.Courier{
+			Name: courierName,
+			Code: courierCode,
+		}
+	)
+
+	type input struct {
+		courier *dto.ShipmentCourierRequest
+		err     error
+	}
+
+	type expected struct {
+		result *model.Courier
+		err    error
+	}
+
+	type cases struct {
+		description string
+		input
+		expected
+	}
+
+	for _, tc := range []cases{
+		{
+			description: "should return error when failed to add courier",
+			input: input{
+				courier: courier,
+				err:     errors.New("failed to add courier"),
+			},
+			expected: expected{
+				result: nil,
+				err:    errors.New("failed to add courier"),
+			},
+		},
+		{
+			description: "should return courier when adding courier succeed",
+			input: input{
+				courier: courier,
+				err:     nil,
+			},
+			expected: expected{
+				result: courierResponse,
+				err:    nil,
+			},
+		},
+	} {
+		t.Run(tc.description, func(t *testing.T) {
+			courierRepo := mocks.NewCourierRepository(t)
+			courierRepo.On("AddCourier", tc.input.courier).Return(tc.expected.result, tc.expected.err)
+			courierService := service.NewCourierService(&service.CourierSConfig{
+				CourierRepository: courierRepo,
+			})
+
+			actualResult, actualErr := courierService.AddCourier(tc.input.courier)
+
+			assert.Equal(t, tc.expected.result, actualResult)
+			assert.Equal(t, tc.expected.err, actualErr)
+		})
+	}
+
+}
+
 func TestGetShipmentList(t *testing.T) {
 	var (
 		shop = &model.Shop{

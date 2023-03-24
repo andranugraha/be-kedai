@@ -131,7 +131,7 @@ func TestGetSellerVoucher(t *testing.T) {
 				userID:  userID,
 				request: request,
 			},
-			beforeTest: func(ss *mocks.ShopService, pr *mocks.ShopVoucherRepository) {
+			beforeTest: func(ss *mocks.ShopService, vr *mocks.ShopVoucherRepository) {
 				ss.On("FindShopByUserId", userID).Return(nil, errors.New("failed to get shop"))
 			},
 			expected: expected{
@@ -145,9 +145,9 @@ func TestGetSellerVoucher(t *testing.T) {
 				userID:  userID,
 				request: request,
 			},
-			beforeTest: func(ss *mocks.ShopService, pr *mocks.ShopVoucherRepository) {
+			beforeTest: func(ss *mocks.ShopService, vr *mocks.ShopVoucherRepository) {
 				ss.On("FindShopByUserId", userID).Return(&model.Shop{UserID: userID, ID: shopID}, nil)
-				pr.On("GetSellerVoucher", shopID, request).Return(nil, int64(0), 0, errors.New("failed to get vouchers"))
+				vr.On("GetSellerVoucher", shopID, request).Return(nil, int64(0), 0, errors.New("failed to get vouchers"))
 			},
 			expected: expected{
 				data: nil,
@@ -160,9 +160,9 @@ func TestGetSellerVoucher(t *testing.T) {
 				userID:  userID,
 				request: request,
 			},
-			beforeTest: func(ss *mocks.ShopService, pr *mocks.ShopVoucherRepository) {
+			beforeTest: func(ss *mocks.ShopService, vr *mocks.ShopVoucherRepository) {
 				ss.On("FindShopByUserId", userID).Return(&model.Shop{UserID: userID, ID: shopID}, nil)
-				pr.On("GetSellerVoucher", shopID, request).Return(vouchers, totalRows, totalPages, nil)
+				vr.On("GetSellerVoucher", shopID, request).Return(vouchers, totalRows, totalPages, nil)
 			},
 			expected: expected{
 				data: &commonDto.PaginationResponse{
@@ -190,6 +190,281 @@ func TestGetSellerVoucher(t *testing.T) {
 			data, err := shopVoucherService.GetSellerVoucher(tc.input.userID, tc.input.request)
 
 			assert.Equal(t, tc.expected.data, data)
+			assert.Equal(t, tc.expected.err, err)
+		})
+	}
+}
+
+func TestGetVoucherByCodeAndShopId(t *testing.T) {
+	type input struct {
+		voucherCode string
+		userID      int
+	}
+	type expected struct {
+		data *dto.SellerVoucher
+		err  error
+	}
+
+	var (
+		userID      = 1
+		shopID      = 1
+		voucherCode = "voucher-code"
+		voucher     = dto.SellerVoucher{}
+	)
+
+	tests := []struct {
+		description string
+		input
+		beforeTest func(*mocks.ShopService, *mocks.ShopVoucherRepository)
+		expected
+	}{
+		{
+			description: "should return error when failed to get shop",
+			input: input{
+				userID:      userID,
+				voucherCode: voucherCode,
+			},
+			beforeTest: func(ss *mocks.ShopService, vr *mocks.ShopVoucherRepository) {
+				ss.On("FindShopByUserId", userID).Return(nil, errors.New("failed to get shop"))
+			},
+			expected: expected{
+				data: nil,
+				err:  errors.New("failed to get shop"),
+			},
+		},
+		{
+			description: "should return error when failed to get voucher",
+			input: input{
+				userID:      userID,
+				voucherCode: voucherCode,
+			},
+			beforeTest: func(ss *mocks.ShopService, vr *mocks.ShopVoucherRepository) {
+				ss.On("FindShopByUserId", userID).Return(&model.Shop{ID: shopID, UserID: userID}, nil)
+				vr.On("GetVoucherByCodeAndShopId", voucherCode, shopID).Return(nil, errors.New("failed to get voucher"))
+			},
+			expected: expected{
+				data: nil,
+				err:  errors.New("failed to get voucher"),
+			},
+		},
+		{
+			description: "should return dto when succeed to get voucher",
+			input: input{
+				userID:      userID,
+				voucherCode: voucherCode,
+			},
+			beforeTest: func(ss *mocks.ShopService, vr *mocks.ShopVoucherRepository) {
+				ss.On("FindShopByUserId", userID).Return(&model.Shop{ID: shopID, UserID: userID}, nil)
+				vr.On("GetVoucherByCodeAndShopId", voucherCode, shopID).Return(&voucher, nil)
+			},
+			expected: expected{
+				data: &dto.SellerVoucher{},
+				err:  nil,
+			},
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.description, func(t *testing.T) {
+			shopVoucherRepo := mocks.NewShopVoucherRepository(t)
+			shopService := mocks.NewShopService(t)
+			tc.beforeTest(shopService, shopVoucherRepo)
+			shopVoucherService := service.NewShopVoucherService(&service.ShopVoucherSConfig{
+				ShopVoucherRepository: shopVoucherRepo,
+				ShopService:           shopService,
+			})
+
+			data, err := shopVoucherService.GetVoucherByCodeAndShopId(tc.input.voucherCode, tc.input.userID)
+
+			assert.Equal(t, tc.expected.data, data)
+			assert.Equal(t, tc.expected.err, err)
+		})
+	}
+}
+
+func TestCreateVoucher(t *testing.T) {
+	type input struct {
+		userID  int
+		request *dto.CreateVoucherRequest
+	}
+	type expected struct {
+		data *model.ShopVoucher
+		err  error
+	}
+
+	var (
+		userID      = 1
+		shopID      = 1
+		voucherName = "voucher name"
+	)
+
+	tests := []struct {
+		description string
+		input
+		beforeTest func(*mocks.ShopService, *mocks.ShopVoucherRepository)
+		expected
+	}{
+		{
+			description: "should return error when voucher name is invalid",
+			input: input{
+				userID: userID,
+				request: &dto.CreateVoucherRequest{
+					Name: "127.0.0.1",
+				},
+			},
+			beforeTest: func(ss *mocks.ShopService, vr *mocks.ShopVoucherRepository) {},
+			expected: expected{
+				data: nil,
+				err:  errs.ErrInvalidVoucherNamePattern,
+			},
+		},
+		{
+			description: "should return error when failed to get shop",
+			input: input{
+				userID: userID,
+				request: &dto.CreateVoucherRequest{
+					Name: voucherName,
+				},
+			},
+			beforeTest: func(ss *mocks.ShopService, vr *mocks.ShopVoucherRepository) {
+				ss.On("FindShopByUserId", userID).Return(nil, errors.New("failed to get shop"))
+			},
+			expected: expected{
+				data: nil,
+				err:  errors.New("failed to get shop"),
+			},
+		},
+		{
+			description: "should return error when failed to create voucher",
+			input: input{
+				userID: userID,
+				request: &dto.CreateVoucherRequest{
+					Name: voucherName,
+				},
+			},
+			beforeTest: func(ss *mocks.ShopService, vr *mocks.ShopVoucherRepository) {
+				ss.On("FindShopByUserId", userID).Return(&model.Shop{ID: shopID}, nil)
+				vr.On("Create", shopID, &dto.CreateVoucherRequest{Name: voucherName}).Return(nil, errors.New("failed to create voucher"))
+			},
+			expected: expected{
+				data: nil,
+				err:  errors.New("failed to create voucher"),
+			},
+		},
+		{
+			description: "should return created voucher when succeed to create voucher",
+			input: input{
+				userID: userID,
+				request: &dto.CreateVoucherRequest{
+					Name: voucherName,
+				},
+			},
+			beforeTest: func(ss *mocks.ShopService, vr *mocks.ShopVoucherRepository) {
+				ss.On("FindShopByUserId", userID).Return(&model.Shop{ID: shopID}, nil)
+				vr.On("Create", shopID, &dto.CreateVoucherRequest{Name: voucherName}).Return(&model.ShopVoucher{Name: voucherName}, nil)
+			},
+			expected: expected{
+				data: &model.ShopVoucher{Name: voucherName},
+				err:  nil,
+			},
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.description, func(t *testing.T) {
+			shopService := mocks.NewShopService(t)
+			shopVoucherRepo := mocks.NewShopVoucherRepository(t)
+			tc.beforeTest(shopService, shopVoucherRepo)
+			shopVoucherService := service.NewShopVoucherService(&service.ShopVoucherSConfig{
+				ShopVoucherRepository: shopVoucherRepo,
+				ShopService:           shopService,
+			})
+
+			data, err := shopVoucherService.CreateVoucher(tc.input.userID, tc.input.request)
+
+			assert.Equal(t, tc.expected.data, data)
+			assert.Equal(t, tc.expected.err, err)
+		})
+	}
+}
+
+func TestDeleteVoucher(t *testing.T) {
+	type input struct {
+		voucherCode string
+		userID      int
+	}
+	type expected struct {
+		err error
+	}
+
+	var (
+		userID      = 1
+		shopID      = 1
+		voucherCode = "voucher-code"
+	)
+
+	tests := []struct {
+		description string
+		input
+		beforeTest func(*mocks.ShopService, *mocks.ShopVoucherRepository)
+		expected
+	}{
+		{
+			description: "should return error when failed to get shop",
+			input: input{
+				userID:      userID,
+				voucherCode: voucherCode,
+			},
+			beforeTest: func(ss *mocks.ShopService, vr *mocks.ShopVoucherRepository) {
+				ss.On("FindShopByUserId", userID).Return(nil, errors.New("failed to get shop"))
+			},
+			expected: expected{
+				err: errors.New("failed to get shop"),
+			},
+		}, {
+			description: "should return error when failed to delete voucher",
+			input: input{
+				userID:      userID,
+				voucherCode: voucherCode,
+			},
+			beforeTest: func(ss *mocks.ShopService, vr *mocks.ShopVoucherRepository) {
+				shop := &model.Shop{ID: shopID}
+				ss.On("FindShopByUserId", userID).Return(shop, nil)
+				vr.On("Delete", shopID, voucherCode).Return(errors.New("failed to delete voucher"))
+			},
+			expected: expected{
+				err: errors.New("failed to delete voucher"),
+			},
+		},
+		{
+			description: "should return nil when voucher is successfully deleted",
+			input: input{
+				userID:      userID,
+				voucherCode: voucherCode,
+			},
+			beforeTest: func(ss *mocks.ShopService, vr *mocks.ShopVoucherRepository) {
+				shop := &model.Shop{ID: shopID}
+				ss.On("FindShopByUserId", userID).Return(shop, nil)
+				vr.On("Delete", shopID, voucherCode).Return(nil)
+			},
+			expected: expected{
+				err: nil,
+			},
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.description, func(t *testing.T) {
+			shopVoucherRepo := mocks.NewShopVoucherRepository(t)
+			shopService := mocks.NewShopService(t)
+			tc.beforeTest(shopService, shopVoucherRepo)
+			shopVoucherService := service.NewShopVoucherService(&service.ShopVoucherSConfig{
+				ShopVoucherRepository: shopVoucherRepo,
+				ShopService:           shopService,
+			})
+
+			err := shopVoucherService.DeleteVoucher(tc.input.userID, tc.input.voucherCode)
+
 			assert.Equal(t, tc.expected.err, err)
 		})
 	}

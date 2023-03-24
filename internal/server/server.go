@@ -32,6 +32,10 @@ import (
 	marketplaceRepoPackage "kedai/backend/be-kedai/internal/domain/marketplace/repository"
 	marketplaceServicePackage "kedai/backend/be-kedai/internal/domain/marketplace/service"
 
+	chatHandlerPackage "kedai/backend/be-kedai/internal/domain/chat/handler"
+	chatRepoPackage "kedai/backend/be-kedai/internal/domain/chat/repository"
+	chatServicePackage "kedai/backend/be-kedai/internal/domain/chat/service"
+
 	"github.com/gin-gonic/gin"
 	"github.com/go-co-op/gocron"
 )
@@ -99,14 +103,7 @@ func createRouter() *gin.Engine {
 		WalletHistory: walletHistoryRepo,
 	})
 
-	courierRepo := shopRepoPackage.NewCourierRepository(&shopRepoPackage.CourierRConfig{
-		DB: db,
-	})
-
 	invoiceStatusRepo := orderRepoPackage.NewInvoiceStatusRepository(&orderRepoPackage.InvoiceStatusRConfig{
-		DB: db,
-	})
-	refundRequestRepo := orderRepoPackage.NewRefundRequestRepository(&orderRepoPackage.RefundRequestRConfig{
 		DB: db,
 	})
 
@@ -126,6 +123,10 @@ func createRouter() *gin.Engine {
 		Redis:             userCache,
 	})
 
+	refundRequestRepo := orderRepoPackage.NewRefundRequestRepository(&orderRepoPackage.RefundRequestRConfig{
+		DB: db,
+	})
+
 	invoicePerShopRepo := orderRepoPackage.NewInvoicePerShopRepository(&orderRepoPackage.InvoicePerShopRConfig{
 		DB:                db,
 		WalletRepo:        walletRepo,
@@ -134,6 +135,11 @@ func createRouter() *gin.Engine {
 		SkuRepo:           skuRepo,
 		UserVoucherRepo:   userVoucherRepo,
 		InvoiceRepo:       invoiceRepo,
+	})
+
+	refundRequestRepo = orderRepoPackage.NewRefundRequestRepository(&orderRepoPackage.RefundRequestRConfig{
+		DB:                 db,
+		InvoicePerShopRepo: invoicePerShopRepo,
 	})
 
 	shopGuestRepo := shopRepoPackage.NewShopGuestRepository(&shopRepoPackage.ShopGuestRConfig{
@@ -147,6 +153,11 @@ func createRouter() *gin.Engine {
 		DB: db,
 	})
 	courierServiceService := shopServicePackage.NewCourierServiceService(&shopServicePackage.CourierServiceSConfig{
+		CourierServiceRepository: courierServiceRepo,
+	})
+
+	courierRepo := shopRepoPackage.NewCourierRepository(&shopRepoPackage.CourierRConfig{
+		DB:                       db,
 		CourierServiceRepository: courierServiceRepo,
 	})
 
@@ -216,6 +227,11 @@ func createRouter() *gin.Engine {
 		ShopVoucherService: shopVoucherService,
 		CourierService:     courierService,
 		ShopGuestService:   shopGuestService,
+	})
+
+	refundRequestService := orderServicePackage.NewRefundRequestService(&orderServicePackage.RefundRequestSConfig{
+		RefundRequestRepo: refundRequestRepo,
+		ShopService:       shopService,
 	})
 
 	userProfileRepo := userRepoPackage.NewUserProfileRepository(&userRepoPackage.UserProfileRConfig{
@@ -355,6 +371,7 @@ func createRouter() *gin.Engine {
 		InvoiceService:           invoiceService,
 		TransactionReviewService: transactionReviewService,
 		InvoicePerShopService:    invoicePerShopService,
+		RefundRequestService:     refundRequestService,
 	})
 
 	locHandler := locationHandlerPackage.New(&locationHandlerPackage.Config{
@@ -363,6 +380,16 @@ func createRouter() *gin.Engine {
 		DistrictService:    districtService,
 		SubdistrictService: subdistrictService,
 		AddressService:     addressService,
+	})
+
+	chatHandler := chatHandlerPackage.New(&chatHandlerPackage.Config{
+		ChatService: chatServicePackage.NewChatService(&chatServicePackage.ChatConfig{
+			ChatRepo: chatRepoPackage.NewChatRepository(&chatRepoPackage.ChatRConfig{
+				DB: db,
+			}),
+			ShopService: shopService,
+			UserService: userService,
+		}),
 	})
 
 	startCron(orderHandler)
@@ -374,6 +401,7 @@ func createRouter() *gin.Engine {
 		ShopHandler:        shopHandler,
 		MarketplaceHandler: marketplaceHandler,
 		OrderHandler:       orderHandler,
+		ChatHandler:        chatHandler,
 	})
 }
 

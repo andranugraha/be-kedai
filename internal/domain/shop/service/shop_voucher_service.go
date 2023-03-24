@@ -2,9 +2,11 @@ package service
 
 import (
 	commonDto "kedai/backend/be-kedai/internal/common/dto"
+	commonErr "kedai/backend/be-kedai/internal/common/error"
 	"kedai/backend/be-kedai/internal/domain/shop/dto"
 	"kedai/backend/be-kedai/internal/domain/shop/model"
 	"kedai/backend/be-kedai/internal/domain/shop/repository"
+	productUtils "kedai/backend/be-kedai/internal/utils/product"
 )
 
 type ShopVoucherService interface {
@@ -12,6 +14,9 @@ type ShopVoucherService interface {
 	GetSellerVoucher(userID int, req *dto.SellerVoucherFilterRequest) (*commonDto.PaginationResponse, error)
 	GetShopVoucher(slug string) ([]*model.ShopVoucher, error)
 	GetValidShopVoucherByUserIDAndSlug(dto.GetValidShopVoucherRequest) ([]*model.ShopVoucher, error)
+	GetVoucherByCodeAndShopId(voucherCode string, userID int) (*dto.SellerVoucher, error)
+	CreateVoucher(userID int, request *dto.CreateVoucherRequest) (*model.ShopVoucher, error)
+	DeleteVoucher(userID int, voucherCode string) error
 }
 
 type shopVoucherServiceImpl struct {
@@ -62,6 +67,52 @@ func (s *shopVoucherServiceImpl) GetSellerVoucher(userID int, req *dto.SellerVou
 		Limit:      req.Limit,
 		Data:       vouchers,
 	}, nil
+}
+
+func (s *shopVoucherServiceImpl) GetVoucherByCodeAndShopId(voucherCode string, userID int) (*dto.SellerVoucher, error) {
+	shop, err := s.shopService.FindShopByUserId(userID)
+	if err != nil {
+		return nil, err
+	}
+
+	voucher, err := s.shopVoucherRepository.GetVoucherByCodeAndShopId(voucherCode, shop.ID)
+	if err != nil {
+		return nil, err
+	}
+
+	return voucher, nil
+}
+
+func (s *shopVoucherServiceImpl) CreateVoucher(userID int, request *dto.CreateVoucherRequest) (*model.ShopVoucher, error) {
+	if isProductNameValid := productUtils.ValidateProductName(request.Name); !isProductNameValid {
+		return nil, commonErr.ErrInvalidVoucherNamePattern
+	}
+
+	shop, err := s.shopService.FindShopByUserId(userID)
+	if err != nil {
+		return nil, err
+	}
+
+	voucher, err := s.shopVoucherRepository.Create(shop.ID, request)
+	if err != nil {
+		return nil, err
+	}
+
+	return voucher, nil
+}
+
+func (s *shopVoucherServiceImpl) DeleteVoucher(userID int, voucherCode string) error {
+	shop, err := s.shopService.FindShopByUserId(userID)
+	if err != nil {
+		return err
+	}
+
+	err = s.shopVoucherRepository.Delete(shop.ID, voucherCode)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (s *shopVoucherServiceImpl) GetValidShopVoucherByUserIDAndSlug(req dto.GetValidShopVoucherRequest) ([]*model.ShopVoucher, error) {
