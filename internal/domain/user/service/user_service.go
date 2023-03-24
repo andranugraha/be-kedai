@@ -21,6 +21,7 @@ import (
 
 type UserService interface {
 	GetByID(id int) (*model.User, error)
+	GetByUsername(username string) (*model.User, error)
 	SignUp(*dto.UserRegistrationRequest) (*dto.UserRegistrationResponse, error)
 	SignIn(*dto.UserLogin, string) (*dto.Token, error)
 	SignInWithGoogle(userLogin *dto.UserLoginWithGoogleRequest) (*dto.Token, error)
@@ -62,6 +63,10 @@ func NewUserService(cfg *UserSConfig) UserService {
 
 func (s *userServiceImpl) GetByID(id int) (*model.User, error) {
 	return s.repository.GetByID(id)
+}
+
+func (s *userServiceImpl) GetByUsername(username string) (*model.User, error) {
+	return s.repository.GetByUsername(username)
 }
 
 func (s *userServiceImpl) SignUp(userReg *dto.UserRegistrationRequest) (*dto.UserRegistrationResponse, error) {
