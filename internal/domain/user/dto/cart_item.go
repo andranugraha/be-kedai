@@ -1,6 +1,7 @@
 package dto
 
 import (
+	"kedai/backend/be-kedai/internal/common/constant"
 	productModel "kedai/backend/be-kedai/internal/domain/product/model"
 	shopModel "kedai/backend/be-kedai/internal/domain/shop/model"
 	"kedai/backend/be-kedai/internal/domain/user/model"
@@ -78,7 +79,11 @@ type CartItemResponse struct {
 
 func (r *GetCartItemsRequest) Validate() {
 	if r.Limit < 10 {
-		r.Limit = 10 // default limit
+		r.Limit = constant.DefaultCartItemLimit // default limit
+	}
+
+	if r.Limit > 50 {
+		r.Limit = constant.MaxCartItemLimit // max limit
 	}
 
 	if r.Page < 1 {
