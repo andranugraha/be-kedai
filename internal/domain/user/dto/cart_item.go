@@ -72,6 +72,8 @@ type CartItemResponse struct {
 	Width           float64                        `json:"width"`
 	Height          float64                        `json:"height"`
 	BulkPrice       *productModel.ProductBulkPrice `json:"bulkPrice,omitempty"`
+	PurchaseLimit   int                            `json:"purchaseLimit"`
+	PromotionStock  int                            `json:"promotionStock"`
 }
 
 func (r *GetCartItemsRequest) Validate() {
@@ -132,6 +134,8 @@ func (d *CartItemResponse) ToCartItemResponse(cartItem model.CartItem) {
 	if cartItem.Sku.Promotion != nil {
 		d.PromotionType = cartItem.Sku.Promotion.Type
 		d.PromotionAmount = cartItem.Sku.Promotion.Amount
+		d.PurchaseLimit = cartItem.Sku.Promotion.PurchaseLimit
+		d.PromotionStock = cartItem.Sku.Promotion.Stock
 	}
 }
 

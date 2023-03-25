@@ -92,6 +92,7 @@ func (r *userCartItemRepository) GetAllCartItem(req *dto.GetCartItemsRequest) (c
 		Joins("left join products p on s.product_id = p.id").
 		Joins("left join shops sh on p.shop_id = sh.id").
 		Joins("left join product_bulk_prices bp on p.id = bp.product_id").
+		Joins("left join product_promotions pp on s.id = pp.sku_id").
 		Group("sh.id, cart_items.id").
 		Where(`sh.id IN (SELECT DISTINCT sh.id from shops sh 
 			JOIN products p on p.shop_id = sh.id 
