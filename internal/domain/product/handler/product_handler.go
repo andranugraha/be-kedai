@@ -239,8 +239,13 @@ func (h *Handler) CreateProduct(c *gin.Context) {
 func (h *Handler) GetRecommendedProducts(c *gin.Context) {
 
 	limit, _ := strconv.Atoi(c.Query("limit"))
+	request := dto.GetRecommendedProductRequest{
+		Limit: limit,
+	}
 
-	res, err := h.productService.GetRecommendedProducts(limit)
+	request.Validate()
+
+	res, err := h.productService.GetRecommendedProducts(request.Limit)
 	if err != nil {
 		response.Error(c, http.StatusInternalServerError, code.INTERNAL_SERVER_ERROR, errs.ErrInternalServerError.Error())
 		return
