@@ -2,7 +2,6 @@ package dto
 
 import (
 	"kedai/backend/be-kedai/internal/domain/product/dto"
-	productModel "kedai/backend/be-kedai/internal/domain/product/model"
 	"kedai/backend/be-kedai/internal/domain/shop/model"
 )
 
@@ -14,18 +13,6 @@ type SellerPromotion struct {
 
 func (SellerPromotion) TableName() string {
 	return "shop_promotions"
-}
-
-type Product struct {
-	ID       int                 `json:"id"`
-	Name     string              `json:"name"`
-	Code     string              `json:"code"`
-	ImageURL string              `json:"imageUrl,omitempty"`
-	SKUs     []*productModel.Sku `json:"skus,omitempty"`
-}
-
-func (Product) TableName() string {
-	return "products"
 }
 
 type SellerPromotionFilterRequest struct {
