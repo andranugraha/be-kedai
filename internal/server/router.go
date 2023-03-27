@@ -229,7 +229,12 @@ func NewRouter(cfg *RouterConfig) *gin.Engine {
 				{
 					order.POST("/:orderId/cancel-commit", cfg.OrderHandler.UpdateToCanceled)
 				}
-
+				// TODO: Angga > admin auth middleware test
+				// marketplace := authenticated.Group("/marketplaces")
+				marketplace := admin.Group("/marketplaces")
+				{
+					marketplace.POST("/banners", cfg.MarketplaceHandler.AddMarketplaceBanner)
+				}
 			}
 		}
 
