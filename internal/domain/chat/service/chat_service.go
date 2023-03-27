@@ -2,8 +2,11 @@ package service
 
 import (
 	commonDto "kedai/backend/be-kedai/internal/common/dto"
+	errs "kedai/backend/be-kedai/internal/common/error"
 	"kedai/backend/be-kedai/internal/domain/chat/dto"
 	"kedai/backend/be-kedai/internal/domain/chat/repository"
+	invoiceService "kedai/backend/be-kedai/internal/domain/order/service"
+	productService "kedai/backend/be-kedai/internal/domain/product/service"
 	shopService "kedai/backend/be-kedai/internal/domain/shop/service"
 	userService "kedai/backend/be-kedai/internal/domain/user/service"
 )
@@ -18,22 +21,28 @@ type ChatService interface {
 }
 
 type chatServiceImpl struct {
-	chatRepo    repository.ChatRepository
-	shopService shopService.ShopService
-	userService userService.UserService
+	chatRepo       repository.ChatRepository
+	shopService    shopService.ShopService
+	userService    userService.UserService
+	productService productService.ProductService
+	invoiceService invoiceService.InvoicePerShopService
 }
 
 type ChatConfig struct {
-	ChatRepo    repository.ChatRepository
-	ShopService shopService.ShopService
-	UserService userService.UserService
+	ChatRepo       repository.ChatRepository
+	ShopService    shopService.ShopService
+	UserService    userService.UserService
+	ProductService productService.ProductService
+	InvoiceService invoiceService.InvoicePerShopService
 }
 
 func NewChatService(config *ChatConfig) ChatService {
 	return &chatServiceImpl{
-		chatRepo:    config.ChatRepo,
-		shopService: config.ShopService,
-		userService: config.UserService,
+		chatRepo:       config.ChatRepo,
+		shopService:    config.ShopService,
+		userService:    config.UserService,
+		productService: config.ProductService,
+		invoiceService: config.InvoiceService,
 	}
 }
 
@@ -70,6 +79,28 @@ func (s *chatServiceImpl) UserAddChat(body *dto.SendChatBodyRequest, userId int,
 	if err != nil {
 		return nil, err
 	}
+
+	if shop.UserID == userId {
+		// ErrSelfMessaging
+		return nil, errs.ErrSelfMessaging
+	}
+
+	if body.Type == "product" {
+		// Check Message as ProductCode: ErrProductNotFound
+		_, err := s.productService.GetByCode(body.Message)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	if body.Type == "invoice" || body.Type == "complaint" {
+		// Check Message as InvoiceCode: ErrInvoiceNotFound
+		_, err := s.invoiceService.GetInvoicesByUserIDAndCode(userId, body.Message)
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	return s.chatRepo.UserAddChat(body, userId, shop)
 }
 
@@ -82,5 +113,26 @@ func (s *chatServiceImpl) SellerAddChat(body *dto.SendChatBodyRequest, userId in
 	if err != nil {
 		return nil, err
 	}
+
+	if shop.UserID == user.ID {
+		return nil, errs.ErrSelfMessaging
+	}
+
+	if body.Type == "product" {
+		// Check Message as ProductCode: ErrProductNotFound
+		_, err := s.productService.GetByCode(body.Message)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	if body.Type == "invoice" || body.Type == "complaint" {
+		// Check Message as InvoiceCode: ErrInvoiceNotFound
+		_, err := s.invoiceService.GetInvoicesByUserIDAndCode(user.ID, body.Message)
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	return s.chatRepo.SellerAddChat(body, shop, user)
 }

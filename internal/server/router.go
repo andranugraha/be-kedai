@@ -141,6 +141,7 @@ func NewRouter(cfg *RouterConfig) *gin.Engine {
 			product.GET("/:code/reviews/stats", cfg.ProductHandler.GetProductReviewStats)
 			product.GET("/recommendations/categories", cfg.ProductHandler.GetRecommendationByCategory)
 			product.GET("/autocompletes", cfg.ProductHandler.SearchAutocomplete)
+			product.GET("/recommended", cfg.ProductHandler.GetRecommendedProducts)
 			product.POST("/views", cfg.ProductHandler.AddProductView)
 			product.GET("/discussions/:productId", cfg.ProductHandler.GetDiscussionByProductID)
 			product.GET("/discussions/replies/:parentId", cfg.ProductHandler.GetDiscussionByParentID)
@@ -220,9 +221,14 @@ func NewRouter(cfg *RouterConfig) *gin.Engine {
 		// TODO ADD MIDLEWARE FOR AUTH ADMIN
 		admin := v1.Group("/admins")
 		{
-			order := admin.Group("/orders")
+			admin.POST("/login", cfg.UserHandler.AdminSignIn)
+			authenticated := admin.Group("", middleware.AdminJWTAuthorization, cfg.UserHandler.GetSession)
 			{
-				order.POST("/:orderId/cancel-commit", cfg.OrderHandler.UpdateToCanceled)
+				order := authenticated.Group("/orders")
+				{
+					order.POST("/:orderId/cancel-commit", cfg.OrderHandler.UpdateToCanceled)
+				}
+
 			}
 		}
 

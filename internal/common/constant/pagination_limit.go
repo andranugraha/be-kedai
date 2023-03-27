@@ -38,4 +38,6 @@ const (
 
 	DefaultDiscussionLimit = 5
 	MaxDiscussionLimit     = 10
+	DefaultRecommendedProductLimit = 18
+	MaxRecommendedProductLimit     = 100
 )
