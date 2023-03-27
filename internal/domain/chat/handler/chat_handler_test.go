@@ -158,7 +158,7 @@ func TestSellerGetListOfChats(t *testing.T) {
 			},
 		},
 		{
-			description: "should return error with code 400 when bad request",
+			description: "should return error with code 404 when not found",
 			input: input{
 				userId: userId,
 				param:  param,
@@ -169,9 +169,9 @@ func TestSellerGetListOfChats(t *testing.T) {
 				cs.On("SellerGetListOfChats", param, userId).Return(nil, errs.ErrShopNotFound)
 			},
 			expected: expected{
-				statusCode: http.StatusBadRequest,
+				statusCode: http.StatusNotFound,
 				response: response.Response{
-					Code:    code.BAD_REQUEST,
+					Code:    code.NOT_FOUND,
 					Message: errs.ErrShopNotFound.Error(),
 				},
 			},
@@ -278,7 +278,7 @@ func TestUserGetChat(t *testing.T) {
 			},
 		},
 		{
-			description: "should return error with code 400 when bad request",
+			description: "should return error with code 404 when not found",
 			input: input{
 				userId:   userId,
 				shopSlug: shopSlug,
@@ -290,9 +290,9 @@ func TestUserGetChat(t *testing.T) {
 				cs.On("UserGetChat", param, userId, shopSlug).Return(nil, errs.ErrShopNotFound)
 			},
 			expected: expected{
-				statusCode: http.StatusBadRequest,
+				statusCode: http.StatusNotFound,
 				response: response.Response{
-					Code:    code.BAD_REQUEST,
+					Code:    code.NOT_FOUND,
 					Message: errs.ErrShopNotFound.Error(),
 				},
 			},
@@ -414,7 +414,7 @@ func TestSellerGetChat(t *testing.T) {
 			},
 		},
 		{
-			description: "should return error with code 400 when bad request",
+			description: "should return error with code 404 when not found",
 			input: input{
 				userId:   userId,
 				username: username,
@@ -426,9 +426,9 @@ func TestSellerGetChat(t *testing.T) {
 				cs.On("SellerGetChat", param, userId, username).Return(nil, errs.ErrShopNotFound)
 			},
 			expected: expected{
-				statusCode: http.StatusBadRequest,
+				statusCode: http.StatusNotFound,
 				response: response.Response{
-					Code:    code.BAD_REQUEST,
+					Code:    code.NOT_FOUND,
 					Message: errs.ErrShopNotFound.Error(),
 				},
 			},
@@ -549,7 +549,7 @@ func TestUserAddChat(t *testing.T) {
 			},
 		},
 		{
-			description: "should return error with code 400 when bad request",
+			description: "should return error with code 404 when not found",
 			input: input{
 				userId:   userId,
 				shopSlug: shopSlug,
@@ -561,10 +561,30 @@ func TestUserAddChat(t *testing.T) {
 				cs.On("UserAddChat", body, userId, shopSlug).Return(nil, errs.ErrShopNotFound)
 			},
 			expected: expected{
+				statusCode: http.StatusNotFound,
+				response: response.Response{
+					Code:    code.NOT_FOUND,
+					Message: errs.ErrShopNotFound.Error(),
+				},
+			},
+		},
+		{
+			description: "should return error with code 400 when bad request",
+			input: input{
+				userId:   userId,
+				shopSlug: shopSlug,
+				body:     body,
+				result:   nil,
+				err:      errs.ErrSelfMessaging,
+			},
+			beforeTests: func(cs *mocks.ChatService) {
+				cs.On("UserAddChat", body, userId, shopSlug).Return(nil, errs.ErrSelfMessaging)
+			},
+			expected: expected{
 				statusCode: http.StatusBadRequest,
 				response: response.Response{
 					Code:    code.BAD_REQUEST,
-					Message: errs.ErrShopNotFound.Error(),
+					Message: errs.ErrSelfMessaging.Error(),
 				},
 			},
 		},
@@ -694,7 +714,7 @@ func TestSellerAddChat(t *testing.T) {
 			},
 		},
 		{
-			description: "should return error with code 400 when bad request",
+			description: "should return error with code 404 when not found",
 			input: input{
 				userId:   userId,
 				username: username,
@@ -706,10 +726,30 @@ func TestSellerAddChat(t *testing.T) {
 				cs.On("SellerAddChat", body, userId, username).Return(nil, errs.ErrShopNotFound)
 			},
 			expected: expected{
+				statusCode: http.StatusNotFound,
+				response: response.Response{
+					Code:    code.NOT_FOUND,
+					Message: errs.ErrShopNotFound.Error(),
+				},
+			},
+		},
+		{
+			description: "should return error with code 400 when bad request",
+			input: input{
+				userId:   userId,
+				username: username,
+				body:     body,
+				result:   nil,
+				err:      errs.ErrSelfMessaging,
+			},
+			beforeTests: func(cs *mocks.ChatService) {
+				cs.On("SellerAddChat", body, userId, username).Return(nil, errs.ErrSelfMessaging)
+			},
+			expected: expected{
 				statusCode: http.StatusBadRequest,
 				response: response.Response{
 					Code:    code.BAD_REQUEST,
-					Message: errs.ErrShopNotFound.Error(),
+					Message: errs.ErrSelfMessaging.Error(),
 				},
 			},
 		},

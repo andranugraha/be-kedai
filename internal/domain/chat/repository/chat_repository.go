@@ -105,8 +105,8 @@ func (r *chatRepositoryImpl) UserGetListOfChats(param *dto.ListOfChatsParamReque
 			eliminatedChatResponseIds = append(eliminatedChatResponseIds, id)
 		}
 	}
-	for _, elimineliminatedChatResponseId := range eliminatedChatResponseIds {
-		listOfChatResponses = slice.UserRemoveElement(listOfChatResponses, elimineliminatedChatResponseId)
+	for _, eliminatedChatResponseId := range eliminatedChatResponseIds {
+		listOfChatResponses = slice.UserRemoveElement(listOfChatResponses, eliminatedChatResponseId)
 	}
 
 	return listOfChatResponses, nil
@@ -160,8 +160,8 @@ func (r *chatRepositoryImpl) SellerGetListOfChats(param *dto.ListOfChatsParamReq
 			eliminatedChatResponseIds = append(eliminatedChatResponseIds, id)
 		}
 	}
-	for _, elimineliminatedChatResponseId := range eliminatedChatResponseIds {
-		listOfChatResponses = slice.SellerRemoveElement(listOfChatResponses, elimineliminatedChatResponseId)
+	for _, eliminatedChatResponseId := range eliminatedChatResponseIds {
+		listOfChatResponses = slice.SellerRemoveElement(listOfChatResponses, eliminatedChatResponseId)
 	}
 
 	return listOfChatResponses, nil

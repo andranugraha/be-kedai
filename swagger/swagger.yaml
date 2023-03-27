@@ -5106,7 +5106,20 @@ paths:
                     example: "UNAUTHORIZED"
                   message:
                     type: string
-                    example: "error message"        
+                    example: "error message"    
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "NOT_FOUND"
+                  message:
+                    type: string
+                    example: "error message"    
         '500':
           description: Internal server error
           content:
@@ -5170,7 +5183,20 @@ paths:
                     example: "UNAUTHORIZED"
                   message:
                     type: string
-                    example: "error message"        
+                    example: "error message" 
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "NOT_FOUND"
+                  message:
+                    type: string
+                    example: "error message"          
         '500':
           description: Internal server error
           content:
@@ -7858,7 +7884,20 @@ paths:
                     example: "UNAUTHORIZED"
                   message:
                     type: string
-                    example: "error message"        
+                    example: "error message"      
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "NOT_FOUND"
+                  message:
+                    type: string
+                    example: "error message"     
         '500':
           description: Internal server error
           content:
@@ -7942,7 +7981,20 @@ paths:
                     example: "UNAUTHORIZED"
                   message:
                     type: string
-                    example: "error message"        
+                    example: "error message"    
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "NOT_FOUND"
+                  message:
+                    type: string
+                    example: "error message"       
         '500':
           description: Internal server error
           content:
@@ -8006,7 +8058,20 @@ paths:
                     example: "UNAUTHORIZED"
                   message:
                     type: string
-                    example: "error message"        
+                    example: "error message"       
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "NOT_FOUND"
+                  message:
+                    type: string
+                    example: "error message"    
         '500':
           description: Internal server error
           content:
