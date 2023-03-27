@@ -83,7 +83,7 @@ func (r *shopPromotionRepositoryImpl) GetSellerPromotions(shopId int, request *d
 	}
 
 	for _, promotions := range promotions {
-		products, err := r.productRepository.GetByPromotionID(shopId, promotions.ID)
+		products, err := r.productRepository.GetWithPromotions(shopId, promotions.ID)
 		if err != nil {
 			return nil, 0, 0, err
 		}
