@@ -27,11 +27,7 @@ func (h *Handler) GetCategories(c *gin.Context) {
 
 func (h *Handler) AddCategory(c *gin.Context) {
 	var categoryDTO dto.CategoryDTO
-	if err := json.NewDecoder(c.Request.Body).Decode(&categoryDTO); err != nil {
-		response.Error(c, http.StatusBadRequest, code.BAD_REQUEST, err.Error())
-		return
-	}
-
+	json.NewDecoder(c.Request.Body).Decode(&categoryDTO)
 	category := categoryDTO.ToModel()
 	err := h.categoryService.AddCategory(category)
 	if err != nil {
