@@ -54,3 +54,15 @@ type CreateVoucherRequest struct {
 	StartFrom    time.Time `json:"startFrom" binding:"required"`
 	ExpiredAt    time.Time `json:"expiredAt" binding:"required"`
 }
+
+type UpdateVoucherRequest struct {
+	Name         string    `json:"name" binding:"omitempty,min=1,max=100"`
+	Amount       float64   `json:"amount" binding:"omitempty,min=0,max=500000000"`
+	Type         string    `json:"type" binding:"omitempty"`
+	IsHidden     *bool     `json:"isHidden" binding:"omitempty"`
+	Description  string    `json:"description" binding:"omitempty,min=5,max=1000"`
+	MinimumSpend float64   `json:"minimumSpend" binding:"omitempty,min=0,max=500000000"`
+	TotalQuota   int       `json:"totalQuota" binding:"omitempty,min=1,max=200000"`
+	StartFrom    time.Time `json:"startFrom" binding:"omitempty"`
+	ExpiredAt    time.Time `json:"expiredAt" binding:"omitempty"`
+}

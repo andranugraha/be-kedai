@@ -5580,7 +5580,7 @@ paths:
                     type: string
                     example: "invalid credential"
         '404':
-          description: not found
+          description: shop not found
           content:
             application/json:
               schema:
@@ -5592,8 +5592,8 @@ paths:
                   message:
                     type: string
                     example: "error message"
-        '422':
-          description: invalid voucher name pattern
+        '409':
+          description: duplicate voucher code
           content:
             application/json:
               schema:
@@ -5601,7 +5601,20 @@ paths:
                 properties:
                   code:
                     type: string
-                    example: "INVALID_VOUCHER_NAME"
+                    example: "DUPLICATE_VOUCHER_CODE"
+                  message:
+                    type: string
+                    example: "duplicate voucher code"
+        '422':
+          description: invalid voucher name pattern / invalid voucher date range
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "INVALID"
                   message:
                     type: string
                     example: "error message"
@@ -5617,7 +5630,7 @@ paths:
                     example: "INTERNAL_SERVER_ERROR"
                   message:
                     type: string
-                    example: "error message"                
+                    example: "error message"
   /v1/sellers/vouchers/{code}:
     get:
       security:
@@ -5693,6 +5706,108 @@ paths:
                   message:
                     type: string
                     example: "error message"
+    put:
+      security:
+        - BearerAuth: []
+      tags:
+        - Seller
+      summary: Update seller's voucher
+      description: Update seller's voucher by using voucher code
+      parameters:
+        - in: path
+          name: code
+          required: true
+          schema:
+            type: string
+            example: voucher-code
+      requestBody:
+        $ref: '#/components/requestBodies/UpdateVoucherBody'
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - type: object
+                    properties:
+                      code:
+                        example: "UPDATED"
+                      message:
+                        example: "update voucher succesful"
+                      data:
+                        allOf:
+                          - $ref: '#/components/schemas/ShopVoucher'
+                          - type: object
+                            properties:
+                              status:
+                                type: string
+                                example: "ongoing"
+        '401':
+          description: unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "UNAUTHORIZED"
+                  message:
+                    type: string
+                    example: "invalid credential"
+        '404':
+          description: shop not found / voucher not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "NOT_FOUND"
+                  message:
+                    type: string
+                    example: "error message"
+        '409':
+          description: voucher status conflict
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: VOUCHER_STATUS_CONFLICT
+                  message:
+                    type: string
+                    example: voucher status conflict
+        '422':
+          description: invalid voucher name pattern / invalid date range
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "INVALID"
+                  message:
+                    type: string
+                    example: "error message"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "INTERNAL_SERVER_ERROR"
+                  message:
+                    type: string
+                    example: "error message"
     delete:
       security:
         - BearerAuth: []
@@ -5749,7 +5864,7 @@ paths:
                     type: string
                     example: "invalid credential"            
         '404':
-          description: Not Found
+          description: shop not found / voucher not found
           content:
             application/json:
               schema:
@@ -5762,7 +5877,7 @@ paths:
                     type: string
                     example: "error message"         
         '409':
-          description: Conflict
+          description: voucher status conflict (either is ongoing or expired)
           content:
             application/json:
               schema:
@@ -5770,10 +5885,10 @@ paths:
                 properties:
                   code:
                     type: string
-                    example: "VOUCHER_IS_EXPIRED_OR_ONGOING"
+                    example: "VOUCHER_STATUS_CONFLICT"
                   message:
                     type: string
-                    example: "voucher status is either expired or ongoing"            
+                    example: "voucher status conflict"            
         '500':
           description: Internal server error
           content:
@@ -5786,7 +5901,7 @@ paths:
                     example: "INTERNAL_SERVER_ERROR"
                   message:
                     type: string
-                    example: "error message"  
+                    example: "error message"
   /v1/sellers/products/{code}:
     get:
       security:
@@ -10349,6 +10464,62 @@ components:
               type:
                 type: string
                 example: "complaint"
+    UpdateVoucherBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - name
+              - amount
+              - type
+              - isHidden
+              - description
+              - minimumSpend
+              - totalQuota
+              - startFrom
+              - expiredAt
+            properties:
+              name:
+                type: string
+                minLength: 1
+                maxLength: 100
+                example: voucher name
+              amount:
+                type: integer
+                minimum: 0
+                maximum: 500000000
+                example: 1000
+              type:
+                type: string
+                example: nominal
+              isHidden:
+                type: boolean
+                example: false
+              description:
+                type: string
+                minLength: 5
+                maxLength: 1000
+                example: voucher bakmi kejaksaan enak
+              minimumSpend:
+                type: integer
+                minimum: 0
+                maximum: 500000000
+                example: 1000
+              totalQuota:
+                type: integer
+                minimum: 1
+                maximum: 200000
+                example: 10
+              startFrom:
+                type: string
+                format: datetime
+                example: "2006-01-02T00:00:00.000Z"
+              expiredAt:
+                type: string
+                format: datetime
+                example: "2006-01-02T00:00:00.000Z"
   securitySchemes:
     BearerAuth:
       type: http

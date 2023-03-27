@@ -2,6 +2,7 @@ package service_test
 
 import (
 	"errors"
+	"kedai/backend/be-kedai/internal/common/constant"
 	commonDto "kedai/backend/be-kedai/internal/common/dto"
 	errs "kedai/backend/be-kedai/internal/common/error"
 	"kedai/backend/be-kedai/internal/domain/shop/dto"
@@ -9,6 +10,7 @@ import (
 	"kedai/backend/be-kedai/internal/domain/shop/service"
 	"kedai/backend/be-kedai/mocks"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -293,9 +295,12 @@ func TestCreateVoucher(t *testing.T) {
 	}
 
 	var (
-		userID      = 1
-		shopID      = 1
-		voucherName = "voucher name"
+		userID       = 1
+		shopID       = 1
+		voucherName  = "voucher name"
+		voucherCode  = "voucher code"
+		startFrom, _ = time.Parse(time.RFC3339Nano, "2023-03-25T10:08:28.905Z")
+		expiredAt, _ = time.Parse(time.RFC3339Nano, "2023-03-25T10:08:28.905Z")
 	)
 
 	tests := []struct {
@@ -324,6 +329,7 @@ func TestCreateVoucher(t *testing.T) {
 				userID: userID,
 				request: &dto.CreateVoucherRequest{
 					Name: voucherName,
+					Code: voucherCode,
 				},
 			},
 			beforeTest: func(ss *mocks.ShopService, vr *mocks.ShopVoucherRepository) {
@@ -335,16 +341,64 @@ func TestCreateVoucher(t *testing.T) {
 			},
 		},
 		{
-			description: "should return error when failed to create voucher",
+			description: "should return error when duplicate voucher code is found",
 			input: input{
 				userID: userID,
 				request: &dto.CreateVoucherRequest{
 					Name: voucherName,
+					Code: voucherCode,
 				},
 			},
 			beforeTest: func(ss *mocks.ShopService, vr *mocks.ShopVoucherRepository) {
 				ss.On("FindShopByUserId", userID).Return(&model.Shop{ID: shopID}, nil)
-				vr.On("Create", shopID, &dto.CreateVoucherRequest{Name: voucherName}).Return(nil, errors.New("failed to create voucher"))
+				vr.On("GetVoucherByCodeAndShopId", voucherCode, shopID).Return(&dto.SellerVoucher{Status: "ongoing"}, nil)
+			},
+			expected: expected{
+				data: nil,
+				err:  errors.New("duplicate voucher code"),
+			},
+		},
+		{
+			description: "should return error when voucher date range is invalid",
+			input: input{
+				userID: userID,
+				request: &dto.CreateVoucherRequest{
+					Name:      voucherName,
+					Code:      voucherCode,
+					StartFrom: startFrom,
+					ExpiredAt: expiredAt,
+				},
+			},
+			beforeTest: func(ss *mocks.ShopService, vr *mocks.ShopVoucherRepository) {
+				ss.On("FindShopByUserId", userID).Return(&model.Shop{ID: shopID}, nil)
+				vr.On("GetVoucherByCodeAndShopId", voucherCode, shopID).Return(&dto.SellerVoucher{
+					ShopVoucher: model.ShopVoucher{Name: voucherName, Code: voucherCode},
+				}, nil)
+				vr.On("ValidateVoucherDateRange", startFrom, expiredAt).Return(errors.New("invalid voucher date range"))
+			},
+			expected: expected{
+				data: nil,
+				err:  errors.New("invalid voucher date range"),
+			},
+		},
+		{
+			description: "should return error when failed to create voucher",
+			input: input{
+				userID: userID,
+				request: &dto.CreateVoucherRequest{
+					Name:      voucherName,
+					Code:      voucherCode,
+					StartFrom: startFrom,
+					ExpiredAt: expiredAt,
+				},
+			},
+			beforeTest: func(ss *mocks.ShopService, vr *mocks.ShopVoucherRepository) {
+				ss.On("FindShopByUserId", userID).Return(&model.Shop{ID: shopID}, nil)
+				vr.On("GetVoucherByCodeAndShopId", voucherCode, shopID).Return(&dto.SellerVoucher{
+					ShopVoucher: model.ShopVoucher{Name: voucherName, Code: voucherCode},
+				}, nil)
+				vr.On("ValidateVoucherDateRange", startFrom, expiredAt).Return(nil)
+				vr.On("Create", shopID, &dto.CreateVoucherRequest{Name: voucherName, Code: voucherCode, StartFrom: startFrom, ExpiredAt: expiredAt}).Return(nil, errors.New("failed to create voucher"))
 			},
 			expected: expected{
 				data: nil,
@@ -356,16 +410,32 @@ func TestCreateVoucher(t *testing.T) {
 			input: input{
 				userID: userID,
 				request: &dto.CreateVoucherRequest{
-					Name: voucherName,
+					Name:      voucherName,
+					Code:      voucherCode,
+					StartFrom: startFrom,
+					ExpiredAt: expiredAt,
 				},
 			},
 			beforeTest: func(ss *mocks.ShopService, vr *mocks.ShopVoucherRepository) {
 				ss.On("FindShopByUserId", userID).Return(&model.Shop{ID: shopID}, nil)
-				vr.On("Create", shopID, &dto.CreateVoucherRequest{Name: voucherName}).Return(&model.ShopVoucher{Name: voucherName}, nil)
+				vr.On("GetVoucherByCodeAndShopId", voucherCode, shopID).Return(&dto.SellerVoucher{
+					ShopVoucher: model.ShopVoucher{Name: voucherName, Code: voucherCode},
+				}, nil)
+				vr.On("ValidateVoucherDateRange", startFrom, expiredAt).Return(nil)
+				vr.On("Create", shopID, &dto.CreateVoucherRequest{
+					Name: voucherName, Code: voucherCode, StartFrom: startFrom, ExpiredAt: expiredAt,
+				}).Return(&model.ShopVoucher{
+					Name: voucherName, Code: voucherCode, StartFrom: startFrom, ExpiredAt: expiredAt,
+				}, nil)
 			},
 			expected: expected{
-				data: &model.ShopVoucher{Name: voucherName},
-				err:  nil,
+				data: &model.ShopVoucher{
+					Name:      voucherName,
+					Code:      voucherCode,
+					StartFrom: startFrom,
+					ExpiredAt: expiredAt,
+				},
+				err: nil,
 			},
 		},
 	}
@@ -381,6 +451,209 @@ func TestCreateVoucher(t *testing.T) {
 			})
 
 			data, err := shopVoucherService.CreateVoucher(tc.input.userID, tc.input.request)
+
+			assert.Equal(t, tc.expected.data, data)
+			assert.Equal(t, tc.expected.err, err)
+		})
+	}
+}
+
+func TestUpdateVoucher(t *testing.T) {
+	type input struct {
+		userID      int
+		shopID      int
+		voucherCode string
+		request     *dto.UpdateVoucherRequest
+	}
+	type expected struct {
+		data *model.ShopVoucher
+		err  error
+	}
+
+	var (
+		userID       = 1
+		shopID       = 1
+		voucherName  = "voucher name"
+		voucherCode  = "voucher-code"
+		isHidden     = false
+		startFrom, _ = time.Parse(time.RFC3339Nano, "2023-03-25T10:08:28.905Z")
+		expiredAt, _ = time.Parse(time.RFC3339Nano, "2023-03-25T10:08:28.905Z")
+	)
+
+	tests := []struct {
+		description string
+		input
+		beforeTest func(*mocks.ShopService, *mocks.ShopVoucherRepository)
+		expected
+	}{
+		{
+			description: "should return error when voucher name is invalid",
+			input: input{
+				userID: userID,
+				request: &dto.UpdateVoucherRequest{
+					Name: "127.0.0.1",
+				},
+			},
+			beforeTest: func(ss *mocks.ShopService, vr *mocks.ShopVoucherRepository) {},
+			expected: expected{
+				data: nil,
+				err:  errs.ErrInvalidVoucherNamePattern,
+			},
+		},
+		{
+			description: "should return error when failed to get shop",
+			input: input{
+				userID: userID,
+				request: &dto.UpdateVoucherRequest{
+					Name: voucherName,
+				},
+			},
+			beforeTest: func(ss *mocks.ShopService, vr *mocks.ShopVoucherRepository) {
+				ss.On("FindShopByUserId", userID).Return(nil, errors.New("failed to get shop"))
+			},
+			expected: expected{
+				data: nil,
+				err:  errors.New("failed to get shop"),
+			},
+		},
+		{
+			description: "should return error when failed to get voucher",
+			input: input{
+				userID:      userID,
+				shopID:      shopID,
+				voucherCode: voucherCode,
+				request: &dto.UpdateVoucherRequest{
+					Name: voucherName,
+				},
+			},
+			beforeTest: func(ss *mocks.ShopService, vr *mocks.ShopVoucherRepository) {
+				ss.On("FindShopByUserId", userID).Return(&model.Shop{ID: shopID}, nil)
+				vr.On("GetVoucherByCodeAndShopId", voucherCode, shopID).Return(nil, errors.New("failed to get voucher"))
+			},
+			expected: expected{
+				data: nil,
+				err:  errors.New("failed to get voucher"),
+			},
+		},
+		{
+			description: "should return ErrVoucherStatusConflict when voucher status is expired",
+			input: input{
+				userID:      userID,
+				shopID:      shopID,
+				voucherCode: voucherCode,
+				request: &dto.UpdateVoucherRequest{
+					Name: voucherName,
+				},
+			},
+			beforeTest: func(ss *mocks.ShopService, vr *mocks.ShopVoucherRepository) {
+				ss.On("FindShopByUserId", userID).Return(&model.Shop{ID: shopID}, nil)
+				voucher := &dto.SellerVoucher{
+					Status: constant.VoucherPromotionStatusExpired,
+				}
+				vr.On("GetVoucherByCodeAndShopId", voucherCode, shopID).Return(voucher, nil)
+			},
+			expected: expected{
+				data: nil,
+				err:  errs.ErrVoucherStatusConflict,
+			},
+		},
+		{
+			description: "should return error when voucher date range is invalid",
+			input: input{
+				userID:      userID,
+				shopID:      shopID,
+				voucherCode: voucherCode,
+				request: &dto.UpdateVoucherRequest{
+					Name:      voucherName,
+					StartFrom: startFrom,
+					ExpiredAt: expiredAt,
+				},
+			},
+			beforeTest: func(ss *mocks.ShopService, vr *mocks.ShopVoucherRepository) {
+				ss.On("FindShopByUserId", userID).Return(&model.Shop{ID: shopID}, nil)
+				vr.On("GetVoucherByCodeAndShopId", voucherCode, shopID).Return(&dto.SellerVoucher{
+					ShopVoucher: model.ShopVoucher{Name: voucherName, Code: voucherCode},
+				}, nil)
+				vr.On("ValidateVoucherDateRange", startFrom, expiredAt).Return(errors.New("invalid voucher date range"))
+			},
+			expected: expected{
+				data: nil,
+				err:  errors.New("invalid voucher date range"),
+			},
+		},
+		{
+			description: "should return error when failed to update voucher",
+			input: input{
+				userID:      userID,
+				shopID:      shopID,
+				voucherCode: voucherCode,
+				request: &dto.UpdateVoucherRequest{
+					Name:      voucherName,
+					IsHidden:  &isHidden,
+					StartFrom: startFrom,
+					ExpiredAt: expiredAt,
+				},
+			},
+			beforeTest: func(ss *mocks.ShopService, vr *mocks.ShopVoucherRepository) {
+				ss.On("FindShopByUserId", userID).Return(&model.Shop{ID: shopID}, nil)
+				vr.On("GetVoucherByCodeAndShopId", voucherCode, shopID).Return(&dto.SellerVoucher{
+					ShopVoucher: model.ShopVoucher{Name: voucherName},
+					Status:      "ongoing",
+				}, nil)
+				vr.On("ValidateVoucherDateRange", startFrom, expiredAt).Return(nil)
+				vr.On("Update", &model.ShopVoucher{
+					Name: voucherName, IsHidden: isHidden, ShopId: shopID, StartFrom: startFrom, ExpiredAt: expiredAt,
+				}).Return(nil, errors.New("failed to update voucher"))
+			},
+			expected: expected{
+				data: nil,
+				err:  errors.New("failed to update voucher"),
+			},
+		},
+		{
+			description: "should return created voucher when succeed to create voucher",
+			input: input{
+				userID:      userID,
+				shopID:      shopID,
+				voucherCode: voucherCode,
+				request: &dto.UpdateVoucherRequest{
+					Name:      voucherName,
+					IsHidden:  &isHidden,
+					StartFrom: startFrom,
+					ExpiredAt: expiredAt,
+				},
+			},
+			beforeTest: func(ss *mocks.ShopService, vr *mocks.ShopVoucherRepository) {
+				ss.On("FindShopByUserId", userID).Return(&model.Shop{ID: shopID}, nil)
+				vr.On("GetVoucherByCodeAndShopId", voucherCode, shopID).Return(&dto.SellerVoucher{
+					ShopVoucher: model.ShopVoucher{Name: voucherName},
+					Status:      "ongoing",
+				}, nil)
+				vr.On("ValidateVoucherDateRange", startFrom, expiredAt).Return(nil)
+				vr.On("Update", &model.ShopVoucher{Name: voucherName, IsHidden: isHidden, ShopId: shopID, StartFrom: startFrom, ExpiredAt: expiredAt}).Return(&model.ShopVoucher{Name: voucherName, StartFrom: startFrom, ExpiredAt: expiredAt}, nil)
+			},
+			expected: expected{
+				data: &model.ShopVoucher{
+					Name:      voucherName,
+					StartFrom: startFrom,
+					ExpiredAt: expiredAt,
+				},
+				err: nil,
+			},
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.description, func(t *testing.T) {
+			shopService := mocks.NewShopService(t)
+			shopVoucherRepo := mocks.NewShopVoucherRepository(t)
+			tc.beforeTest(shopService, shopVoucherRepo)
+			shopVoucherService := service.NewShopVoucherService(&service.ShopVoucherSConfig{
+				ShopVoucherRepository: shopVoucherRepo,
+				ShopService:           shopService,
+			})
+
+			data, err := shopVoucherService.UpdateVoucher(tc.input.userID, tc.input.voucherCode, tc.input.request)
 
 			assert.Equal(t, tc.expected.data, data)
 			assert.Equal(t, tc.expected.err, err)
