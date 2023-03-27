@@ -23,7 +23,7 @@ type ShopService interface {
 	GetShopInsight(req dto.GetShopInsightRequest) (*dto.GetShopInsightResponse, error)
 	GetShopProfile(userId int) (*dto.ShopProfile, error)
 	UpdateShopProfile(userId int, req dto.ShopProfile) error
-	GetShopRating(userId int, filter dto.GetShopRatingFilterRequest) (*commonDto.PaginationResponse, error)
+	GetShopRating(userId int, filter dto.GetShopRatingFilterRequest) (*dto.GetShopRatingResponse, error)
 }
 
 type shopServiceImpl struct {
@@ -175,7 +175,7 @@ func (s *shopServiceImpl) UpdateShopProfile(userId int, req dto.ShopProfile) err
 	return s.shopRepository.UpdateShop(shop)
 }
 
-func (s *shopServiceImpl) GetShopRating(userId int, filter dto.GetShopRatingFilterRequest) (*commonDto.PaginationResponse, error) {
+func (s *shopServiceImpl) GetShopRating(userId int, filter dto.GetShopRatingFilterRequest) (*dto.GetShopRatingResponse, error) {
 	if filter.Limit == 0 {
 		filter.Limit = 10
 	}
@@ -184,14 +184,22 @@ func (s *shopServiceImpl) GetShopRating(userId int, filter dto.GetShopRatingFilt
 		filter.Page = 1
 	}
 
+	_, err := s.shopRepository.FindShopByUserId(userId)
+	if err != nil {
+		return nil, err
+	}
+
 	review, totalRows, totalPages, err := s.shopRepository.GetShopRating(userId, filter)
 
-	return &commonDto.PaginationResponse{
-		Data:       review,
-		TotalRows:  totalRows,
-		TotalPages: totalPages,
-		Limit:      filter.Limit,
-		Page:       filter.Page,
+	return &dto.GetShopRatingResponse{
+		ShopRating: review.ShopRating,
+		Data: &commonDto.PaginationResponse{
+			Data:       review.ProductItem,
+			TotalRows:  totalRows,
+			TotalPages: totalPages,
+			Limit:      filter.Limit,
+			Page:       filter.Page,
+		},
 	}, err
 
 }
