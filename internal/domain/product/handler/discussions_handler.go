@@ -17,6 +17,8 @@ func (h *Handler) GetDiscussionByProductID(c *gin.Context) {
 	request.Limit, _ = strconv.Atoi(c.Query("limit"))
 	request.Page, _ = strconv.Atoi(c.Query("page"))
 
+	request.Validate()
+
 	result, err := h.discussionService.GetDiscussionByProductID(productId, request)
 	if err != nil {
 		response.Error(c, http.StatusInternalServerError, code.INTERNAL_SERVER_ERROR, err.Error())

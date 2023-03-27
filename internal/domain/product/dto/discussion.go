@@ -5,6 +5,8 @@ import (
 	userModel "kedai/backend/be-kedai/internal/domain/user/model"
 	"time"
 
+	"kedai/backend/be-kedai/internal/common/constant"
+
 	"gorm.io/gorm"
 )
 
@@ -63,7 +65,11 @@ type GetDiscussionReq struct {
 
 func (req *GetDiscussionReq) Validate() {
 	if req.Page < 1 {
-		req.Page = 1
+		req.Page = constant.DefaultReviewLimit
+	}
+
+	if req.Limit > 50 {
+		req.Limit = constant.MaxReviewLimit
 	}
 
 	if req.Limit < 1 {
