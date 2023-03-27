@@ -1964,3 +1964,131 @@ func TestCompletePasswordReset(t *testing.T) {
 		})
 	}
 }
+
+func TestAdminSignIn(t *testing.T) {
+
+	var (
+		req = &dto.UserLogin{
+			Email:    "kedai@mail.com",
+			Password: "test",
+		}
+	)
+
+	type input struct {
+		request     *dto.UserLogin
+		beforeTests func(*mocks.UserService)
+	}
+	type expected struct {
+		statusCode int
+		response   response.Response
+	}
+	cases := []struct {
+		description string
+		input       input
+		expected    expected
+	}{
+		{
+			description: "should return error with status code 400 when binding request failed",
+			input: input{
+				request: &dto.UserLogin{
+					Email:    "test",
+					Password: "test",
+				},
+				beforeTests: func(mockUserService *mocks.UserService) {
+				},
+			},
+			expected: expected{
+				statusCode: http.StatusBadRequest,
+				response: response.Response{
+					Code:    code.BAD_REQUEST,
+					Message: "Email must be an email format",
+				},
+			},
+		},
+		{
+			description: "should return error with status code 400 when binding request failed",
+			input: input{
+				request: &dto.UserLogin{
+					Email: "kedai@mail.com",
+				},
+				beforeTests: func(mockUserService *mocks.UserService) {
+				},
+			},
+			expected: expected{
+				statusCode: http.StatusBadRequest,
+				response: response.Response{
+					Code:    code.BAD_REQUEST,
+					Message: "Password is required",
+				},
+			},
+		},
+		{
+			description: "should return error with status code 400 when credentials are invalid",
+			input: input{
+				request: req,
+				beforeTests: func(mockUserService *mocks.UserService) {
+					mockUserService.On("AdminSignIn", req).Return(nil, errs.ErrInvalidCredential)
+				},
+			},
+			expected: expected{
+				statusCode: http.StatusBadRequest,
+				response: response.Response{
+					Code:    code.WRONG_PASSWORD,
+					Message: errs.ErrInvalidCredential.Error(),
+				},
+			},
+		},
+		{
+			description: "should return error with status code 500 when server errors",
+			input: input{
+				request: req,
+				beforeTests: func(mockUserService *mocks.UserService) {
+					mockUserService.On("AdminSignIn", req).Return(nil, errors.New("internal server error"))
+				},
+			},
+			expected: expected{
+				statusCode: http.StatusInternalServerError,
+				response: response.Response{
+					Code:    code.INTERNAL_SERVER_ERROR,
+					Message: errs.ErrInternalServerError.Error(),
+				},
+			},
+		},
+		{
+			description: "should return token with status code 200 when succesfull",
+			input: input{
+				request: req,
+				beforeTests: func(mockUserService *mocks.UserService) {
+					mockUserService.On("AdminSignIn", req).Return(&dto.Token{}, nil)
+				},
+			},
+			expected: expected{
+				statusCode: http.StatusOK,
+				response: response.Response{
+					Code:    code.OK,
+					Message: "ok",
+					Data:    &dto.Token{},
+				},
+			},
+		},
+	}
+	for _, tc := range cases {
+		t.Run(tc.description, func(t *testing.T) {
+			expectedRes, _ := json.Marshal(tc.expected.response)
+			rec := httptest.NewRecorder()
+			c, _ := gin.CreateTestContext(rec)
+			userService := mocks.NewUserService(t)
+			tc.input.beforeTests(userService)
+			cfg := handler.HandlerConfig{
+				UserService: userService,
+			}
+			h := handler.New(&cfg)
+			c.Request, _ = http.NewRequest("POST", "/v1/admin/login", test.MakeRequestBody(tc.input.request))
+
+			h.AdminSignIn(c)
+
+			assert.Equal(t, tc.expected.statusCode, rec.Code)
+			assert.Equal(t, string(expectedRes), rec.Body.String())
+		})
+	}
+}

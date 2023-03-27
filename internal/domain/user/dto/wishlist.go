@@ -26,7 +26,11 @@ type GetUserWishlistsRequest struct {
 
 func (req *GetUserWishlistsRequest) Validate(strCityIds string) {
 	if req.Limit < 1 {
-		req.Limit = 10
+		req.Limit = constant.DefaultWishlistLimit
+	}
+
+	if req.Limit > 50 {
+		req.Limit = constant.MaxWishlistLimit
 	}
 
 	if req.Page < 1 {
