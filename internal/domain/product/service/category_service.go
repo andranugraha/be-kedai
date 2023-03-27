@@ -10,6 +10,7 @@ import (
 type CategoryService interface {
 	GetCategories(categoryDto.GetCategoriesRequest) (*dto.PaginationResponse, error)
 	GetCategoryLineAgesFromBottom(categoryID int) ([]*model.Category, error)
+	AddCategory(req *categoryDto.CategoryDTO) error
 }
 
 type categoryServiceImpl struct {
@@ -84,4 +85,8 @@ func getCategoryMinPrice(category *model.Category) float64 {
 
 	category.MinPrice = &minPrice
 	return minPrice
+}
+
+func (s *categoryServiceImpl) AddCategory(req *categoryDto.CategoryDTO) error {
+	return s.categoryRepo.AddCategory(req)
 }

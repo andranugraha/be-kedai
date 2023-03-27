@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"encoding/json"
 	"kedai/backend/be-kedai/internal/common/code"
 	"kedai/backend/be-kedai/internal/common/error"
 	"kedai/backend/be-kedai/internal/domain/product/dto"
@@ -22,4 +23,18 @@ func (h *Handler) GetCategories(c *gin.Context) {
 	}
 
 	response.Success(c, http.StatusOK, code.OK, "success", categories)
+}
+
+func (h *Handler) AddCategory(c *gin.Context) {
+	var categoryDTO dto.CategoryDTO
+	if err := json.NewDecoder(c.Request.Body).Decode(&categoryDTO); err != nil {
+		response.Error(c, http.StatusBadRequest, code.BAD_REQUEST, err.Error())
+	}
+
+	if err := h.categoryService.AddCategory(&categoryDTO); err != nil {
+		response.Error(c, http.StatusInternalServerError, code.INTERNAL_SERVER_ERROR, err.Error())
+	}
+
+	response.Success(c, http.StatusOK, code.OK)
+
 }

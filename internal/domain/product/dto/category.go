@@ -20,3 +20,11 @@ func (r *GetCategoriesRequest) Validate() {
 func (r *GetCategoriesRequest) Offset() int {
 	return int((r.Page - 1) * r.Limit)
 }
+
+
+type CategoryDTO struct {
+	Name     string        `json:"name"`
+	ImageURL string        `json:"image_url"`
+	ParentID *int          `json:"parent_id,omitempty"`
+	Children []CategoryDTO `json:"children,omitempty"`
+}
