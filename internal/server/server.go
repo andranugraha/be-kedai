@@ -60,8 +60,16 @@ func createRouter() *gin.Engine {
 		UserVoucherRepository: userVoucherRepo,
 	})
 
+	marketplaceBannerRepo := marketplaceRepoPackage.NewMarketplaceBannerRepository(&marketplaceRepoPackage.MarketplaceBannerRConfig{
+		DB: db,
+	})
+
 	marketplaceVoucherService := marketplaceServicePackage.NewMarketplaceVoucherService(&marketplaceServicePackage.MarketplaceVoucherSConfig{
 		MarketplaceVoucherRepository: marketplaceVoucherRepo,
+	})
+
+	marketplaceBannerService := marketplaceServicePackage.NewMarketplaceBannerService(&marketplaceServicePackage.MarketplaceBannerSConfig{
+		MarketplaceBannerRepository: marketplaceBannerRepo,
 	})
 
 	mailer := connection.GetMailer()
@@ -335,6 +343,7 @@ func createRouter() *gin.Engine {
 	})
 	marketplaceHandler := marketplaceHandlerPackage.New(&marketplaceHandlerPackage.HandlerConfig{
 		MarketplaceVoucherService: marketplaceVoucherService,
+		MarketplaceBannerService:  marketplaceBannerService,
 	})
 
 	invoicePerShopService := orderServicePackage.NewInvoicePerShopService(&orderServicePackage.InvoicePerShopSConfig{
