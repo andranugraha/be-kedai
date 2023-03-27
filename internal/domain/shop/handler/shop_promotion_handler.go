@@ -11,7 +11,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func (h *Handler) GetSellerPromotion(c *gin.Context) {
+func (h *Handler) GetSellerPromotions(c *gin.Context) {
 	var request dto.SellerPromotionFilterRequest
 	_ = c.ShouldBindQuery(&request)
 
