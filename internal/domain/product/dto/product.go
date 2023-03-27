@@ -37,11 +37,7 @@ func (SellerProduct) TableName() string {
 
 type SellerProductPromotion struct {
 	model.Product
-	// ID       int          `json:"id"`
-	// Name     string       `json:"name"`
-	// Code     string       `json:"code"`
 	ImageURL string `json:"imageUrl,omitempty"`
-	// SKUs     []*model.Sku `json:"skus,omitempty"`
 }
 
 func (SellerProductPromotion) TableName() string {
