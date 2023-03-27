@@ -3,6 +3,7 @@ package service
 import (
 	"errors"
 	"fmt"
+	"kedai/backend/be-kedai/config"
 	errs "kedai/backend/be-kedai/internal/common/error"
 	"kedai/backend/be-kedai/internal/domain/user/cache"
 	"kedai/backend/be-kedai/internal/domain/user/dto"
@@ -36,6 +37,7 @@ type UserService interface {
 	CompletePasswordReset(request *dto.CompletePasswordResetRequest) error
 	ValidatePasswordChange(request *dto.RequestPasswordChangeRequest, user *model.User) error
 	SignOut(*dto.UserLogoutRequest) error
+	AdminSignIn(*dto.UserLogin) (*dto.Token, error)
 }
 
 type userServiceImpl struct {
@@ -401,4 +403,37 @@ func (s *userServiceImpl) CompletePasswordReset(request *dto.CompletePasswordRes
 	_ = s.redis.DeleteResetPasswordToken(request.Token)
 
 	return nil
+}
+
+func (s *userServiceImpl) AdminSignIn(userLogin *dto.UserLogin) (*dto.Token, error) {
+
+	admin := userLogin.ToUser()
+
+	isValid := hash.ComparePassword(config.AdminPassword, admin.Password)
+
+	if admin.Email == config.AdminEmail && isValid {
+		result := &model.User{
+			ID:       0,
+			Email:    admin.Email,
+			Username: "admin",
+		}
+
+		defaultLevel := 0
+		accessToken, _ := jwttoken.GenerateAccessToken(result, defaultLevel)
+		refreshToken, _ := jwttoken.GenerateRefreshToken(result, defaultLevel)
+
+		token := &dto.Token{
+			AccessToken:  accessToken,
+			RefreshToken: refreshToken,
+		}
+
+		errToken := s.redis.StoreToken(result.ID, accessToken, refreshToken)
+		if errToken != nil {
+			return nil, errToken
+		}
+
+		return token, nil
+	}
+
+	return nil, errs.ErrInvalidCredential
 }
