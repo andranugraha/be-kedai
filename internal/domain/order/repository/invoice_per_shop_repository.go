@@ -630,6 +630,74 @@ func (r *invoicePerShopRepositoryImpl) UpdateStatusToCompleted(shopId int, order
 	return nil
 }
 
+func (r *invoicePerShopRepositoryImpl) RefundAdmin(shopId int, orderId int, invoiceStatuses []*model.InvoiceStatus) error {
+
+	err := r.db.Transaction(func(tx *gorm.DB) error {
+		var invoicePerShop model.InvoicePerShop
+		if res := tx.
+			Clauses(clause.Returning{}).
+			Preload("Transactions").
+			Model(&invoicePerShop).
+			Where("shop_id = ? AND id = ? AND status = ?", shopId, orderId, constant.TransactionStatusRefundPending).
+			Update("status", constant.TransactionStatusRefunded); res != nil {
+			if res.Error != nil {
+				return res.Error
+			}
+			if res.RowsAffected == 0 {
+				return commonErr.ErrInvoiceNotFound
+			}
+		}
+
+		if err := r.invoiceStatusRepo.Create(tx, invoiceStatuses); err != nil {
+			return err
+		}
+
+		for _, transaction := range invoicePerShop.Transactions {
+			if err := r.skuRepo.IncreaseStock(tx, transaction.SkuID, transaction.Quantity); err != nil {
+				return err
+			}
+		}
+
+		if invoicePerShop.Voucher != nil {
+			if err := r.userVoucherRepo.UpdateShopVoucherToUnused(tx, invoicePerShop.UserID, invoicePerShop.Voucher.ID); err != nil {
+				return err
+			}
+		}
+
+		invoice, err := r.invoiceRepo.GetByIDAndUserID(invoicePerShop.InvoiceID, invoicePerShop.UserID)
+		if err != nil {
+			return err
+		}
+
+		if invoice.Voucher != nil {
+			if len(invoice.InvoicePerShops) == 1 {
+				if err := r.userVoucherRepo.UpdateMarketplaceVoucherToUnused(tx, invoice.UserID, invoice.Voucher.ID); err != nil {
+					return err
+				}
+				invoice.VoucherAmount = nil
+				invoice.VoucherType = nil
+				invoice.VoucherID = nil
+				if err := r.invoiceRepo.UpdateInvoice(tx, invoice); err != nil {
+					return err
+				}
+			}
+		}
+
+		if err := r.refundRequestRepo.UpdateRefundStatus(tx, invoicePerShop.ID, constant.RefundStatusRefunded); err != nil {
+			return err
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+	
+
 func (r *invoicePerShopRepositoryImpl) UpdateStatusToRefundPending(shopId int, orderId int, invoiceStatuses []*model.InvoiceStatus, refundType string) error {
 	var invoiceStatus string
 	var invoicePerShop model.InvoicePerShop
