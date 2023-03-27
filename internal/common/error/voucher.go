@@ -10,4 +10,5 @@ var (
 	ErrVoucherStatusConflict                     = errors.New("voucher status conflict")
 	ErrDuplicateVoucherCode                      = errors.New("duplicate voucher code")
 	ErrInvalidVoucherDateRange                   = errors.New("invalid voucher date range")
+	ErrVoucherFieldsCantBeEdited                 = errors.New("voucher fields cant be edited")
 )
