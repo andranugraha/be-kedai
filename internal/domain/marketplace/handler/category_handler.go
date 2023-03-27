@@ -20,4 +20,6 @@ func (h *Handler) AddCategory(c *gin.Context) {
 		response.Error(c, http.StatusInternalServerError, code.INTERNAL_SERVER_ERROR, err.Error())
 	}
 
+	response.Success(c, http.StatusOK, code.OK)
+
 }
