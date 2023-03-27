@@ -1188,13 +1188,12 @@ func TestCompletePasswordReset(t *testing.T) {
 func TestAdminSignIn(t *testing.T) {
 	var (
 		email             = "yangPunya@kedai.com"
-		password          = "kedai_Owner88"
 		incorrectPassword = "kedai_Owner89"
 	)
 
 	type input struct {
 		request    *dto.UserLogin
-		beforeTest func(*mocks.UserRepository, *mocks.UserCache)
+		beforeTest func(*mocks.UserCache)
 	}
 
 	type expected struct {
@@ -1214,8 +1213,7 @@ func TestAdminSignIn(t *testing.T) {
 					Email:    email,
 					Password: incorrectPassword,
 				},
-				beforeTest: func(ur *mocks.UserRepository, uc *mocks.UserCache) {
-					ur.On("AdminSignIn", email, incorrectPassword).Return(errors.New("invalid user credential"))
+				beforeTest: func(uc *mocks.UserCache) {
 				},
 			},
 			expected: expected{
@@ -1223,50 +1221,14 @@ func TestAdminSignIn(t *testing.T) {
 				token: nil,
 			},
 		},
-		{
-			description: "should return error when fails to store token in redis",
-			input: input{
-				request: &dto.UserLogin{
-					Email:    email,
-					Password: password,
-				},
-				beforeTest: func(ur *mocks.UserRepository, uc *mocks.UserCache) {
-					ur.On("AdminSignIn", email, password).Return(nil)
-					uc.On("StoreToken", mock.Anything, mock.Anything, mock.Anything).Return(errors.New("failed to store token"))
-				},
-			},
-			expected: expected{
-				err:   errors.New("failed to store token"),
-				token: nil,
-			},
-		},
-		// {
-		// 	description: "should return token when sign in success",
-		// 	input: input{
-		// 		request: &dto.UserLogin{
-		// 			Email:    email,
-		// 			Password: password,
-		// 		},
-		// 		beforeTest: func(ur *mocks.UserRepository, uc *mocks.UserCache) {
-		// 			ur.On("AdminSignIn", email, password).Return(nil)
-		// 			uc.On("StoreToken", mock.Anything, mock.Anything, mock.Anything).Return(nil)
-		// 		},
-		// 	},
-		// 	expected: expected{
-		// 		err:   nil,
-		// 		token: &dto.Token{},
-		// 	},
-		// },
 	}
 
 	for _, tc := range cases {
 		t.Run(tc.description, func(t *testing.T) {
-			userRepo := mocks.NewUserRepository(t)
 			userCache := mocks.NewUserCache(t)
-			tc.beforeTest(userRepo, userCache)
+			tc.beforeTest(userCache)
 			userService := service.NewUserService(&service.UserSConfig{
-				Repository: userRepo,
-				Redis:      userCache,
+				Redis: userCache,
 			})
 
 			actualToken, actualErr := userService.AdminSignIn(tc.input.request)
@@ -1275,5 +1237,4 @@ func TestAdminSignIn(t *testing.T) {
 			assert.Equal(t, tc.expected.token, actualToken)
 		})
 	}
-
 }

@@ -3,7 +3,6 @@ package repository
 import (
 	"errors"
 	"fmt"
-	"kedai/backend/be-kedai/config"
 	errs "kedai/backend/be-kedai/internal/common/error"
 
 	"kedai/backend/be-kedai/internal/domain/user/cache"
@@ -25,7 +24,6 @@ type UserRepository interface {
 	UpdateEmail(userId int, email string) (*model.User, error)
 	UpdateUsername(id int, username string) (*model.User, error)
 	UpdatePassword(id int, password string) (*model.User, error)
-	AdminSignIn(email string, password string) error
 }
 
 type userRepositoryImpl struct {
@@ -225,11 +223,4 @@ func (r *userRepositoryImpl) UpdatePassword(userId int, password string) (*model
 	}
 
 	return &model.User{ID: userId}, nil
-}
-
-func (r *userRepositoryImpl) AdminSignIn(email string, password string) error {
-	if email == config.AdminEmail && password == config.AdminPassword {
-		return nil
-	}
-	return errs.ErrInvalidCredential
 }
