@@ -37,5 +37,5 @@ func (h *Handler) AddMarketplaceBanner(c *gin.Context) {
 		return
 	}
 
-	response.Success(c, http.StatusOK, code.OK, "success", banner)
+	response.Success(c, http.StatusCreated, code.CREATED, "success", banner)
 }
