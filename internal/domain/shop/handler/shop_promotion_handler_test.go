@@ -130,3 +130,96 @@ func TestGetSellerPromotion(t *testing.T) {
 		assert.Equal(t, string(expectedRes), rec.Body.String())
 	}
 }
+
+func TestGetSellerPromotionById(t *testing.T) {
+	type input struct {
+		userID      int
+		promotionId int
+		mockData    *dto.SellerPromotion
+		mockErr     error
+	}
+	type expected struct {
+		statusCode int
+		response   response.Response
+	}
+
+	var (
+		userID      = 1
+		promotionId = 1
+	)
+
+	tests := []struct {
+		description string
+		input
+		expected
+	}{
+		{
+			description: "should return error with status code 404 when shop not found",
+			input: input{
+				userID:      userID,
+				promotionId: promotionId,
+				mockData:    nil,
+				mockErr:     errs.ErrShopNotFound,
+			},
+			expected: expected{
+				statusCode: http.StatusNotFound,
+				response: response.Response{
+					Code:    code.SHOP_NOT_REGISTERED,
+					Message: errs.ErrShopNotFound.Error(),
+				},
+			},
+		},
+		{
+			description: "should return error with status code 500 when something went wrong",
+			input: input{
+				userID:      userID,
+				promotionId: promotionId,
+				mockData:    nil,
+				mockErr:     errs.ErrInternalServerError,
+			},
+			expected: expected{
+				statusCode: http.StatusInternalServerError,
+				response: response.Response{
+					Code:    code.INTERNAL_SERVER_ERROR,
+					Message: errs.ErrInternalServerError.Error(),
+				},
+			},
+		},
+		{
+			description: "should return promotion detail with status code 200 when succeed to get promotion",
+			input: input{
+				userID:      userID,
+				promotionId: promotionId,
+				mockData:    &dto.SellerPromotion{},
+				mockErr:     nil,
+			},
+			expected: expected{
+				statusCode: http.StatusOK,
+				response: response.Response{
+					Code:    code.OK,
+					Message: "success",
+					Data:    &dto.SellerPromotion{},
+				},
+			},
+		},
+	}
+
+	for _, tc := range tests {
+		expectedRes, _ := json.Marshal(tc.expected.response)
+		shopPromotionService := mocks.NewShopPromotionService(t)
+		shopPromotionService.On("GetSellerPromotionById", tc.input.userID, tc.input.promotionId).Return(tc.input.mockData, tc.input.mockErr)
+		rec := httptest.NewRecorder()
+		c, _ := gin.CreateTestContext(rec)
+		c.Set("userId", tc.input.userID)
+		c.AddParam("promotionId", "1")
+		h := handler.New(&handler.HandlerConfig{
+			ShopPromotionService: shopPromotionService,
+		})
+		c.Request = httptest.NewRequest("GET", fmt.Sprintf("/v1/sellers/promotions?%d", tc.input.promotionId), nil)
+
+		h.GetSellerPromotionById(c)
+
+		assert.Equal(t, tc.expected.statusCode, rec.Code)
+		assert.Equal(t, string(expectedRes), rec.Body.String())
+	}
+}
