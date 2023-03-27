@@ -8,6 +8,7 @@ import (
 
 type ShopPromotionService interface {
 	GetSellerPromotions(userID int, request *dto.SellerPromotionFilterRequest) (*commonDto.PaginationResponse, error)
+	GetSellerPromotionById(userId int, promotionId int) (*dto.SellerPromotion, error)
 }
 
 type shopPromotionServiceImpl struct {
@@ -45,4 +46,18 @@ func (s *shopPromotionServiceImpl) GetSellerPromotions(userID int, request *dto.
 		Limit:      request.Limit,
 		Data:       promotions,
 	}, nil
+}
+
+func (s *shopPromotionServiceImpl) GetSellerPromotionById(userId int, promotionId int) (*dto.SellerPromotion, error) {
+	shop, err := s.shopService.FindShopByUserId(userId)
+	if err != nil {
+		return nil, err
+	}
+
+	promotion, err := s.shopPromotionRepository.GetSellerPromotionById(shop.ID, promotionId)
+	if err != nil {
+		return nil, err
+	}
+
+	return promotion, nil
 }

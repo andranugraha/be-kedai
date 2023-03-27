@@ -15,6 +15,7 @@ import (
 
 type ShopPromotionRepository interface {
 	GetSellerPromotions(shopId int, request *dto.SellerPromotionFilterRequest) ([]*dto.SellerPromotion, int64, int, error)
+	GetSellerPromotionById(shopId int, promotionId int) (*dto.SellerPromotion, error)
 }
 
 type shopPromotionRepositoryImpl struct {
@@ -91,4 +92,32 @@ func (r *shopPromotionRepositoryImpl) GetSellerPromotions(shopId int, request *d
 	}
 
 	return promotions, totalRows, totalPages, nil
+}
+
+func (r *shopPromotionRepositoryImpl) GetSellerPromotionById(shopId int, promotionId int) (*dto.SellerPromotion, error) {
+	var promotion *dto.SellerPromotion
+
+	now := time.Now()
+	query := r.db.
+		Model(&model.ShopPromotion{}).
+		Where("shop_promotions.shop_id = ? AND shop_promotions.id = ?", shopId, promotionId)
+
+	query = query.Select("shop_promotions.*, "+
+		"CASE WHEN start_period <= ? AND end_period >= ? THEN ? "+
+		"WHEN start_period > ? THEN ? "+
+		"ELSE ? "+
+		"END as status", now, now, constant.VoucherPromotionStatusOngoing, now, constant.VoucherPromotionStatusUpcoming, constant.VoucherPromotionStatusExpired)
+
+	err := query.First(&promotion).Error
+	if err != nil {
+		return nil, err
+	}
+
+	products, err := r.productRepository.GetWithPromotions(shopId, promotion.ID)
+	if err != nil {
+		return nil, err
+	}
+	promotion.Product = products
+
+	return promotion, nil
 }

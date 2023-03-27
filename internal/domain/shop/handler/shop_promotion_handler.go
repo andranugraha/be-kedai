@@ -7,6 +7,7 @@ import (
 	"kedai/backend/be-kedai/internal/domain/shop/dto"
 	"kedai/backend/be-kedai/internal/utils/response"
 	"net/http"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 )
@@ -20,6 +21,24 @@ func (h *Handler) GetSellerPromotions(c *gin.Context) {
 	userID := c.GetInt("userId")
 
 	res, err := h.shopPromotionService.GetSellerPromotions(userID, &request)
+	if err != nil {
+		if errors.Is(err, commonErr.ErrShopNotFound) {
+			response.Error(c, http.StatusNotFound, code.SHOP_NOT_REGISTERED, err.Error())
+			return
+		}
+
+		response.Error(c, http.StatusInternalServerError, code.INTERNAL_SERVER_ERROR, commonErr.ErrInternalServerError.Error())
+		return
+	}
+
+	response.Success(c, http.StatusOK, code.OK, "success", res)
+}
+
+func (h *Handler) GetSellerPromotionById(c *gin.Context) {
+	userId := c.GetInt("userId")
+	promotionId, _ := strconv.Atoi(c.Param("promotionId"))
+
+	res, err := h.shopPromotionService.GetSellerPromotionById(userId, promotionId)
 	if err != nil {
 		if errors.Is(err, commonErr.ErrShopNotFound) {
 			response.Error(c, http.StatusNotFound, code.SHOP_NOT_REGISTERED, err.Error())
