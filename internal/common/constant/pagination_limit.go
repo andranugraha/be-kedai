@@ -35,4 +35,7 @@ const (
 
 	DefaultWishlistLimit = 10
 	MaxWishlistLimit     = 50
+
+	DefaultRecommendedProductLimit = 18
+	MaxRecommendedProductLimit     = 100
 )

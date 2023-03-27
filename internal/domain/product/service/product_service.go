@@ -24,6 +24,7 @@ type ProductService interface {
 	AddViewCount(id int) error
 	UpdateProductActivation(userID int, code string, request *dto.UpdateProductActivationRequest) error
 	CreateProduct(userID int, request *dto.CreateProductRequest) (*model.Product, error)
+	GetRecommendedProducts(limit int) ([]*dto.ProductResponse, error)
 }
 
 type productServiceImpl struct {
@@ -235,4 +236,14 @@ func (s *productServiceImpl) CreateProduct(userID int, request *dto.CreateProduc
 	}
 
 	return product, nil
+}
+
+func (s *productServiceImpl) GetRecommendedProducts(limit int) ([]*dto.ProductResponse, error) {
+
+	recommendedProducts, err := s.productRepository.GetRecommended(limit)
+	if err != nil {
+		return nil, err
+	}
+
+	return recommendedProducts, nil
 }
