@@ -16,7 +16,7 @@ func (SellerPromotion) TableName() string {
 }
 
 type SellerPromotionFilterRequest struct {
-	Limit  int    `form:"limit"`
+	Limit  int    `form:"limit,max=100"`
 	Page   int    `form:"page"`
 	Status string `form:"status"`
 	Name   string `form:"name"`
