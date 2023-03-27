@@ -352,6 +352,24 @@ func TestCreateVoucher(t *testing.T) {
 			},
 			beforeTest: func(ss *mocks.ShopService, vr *mocks.ShopVoucherRepository) {
 				ss.On("FindShopByUserId", userID).Return(&model.Shop{ID: shopID}, nil)
+				vr.On("GetVoucherByCodeAndShopId", voucherCode, shopID).Return(nil, errors.New("failed to get voucher"))
+			},
+			expected: expected{
+				data: nil,
+				err:  errors.New("failed to get voucher"),
+			},
+		},
+		{
+			description: "should return error when duplicate voucher code is found",
+			input: input{
+				userID: userID,
+				request: &dto.CreateVoucherRequest{
+					Name: voucherName,
+					Code: voucherCode,
+				},
+			},
+			beforeTest: func(ss *mocks.ShopService, vr *mocks.ShopVoucherRepository) {
+				ss.On("FindShopByUserId", userID).Return(&model.Shop{ID: shopID}, nil)
 				vr.On("GetVoucherByCodeAndShopId", voucherCode, shopID).Return(&dto.SellerVoucher{Status: "ongoing"}, nil)
 			},
 			expected: expected{

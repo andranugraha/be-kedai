@@ -149,6 +149,11 @@ func (h *Handler) UpdateVoucher(c *gin.Context) {
 			return
 		}
 
+		if errors.Is(err, commonErr.ErrVoucherFieldsCantBeEdited) {
+			response.Error(c, http.StatusUnprocessableEntity, code.VOUCHER_FIELDS_CANT_BE_EDITED, err.Error())
+			return
+		}
+
 		response.Error(c, http.StatusInternalServerError, code.INTERNAL_SERVER_ERROR, commonErr.ErrInternalServerError.Error())
 		return
 	}

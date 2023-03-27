@@ -10,8 +10,6 @@ import (
 	"kedai/backend/be-kedai/internal/domain/shop/repository"
 	productUtils "kedai/backend/be-kedai/internal/utils/product"
 	"time"
-
-	"gorm.io/gorm"
 )
 
 type ShopVoucherService interface {
@@ -100,7 +98,7 @@ func (s *shopVoucherServiceImpl) CreateVoucher(userID int, request *dto.CreateVo
 	}
 
 	existingVoucher, err := s.shopVoucherRepository.GetVoucherByCodeAndShopId(request.Code, shop.ID)
-	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+	if err != nil && !errors.Is(err, commonErr.ErrVoucherNotFound) {
 		return nil, err
 	}
 
