@@ -801,6 +801,24 @@ func TestUpdateVoucher(t *testing.T) {
 			},
 		},
 		{
+			description: "should return error with status code 422 when voucher fields cant be edited",
+			input: input{
+				userID:      userID,
+				voucherCode: voucherCode,
+				request:     request,
+			},
+			beforeTest: func(vs *mocks.ShopVoucherService) {
+				vs.On("UpdateVoucher", userID, voucherCode, request).Return(nil, errs.ErrVoucherFieldsCantBeEdited)
+			},
+			expected: expected{
+				statusCode: http.StatusUnprocessableEntity,
+				response: response.Response{
+					Code:    code.VOUCHER_FIELDS_CANT_BE_EDITED,
+					Message: errs.ErrVoucherFieldsCantBeEdited.Error(),
+				},
+			},
+		},
+		{
 			description: "should return error with status code 409 and VOUCHER_STATUS_CONFLICT code when voucher status conflict",
 			input: input{
 				userID:      userID,
