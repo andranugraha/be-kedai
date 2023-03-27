@@ -185,6 +185,7 @@ func NewRouter(cfg *RouterConfig) *gin.Engine {
 		{
 			marketplace.GET("/vouchers", cfg.MarketplaceHandler.GetMarketplaceVoucher)
 			marketplace.POST("/couriers", cfg.ShopHandler.AddCourier)
+			marketplace.GET("/banners", cfg.MarketplaceHandler.GetMarketplaceBanner)
 			authenticated := marketplace.Group("", middleware.JWTAuthorization, cfg.UserHandler.GetSession)
 			{
 				authenticated.GET("/vouchers/valid", cfg.MarketplaceHandler.GetValidMarketplaceVoucher)

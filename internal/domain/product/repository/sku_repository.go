@@ -34,7 +34,7 @@ func NewSkuRepository(cfg *SkuRConfig) SkuRepository {
 func (r *skuRepositoryImpl) GetByID(ID int) (*model.Sku, error) {
 	var sku model.Sku
 
-	err := r.db.Where("id = ?", ID).First(&sku).Error
+	err := r.db.Where("id = ?", ID).Preload("Product").First(&sku).Error
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, errs.ErrProductDoesNotExist

@@ -163,9 +163,6 @@ func TestGetValidMarketplaceVoucher(t *testing.T) {
 
 			c.Request, _ = http.NewRequest(http.MethodGet, "v1//marketplace/vouchers/valid", nil)
 
-			mockMarketplaceVoucherService := new(mocks.MarketplaceVoucherService)
-			tc.input.beforeTest(mockMarketplaceVoucherService)
-
 			h := handler.New(&handler.HandlerConfig{
 				MarketplaceVoucherService: m,
 			})
