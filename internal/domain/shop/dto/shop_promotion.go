@@ -4,6 +4,7 @@ import (
 	"kedai/backend/be-kedai/internal/domain/product/dto"
 	productModel "kedai/backend/be-kedai/internal/domain/product/model"
 	"kedai/backend/be-kedai/internal/domain/shop/model"
+	"time"
 )
 
 type SellerPromotion struct {
@@ -47,4 +48,10 @@ func (p *SellerPromotionFilterRequest) Validate() {
 
 func (p *SellerPromotionFilterRequest) Offset() int {
 	return (p.Page - 1) * p.Limit
+}
+
+type CreatePromotionRequest struct {
+	Name        string    `json:"name" binding:"required,min=1,max=100"`
+	StartPeriod time.Time `json:"startPeriod" binding:"required"`
+	EndPeriod   time.Time `json:"endPeriod" binding:"required"`
 }
