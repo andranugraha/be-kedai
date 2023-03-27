@@ -35,15 +35,27 @@ func (SellerProduct) TableName() string {
 	return "products"
 }
 
+type SellerProductPromotion struct {
+	model.Product
+	ImageURL string `json:"imageUrl,omitempty"`
+}
+
+func (SellerProductPromotion) TableName() string {
+	return "products"
+}
+
 type SellerProductFilterRequest struct {
-	Limit  int    `form:"limit"`
-	Page   int    `form:"page"`
-	Sales  int    `form:"sales"`
-	Stock  int    `form:"stock"`
-	Sort   string `form:"sort"`
-	Status string `form:"status"`
-	Sku    string `form:"sku"`
-	Name   string `form:"name"`
+	Limit       int    `form:"limit"`
+	Page        int    `form:"page"`
+	Sales       int    `form:"sales"`
+	Stock       int    `form:"stock"`
+	Sort        string `form:"sort"`
+	Status      string `form:"status"`
+	Sku         string `form:"sku"`
+	Name        string `form:"name"`
+	IsPromoted  *bool  `form:"isPromoted"`
+	StartPeriod string `form:"startPeriod"`
+	EndPeriod   string `form:"endPeriod"`
 }
 
 func (r *SellerProductFilterRequest) Validate() {
