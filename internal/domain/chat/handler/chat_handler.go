@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"fmt"
 	"kedai/backend/be-kedai/internal/common/code"
 	spErr "kedai/backend/be-kedai/internal/common/error"
 	"kedai/backend/be-kedai/internal/domain/chat/dto"
@@ -9,6 +10,42 @@ import (
 
 	"github.com/gin-gonic/gin"
 )
+
+func (h *Handler) UserGetListOfChats(c *gin.Context) {
+	userID := c.GetInt("userId")
+	fmt.Println("ASD")
+
+	var param dto.ListOfChatsParamRequest
+	c.ShouldBindQuery(&param)
+
+	chatResponses, err := h.chatService.UserGetListOfChats(&param, userID)
+	if err != nil {
+		response.Error(c, http.StatusInternalServerError, code.INTERNAL_SERVER_ERROR, spErr.ErrInternalServerError.Error())
+		return
+	}
+
+	response.Success(c, http.StatusOK, code.OK, "success", chatResponses)
+}
+
+func (h *Handler) SellerGetListOfChats(c *gin.Context) {
+	userID := c.GetInt("userId")
+	fmt.Println("ASD")
+
+	var param dto.ListOfChatsParamRequest
+	c.ShouldBindQuery(&param)
+
+	chatResponses, err := h.chatService.SellerGetListOfChats(&param, userID)
+	if err != nil {
+		if err == spErr.ErrShopNotFound {
+			response.Error(c, http.StatusBadRequest, code.BAD_REQUEST, err.Error())
+			return
+		}
+		response.Error(c, http.StatusInternalServerError, code.INTERNAL_SERVER_ERROR, spErr.ErrInternalServerError.Error())
+		return
+	}
+
+	response.Success(c, http.StatusOK, code.OK, "success", chatResponses)
+}
 
 func (h *Handler) UserGetChat(c *gin.Context) {
 	userID := c.GetInt("userId")
