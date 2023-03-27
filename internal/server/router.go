@@ -146,6 +146,7 @@ func NewRouter(cfg *RouterConfig) *gin.Engine {
 			category := product.Group("/categories")
 			{
 				category.GET("", cfg.ProductHandler.GetCategories)
+				category.POST("", cfg.MarketplaceHandler.AddCategory)
 			}
 			sku := product.Group("/skus")
 			{
