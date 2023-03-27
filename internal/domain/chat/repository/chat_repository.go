@@ -169,6 +169,7 @@ func (r *chatRepositoryImpl) SellerGetListOfChats(param *dto.ListOfChatsParamReq
 }
 
 func (r *chatRepositoryImpl) UserGetChat(param *dto.ChatParamRequest, userId int, shop *shopModel.Shop) (*commonDto.PaginationResponse, error) {
+	// Step 1: Get User Chat
 	var calculatedTotalRows int64
 	firstChat, err := r.FirstChat(shop, &userModel.User{ID: userId})
 	if err != nil && err == gorm.ErrRecordNotFound {
@@ -198,10 +199,19 @@ func (r *chatRepositoryImpl) UserGetChat(param *dto.ChatParamRequest, userId int
 		TotalRows:  calculatedTotalRows,
 		TotalPages: int(math.Ceil(float64(calculatedTotalRows) / float64(param.LimitByDay))),
 	}
+
+	// Step 2: Read all messages (change status from unread to read)
+	r.db.Model(&model.Chat{}).
+		Where("user_id = ? AND shop_id = ?", userId, shop.ID).
+		Where("issuer = ?", "seller").
+		Where("is_read_by_opponent = ?", false).
+		Update("is_read_by_opponent", true)
+
 	return paginatedChats, nil
 }
 
 func (r *chatRepositoryImpl) SellerGetChat(param *dto.ChatParamRequest, shop *shopModel.Shop, user *userModel.User) (*commonDto.PaginationResponse, error) {
+	// Step 1: Get Seller Chat
 	var calculatedTotalRows int64
 	firstChat, err := r.FirstChat(shop, user)
 	if err != nil && err == gorm.ErrRecordNotFound {
@@ -231,6 +241,14 @@ func (r *chatRepositoryImpl) SellerGetChat(param *dto.ChatParamRequest, shop *sh
 		TotalRows:  calculatedTotalRows,
 		TotalPages: int(math.Ceil(float64(calculatedTotalRows) / float64(param.LimitByDay))),
 	}
+
+	// Step 2: Read all messages (change status from unread to read)
+	r.db.Model(&model.Chat{}).
+		Where("user_id = ? AND shop_id = ?", user.ID, shop.ID).
+		Where("issuer = ?", "user").
+		Where("is_read_by_opponent = ?", false).
+		Update("is_read_by_opponent", true)
+
 	return paginatedChats, nil
 }
 
