@@ -1,14 +1,14 @@
 package service
 
 import (
+	commonDto "kedai/backend/be-kedai/internal/common/dto"
 	"kedai/backend/be-kedai/internal/domain/product/dto"
 	"kedai/backend/be-kedai/internal/domain/product/repository"
 	"kedai/backend/be-kedai/internal/domain/shop/service"
-	commonDto "kedai/backend/be-kedai/internal/common/dto"
 )
 
 type DiscussionService interface {
-	GetDiscussionByProductID(productID int, limit int, page int) (*commonDto.PaginationResponse, error)
+	GetDiscussionByProductID(productID int, req dto.GetDiscussionReq) (*commonDto.PaginationResponse, error)
 	GetChildDiscussionByParentID(parentID int) ([]*dto.DiscussionReply, error)
 	PostDiscussion(discussion *dto.DiscussionReq) error
 }
@@ -30,8 +30,20 @@ func NewDiscussionService(cfg *DiscussionSConfig) DiscussionService {
 	}
 }
 
-func (d *discussionServiceImpl) GetDiscussionByProductID(productID int, limit int, page int) (*commonDto.PaginationResponse, error) {
-	return d.discussionRepository.GetDiscussionByProductID(productID, limit, page)
+func (d *discussionServiceImpl) GetDiscussionByProductID(productID int, req dto.GetDiscussionReq) (*commonDto.PaginationResponse, error) {
+	data, limit, page, totalRows, totalPages, err := d.discussionRepository.GetDiscussionByProductID(productID, req)
+
+	if err != nil {
+		return nil, err
+	}
+	var res commonDto.PaginationResponse
+	res.Data = data
+	res.Limit = limit
+	res.Page = page
+	res.TotalRows = int64(totalRows)
+	res.TotalPages = totalPages
+
+	return &res, err
 }
 
 func (d *discussionServiceImpl) GetChildDiscussionByParentID(parentID int) ([]*dto.DiscussionReply, error) {

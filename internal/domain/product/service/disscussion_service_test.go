@@ -15,16 +15,30 @@ import (
 func TestGetDisscussionByProductID(t *testing.T) {
 	var (
 		productID  = 1
-		discussion = commonDto.PaginationResponse{}
-		limit      = 10
-		page       = 1
+		data       = []*dto.Discussion{}
+		limit      = 0
+		totalRows  = 0
+		TotalPages = 0
+		page       = 0
+		discussion = commonDto.PaginationResponse{
+			Data:       data,
+			Limit:      limit,
+			Page:       page,
+			TotalRows:  int64(totalRows),
+			TotalPages: TotalPages,
+
+		}
 	)
 
 	type input struct {
-		productID int
-		limit     int
-		page      int
-		err       error
+		productID  int
+		req        dto.GetDiscussionReq
+		data       []*dto.Discussion
+		limit      int
+		totalRows  int
+		totalPages int
+		page       int
+		err        error
 	}
 
 	type expected struct {
@@ -42,10 +56,17 @@ func TestGetDisscussionByProductID(t *testing.T) {
 		{
 			description: "should return discussion when success",
 			input: input{
-				productID: productID,
-				limit:     limit,
-				page:      page,
-				err:       nil,
+				productID:  productID,
+				data:       data,
+				limit:      limit,
+				totalRows:  totalRows,
+				totalPages: TotalPages,
+				page:       page,
+				req: dto.GetDiscussionReq{
+					Limit: limit,
+					Page:  page,
+				},
+				err: nil,
 			},
 			expected: expected{
 				discussion: &discussion,
@@ -56,9 +77,16 @@ func TestGetDisscussionByProductID(t *testing.T) {
 			description: "should return error when failed",
 			input: input{
 				productID: productID,
-				limit:     limit,
-				page:      page,
-				err:       errorResponse.ErrInternalServerError,
+				data:       nil,
+				limit:      limit,
+				totalRows:  totalRows,
+				totalPages: TotalPages,
+				page:       page,
+				req: dto.GetDiscussionReq{
+					Limit: limit,
+					Page:  page,
+				},
+				err: errorResponse.ErrInternalServerError,
 			},
 			expected: expected{
 				discussion: nil,
@@ -68,13 +96,13 @@ func TestGetDisscussionByProductID(t *testing.T) {
 	} {
 		t.Run(tc.description, func(t *testing.T) {
 			mockDiscussionRepository := new(mocks.DiscussionRepository)
-			mockDiscussionRepository.On("GetDiscussionByProductID", tc.input.productID, tc.input.limit, tc.input.page).Return(tc.expected.discussion, tc.expected.err)
+			mockDiscussionRepository.On("GetDiscussionByProductID", tc.input.productID, tc.input.req).Return(tc.input.data, tc.input.limit, tc.input.page, tc.input.totalRows, tc.input.totalPages, tc.input.err)
 
 			discussionService := service.NewDiscussionService(&service.DiscussionSConfig{
 				DiscussionRepository: mockDiscussionRepository,
 			})
 
-			discussion, err := discussionService.GetDiscussionByProductID(tc.input.productID, tc.input.limit, tc.input.page)
+			discussion, err := discussionService.GetDiscussionByProductID(tc.input.productID, tc.input.req)
 			assert.Equal(t, tc.expected.err, err)
 			assert.Equal(t, tc.expected.discussion, discussion)
 		})

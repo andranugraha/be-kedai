@@ -56,3 +56,21 @@ type DiscussionReq struct {
 	IsSeller  *bool     `json:"isSeller"`
 }
 
+type GetDiscussionReq struct {
+	Page  int `form:"page"`
+	Limit int `form:"limit"`
+}
+
+func (req *GetDiscussionReq) Validate() {
+	if req.Page < 1 {
+		req.Page = 1
+	}
+
+	if req.Limit < 1 {
+		req.Limit = 5
+	}
+}
+
+func (req *GetDiscussionReq) GetOffset() int {
+	return (req.Page - 1) * req.Limit
+}

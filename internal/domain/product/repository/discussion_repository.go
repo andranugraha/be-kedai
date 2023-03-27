@@ -1,7 +1,6 @@
 package repository
 
 import (
-	commonDto "kedai/backend/be-kedai/internal/common/dto"
 	"kedai/backend/be-kedai/internal/domain/product/dto"
 	"log"
 	"math"
@@ -10,7 +9,7 @@ import (
 )
 
 type DiscussionRepository interface {
-	GetDiscussionByProductID(productID int, limit int, page int) (*commonDto.PaginationResponse, error)
+	GetDiscussionByProductID(productID int, req dto.GetDiscussionReq) (data []*dto.Discussion, limit int, page int, totalRows int, totalPages int, err error)
 	GetChildDiscussionByParentID(parentID int) ([]*dto.DiscussionReply, error)
 	PostDiscussion(discussion *dto.DiscussionReq) error
 }
@@ -29,22 +28,22 @@ func NewDiscussionRepository(cfg *DiscussionRConfig) DiscussionRepository {
 	}
 }
 
-func (d *discussionRepositoryImpl) GetDiscussionByProductID(productID int, limit int, page int) (*commonDto.PaginationResponse, error) {
+func (d *discussionRepositoryImpl) GetDiscussionByProductID(productID int, req dto.GetDiscussionReq) (data []*dto.Discussion, limit int, page int, totalRows int, totalPages int, err error) {
 
 	var discussions []*dto.Discussion
 	var count int64
-	err := d.db.Model(&dto.Discussion{}).Where("product_id = ? AND parent_id IS NULL", productID).Count(&count).Error
+	err = d.db.Model(&dto.Discussion{}).Where("product_id = ? AND parent_id IS NULL", productID).Count(&count).Error
 	if err != nil {
-		return nil, err
+		return nil, 0, 0, 0, 0, err
 	}
 
-	err = d.db.Where("product_id = ? AND parent_id IS NULL", productID).Preload("User").Preload("User.Profile").Preload("Shop").Limit(limit).Offset((page - 1) * limit).Find(&discussions).Error
+	err = d.db.Where("product_id = ? AND parent_id IS NULL", productID).Preload("User").Preload("User.Profile").Preload("Shop").Limit(req.Limit).Offset((req.Page - 1) * req.Limit).Find(&discussions).Error
 	if err != nil {
-		return nil, err
+		return nil, 0, 0, 0, 0, err
 	}
 
 	if len(discussions) == 0 {
-		return nil, nil
+		return nil, 0, 0, 0, 0, nil
 	}
 
 	for i, discussion := range discussions {
@@ -52,7 +51,7 @@ func (d *discussionRepositoryImpl) GetDiscussionByProductID(productID int, limit
 		var repliesCount int
 		err := d.db.Table("discussions").Where("parent_id = ?", discussion.ID).Preload("User").Preload("User.Profile").Preload("Shop").Find(&replies).Error
 		if err != nil {
-			return nil, err
+			return nil, 0, 0, 0, 0, err
 		}
 
 		discussions[i].Username = discussion.User.Username
@@ -74,15 +73,7 @@ func (d *discussionRepositoryImpl) GetDiscussionByProductID(productID int, limit
 		}
 		discussions[i].ReplyCount = repliesCount
 	}
-
-	var response commonDto.PaginationResponse
-	response.Data = discussions
-	response.Limit = limit
-	response.Page = page
-	response.TotalRows = count
-	response.TotalPages = int(math.Ceil(float64(count) / float64(limit)))
-
-	return &response, nil
+	return discussions, req.Limit, req.Page, int(count), int(math.Ceil(float64(count) / float64(req.Limit))), nil
 }
 
 func (d *discussionRepositoryImpl) GetChildDiscussionByParentID(parentID int) ([]*dto.DiscussionReply, error) {

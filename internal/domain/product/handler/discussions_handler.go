@@ -13,20 +13,11 @@ import (
 func (h *Handler) GetDiscussionByProductID(c *gin.Context) {
 	productId, _ := strconv.Atoi(c.Param("productId"))
 
-	var limit, page int
-	if c.Query("limit") != "" {
-		limit, _ = strconv.Atoi(c.Query("limit"))
-	} else {
-		limit = 10
-	}
+	var request dto.GetDiscussionReq
+	request.Limit, _ = strconv.Atoi(c.Query("limit"))
+	request.Page, _ = strconv.Atoi(c.Query("page"))
 
-	if c.Query("page") != "" {
-		page, _ = strconv.Atoi(c.Query("page"))
-	} else {
-		page = 1
-	}
-
-	result, err := h.discussionService.GetDiscussionByProductID(productId, limit, page)
+	result, err := h.discussionService.GetDiscussionByProductID(productId, request)
 	if err != nil {
 		response.Error(c, http.StatusInternalServerError, code.INTERNAL_SERVER_ERROR, err.Error())
 		return
