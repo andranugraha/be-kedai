@@ -281,3 +281,17 @@ func (d *CreateProductRequest) GenerateProduct() *model.Product {
 
 	return &product
 }
+
+type GetRecommendedProductRequest struct {
+	Limit int `json:"limit"`
+}
+
+func (p *GetRecommendedProductRequest) Validate() {
+	if p.Limit < 1 {
+		p.Limit = constant.DefaultRecommendedProductLimit
+	}
+
+	if p.Limit > 100 {
+		p.Limit = constant.MaxRecommendedProductLimit
+	}
+}

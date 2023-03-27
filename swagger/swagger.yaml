@@ -7040,7 +7040,54 @@ paths:
                   message:
                     type: string
                     example: "error message"
-  /v1/admin/orders/{orderId}/cancel-commit:
+  /v1/admins/login:
+    post:
+      tags:
+        - Admin
+      summary: Admin login
+      description: Admin login with email and password to get token
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - type: object
+                    properties:
+                      code:
+                        example: 'OK'
+                      message:
+                        example: 'ok'
+                      data:
+                        $ref: '#/components/schemas/Token'
+        '400':
+          description: unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "BAD_REQUEST"
+                  message:
+                    type: string
+                    example: "error message"  
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "INTERNAL_SERVER_ERROR"
+                  message:
+                    type: string
+                    example: "error message"
+  /v1/admins/orders/{orderId}/cancel-commit:
     post:
       security:
         - BearerAuth: []

@@ -26,6 +26,7 @@ type ProductRepository interface {
 	AddViewCount(productID int) error
 	UpdateActivation(shopID int, code string, isActive bool) error
 	Create(shopID int, request *dto.CreateProductRequest, courierServices []*shopModel.CourierService) (*model.Product, error)
+	GetRecommended(limit int) ([]*dto.ProductResponse, error)
 }
 
 type productRepositoryImpl struct {
@@ -478,4 +479,35 @@ func (r *productRepositoryImpl) Create(shopID int, request *dto.CreateProductReq
 	product.SKUs = skus
 
 	return product, nil
+}
+
+func (r *productRepositoryImpl) GetRecommended(limit int) (recommendedProducts []*dto.ProductResponse, err error) {
+
+	var (
+		isActive = true
+	)
+
+	db := r.db.Select(`products.*, min(s.price) as min_price, max(s.price) as max_price,
+		concat(c.name, ', ', p.name) as address, 
+		max(case when pp.type = 'nominal' then pp.amount / s.price else pp.amount end) as promotion_percent,
+		(select url from product_medias pm where pm.product_id = products.id limit 1) as image_url,
+		(select id from skus s where products.id = s.product_id limit 1) as default_sku_id`).
+		Joins("join skus s on s.product_id = products.id").
+		Joins("join shops sh ON sh.id = products.shop_id").
+		Joins("join user_addresses ua ON ua.id = sh.address_id").
+		Joins("join cities c ON c.id = ua.city_id").
+		Joins("join provinces p ON p.id = c.province_id").
+		Joins("left join product_promotions pp on pp.sku_id = s.id and (select count(id) from shop_promotions sp where pp.promotion_id = sp.id and now() between sp.start_period and sp.end_period) > 0").
+		Group("products.id,c.name,p.name")
+
+	err = db.Where("products.is_active = ?", isActive).
+		Limit(limit).
+		Order("products.sold desc, products.rating desc").
+		Find(&recommendedProducts).Error
+
+	if err != nil {
+		return nil, err
+	}
+
+	return recommendedProducts, nil
 }
