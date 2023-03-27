@@ -387,8 +387,10 @@ func createRouter() *gin.Engine {
 			ChatRepo: chatRepoPackage.NewChatRepository(&chatRepoPackage.ChatRConfig{
 				DB: db,
 			}),
-			ShopService: shopService,
-			UserService: userService,
+			ShopService:    shopService,
+			UserService:    userService,
+			ProductService: productService,
+			InvoiceService: invoicePerShopService,
 		}),
 	})
 
