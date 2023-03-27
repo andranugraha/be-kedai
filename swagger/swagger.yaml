@@ -3412,7 +3412,285 @@ paths:
                     example: "INTERNAL_SERVER_ERROR"
                   message:
                     type: string
-                    example: "error message"                    
+                    example: "error message" 
+  /v1/products/discussions/replies/{parentId}:
+    get:
+      tags:
+        - Product
+      summary: Get product discussion replies by parent id
+      description: Get product discussion replies by parent id
+      parameters:
+        - in: path
+          name: parentId
+          required: true
+          schema:
+            type: integer
+            example: 1
+      responses:
+        '200':
+          description: operation successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: 'OK'
+                  message:
+                    type: string
+                    example: "ok"
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: integer
+                          example: 1
+                        username:
+                          type: string
+                          example: "username"
+                        userUrl:
+                          type: string
+                          example: "https://www.example.com"
+                        shopName:
+                          type: string
+                          example: "shop name"
+                        shopUrl:
+                          type: string
+                          example: "https://www.example.com"
+                        productId:
+                          type: integer
+                          example: 1
+                        message:
+                          type: string
+                          example: "message"
+                        date:
+                          type: string
+                          example: "2020-01-01 00:00:00"
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "BAD_REQUEST"
+                  message:
+                    type: string
+                    example: "error message"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "INTERNAL_SERVER_ERROR"
+                  message:
+                    type: string
+                    example: "error message"
+  /v1/products/discussions/:
+    post:
+      tags:
+        - Product
+      summary: Create product discussion
+      description: Create product discussion
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                productId:
+                  type: integer
+                  example: 1
+                message:
+                  type: string
+                  example: "message"
+                isSeller:
+                  type: boolean
+                  example: true
+                parentId:
+                  type: integer
+                  example: 1
+      responses:
+        '200':
+          description: operation successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: 'OK'
+                  message:
+                    type: string
+                    example: "ok"
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "BAD_REQUEST"
+                  message:
+                    type: string
+                    example: "error message"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "INTERNAL_SERVER_ERROR"
+                  message:
+                    type: string
+                    example: "error message"
+  /v1/products/discussions/{productId}:
+    get:
+      tags:
+        - Product
+      summary: Get product discussions by product id
+      description: Get product discussions by product id
+      parameters:
+        - in: path
+          name: productId
+          required: true
+          schema:
+            type: integer
+            example: 1
+      responses:
+        '200':
+          description: operation successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: 'OK'
+                  message:
+                    type: string
+                    example: "ok"
+                  data:
+                    type: object
+                    properties:
+                      limit:
+                        type: integer
+                        example: 1
+                      page:
+                        type: integer
+                        example: 1
+                      totalRows:
+                        type: integer
+                        example: 1
+                      totalPages:
+                        type: integer
+                        example: 1
+                      Data:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            id:
+                              type: integer
+                              example: 1
+                            username:
+                              type: string
+                              example: "username"
+                            userUrl:
+                              type: string
+                              example: "https://www.example.com"
+                            shopName:
+                              type: string
+                              example: "shop name"
+                            shopUrl:
+                              type: string
+                              example: "https://www.example.com"
+                            productId:
+                              type: integer
+                              example: 1
+                            message:
+                              type: string
+                              example: "message"
+                            date:
+                              type: string
+                              example: "2020-01-01 00:00:00"
+                            replyCount:
+                              type: integer
+                              example: 1
+                            reply:
+                              type: object
+                              properties:
+                                id:
+                                  type: integer
+                                  example: 1
+                                username:
+                                  type: string
+                                  example: "username"
+                                userUrl:
+                                  type: string
+                                  example: "https://www.example.com"
+                                shopName:
+                                  type: string
+                                  example: "shop name"
+                                shopUrl:
+                                  type: string
+                                  example: "https://www.example.com"
+                                productId:
+                                  type: integer
+                                  example: 1
+                                message:
+                                  type: string
+                                  example: "message"
+                                date:
+                                  type: string
+                                  example: "2020-01-01 00:00:00"
+
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "BAD_REQUEST"
+                  message:
+                    type: string
+                    example: "error message"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "INTERNAL_SERVER_ERROR"
+                  message:
+                    type: string
+                    example: "error message"
+
+
+
   /v1/products:
     post:
       security:

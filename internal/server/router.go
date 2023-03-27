@@ -143,7 +143,9 @@ func NewRouter(cfg *RouterConfig) *gin.Engine {
 			product.GET("/autocompletes", cfg.ProductHandler.SearchAutocomplete)
 			product.GET("/recommended", cfg.ProductHandler.GetRecommendedProducts)
 			product.POST("/views", cfg.ProductHandler.AddProductView)
-
+			product.GET("/discussions/:productId", cfg.ProductHandler.GetDiscussionByProductID)
+			product.GET("/discussions/replies/:parentId", cfg.ProductHandler.GetDiscussionByParentID)
+			product.POST("/discussions", middleware.JWTAuthorization, cfg.ProductHandler.PostDiscussion)
 			category := product.Group("/categories")
 			{
 				category.GET("", cfg.ProductHandler.GetCategories)
