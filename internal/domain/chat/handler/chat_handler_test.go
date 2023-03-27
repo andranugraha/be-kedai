@@ -22,6 +22,201 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func TestUserGetListOfChats(t *testing.T) {
+	var (
+		userId        = 1
+		param         = &dto.ListOfChatsParamRequest{}
+		chatResponses = []*dto.UserListOfChatResponse{}
+	)
+
+	type input struct {
+		userId int
+		param  *dto.ListOfChatsParamRequest
+		result []*dto.UserListOfChatResponse
+		err    error
+	}
+
+	type expected struct {
+		statusCode int
+		response   response.Response
+	}
+
+	type cases struct {
+		description string
+		input
+		beforeTests func(cs *mocks.ChatService)
+		expected
+	}
+
+	for _, tc := range []cases{
+		{
+			description: "should return chat response with code 200 when success",
+			input: input{
+				userId: userId,
+				param:  param,
+				result: chatResponses,
+				err:    nil,
+			},
+			beforeTests: func(cs *mocks.ChatService) {
+				cs.On("UserGetListOfChats", param, userId).Return(chatResponses, nil)
+			},
+			expected: expected{
+				statusCode: http.StatusOK,
+				response: response.Response{
+					Code:    code.OK,
+					Message: "success",
+					Data:    chatResponses,
+				},
+			},
+		},
+		{
+			description: "should return error with code 500 when error",
+			input: input{
+				userId: userId,
+				param:  param,
+				result: nil,
+				err:    errors.New("error"),
+			},
+			beforeTests: func(cs *mocks.ChatService) {
+				cs.On("UserGetListOfChats", param, userId).Return(nil, errors.New("error"))
+			},
+			expected: expected{
+				statusCode: http.StatusInternalServerError,
+				response: response.Response{
+					Code:    code.INTERNAL_SERVER_ERROR,
+					Message: errs.ErrInternalServerError.Error(),
+				},
+			},
+		},
+	} {
+		t.Run(tc.description, func(t *testing.T) {
+			expectedBody, _ := json.Marshal(tc.expected.response)
+			rec := httptest.NewRecorder()
+			c, _ := gin.CreateTestContext(rec)
+			mockChatService := mocks.NewChatService(t)
+			tc.beforeTests(mockChatService)
+			handler := handler.New(&handler.Config{
+				ChatService: mockChatService,
+			})
+			c.Set("userId", 1)
+
+			c.Request, _ = http.NewRequest("GET", "/users/chats", nil)
+
+			handler.UserGetListOfChats(c)
+
+			assert.Equal(t, tc.expected.statusCode, rec.Code)
+			assert.Equal(t, string(expectedBody), rec.Body.String())
+		})
+	}
+}
+
+func TestSellerGetListOfChats(t *testing.T) {
+	var (
+		userId        = 1
+		param         = &dto.ListOfChatsParamRequest{}
+		chatResponses = []*dto.SellerListOfChatResponse{}
+	)
+
+	type input struct {
+		userId int
+		param  *dto.ListOfChatsParamRequest
+		result []*dto.SellerListOfChatResponse
+		err    error
+	}
+
+	type expected struct {
+		statusCode int
+		response   response.Response
+	}
+
+	type cases struct {
+		description string
+		input
+		beforeTests func(cs *mocks.ChatService)
+		expected
+	}
+
+	for _, tc := range []cases{
+		{
+			description: "should return chat response with code 200 when success",
+			input: input{
+				userId: userId,
+				param:  param,
+				result: chatResponses,
+				err:    nil,
+			},
+			beforeTests: func(cs *mocks.ChatService) {
+				cs.On("SellerGetListOfChats", param, userId).Return(chatResponses, nil)
+			},
+			expected: expected{
+				statusCode: http.StatusOK,
+				response: response.Response{
+					Code:    code.OK,
+					Message: "success",
+					Data:    chatResponses,
+				},
+			},
+		},
+		{
+			description: "should return error with code 400 when bad request",
+			input: input{
+				userId: userId,
+				param:  param,
+				result: nil,
+				err:    errs.ErrShopNotFound,
+			},
+			beforeTests: func(cs *mocks.ChatService) {
+				cs.On("SellerGetListOfChats", param, userId).Return(nil, errs.ErrShopNotFound)
+			},
+			expected: expected{
+				statusCode: http.StatusBadRequest,
+				response: response.Response{
+					Code:    code.BAD_REQUEST,
+					Message: errs.ErrShopNotFound.Error(),
+				},
+			},
+		},
+		{
+			description: "should return error with code 500 when error",
+			input: input{
+				userId: userId,
+				param:  param,
+				result: nil,
+				err:    errors.New("error"),
+			},
+			beforeTests: func(cs *mocks.ChatService) {
+				cs.On("SellerGetListOfChats", param, userId).Return(nil, errors.New("error"))
+			},
+			expected: expected{
+				statusCode: http.StatusInternalServerError,
+				response: response.Response{
+					Code:    code.INTERNAL_SERVER_ERROR,
+					Message: errs.ErrInternalServerError.Error(),
+				},
+			},
+		},
+	} {
+		t.Run(tc.description, func(t *testing.T) {
+			expectedBody, _ := json.Marshal(tc.expected.response)
+			rec := httptest.NewRecorder()
+			c, _ := gin.CreateTestContext(rec)
+			mockChatService := mocks.NewChatService(t)
+			tc.beforeTests(mockChatService)
+			handler := handler.New(&handler.Config{
+				ChatService: mockChatService,
+			})
+			c.Set("userId", 1)
+
+			c.Request, _ = http.NewRequest("GET", "/users/chats", nil)
+
+			handler.SellerGetListOfChats(c)
+
+			assert.Equal(t, tc.expected.statusCode, rec.Code)
+			assert.Equal(t, string(expectedBody), rec.Body.String())
+		})
+	}
+}
+
 func TestUserGetChat(t *testing.T) {
 	var (
 		userId   = 1
