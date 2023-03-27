@@ -57,8 +57,8 @@ func (d *discussionServiceImpl) PostDiscussion(discussion *dto.DiscussionReq) er
 		if err != nil {
 			return err
 		}
-		discussion.ShopID = shop.ID
-	}
+		discussion.ShopID = &shop.ID
+	} 
 
 	return d.discussionRepository.PostDiscussion(discussion)
 }

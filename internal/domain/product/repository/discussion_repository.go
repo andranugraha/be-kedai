@@ -97,6 +97,7 @@ func (d *discussionRepositoryImpl) GetChildDiscussionByParentID(parentID int) ([
 
 func (d *discussionRepositoryImpl) PostDiscussion(discussion *dto.DiscussionReq) error {
 
+	
 	err := d.db.Table("discussions").Create(discussion).Error
 	if err != nil {
 		if errors.IsForeignKeyError(err) {

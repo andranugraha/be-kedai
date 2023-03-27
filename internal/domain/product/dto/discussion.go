@@ -54,7 +54,7 @@ type DiscussionReq struct {
 	Message   string    `json:"message" binding:"required"`
 	Date      time.Time `json:"date"`
 	ParentID  *int      `json:"parentId"`
-	ShopID    int       `json:"-"`
+	ShopID    *int       `json:"-"`
 	IsSeller  *bool     `json:"isSeller"`
 }
 

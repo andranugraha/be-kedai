@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"kedai/backend/be-kedai/internal/common/code"
+	commonDto "kedai/backend/be-kedai/internal/common/dto"
 	errorResponse "kedai/backend/be-kedai/internal/common/error"
 	"kedai/backend/be-kedai/internal/domain/product/dto"
 	"kedai/backend/be-kedai/internal/domain/product/handler"
@@ -21,12 +22,17 @@ import (
 func TestGetDiscussionByProductID(t *testing.T) {
 	var (
 		productID  = 1
-		discussion = []*dto.Discussion{}
+		discussion = &commonDto.PaginationResponse{}
+		filter     = dto.GetDiscussionReq{
+			Page:  1,
+			Limit: 5,
+		}
 	)
 
 	type input struct {
 		productID int
 		err       error
+		filter    dto.GetDiscussionReq
 	}
 
 	type expected struct {
@@ -46,6 +52,7 @@ func TestGetDiscussionByProductID(t *testing.T) {
 			input: input{
 				productID: productID,
 				err:       nil,
+				filter:    filter,
 			},
 			expected: expected{
 				statusCode: 200,
@@ -57,30 +64,17 @@ func TestGetDiscussionByProductID(t *testing.T) {
 			},
 		},
 		{
-			description: "should return error when failed",
+			description: "should return code 500 when internal server error",
 			input: input{
 				productID: productID,
+				filter:    filter,
 				err:       errorResponse.ErrInternalServerError,
 			},
 			expected: expected{
-				statusCode: 500,
+				statusCode: http.StatusInternalServerError,
 				response: response.Response{
 					Code:    code.INTERNAL_SERVER_ERROR,
 					Message: errorResponse.ErrInternalServerError.Error(),
-				},
-			},
-		},
-		{
-			description: "should return error when bad request",
-			input: input{
-
-				err: errorResponse.ErrBadRequest,
-			},
-			expected: expected{
-				statusCode: 500,
-				response: response.Response{
-					Code:    code.BAD_REQUEST,
-					Message: errorResponse.ErrBadRequest.Error(),
 				},
 			},
 		},
@@ -88,7 +82,7 @@ func TestGetDiscussionByProductID(t *testing.T) {
 		t.Run(tc.description, func(t *testing.T) {
 			expectedBody, _ := json.Marshal(tc.expected.response)
 			mockService := new(mocks.DiscussionService)
-			mockService.On("GetDiscussionByProductID", tc.input.productID).Return(tc.expected.response.Data, tc.input.err)
+			mockService.On("GetDiscussionByProductID", tc.input.productID, tc.input.filter).Return(tc.expected.response.Data, tc.input.err)
 			rec := httptest.NewRecorder()
 			c, _ := gin.CreateTestContext(rec)
 			h := handler.New(&handler.Config{
@@ -135,7 +129,7 @@ func TestGetDiscussionByParentID(t *testing.T) {
 				err:      nil,
 			},
 			expected: expected{
-				statusCode: 200,
+				statusCode: http.StatusOK,
 				response: response.Response{
 					Code:    code.OK,
 					Message: "ok",
@@ -144,13 +138,13 @@ func TestGetDiscussionByParentID(t *testing.T) {
 			},
 		},
 		{
-			description: "should return error when failed",
+			description: "should return 500 when internal server error",
 			input: input{
 				parentID: parentID,
 				err:      errorResponse.ErrInternalServerError,
 			},
 			expected: expected{
-				statusCode: 500,
+				statusCode: http.StatusInternalServerError,
 				response: response.Response{
 					Code:    code.INTERNAL_SERVER_ERROR,
 					Message: errorResponse.ErrInternalServerError.Error(),
@@ -214,7 +208,7 @@ func TestPostDiscussion(t *testing.T) {
 				err:        nil,
 			},
 			expected: expected{
-				statusCode: 200,
+				statusCode: http.StatusOK,
 				response: response.Response{
 					Code:    code.OK,
 					Message: "ok",
@@ -222,14 +216,14 @@ func TestPostDiscussion(t *testing.T) {
 			},
 		},
 		{
-			description: "should return error when failed",
+			description: "should return 500 when internal server error",
 			input: input{
 				discussion: discussion,
 				userId:     userId,
 				err:        errorResponse.ErrInternalServerError,
 			},
 			expected: expected{
-				statusCode: 500,
+				statusCode: http.StatusInternalServerError,
 				response: response.Response{
 					Code:    code.INTERNAL_SERVER_ERROR,
 					Message: errorResponse.ErrInternalServerError.Error(),
@@ -237,14 +231,14 @@ func TestPostDiscussion(t *testing.T) {
 			},
 		},
 		{
-			description: "should return bad request when body is empty",
+			description: "should return 400 when product id is required",
 			input: input{
 				discussion: &dto.DiscussionReq{},
 				userId:     userId,
 				err:        errorResponse.ErrBadRequest,
 			},
 			expected: expected{
-				statusCode: 400,
+				statusCode: http.StatusBadRequest,
 				response: response.Response{
 					Code:    code.BAD_REQUEST,
 					Message: "Message is required",
