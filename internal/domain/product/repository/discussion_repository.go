@@ -1,8 +1,8 @@
 package repository
 
 import (
+	errors "kedai/backend/be-kedai/internal/common/error"
 	"kedai/backend/be-kedai/internal/domain/product/dto"
-	"log"
 	"math"
 
 	"gorm.io/gorm"
@@ -34,16 +34,16 @@ func (d *discussionRepositoryImpl) GetDiscussionByProductID(productID int, req d
 	var count int64
 	err = d.db.Model(&dto.Discussion{}).Where("product_id = ? AND parent_id IS NULL", productID).Count(&count).Error
 	if err != nil {
-		return nil, 0, 0, 0, 0, err
+		return []*dto.Discussion{}, 0, 0, 0, 0, err
 	}
 
 	err = d.db.Where("product_id = ? AND parent_id IS NULL", productID).Preload("User").Preload("User.Profile").Preload("Shop").Limit(req.Limit).Offset(req.Offset()).Find(&discussions).Error
 	if err != nil {
-		return nil, 0, 0, 0, 0, err
+		return []*dto.Discussion{}, 0, 0, 0, 0, err
 	}
 
 	if len(discussions) == 0 {
-		return nil, 0, 0, 0, 0, nil
+		return []*dto.Discussion{}, req.Limit, req.Page, int(count), int(math.Ceil(float64(count) / float64(req.Limit))), nil
 	}
 
 	for i, discussion := range discussions {
@@ -51,7 +51,7 @@ func (d *discussionRepositoryImpl) GetDiscussionByProductID(productID int, req d
 		var repliesCount int
 		err := d.db.Table("discussions").Where("parent_id = ?", discussion.ID).Preload("User").Preload("User.Profile").Preload("Shop").Find(&replies).Error
 		if err != nil {
-			return nil, 0, 0, 0, 0, err
+			return []*dto.Discussion{}, 0, 0, 0, 0, err
 		}
 
 		discussions[i].Username = discussion.User.Username
@@ -86,7 +86,6 @@ func (d *discussionRepositoryImpl) GetChildDiscussionByParentID(parentID int) ([
 	for i, reply := range replies {
 		replies[i].Username = reply.User.Username
 		replies[i].UserUrl = *reply.User.Profile.PhotoUrl
-		log.Println(reply.ShopId)
 		if replies[i].ShopId != 0 {
 			replies[i].ShopName = reply.Shop.Name
 			replies[i].ShopUrl = *reply.Shop.PhotoUrl
@@ -100,6 +99,9 @@ func (d *discussionRepositoryImpl) PostDiscussion(discussion *dto.DiscussionReq)
 
 	err := d.db.Table("discussions").Create(discussion).Error
 	if err != nil {
+		if errors.IsForeignKeyError(err) {
+			return errors.ErrDiscussionNotFound
+		}
 		return err
 	}
 
