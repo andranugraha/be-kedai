@@ -1184,3 +1184,57 @@ func TestCompletePasswordReset(t *testing.T) {
 	}
 
 }
+
+func TestAdminSignIn(t *testing.T) {
+	var (
+		email             = "yangPunya@kedai.com"
+		incorrectPassword = "kedai_Owner89"
+	)
+
+	type input struct {
+		request    *dto.UserLogin
+		beforeTest func(*mocks.UserCache)
+	}
+
+	type expected struct {
+		token *dto.Token
+		err   error
+	}
+
+	cases := []struct {
+		description string
+		input
+		expected
+	}{
+		{
+			description: "should return error when inputted credentials does not match",
+			input: input{
+				request: &dto.UserLogin{
+					Email:    email,
+					Password: incorrectPassword,
+				},
+				beforeTest: func(uc *mocks.UserCache) {
+				},
+			},
+			expected: expected{
+				err:   errors.New("invalid user credential"),
+				token: nil,
+			},
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.description, func(t *testing.T) {
+			userCache := mocks.NewUserCache(t)
+			tc.beforeTest(userCache)
+			userService := service.NewUserService(&service.UserSConfig{
+				Redis: userCache,
+			})
+
+			actualToken, actualErr := userService.AdminSignIn(tc.input.request)
+
+			assert.Equal(t, tc.expected.err, actualErr)
+			assert.Equal(t, tc.expected.token, actualToken)
+		})
+	}
+}

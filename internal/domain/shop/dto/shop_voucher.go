@@ -1,6 +1,7 @@
 package dto
 
 import (
+	"kedai/backend/be-kedai/internal/common/constant"
 	"kedai/backend/be-kedai/internal/domain/shop/model"
 	"time"
 )
@@ -30,7 +31,11 @@ type SellerVoucherFilterRequest struct {
 
 func (p *SellerVoucherFilterRequest) Validate() {
 	if p.Limit < 1 {
-		p.Limit = 10
+		p.Limit = constant.DefaultSellerVoucherLimit
+	}
+
+	if p.Limit > 50 {
+		p.Limit = constant.MaxSellerVoucherLimit
 	}
 
 	if p.Page < 1 {

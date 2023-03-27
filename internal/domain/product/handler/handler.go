@@ -10,6 +10,7 @@ type Handler struct {
 	productService           service.ProductService
 	skuService               service.SkuService
 	transactionReviewService orderService.TransactionReviewService
+	discussionService        service.DiscussionService
 }
 
 type Config struct {
@@ -17,6 +18,7 @@ type Config struct {
 	ProductService           service.ProductService
 	SkuService               service.SkuService
 	TransactionReviewService orderService.TransactionReviewService
+	DiscussionService        service.DiscussionService
 }
 
 func New(cfg *Config) *Handler {
@@ -25,6 +27,7 @@ func New(cfg *Config) *Handler {
 		productService:           cfg.ProductService,
 		skuService:               cfg.SkuService,
 		transactionReviewService: cfg.TransactionReviewService,
+		discussionService:        cfg.DiscussionService,
 	}
 }
 
