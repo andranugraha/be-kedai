@@ -1,7 +1,6 @@
 package repository
 
 import (
-	"fmt"
 	commonDto "kedai/backend/be-kedai/internal/common/dto"
 	errs "kedai/backend/be-kedai/internal/common/error"
 	"kedai/backend/be-kedai/internal/domain/chat/dto"
@@ -176,9 +175,6 @@ func (r *chatRepositoryImpl) UserGetChat(param *dto.ChatParamRequest, userId int
 		calculatedTotalRows = 0
 	} else {
 		calculatedTotalRows = int64(date.DaysBetween(firstChat.CreatedAt, time.Now()))
-		fmt.Println("aASD", date.DaysBetween(firstChat.CreatedAt, time.Now()))
-		fmt.Println("1", firstChat.CreatedAt)
-		fmt.Println("2", time.Now())
 	}
 
 	var chats []*model.Chat
@@ -218,9 +214,6 @@ func (r *chatRepositoryImpl) SellerGetChat(param *dto.ChatParamRequest, shop *sh
 		calculatedTotalRows = 0
 	} else {
 		calculatedTotalRows = int64(date.DaysBetween(firstChat.CreatedAt, time.Now()))
-		fmt.Println("aASD", date.DaysBetween(firstChat.CreatedAt, time.Now()))
-		fmt.Println("1", firstChat.CreatedAt)
-		fmt.Println("2", time.Now())
 	}
 
 	var chats []*model.Chat

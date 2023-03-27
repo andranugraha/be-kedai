@@ -1,7 +1,6 @@
 package handler
 
 import (
-	"fmt"
 	"kedai/backend/be-kedai/internal/common/code"
 	spErr "kedai/backend/be-kedai/internal/common/error"
 	"kedai/backend/be-kedai/internal/domain/chat/dto"
@@ -13,7 +12,6 @@ import (
 
 func (h *Handler) UserGetListOfChats(c *gin.Context) {
 	userID := c.GetInt("userId")
-	fmt.Println("ASD")
 
 	var param dto.ListOfChatsParamRequest
 	c.ShouldBindQuery(&param)
@@ -29,7 +27,6 @@ func (h *Handler) UserGetListOfChats(c *gin.Context) {
 
 func (h *Handler) SellerGetListOfChats(c *gin.Context) {
 	userID := c.GetInt("userId")
-	fmt.Println("ASD")
 
 	var param dto.ListOfChatsParamRequest
 	c.ShouldBindQuery(&param)
