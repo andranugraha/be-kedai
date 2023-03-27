@@ -29,12 +29,16 @@ func (h *Handler) AddCategory(c *gin.Context) {
 	var categoryDTO dto.CategoryDTO
 	if err := json.NewDecoder(c.Request.Body).Decode(&categoryDTO); err != nil {
 		response.Error(c, http.StatusBadRequest, code.BAD_REQUEST, err.Error())
+		return
 	}
 
-	if err := h.categoryService.AddCategory(&categoryDTO); err != nil {
+	category := categoryDTO.ToModel()
+	err := h.categoryService.AddCategory(category)
+	if err != nil {
 		response.Error(c, http.StatusInternalServerError, code.INTERNAL_SERVER_ERROR, err.Error())
+		return
 	}
 
-	response.Success(c, http.StatusOK, code.OK)
+	response.Success(c, http.StatusOK, code.OK, "success", nil)
 
 }

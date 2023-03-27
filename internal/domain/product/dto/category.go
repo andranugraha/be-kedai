@@ -1,5 +1,9 @@
 package dto
 
+import (
+	"kedai/backend/be-kedai/internal/domain/product/model"
+)
+
 type GetCategoriesRequest struct {
 	Depth     int  `form:"depth"`
 	ParentID  int  `form:"parentId"`
@@ -21,10 +25,23 @@ func (r *GetCategoriesRequest) Offset() int {
 	return int((r.Page - 1) * r.Limit)
 }
 
-
 type CategoryDTO struct {
 	Name     string        `json:"name"`
 	ImageURL string        `json:"image_url"`
 	ParentID *int          `json:"parent_id,omitempty"`
 	Children []CategoryDTO `json:"children,omitempty"`
+}
+
+func (cdto CategoryDTO) ToModel() *model.Category {
+	categoryModel := &model.Category{
+		Name:     cdto.Name,
+		ImageURL: cdto.ImageURL,
+	}
+	for _, childDTO := range cdto.Children {
+		childModel := childDTO.ToModel()
+
+		categoryModel.Children = append(categoryModel.Children, childModel)
+	}
+
+	return categoryModel
 }

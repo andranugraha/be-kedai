@@ -11,7 +11,7 @@ import (
 type CategoryRepository interface {
 	GetAll(dto.GetCategoriesRequest) ([]*model.Category, int64, int, error)
 	GetLineageFromBottom(categoryID int) ([]*model.Category, error)
-	AddCategory(req *dto.CategoryDTO) error
+	AddCategory(category *model.Category) error
 }
 
 type categoryRepositoryImpl struct {
@@ -96,6 +96,11 @@ func scope(query dto.GetCategoriesRequest) func(*gorm.DB) *gorm.DB {
 	}
 }
 
-func (r *categoryRepositoryImpl) AddCategory(req *dto.CategoryDTO) error {
+func (r *categoryRepositoryImpl) AddCategory(category *model.Category) error {
+
+	if err := r.db.Create(category).Error; err != nil {
+		return err
+	}
+
 	return nil
 }
