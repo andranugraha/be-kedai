@@ -15,16 +15,19 @@ type RefundRequestRepository interface {
 }
 
 type refundRequestRepositoryImpl struct {
-	db *gorm.DB
+	db                 *gorm.DB
+	invoicePerShopRepo InvoicePerShopRepository
 }
 
 type RefundRequestRConfig struct {
-	DB *gorm.DB
+	DB                 *gorm.DB
+	InvoicePerShopRepo InvoicePerShopRepository
 }
 
 func NewRefundRequestRepository(cfg *RefundRequestRConfig) RefundRequestRepository {
 	return &refundRequestRepositoryImpl{
-		db: cfg.DB,
+		db:                 cfg.DB,
+		invoicePerShopRepo: cfg.InvoicePerShopRepo,
 	}
 }
 
@@ -45,17 +48,44 @@ func (r *refundRequestRepositoryImpl) UpdateRefundStatus(tx *gorm.DB, invoiceId 
 
 func (r *refundRequestRepositoryImpl) ApproveRejectRefund(shopId int, invoiceId int, refundStatus string) error {
 
-	res := r.db.Model(&model.RefundRequest{}).
+	tx := r.db.Begin()
+	defer tx.Commit()
+
+	res := tx.Model(&model.RefundRequest{}).
 		Where("invoice_id = ? AND status = ?", invoiceId, constant.RefundStatusPending).
 		Joins("JOIN invoice_per_shops ON invoice_per_shops.shop_id = ?", shopId).
 		Update("status", refundStatus)
 
 	if err := res.Error; err != nil {
+		tx.Rollback()
 		return err
 	}
 
 	if res.RowsAffected == 0 {
+		tx.Rollback()
 		return commonErr.ErrRefundRequestNotFound
+	}
+
+	var invoiceStatuses []*model.InvoiceStatus
+
+	if refundStatus == constant.RequestStatusSellerApproved {
+		invoiceStatuses = append(invoiceStatuses, &model.InvoiceStatus{
+			InvoicePerShopID: invoiceId,
+			Status:           constant.TransactionStatusRefundPending,
+		})
+	}
+
+	if refundStatus == constant.RefundStatusRejected {
+		invoiceStatuses = append(invoiceStatuses, &model.InvoiceStatus{
+			InvoicePerShopID: invoiceId,
+			Status:           constant.TransactionStatusComplaintRejected,
+		})
+	}
+
+	err := r.invoicePerShopRepo.UpdateRefundStatus(tx, shopId, invoiceId, refundStatus, invoiceStatuses)
+	if err != nil {
+		tx.Rollback()
+		return err
 	}
 
 	return nil

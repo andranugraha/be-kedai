@@ -90,11 +90,13 @@ func (r *userCartItemRepository) GetAllCartItem(req *dto.GetCartItemsRequest) (c
 		Joins("left join skus s on cart_items.sku_id = s.id").
 		Joins("left join products p on s.product_id = p.id").
 		Joins("left join shops sh on p.shop_id = sh.id").
+		Joins("left join product_bulk_prices bp on p.id = bp.product_id").
+		Joins("left join product_promotions pp on s.id = pp.sku_id").
 		Group("sh.id, cart_items.id").
 		Where(`sh.id IN (SELECT DISTINCT sh.id from shops sh 
 			JOIN products p on p.shop_id = sh.id 
 			JOIN skus s on s.product_id = p.id 
-			JOIN cart_items ci on ci.sku_id = s.id 
+			JOIN cart_items ci on ci.sku_id = s.id
 			WHERE ci.user_id = ?
 			ORDER BY sh.id LIMIT ? OFFSET ?)`, req.UserId, req.Limit, req.Offset()).
 		Order("cart_items.created_at desc").
@@ -102,7 +104,8 @@ func (r *userCartItemRepository) GetAllCartItem(req *dto.GetCartItemsRequest) (c
 		Preload("Sku.Product.Shop.Address.Province").
 		Preload("Sku.Product.Shop.Address.Subdistrict").
 		Preload("Sku.Variants.Group").
-		Preload("Sku.Promotion")
+		Preload("Sku.Promotion").
+		Preload("Sku.Product.Bulk")
 
 	db.Model(&model.CartItem{}).Count(&totalRows)
 

@@ -45,7 +45,11 @@ type InvoicePerShopFilterRequest struct {
 
 func (d *InvoicePerShopFilterRequest) Validate() {
 	if d.Limit < 1 {
-		d.Limit = 10
+		d.Limit = constant.DefaultInvoicePerShopLimit
+	}
+
+	if d.Limit > 50 {
+		d.Limit = constant.MaxInvoicePerShopLimit
 	}
 
 	if d.Page < 1 {

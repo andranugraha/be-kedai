@@ -34,6 +34,7 @@ type InvoicePerShopRepository interface {
 	UpdateStatusToReceived(shopId int, orderId int, invoiceStatuses []*model.InvoiceStatus) error
 	UpdateStatusToCompleted(shopId int, orderId int, invoiceStatuses []*model.InvoiceStatus) error
 	UpdateStatusToRefundPending(shopId int, orderId int, invoiceStatuses []*model.InvoiceStatus, refundType string) error
+	UpdateRefundStatus(tx *gorm.DB, shopId int, orderId int, refundStatus string, invoiceStatuses []*model.InvoiceStatus) error
 	UpdateStatusCRONJob() error
 	AutoReceivedCRONJob() error
 	AutoCompletedCRONJob() error
@@ -674,6 +675,38 @@ func (r *invoicePerShopRepositoryImpl) UpdateStatusToRefundPending(shopId int, o
 	})
 
 	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (r *invoicePerShopRepositoryImpl) UpdateRefundStatus(tx *gorm.DB, shopId int, orderId int, refundStatus string, invoiceStatuses []*model.InvoiceStatus) error {
+	var invoiceStatus string
+	var invoicePerShop model.InvoicePerShop
+	if refundStatus == constant.RequestStatusSellerApproved {
+		invoiceStatus = constant.TransactionStatusRefundPending
+	} else {
+		invoiceStatus = constant.TransactionStatusComplaintRejected
+	}
+
+	if res := tx.
+		Model(&invoicePerShop).
+		Clauses(clause.Returning{}).
+		Where("shop_id = ? AND id = ? AND status = ?", shopId, orderId, constant.TransactionStatusComplained).
+		Update("status", invoiceStatus); res != nil {
+		if res.Error != nil {
+			tx.Rollback()
+			return res.Error
+		}
+		if res.RowsAffected == 0 {
+			tx.Rollback()
+			return commonErr.ErrInvoiceNotFound
+		}
+	}
+
+	if err := r.invoiceStatusRepo.Create(tx, invoiceStatuses); err != nil {
+		tx.Rollback()
 		return err
 	}
 
