@@ -187,16 +187,12 @@ func (h *Handler) CreateShop(c *gin.Context) {
 func (h *Handler) GetShopRating(c *gin.Context) {
 	userID := c.GetInt("userId")
 	var req dto.GetShopRatingFilterRequest
-	err := c.ShouldBindQuery(&req)
-	if err != nil {
-		response.ErrorValidator(c, http.StatusBadRequest, err)
-		return
-	}
+	_ = c.ShouldBindQuery(&req)
 
 	result, err := h.shopService.GetShopRating(userID, req)
 	if err != nil {
 		if errors.Is(err, errs.ErrShopNotFound) {
-			response.Error(c, http.StatusNotFound, code.SHOP_NOT_REGISTERED, err.Error())
+			response.Error(c, http.StatusNotFound, code.NOT_FOUND, err.Error())
 			return
 		}
 		response.Error(c, http.StatusInternalServerError, code.INTERNAL_SERVER_ERROR, errs.ErrInternalServerError.Error())
