@@ -65,15 +65,18 @@ type GetDiscussionReq struct {
 
 func (req *GetDiscussionReq) Validate() {
 	if req.Page < 1 {
-		req.Page = constant.DefaultReviewLimit
+		req.Page = 1
+	}
+
+	if req.Limit < 1 {
+		req.Limit = constant.DefaultDiscussionLimit
 	}
 
 	if req.Limit > 10 {
 		req.Limit = constant.MaxDiscussionLimit
 	}
-
-	if req.Limit < 1 {
-		req.Limit = 5
-	}
 }
 
+func (req *GetDiscussionReq) Offset() int {
+	return (req.Page - 1) * req.Limit
+}

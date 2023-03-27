@@ -37,7 +37,7 @@ func (d *discussionRepositoryImpl) GetDiscussionByProductID(productID int, req d
 		return nil, 0, 0, 0, 0, err
 	}
 
-	err = d.db.Where("product_id = ? AND parent_id IS NULL", productID).Preload("User").Preload("User.Profile").Preload("Shop").Limit(req.Limit).Offset((req.Page - 1) * req.Limit).Find(&discussions).Error
+	err = d.db.Where("product_id = ? AND parent_id IS NULL", productID).Preload("User").Preload("User.Profile").Preload("Shop").Limit(req.Limit).Offset(req.Offset()).Find(&discussions).Error
 	if err != nil {
 		return nil, 0, 0, 0, 0, err
 	}
