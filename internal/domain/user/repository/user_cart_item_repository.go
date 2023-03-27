@@ -5,7 +5,6 @@ import (
 	errs "kedai/backend/be-kedai/internal/common/error"
 	"kedai/backend/be-kedai/internal/domain/user/dto"
 	"kedai/backend/be-kedai/internal/domain/user/model"
-	"log"
 	"math"
 
 	"gorm.io/gorm"
@@ -118,10 +117,6 @@ func (r *userCartItemRepository) GetAllCartItem(req *dto.GetCartItemsRequest) (c
 	err = db.Find(&cartItems).Error
 	if err != nil {
 		return
-	}
-
-	for _, value := range cartItems {
-		log.Println(value.Sku.Product.Bulk)
 	}
 
 	return
