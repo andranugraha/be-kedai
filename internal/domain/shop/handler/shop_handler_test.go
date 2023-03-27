@@ -23,19 +23,23 @@ import (
 func TestGetShopRating(t *testing.T) {
 	var (
 		userId     = 1
-		shopRating = &commonDto.PaginationResponse{
-			Data: dto.ShopRatingResponse{
-				ShopRating:  1,
-				ProductItem: []*dto.ProductItem{},
+		filter     = &dto.GetShopRatingFilterRequest{}
+		shopRating = dto.GetShopRatingResponse{
+			ShopRating: 1,
+			Data: &commonDto.PaginationResponse{
+				Data:       []dto.ProductItem{},
+				TotalRows:  0,
+				TotalPages: 0,
+				Limit:      0,
+				Page:       0,
 			},
 		}
-		filter = &dto.GetShopRatingFilterRequest{}
 	)
 
 	type input struct {
 		userId int
 		filter *dto.GetShopRatingFilterRequest
-		result *commonDto.PaginationResponse
+		result *dto.GetShopRatingResponse
 		err    error
 	}
 
@@ -56,7 +60,7 @@ func TestGetShopRating(t *testing.T) {
 			input: input{
 				userId: userId,
 				filter: filter,
-				result: shopRating,
+				result: &shopRating,
 				err:    nil},
 			expected: expected{
 				statusCode: http.StatusOK,
@@ -80,6 +84,21 @@ func TestGetShopRating(t *testing.T) {
 				response: response.Response{
 					Code:    code.INTERNAL_SERVER_ERROR,
 					Message: errs.ErrInternalServerError.Error(),
+				},
+			},
+		}, {
+			description: "should return error with shop not found",
+			input: input{
+				userId: userId,
+				filter: filter,
+				result: nil,
+				err:    errs.ErrShopNotFound,
+			},
+			expected: expected{
+				statusCode: http.StatusNotFound,
+				response: response.Response{
+					Code:    code.NOT_FOUND,
+					Message: errs.ErrShopNotFound.Error(),
 				},
 			},
 		},
