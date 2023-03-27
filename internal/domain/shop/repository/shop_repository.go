@@ -366,10 +366,10 @@ func (r *shopRepositoryImpl) GetShopRating(userId int, filter dto.GetShopRatingF
 		Group("t.id, u.username, ips.id, up.photo_url, p.name, tr.rating, tr.description, s.rating ")
 
 	r1 := query.Count(&totalRows)
-	totalRows = r1.RowsAffected
 	if r1.Error != nil {
 		return nil, 0, 0, r1.Error
 	}
+	totalRows = r1.RowsAffected
 
 	r2 := query.Limit(filter.Limit).Offset(filter.Limit * (filter.Page - 1)).Find(&results)
 	if r2.Error != nil {

@@ -1,6 +1,7 @@
 package dto
 
 import (
+	"kedai/backend/be-kedai/internal/common/constant"
 	productModel "kedai/backend/be-kedai/internal/domain/product/model"
 	shopModel "kedai/backend/be-kedai/internal/domain/shop/model"
 	"kedai/backend/be-kedai/internal/domain/user/model"
@@ -57,25 +58,32 @@ type GetCartItemsResponses struct {
 }
 
 type CartItemResponse struct {
-	ID              int                    `json:"id"`
-	SkuId           int                    `json:"skuId"`
-	Name            string                 `json:"name"`
-	Quantity        int                    `json:"quantity"`
-	Stock           int                    `json:"stock"`
-	Variants        []productModel.Variant `json:"variants"`
-	Notes           string                 `json:"notes"`
-	OriginalPrice   float64                `json:"originalPrice"`
-	PromotionType   string                 `json:"promotionType"`
-	PromotionAmount float64                `json:"promotionAmount"`
-	Weight          float64                `json:"weight"`
-	Length          float64                `json:"length"`
-	Width           float64                `json:"width"`
-	Height          float64                `json:"height"`
+	ID              int                            `json:"id"`
+	SkuId           int                            `json:"skuId"`
+	Name            string                         `json:"name"`
+	Quantity        int                            `json:"quantity"`
+	Stock           int                            `json:"stock"`
+	Variants        []productModel.Variant         `json:"variants"`
+	Notes           string                         `json:"notes"`
+	OriginalPrice   float64                        `json:"originalPrice"`
+	PromotionType   string                         `json:"promotionType"`
+	PromotionAmount float64                        `json:"promotionAmount"`
+	Weight          float64                        `json:"weight"`
+	Length          float64                        `json:"length"`
+	Width           float64                        `json:"width"`
+	Height          float64                        `json:"height"`
+	BulkPrice       *productModel.ProductBulkPrice `json:"bulkPrice,omitempty"`
+	PurchaseLimit   int                            `json:"purchaseLimit"`
+	PromotionStock  int                            `json:"promotionStock"`
 }
 
 func (r *GetCartItemsRequest) Validate() {
 	if r.Limit < 10 {
-		r.Limit = 10 // default limit
+		r.Limit = constant.DefaultCartItemLimit // default limit
+	}
+
+	if r.Limit > 50 {
+		r.Limit = constant.MaxCartItemLimit // max limit
 	}
 
 	if r.Page < 1 {
@@ -124,10 +132,15 @@ func (d *CartItemResponse) ToCartItemResponse(cartItem model.CartItem) {
 	d.Width = cartItem.Sku.Product.Width
 	d.Height = cartItem.Sku.Product.Height
 
+	if cartItem.Sku.Product.Bulk != nil {
+		d.BulkPrice = cartItem.Sku.Product.Bulk
+	}
+
 	if cartItem.Sku.Promotion != nil {
 		d.PromotionType = cartItem.Sku.Promotion.Type
 		d.PromotionAmount = cartItem.Sku.Promotion.Amount
-
+		d.PurchaseLimit = cartItem.Sku.Promotion.PurchaseLimit
+		d.PromotionStock = cartItem.Sku.Promotion.Stock
 	}
 }
 

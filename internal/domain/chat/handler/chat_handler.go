@@ -67,7 +67,7 @@ func (h *Handler) UserAddChat(c *gin.Context) {
 
 	chat, err := h.chatService.UserAddChat(body, userID, shopSlug)
 	if err != nil {
-		if err == spErr.ErrShopNotFound || err == spErr.ErrUserDoesNotExist {
+		if err == spErr.ErrShopNotFound || err == spErr.ErrUserDoesNotExist || err == spErr.ErrSelfMessaging || err == spErr.ErrProductDoesNotExist || err == spErr.ErrInvoiceNotFound {
 			response.Error(c, http.StatusBadRequest, code.BAD_REQUEST, err.Error())
 			return
 		}
@@ -91,7 +91,7 @@ func (h *Handler) SellerAddChat(c *gin.Context) {
 
 	chat, err := h.chatService.SellerAddChat(body, userID, username)
 	if err != nil {
-		if err == spErr.ErrShopNotFound || err == spErr.ErrUserDoesNotExist {
+		if err == spErr.ErrShopNotFound || err == spErr.ErrUserDoesNotExist || err == spErr.ErrSelfMessaging || err == spErr.ErrProductDoesNotExist || err == spErr.ErrInvoiceNotFound {
 			response.Error(c, http.StatusBadRequest, code.BAD_REQUEST, err.Error())
 			return
 		}

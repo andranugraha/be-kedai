@@ -64,7 +64,11 @@ type SellerProductFilterRequest struct {
 
 func (r *SellerProductFilterRequest) Validate() {
 	if r.Limit < 1 {
-		r.Limit = 20
+		r.Limit = constant.DefaultSellerProductLimit
+	}
+
+	if r.Limit > 100 {
+		r.Limit = constant.MaxSellerProductLimit
 	}
 
 	if r.Page < 1 {
@@ -125,7 +129,11 @@ type ProductSearchFilterRequest struct {
 
 func (p *ProductSearchFilterRequest) Validate(strCityIds string) {
 	if p.Limit < 1 {
-		p.Limit = 10
+		p.Limit = constant.DefaultProductSearchLimit
+	}
+
+	if p.Limit > 50 {
+		p.Limit = constant.MaxProductSearchLimit
 	}
 
 	if p.Page < 1 {
@@ -182,7 +190,11 @@ type ShopProductFilterRequest struct {
 
 func (p *ShopProductFilterRequest) Validate() {
 	if p.Limit < 1 {
-		p.Limit = 10
+		p.Limit = constant.DefaultShopProductLimit
+	}
+
+	if p.Limit > 50 {
+		p.Limit = constant.MaxShopProductLimit
 	}
 
 	if p.Page < 1 {
@@ -209,7 +221,7 @@ type ProductSearchAutocomplete struct {
 
 func (p *ProductSearchAutocomplete) Validate() {
 	if p.Limit == 0 {
-		p.Limit = 10
+		p.Limit = constant.DefaultProductSearchAutoCompleteLimit
 	}
 }
 
@@ -284,4 +296,18 @@ func (d *CreateProductRequest) GenerateProduct() *model.Product {
 	}
 
 	return &product
+}
+
+type GetRecommendedProductRequest struct {
+	Limit int `json:"limit"`
+}
+
+func (p *GetRecommendedProductRequest) Validate() {
+	if p.Limit < 1 {
+		p.Limit = constant.DefaultRecommendedProductLimit
+	}
+
+	if p.Limit > 100 {
+		p.Limit = constant.MaxRecommendedProductLimit
+	}
 }
