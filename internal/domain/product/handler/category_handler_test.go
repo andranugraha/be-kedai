@@ -17,6 +17,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 )
 
 func TestGetCategories(t *testing.T) {
@@ -82,7 +83,6 @@ func TestGetCategories(t *testing.T) {
 			},
 			code: http.StatusInternalServerError,
 		},
-		
 	}
 
 	for _, test := range tests {
@@ -112,51 +112,59 @@ func TestAddCategory(t *testing.T) {
 			Name:     "Fashion",
 			ImageURL: "https://image.com",
 		}
-		res = &model.Category{
-			ID:       0,
-			Name:     "Fashion",
-			ImageURL: "https://image.com",
-			MinPrice: nil,
-			ParentID: nil,
-			Children: nil,
-		}
 	)
 
 	tests := []struct {
-		name           string
-		addCategoryRes *model.Category
-		addCategoryErr error
-		want           response.Response
-		code           int
+		name       string
+		want       response.Response
+		req        categoryDto.CategoryDTO
+		code       int
+		beforeTest func(*mocks.CategoryService)
 	}{
 		{
-			name:           "should return 200 when add category success",
-			addCategoryRes: res,
-			addCategoryErr: nil,
+			name: "should return 200 when add category success",
+			req:  req,
 			want: response.Response{
 				Code:    code.OK,
 				Message: "success",
 			},
 			code: http.StatusOK,
+			beforeTest: func(mockService *mocks.CategoryService) {
+				mockService.On("AddCategory", mock.Anything).Return(nil)
+
+			},
 		},
 		{
-			name:           "should return 500 when add category failed",
-			addCategoryRes: nil,
-			addCategoryErr: errorResponse.ErrInternalServerError,
+			name: "should return 500 when add category failed",
+			req:  req,
 			want: response.Response{
 				Code:    code.INTERNAL_SERVER_ERROR,
 				Message: errorResponse.ErrInternalServerError.Error(),
 			},
 			code: http.StatusInternalServerError,
+			beforeTest: func(mockService *mocks.CategoryService) {
+				mockService.On("AddCategory", mock.Anything).Return(errorResponse.ErrInternalServerError)
+			},
 		},
-	
+		{
+			name: "should return 400 when name is empty",
+			req:  categoryDto.CategoryDTO{},
+			want: response.Response{
+				Code:    code.BAD_REQUEST,
+				Message: "ImageURL is required",
+			},
+			code: http.StatusBadRequest,
+			beforeTest: func(mockService *mocks.CategoryService) {
+
+			},
+		},
 	}
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			jsonRes, _ := json.Marshal(test.want)
 			mockService := mocks.NewCategoryService(t)
-			mockService.On("AddCategory", res).Return(test.addCategoryErr)
+			test.beforeTest(mockService)
 			productHandler := handler.New(&handler.Config{
 				CategoryService: mockService,
 			})
@@ -164,7 +172,7 @@ func TestAddCategory(t *testing.T) {
 				ProductHandler: productHandler,
 			}
 
-			payload := testutil.MakeRequestBody(req)
+			payload := testutil.MakeRequestBody(test.req)
 			req, _ := http.NewRequest("POST", "/v1/products/categories", payload)
 			_, rec := testutil.ServeReq(cfg, req)
 

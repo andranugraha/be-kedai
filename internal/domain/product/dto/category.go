@@ -26,8 +26,8 @@ func (r *GetCategoriesRequest) Offset() int {
 }
 
 type CategoryDTO struct {
-	Name     string        `json:"name"`
-	ImageURL string        `json:"image_url"`
+	Name     string        `json:"name" binding:"required"`
+	ImageURL string        `json:"image_url" binding:"required"`
 	ParentID *int          `json:"parent_id,omitempty"`
 	Children []CategoryDTO `json:"children,omitempty"`
 }
