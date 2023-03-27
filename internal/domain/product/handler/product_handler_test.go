@@ -15,6 +15,7 @@ import (
 	"kedai/backend/be-kedai/mocks"
 	"net/http"
 	"net/http/httptest"
+	"strconv"
 	"testing"
 
 	"github.com/gin-gonic/gin"
@@ -1150,6 +1151,77 @@ func TestCreateProduct(t *testing.T) {
 
 			h.CreateProduct(c)
 
+			assert.Equal(t, tc.expected.statusCode, rec.Code)
+			assert.Equal(t, string(expectedRes), rec.Body.String())
+		})
+	}
+}
+
+func TestGetRecommendedProducts(t *testing.T) {
+	type input struct {
+		limit int
+	}
+	type expected struct {
+		statusCode int
+		response   response.Response
+	}
+	var (
+		defaultLimit        = 18
+		recommendedProducts = []*dto.ProductResponse{}
+	)
+	test := []struct {
+		description string
+		input
+		beforeTest func(*mocks.ProductService)
+		expected
+	}{
+		{
+			description: "should return error with status code 500 when server fails to fetch recommended products",
+			input: input{
+				limit: defaultLimit,
+			},
+			beforeTest: func(ps *mocks.ProductService) {
+				ps.On("GetRecommendedProducts", defaultLimit).Return(nil, errors.New("failed to fetch recommended products"))
+			},
+			expected: expected{
+				statusCode: http.StatusInternalServerError,
+				response: response.Response{
+					Code:    code.INTERNAL_SERVER_ERROR,
+					Message: errs.ErrInternalServerError.Error(),
+				},
+			},
+		},
+		{
+			description: "should return success with status code 200 when server succeed to fetch recommended products",
+			input: input{
+				limit: defaultLimit,
+			},
+			beforeTest: func(ps *mocks.ProductService) {
+				ps.On("GetRecommendedProducts", defaultLimit).Return(recommendedProducts, nil)
+			},
+			expected: expected{
+				statusCode: http.StatusOK,
+				response: response.Response{
+					Code:    code.OK,
+					Message: "success",
+					Data:    recommendedProducts,
+				},
+			},
+		},
+	}
+	for _, tc := range test {
+		t.Run(tc.description, func(t *testing.T) {
+			expectedRes, _ := json.Marshal(tc.expected.response)
+			productService := mocks.NewProductService(t)
+			tc.beforeTest(productService)
+			rec := httptest.NewRecorder()
+			c, _ := gin.CreateTestContext(rec)
+			c.AddParam("limit", strconv.Itoa(tc.input.limit))
+			c.Request = httptest.NewRequest(http.MethodGet, fmt.Sprintf("/v1/products/recommended?limit=%d", tc.input.limit), nil)
+			h := handler.New(&handler.Config{
+				ProductService: productService,
+			})
+			h.GetRecommendedProducts(c)
 			assert.Equal(t, tc.expected.statusCode, rec.Code)
 			assert.Equal(t, string(expectedRes), rec.Body.String())
 		})

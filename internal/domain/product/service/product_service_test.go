@@ -1002,3 +1002,68 @@ func TestCreateProduct(t *testing.T) {
 		})
 	}
 }
+
+func TestGetRecommendedProducts(t *testing.T) {
+	type input struct {
+		limit int
+	}
+	type expected struct {
+		data []*dto.ProductResponse
+		err  error
+	}
+
+	var (
+		defaultLimit        = 18
+		recommendedProducts = []*dto.ProductResponse{}
+	)
+
+	test := []struct {
+		description string
+		input
+		beforeTest func(*mocks.ProductRepository)
+		expected
+	}{
+		{
+			description: "should return error when failed to get recommended products",
+			input: input{
+				limit: defaultLimit,
+			},
+			beforeTest: func(pr *mocks.ProductRepository) {
+				pr.On("GetRecommended", defaultLimit).Return(nil, errors.New("failed to get recommended products"))
+			},
+			expected: expected{
+				data: nil,
+				err:  errors.New("failed to get recommended products"),
+			},
+		},
+		{
+			description: "should recommended products when successful",
+			input: input{
+				limit: defaultLimit,
+			},
+			beforeTest: func(pr *mocks.ProductRepository) {
+				pr.On("GetRecommended", defaultLimit).Return(recommendedProducts, nil)
+			},
+			expected: expected{
+				data: recommendedProducts,
+				err:  nil,
+			},
+		},
+	}
+
+	for _, tc := range test {
+		t.Run(tc.description, func(t *testing.T) {
+			productRepo := mocks.NewProductRepository(t)
+			tc.beforeTest(productRepo)
+			productService := service.NewProductService(&service.ProductSConfig{
+				ProductRepository: productRepo,
+			})
+
+			data, err := productService.GetRecommendedProducts(tc.input.limit)
+
+			assert.Equal(t, tc.expected.data, data)
+			assert.Equal(t, tc.expected.err, err)
+		})
+	}
+
+}

@@ -1,6 +1,7 @@
 package dto
 
 import (
+	"kedai/backend/be-kedai/internal/common/constant"
 	commonDto "kedai/backend/be-kedai/internal/common/dto"
 	"kedai/backend/be-kedai/internal/domain/shop/model"
 	stringsUtil "kedai/backend/be-kedai/internal/utils/strings"
@@ -33,13 +34,18 @@ type ShopFinanceReleased struct {
 }
 
 func (req *FindShopRequest) Validate() {
+	if req.Limit < 1 {
+		req.Limit = constant.DefaultFindShopLimit
+	}
+
+	if req.Limit > 50 {
+		req.Limit = constant.MaxFindShopLimit
+	}
+
 	if req.Page < 1 {
 		req.Page = 1
 	}
 
-	if req.Limit < 1 {
-		req.Limit = 10
-	}
 }
 
 func (req *FindShopRequest) Offset() int {
@@ -110,13 +116,18 @@ type GetShopRatingFilterRequest struct {
 }
 
 func (req *GetShopRatingFilterRequest) Validate() {
+	if req.Limit < 1 {
+		req.Limit = constant.DefaultShopRatingLimit
+	}
+
+	if req.Limit > 20 {
+		req.Limit = constant.MaxShopRatingLimit
+	}
+
 	if req.Page < 1 {
 		req.Page = 1
 	}
 
-	if req.Limit < 1 {
-		req.Limit = 5
-	}
 }
 
 const (
