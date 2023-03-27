@@ -112,6 +112,23 @@ func (h *Handler) GetSellerProducts(c *gin.Context) {
 	response.Success(c, http.StatusOK, code.OK, "success", res)
 }
 
+func (h *Handler) GetSellerProductPromotion(c *gin.Context) {
+	userID := c.GetInt("userId")
+
+	res, err := h.productService.GetSellerProductPromotion(userID, 1)
+	if err != nil {
+		if errors.Is(err, errs.ErrShopNotFound) {
+			response.Error(c, http.StatusNotFound, code.SHOP_NOT_REGISTERED, err.Error())
+			return
+		}
+
+		response.Error(c, http.StatusInternalServerError, code.INTERNAL_SERVER_ERROR, errs.ErrInternalServerError.Error())
+		return
+	}
+
+	response.Success(c, http.StatusOK, code.OK, "success", res)
+}
+
 func (h *Handler) SearchAutocomplete(c *gin.Context) {
 	var req dto.ProductSearchAutocomplete
 	_ = c.ShouldBindQuery(&req)

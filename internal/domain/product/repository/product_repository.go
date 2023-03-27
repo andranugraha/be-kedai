@@ -22,6 +22,7 @@ type ProductRepository interface {
 	GetRecommendationByCategory(productId int, categoryId int) ([]*dto.ProductResponse, error)
 	ProductSearchFiltering(req dto.ProductSearchFilterRequest, shopId int) ([]*dto.ProductResponse, int64, int, error)
 	GetBySellerID(shopID int, request *dto.SellerProductFilterRequest) ([]*dto.SellerProduct, int64, int, error)
+	GetByPromotionID(shopID int, promotionID int) ([]*dto.SellerProductPromotion, error)
 	SearchAutocomplete(req dto.ProductSearchAutocomplete) ([]*dto.ProductResponse, error)
 	GetSellerProductByCode(shopID int, productCode string) (*model.Product, error)
 	AddViewCount(productID int) error
@@ -369,6 +370,32 @@ func (r *productRepositoryImpl) GetBySellerID(shopID int, request *dto.SellerPro
 
 	return products, totalRows, totalPages, nil
 }
+
+	func (r *productRepositoryImpl) GetByPromotionID(shopID int, promotionID int) ([]*dto.SellerProductPromotion, error) {
+		var (
+			products []*dto.SellerProductPromotion
+		)
+
+		query := r.db.
+			Select(`products.id,
+			products.name,
+			products.code,
+			(SELECT url FROM product_medias pm WHERE pm.product_id = products.id LIMIT 1) AS image_url
+		`).
+			Joins(`
+		JOIN skus ON skus.product_id = products.id
+		JOIN product_promotions ON product_promotions.sku_id = skus.id
+	`).
+			Group("products.id").
+			Where("products.shop_id = ? AND product_promotions.promotion_id = ?", shopID, promotionID)
+
+		err := query.Preload("SKUs.Variants").Preload("SKUs.Promotion").Find(&products).Error
+		if err != nil {
+			return nil, err
+		}
+
+		return products, nil
+	}
 
 func (r *productRepositoryImpl) SearchAutocomplete(req dto.ProductSearchAutocomplete) ([]*dto.ProductResponse, error) {
 	var (

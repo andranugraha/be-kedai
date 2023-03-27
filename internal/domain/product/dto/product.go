@@ -35,6 +35,19 @@ func (SellerProduct) TableName() string {
 	return "products"
 }
 
+type SellerProductPromotion struct {
+	model.Product
+	// ID       int          `json:"id"`
+	// Name     string       `json:"name"`
+	// Code     string       `json:"code"`
+	ImageURL string `json:"imageUrl,omitempty"`
+	// SKUs     []*model.Sku `json:"skus,omitempty"`
+}
+
+func (SellerProductPromotion) TableName() string {
+	return "products"
+}
+
 type SellerProductFilterRequest struct {
 	Limit       int    `form:"limit"`
 	Page        int    `form:"page"`

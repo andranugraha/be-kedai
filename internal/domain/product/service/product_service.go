@@ -19,6 +19,7 @@ type ProductService interface {
 	GetRecommendationByCategory(productId int, categoryId int) ([]*dto.ProductResponse, error)
 	ProductSearchFiltering(req dto.ProductSearchFilterRequest) (*commonDto.PaginationResponse, error)
 	GetSellerProducts(userID int, req *dto.SellerProductFilterRequest) (*commonDto.PaginationResponse, error)
+	GetSellerProductPromotion(shopID int, promotionID int) ([]*dto.SellerProductPromotion, error)
 	SearchAutocomplete(req dto.ProductSearchAutocomplete) ([]*dto.ProductResponse, error)
 	GetSellerProductByCode(userID int, productCode string) (*dto.SellerProductDetail, error)
 	AddViewCount(id int) error
@@ -165,6 +166,20 @@ func (s *productServiceImpl) GetSellerProducts(userID int, req *dto.SellerProduc
 		Limit:      req.Limit,
 		Data:       products,
 	}, nil
+}
+
+func (s *productServiceImpl) GetSellerProductPromotion(userID int, promotionID int) ([]*dto.SellerProductPromotion, error) {
+	shop, err := s.shopService.FindShopByUserId(userID)
+	if err != nil {
+		return nil, err
+	}
+
+	products, err := s.productRepository.GetByPromotionID(shop.ID, promotionID)
+	if err != nil {
+		return nil, err
+	}
+
+	return products, nil
 }
 
 func (s *productServiceImpl) SearchAutocomplete(req dto.ProductSearchAutocomplete) ([]*dto.ProductResponse, error) {

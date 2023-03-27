@@ -10,21 +10,21 @@ type Product struct {
 	ID          int     `json:"id"`
 	Code        string  `json:"code"`
 	Name        string  `json:"name"`
-	Description string  `json:"description"`
-	View        int     `json:"view"`
-	IsHazardous bool    `json:"isHazardous"`
-	Weight      float64 `json:"weight"`
-	Length      float64 `json:"length"`
-	Width       float64 `json:"width"`
-	Height      float64 `json:"height"`
-	IsNew       bool    `json:"isNew"`
-	IsActive    bool    `json:"isActive"`
-	Rating      float64 `json:"rating"`
-	Sold        int     `json:"sold"`
+	Description string  `json:"description,omitempty"`
+	View        int     `json:"view,omitempty"`
+	IsHazardous bool    `json:"isHazardous,omitempty"`
+	Weight      float64 `json:"weight,omitempty"`
+	Length      float64 `json:"length,omitempty"`
+	Width       float64 `json:"width,omitempty"`
+	Height      float64 `json:"height,omitempty"`
+	IsNew       bool    `json:"isNew,omitempty"`
+	IsActive    bool    `json:"isActive,omitempty"`
+	Rating      float64 `json:"rating,omitempty"`
+	Sold        int     `json:"sold,omitempty"`
 
-	ShopID         int                         `json:"shopId"`
+	ShopID         int                         `json:"shopId,omitempty"`
 	Shop           *shopModel.Shop             `json:"shop,omitempty"`
-	CategoryID     int                         `json:"categoryId"`
+	CategoryID     int                         `json:"categoryId,omitempty"`
 	Bulk           *ProductBulkPrice           `json:"bulk,omitempty"`
 	VariantGroup   []*VariantGroup             `json:"variantGroups,omitempty"`
 	Media          []*ProductMedia             `json:"media,omitempty"`

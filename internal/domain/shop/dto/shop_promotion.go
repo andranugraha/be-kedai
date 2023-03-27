@@ -1,14 +1,15 @@
 package dto
 
 import (
+	"kedai/backend/be-kedai/internal/domain/product/dto"
 	productModel "kedai/backend/be-kedai/internal/domain/product/model"
 	"kedai/backend/be-kedai/internal/domain/shop/model"
 )
 
 type SellerPromotion struct {
 	model.ShopPromotion
-	Status  string  `json:"status" gorm:"column:status"`
-	Product Product `json:"product"`
+	Status  string                        `json:"status" gorm:"column:status"`
+	Product []*dto.SellerProductPromotion `json:"products"`
 }
 
 func (SellerPromotion) TableName() string {

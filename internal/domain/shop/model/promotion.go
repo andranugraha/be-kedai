@@ -7,13 +7,13 @@ import (
 )
 
 type ShopPromotion struct {
-	ID          int       `json:"id"`
-	Name        string    `json:"name"`
-	StartPeriod time.Time `json:"startPeriod"`
-	EndPeriod   time.Time `json:"endPeriod"`
-	ShopId      int       `json:"shopId"`
+	ID          int        `json:"id,omitempty"`
+	Name        string     `json:"name,omitempty"`
+	StartPeriod *time.Time `json:"startPeriod,omitempty"`
+	EndPeriod   *time.Time `json:"endPeriod,omitempty"`
+	ShopId      int        `json:"shopId,omitempty"`
 
-	Shop Shop `json:"shop" gorm:"foreignKey:ShopId"`
+	Shop *Shop `json:"shop,omitempty" gorm:"foreignKey:ShopId"`
 
 	gorm.Model `json:"-"`
 }

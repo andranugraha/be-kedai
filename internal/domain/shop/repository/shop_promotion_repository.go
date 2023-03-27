@@ -8,6 +8,8 @@ import (
 	"math"
 	"time"
 
+	productRepo "kedai/backend/be-kedai/internal/domain/product/repository"
+
 	"gorm.io/gorm"
 )
 
@@ -16,16 +18,19 @@ type ShopPromotionRepository interface {
 }
 
 type shopPromotionRepositoryImpl struct {
-	db *gorm.DB
+	db                *gorm.DB
+	productRepository productRepo.ProductRepository
 }
 
 type ShopPromotionRConfig struct {
-	DB *gorm.DB
+	DB                *gorm.DB
+	ProductRepository productRepo.ProductRepository
 }
 
 func NewShopPromotionRepository(cfg *ShopPromotionRConfig) ShopPromotionRepository {
 	return &shopPromotionRepositoryImpl{
-		db: cfg.DB,
+		db:                cfg.DB,
+		productRepository: cfg.ProductRepository,
 	}
 }
 
@@ -38,14 +43,7 @@ func (r *shopPromotionRepositoryImpl) GetSellerPromotions(shopId int, request *d
 
 	now := time.Now()
 	query := r.db.
-		Select("shop_promotions.*,"+
-			"CASE WHEN start_period <= ? AND end_period >= ? THEN ? "+
-			"WHEN start_from > ? THEN ? "+
-			"ELSE ? "+
-			"END as status, ").
-		Joins("JOIN shops ON shops.id = shop_promotions.shop_id").
-		Joins("JOIN skus ON skus.id = shop_promotions.sku_id").
-		Joins("JOIN products ON products.id = skus.product_id").
+		Model(&model.ShopPromotion{}).
 		Where("shop_promotions.shop_id = ?", shopId)
 
 	if request.Name != "" {
@@ -54,16 +52,16 @@ func (r *shopPromotionRepositoryImpl) GetSellerPromotions(shopId int, request *d
 
 	switch request.Status {
 	case constant.VoucherPromotionStatusOngoing:
-		query = query.Where("shop_promotions.start_from <= ? AND ? < shop_promotions.expired_at", now, now)
+		query = query.Where("shop_promotions.start_period <= ? AND ? < shop_promotions.end_period", now, now)
 	case constant.VoucherPromotionStatusUpcoming:
-		query = query.Where("? < shop_promotions.start_from", now)
+		query = query.Where("? < shop_promotions.start_period", now)
 	case constant.VoucherPromotionStatusExpired:
-		query = query.Where("shop_promotions.expired_at <= ?", now)
+		query = query.Where("shop_promotions.end_period <= ?", now)
 	}
 
 	query = query.Select("shop_promotions.*, "+
 		"CASE WHEN start_period <= ? AND end_period >= ? THEN ? "+
-		"WHEN start_from > ? THEN ? "+
+		"WHEN start_period > ? THEN ? "+
 		"ELSE ? "+
 		"END as status", now, now, constant.VoucherPromotionStatusOngoing, now, constant.VoucherPromotionStatusUpcoming, constant.VoucherPromotionStatusExpired)
 
@@ -78,21 +76,18 @@ func (r *shopPromotionRepositoryImpl) GetSellerPromotions(shopId int, request *d
 
 	err = query.
 		Order("shop_promotions.created_at desc").
-		Preload("Product", func(query *gorm.DB) *gorm.DB {
-			return query.Select(`
-				product.id,
-				product.name,
-				product.code,
-				(SELECT url FROM product_medias pm WHERE pm.product_id = products.id LIMIT 1) AS image_url")
-			`)
-		}).
-		Preload("SKUs.Variants").
-		Preload("SKUs.Promotion").
 		Limit(request.Limit).
 		Offset(request.Offset()).Find(&promotions).Error
-
 	if err != nil {
 		return nil, 0, 0, err
+	}
+
+	for _, promotions := range promotions {
+		products, err := r.productRepository.GetByPromotionID(shopId, promotions.ID)
+		if err != nil {
+			return nil, 0, 0, err
+		}
+		promotions.Product = products
 	}
 
 	return promotions, totalRows, totalPages, nil
