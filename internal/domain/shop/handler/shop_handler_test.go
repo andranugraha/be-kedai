@@ -22,10 +22,8 @@ import (
 
 func TestGetShopRating(t *testing.T) {
 	var (
-		userId           = 1
-		filter           = &dto.GetShopRatingFilterRequest{
-
-		}
+		userId     = 1
+		filter     = &dto.GetShopRatingFilterRequest{}
 		shopRating = dto.GetShopRatingResponse{
 			ShopRating: 1,
 			Data: &commonDto.PaginationResponse{
@@ -88,7 +86,22 @@ func TestGetShopRating(t *testing.T) {
 					Message: errs.ErrInternalServerError.Error(),
 				},
 			},
-		}, 
+		}, {
+			description: "should return error with shop not found",
+			input: input{
+				userId: userId,
+				filter: filter,
+				result: nil,
+				err:    errs.ErrShopNotFound,
+			},
+			expected: expected{
+				statusCode: http.StatusNotFound,
+				response: response.Response{
+					Code:    code.NOT_FOUND,
+					Message: errs.ErrShopNotFound.Error(),
+				},
+			},
+		},
 	} {
 
 		t.Run(tc.description, func(t *testing.T) {
@@ -96,7 +109,7 @@ func TestGetShopRating(t *testing.T) {
 			rec := httptest.NewRecorder()
 			c, _ := gin.CreateTestContext(rec)
 			mockService := new(mocks.ShopService)
-			mockService.On("GetShopRating", tc.input.userId,*tc.input.filter).Return(tc.input.result, tc.input.err)
+			mockService.On("GetShopRating", tc.input.userId, *tc.input.filter).Return(tc.input.result, tc.input.err)
 			handler := handler.New(&handler.HandlerConfig{
 				ShopService: mockService,
 			})

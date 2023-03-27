@@ -191,6 +191,10 @@ func (h *Handler) GetShopRating(c *gin.Context) {
 
 	result, err := h.shopService.GetShopRating(userID, req)
 	if err != nil {
+		if errors.Is(err, errs.ErrShopNotFound) {
+			response.Error(c, http.StatusNotFound, code.NOT_FOUND, err.Error())
+			return
+		}
 		response.Error(c, http.StatusInternalServerError, code.INTERNAL_SERVER_ERROR, errs.ErrInternalServerError.Error())
 		return
 	}

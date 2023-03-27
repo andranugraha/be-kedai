@@ -1,10 +1,10 @@
 package dto
 
 import (
+	commonDto "kedai/backend/be-kedai/internal/common/dto"
 	"kedai/backend/be-kedai/internal/domain/shop/model"
 	stringsUtil "kedai/backend/be-kedai/internal/utils/strings"
 	"strings"
-	commonDto "kedai/backend/be-kedai/internal/common/dto"
 )
 
 type FindShopRequest struct {
@@ -102,8 +102,8 @@ type GetShopRatingResponse struct {
 }
 type GetShopRatingFilterRequest struct {
 	Search    string `form:"search"`
-	StartDate string `form:"startDate" binding:"required_with=EndDate,omitempty,datetime=2006-01-02"`
-	EndDate   string `form:"endDate" binding:"required_with=StartDate,omitempty,datetime=2006-01-02"`
+	StartDate string `form:"startDate"`
+	EndDate   string `form:"endDate"`
 	Limit     int    `form:"limit"`
 	Page      int    `form:"page"`
 	Filter    int    `form:"filter"`
