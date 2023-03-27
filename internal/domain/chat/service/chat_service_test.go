@@ -14,6 +14,138 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func TestUserGetListOfChat(t *testing.T) {
+	type input struct {
+		param    *dto.ListOfChatsParamRequest
+		userId   int
+		mockData []*dto.UserListOfChatResponse
+		mockErr  error
+	}
+	type expected struct {
+		data []*dto.UserListOfChatResponse
+		err  error
+	}
+
+	var (
+		param        = &dto.ListOfChatsParamRequest{}
+		userId       = 1
+		chatResponse = []*dto.UserListOfChatResponse{}
+	)
+
+	tests := []struct {
+		description string
+		input
+		beforeTest func(*mocks.ChatRepository, *mocks.ShopService)
+		expected
+	}{
+		{
+			description: "should return success when successfully get chat list",
+			input: input{
+				param:    param,
+				userId:   userId,
+				mockData: chatResponse,
+				mockErr:  nil,
+			},
+			expected: expected{
+				data: chatResponse,
+				err:  nil,
+			},
+		},
+		{
+			description: "should return data when error get chat list",
+			input: input{
+				param:    param,
+				userId:   userId,
+				mockData: nil,
+				mockErr:  errors.New("failed to get chat list"),
+			},
+			expected: expected{
+				data: nil,
+				err:  errors.New("failed to get chat list"),
+			},
+		},
+	}
+
+	for _, tc := range tests {
+		mockChatRepo := mocks.NewChatRepository(t)
+		mockChatRepo.On("UserGetListOfChats", tc.input.param, tc.input.userId).Return(tc.expected.data, tc.expected.err)
+		chatService := service.NewChatService(&service.ChatConfig{
+			ChatRepo: mockChatRepo,
+		})
+
+		data, err := chatService.UserGetListOfChats(tc.input.param, tc.input.userId)
+
+		assert.Equal(t, tc.expected.data, data)
+		assert.Equal(t, tc.expected.err, err)
+	}
+}
+
+func TestSellerGetListOfChat(t *testing.T) {
+	type input struct {
+		param    *dto.ListOfChatsParamRequest
+		userId   int
+		mockData []*dto.SellerListOfChatResponse
+		mockErr  error
+	}
+	type expected struct {
+		data []*dto.SellerListOfChatResponse
+		err  error
+	}
+
+	var (
+		param        = &dto.ListOfChatsParamRequest{}
+		userId       = 1
+		chatResponse = []*dto.SellerListOfChatResponse{}
+	)
+
+	tests := []struct {
+		description string
+		input
+		beforeTest func(*mocks.ChatRepository, *mocks.ShopService)
+		expected
+	}{
+		{
+			description: "should return success when successfully get chat list",
+			input: input{
+				param:    param,
+				userId:   userId,
+				mockData: chatResponse,
+				mockErr:  nil,
+			},
+			expected: expected{
+				data: chatResponse,
+				err:  nil,
+			},
+		},
+		{
+			description: "should return data when error get chat list",
+			input: input{
+				param:    param,
+				userId:   userId,
+				mockData: nil,
+				mockErr:  errors.New("failed to get chat list"),
+			},
+			expected: expected{
+				data: nil,
+				err:  errors.New("failed to get chat list"),
+			},
+		},
+	}
+
+	for _, tc := range tests {
+		mockChatRepo := mocks.NewChatRepository(t)
+		mockChatRepo.On("SellerGetListOfChats", tc.input.param, tc.input.userId).Return(tc.expected.data, tc.expected.err)
+		chatService := service.NewChatService(&service.ChatConfig{
+			ChatRepo: mockChatRepo,
+		})
+
+		data, err := chatService.SellerGetListOfChats(tc.input.param, tc.input.userId)
+
+		assert.Equal(t, tc.expected.data, data)
+		assert.Equal(t, tc.expected.err, err)
+	}
+}
+
 func TestUserGetChat(t *testing.T) {
 	type input struct {
 		param    *dto.ChatParamRequest
