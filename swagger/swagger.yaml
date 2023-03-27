@@ -4070,6 +4070,52 @@ paths:
                     type: string
                     example: "error message"          
   /v1/products/categories:
+    post:
+      tags:
+        - Product
+      summary: Add product category
+      description: Add product category using product id and category id as request body
+      requestBody:
+        $ref: '#/components/requestBodies/AddProductCategoryRequestBody'
+      responses:
+        '201':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - type: object
+                    properties:
+                      code:
+                        example: 'OK'
+                      message:
+                        example: 'ok'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "BAD_REQUEST"
+                  message:
+                    type: string
+                    example: "error message"          
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "INTERNAL_SERVER_ERROR"
+                  message:
+                    type: string
+                    example: "error message"
     get:
       tags:
         - Product
@@ -9715,6 +9761,44 @@ components:
         description:
           type: string
   requestBodies:
+    AddProductCategoryRequestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - name
+              - image_url
+            properties:
+              name:
+                type: string
+                example: "category name"
+              image_url:
+                type: string
+                example: "https://example.com/image.jpg"
+              children:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    name:
+                      type: string
+                      example: "category name"
+                    image_url:
+                      type: string
+                      example: "https://example.com/image.jpg"
+                    children:
+                      type: array
+                      items:
+                        type: object
+                        properties:
+                          name:
+                            type: string
+                            example: "category name"
+                          image_url:
+                            type: string
+                            example: "https://example.com/image.jpg"
     WalletBody:
       required: true
       content:
