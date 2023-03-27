@@ -68,8 +68,8 @@ func (req *GetDiscussionReq) Validate() {
 		req.Page = constant.DefaultReviewLimit
 	}
 
-	if req.Limit > 50 {
-		req.Limit = constant.MaxReviewLimit
+	if req.Limit > 10 {
+		req.Limit = constant.MaxDiscussionLimit
 	}
 
 	if req.Limit < 1 {
@@ -77,6 +77,3 @@ func (req *GetDiscussionReq) Validate() {
 	}
 }
 
-func (req *GetDiscussionReq) GetOffset() int {
-	return (req.Page - 1) * req.Limit
-}
