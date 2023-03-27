@@ -184,6 +184,11 @@ func (s *shopServiceImpl) GetShopRating(userId int, filter dto.GetShopRatingFilt
 		filter.Page = 1
 	}
 
+	_, err := s.shopRepository.FindShopByUserId(userId)
+	if err != nil {
+		return nil, err
+	}
+
 	review, totalRows, totalPages, err := s.shopRepository.GetShopRating(userId, filter)
 
 	return &dto.GetShopRatingResponse{
