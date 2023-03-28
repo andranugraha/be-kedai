@@ -83,7 +83,11 @@ func (r *shopVoucherRepositoryImpl) GetSellerVoucher(shopId int, request *dto.Se
 		query = query.Where("shop_vouchers.expired_at <= ?", now)
 	}
 
-	query = query.Select("shop_vouchers.*, ?", request.Status)
+	query = query.Select("shop_vouchers.*, "+
+		"CASE WHEN start_from <= ? AND expired_at >= ? THEN ? "+
+		"WHEN start_from > ? THEN ? "+
+		"ELSE ? "+
+		"END as status", now, now, constant.VoucherPromotionStatusOngoing, now, constant.VoucherPromotionStatusUpcoming, constant.VoucherPromotionStatusExpired)
 
 	query = query.Session(&gorm.Session{})
 
