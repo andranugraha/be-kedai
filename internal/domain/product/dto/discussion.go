@@ -48,14 +48,14 @@ type DiscussionReply struct {
 }
 
 type DiscussionReq struct {
-	ID        int       `json:"id"`
-	UserID    int       `json:"-"`
-	ProductID int       `json:"productId" binding:"required"`
-	Message   string    `json:"message" binding:"required"`
-	Date      time.Time `json:"date"`
-	ParentID  *int      `json:"parentId"`
+	ID        int        `json:"id"`
+	UserID    int        `json:"-"`
+	ProductID int        `json:"productId" binding:"required"`
+	Message   string     `json:"message" binding:"required"`
+	Date      *time.Time `json:"date"`
+	ParentID  *int       `json:"parentId"`
 	ShopID    *int       `json:"-"`
-	IsSeller  *bool     `json:"isSeller"`
+	IsSeller  *bool      `json:"isSeller"`
 }
 
 type GetDiscussionReq struct {

@@ -8,8 +8,6 @@ import (
 type ListOfChatsParamRequest struct {
 	Search string `form:"search"`
 	Status string `form:"status"`
-	Page   int    `form:"page"`
-	Limit  int    `form:"limit"`
 }
 
 type ChatParamRequest struct {
@@ -36,26 +34,30 @@ type SendChatBodyRequest struct {
 }
 
 type UserChatProfile struct {
-	Username string `json:"username"`
-	ImageUrl string `json:"imageUrl"`
+	ID       int     `json:"-"`
+	Username string  `json:"username"`
+	ImageUrl *string `json:"imageUrl"`
 }
 
 type ShopChatProfile struct {
-	Name     string `json:"name"`
-	ImageUrl string `json:"imageUrl"`
-	ShopSlug string `json:"shopSlug"`
+	ID       int     `json:"-"`
+	Name     string  `json:"name"`
+	ImageUrl *string `json:"imageUrl"`
+	ShopSlug string  `json:"shopSlug"`
 }
 
 type UserListOfChatResponse struct {
-	Shop          *ShopChatProfile `json:"shop"`
-	RecentMessage string           `json:"recentMessage"`
-	UnreadCount   int              `json:"unreadCount"`
+	Shop              *ShopChatProfile `json:"shop"`
+	RecentMessage     string           `json:"recentMessage"`
+	RecentMessageType string           `json:"recentMessageType"`
+	UnreadCount       int              `json:"unreadCount"`
 }
 
 type SellerListOfChatResponse struct {
-	User          *UserChatProfile `json:"user"`
-	RecentMessage string           `json:"recentMessage"`
-	UnreadCount   int              `json:"unreadCount"`
+	User              *UserChatProfile `json:"user"`
+	RecentMessage     string           `json:"recentMessage"`
+	RecentMessageType string           `json:"recentMessageType"`
+	UnreadCount       int              `json:"unreadCount"`
 }
 
 type ChatResponse struct {
