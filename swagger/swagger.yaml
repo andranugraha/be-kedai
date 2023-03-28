@@ -5430,6 +5430,43 @@ paths:
                     example: "INTERNAL_SERVER_ERROR"
                   message:
                     type: string
+                    example: "error message"
+  /v1/marketplaces/banners:
+    get:
+      tags:
+        - Marketplace
+      summary: Get active marketplace banners
+      description: Get list of active marketplace banners
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Response'
+                  - type: object
+                    properties:
+                      code:
+                        example: "OK"
+                      message:
+                        example: "success"
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/MarketplaceBanner'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "INTERNAL_SERVER_ERROR"
+                  message:
+                    type: string
                     example: "error message"       
   /v1/sellers/register:
     post:
@@ -9271,6 +9308,23 @@ components:
         paymentMethodId:
           type: integer
           example: 2
+    MarketplaceBanner:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 2
+        mediaUrl:
+          type: string
+          example: "https://image.png"
+        startDate:
+          type: string
+          format: dateTime
+          example: "2006-01-02T00:00:00Z"
+        endDate:
+          type: string
+          format: dateTime
+          example: "2006-01-02T00:00:00Z"
     Token:
       type: object
       properties:
