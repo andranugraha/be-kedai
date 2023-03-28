@@ -37,7 +37,8 @@ func (d *discussionRepositoryImpl) GetDiscussionByProductID(productID int, req d
 		return []*dto.Discussion{}, 0, 0, 0, 0, err
 	}
 
-	err = d.db.Where("product_id = ? AND parent_id IS NULL", productID).Preload("User").Preload("User.Profile").Preload("Shop").Limit(req.Limit).Offset(req.Offset()).Find(&discussions).Error
+	err = d.db.Where("product_id = ? AND parent_id IS NULL", productID).Preload("User").Preload("User.Profile").
+		Preload("Shop").Limit(req.Limit).Offset(req.Offset()).Order("date desc").Find(&discussions).Error
 	if err != nil {
 		return []*dto.Discussion{}, 0, 0, 0, 0, err
 	}
@@ -97,7 +98,6 @@ func (d *discussionRepositoryImpl) GetChildDiscussionByParentID(parentID int) ([
 
 func (d *discussionRepositoryImpl) PostDiscussion(discussion *dto.DiscussionReq) error {
 
-	
 	err := d.db.Table("discussions").Create(discussion).Error
 	if err != nil {
 		if errors.IsForeignKeyError(err) {
