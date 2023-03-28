@@ -26,7 +26,6 @@ func TestGetDisscussionByProductID(t *testing.T) {
 			Page:       page,
 			TotalRows:  int64(totalRows),
 			TotalPages: TotalPages,
-
 		}
 	)
 
@@ -76,7 +75,7 @@ func TestGetDisscussionByProductID(t *testing.T) {
 		{
 			description: "should return error when failed",
 			input: input{
-				productID: productID,
+				productID:  productID,
 				data:       nil,
 				limit:      limit,
 				totalRows:  totalRows,
@@ -204,7 +203,7 @@ func TestPostDiscussion(t *testing.T) {
 					ProductID: 1,
 					UserID:    1,
 					Message:   "test",
-					IsSeller:  &IsSellerTrue,
+					IsSeller:  IsSellerTrue,
 				},
 				err: nil,
 			},
@@ -222,7 +221,7 @@ func TestPostDiscussion(t *testing.T) {
 					ProductID: 1,
 					UserID:    1,
 					Message:   "test",
-					IsSeller:  &IsSellerTrue,
+					IsSeller:  IsSellerTrue,
 				},
 				err: errorResponse.ErrInternalServerError,
 			},
