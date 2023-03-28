@@ -66,6 +66,8 @@ func (r *shopPromotionRepositoryImpl) GetSellerPromotions(shopId int, request *d
 		"ELSE ? "+
 		"END as status", now, now, constant.VoucherPromotionStatusOngoing, now, constant.VoucherPromotionStatusUpcoming, constant.VoucherPromotionStatusExpired)
 
+	query = query.Session(&gorm.Session{})
+
 	err := query.Model(&model.ShopPromotion{}).Distinct("shop_promotions.id").Count(&totalRows).Error
 	if err != nil {
 		return nil, 0, 0, err
