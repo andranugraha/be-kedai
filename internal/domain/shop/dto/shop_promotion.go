@@ -51,10 +51,10 @@ func (p *SellerPromotionFilterRequest) Offset() int {
 }
 
 type CreateShopPromotionRequest struct {
-	Name              string    `json:"name" binding:"required,min=1,max=100"`
-	StartPeriod       time.Time `json:"startPeriod" binding:"required"`
-	EndPeriod         time.Time `json:"endPeriod" binding:"required"`
-	ProductPromotions []*dto.CreateProductPromotionRequest
+	Name              string                               `json:"name" binding:"required,min=1,max=100"`
+	StartPeriod       time.Time                            `json:"startPeriod" binding:"required"`
+	EndPeriod         time.Time                            `json:"endPeriod" binding:"required"`
+	ProductPromotions []*dto.CreateProductPromotionRequest `json:"productPromotions" binding:"required,dive"`
 }
 
 func (d *CreateShopPromotionRequest) GenerateShopPromotion() *model.ShopPromotion {

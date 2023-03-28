@@ -2,7 +2,6 @@ package repository
 
 import (
 	productModel "kedai/backend/be-kedai/internal/domain/product/model"
-	productRepo "kedai/backend/be-kedai/internal/domain/product/repository"
 	"kedai/backend/be-kedai/internal/domain/shop/dto"
 	"kedai/backend/be-kedai/internal/domain/shop/model"
 
@@ -14,19 +13,16 @@ type ShopPromotionRepository interface {
 }
 
 type shopPromotionRepositoryImpl struct {
-	db                *gorm.DB
-	productRepository productRepo.ProductRepository
+	db *gorm.DB
 }
 
 type ShopPromotionRConfig struct {
-	DB                *gorm.DB
-	ProductRepository productRepo.ProductRepository
+	DB *gorm.DB
 }
 
 func NewShopPromotionRepository(cfg *ShopPromotionRConfig) ShopPromotionRepository {
 	return &shopPromotionRepositoryImpl{
-		db:                cfg.DB,
-		productRepository: cfg.ProductRepository,
+		db: cfg.DB,
 	}
 }
 
