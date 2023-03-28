@@ -9307,7 +9307,7 @@ components:
           example: 1
         paymentMethodId:
           type: integer
-          example: 
+          example: 2
     MarketplaceBanner:
       type: object
       properties:
