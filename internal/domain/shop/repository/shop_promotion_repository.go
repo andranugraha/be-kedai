@@ -53,11 +53,11 @@ func (r *shopPromotionRepositoryImpl) GetSellerPromotions(shopId int, request *d
 
 	switch request.Status {
 	case constant.VoucherPromotionStatusOngoing:
-		query = query.Where("shop_promotions.start_period <= ? AND ? < shop_promotions.end_period", now, now)
+		query = query.Where("shop_promotions.start_period <= ? AND ? <= shop_promotions.end_period", now, now)
 	case constant.VoucherPromotionStatusUpcoming:
 		query = query.Where("? < shop_promotions.start_period", now)
 	case constant.VoucherPromotionStatusExpired:
-		query = query.Where("shop_promotions.end_period <= ?", now)
+		query = query.Where("shop_promotions.end_period < ?", now)
 	}
 
 	query = query.Select("shop_promotions.*, "+
