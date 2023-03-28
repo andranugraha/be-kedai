@@ -10,6 +10,7 @@ import (
 )
 
 type ShopPromotionRepository interface {
+	Create(shopID int, request *dto.CreateShopPromotionRequest) (*model.ShopPromotion, error)
 }
 
 type shopPromotionRepositoryImpl struct {
