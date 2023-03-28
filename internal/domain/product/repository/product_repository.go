@@ -321,25 +321,25 @@ func (r *productRepositoryImpl) GetBySellerID(shopID int, request *dto.SellerPro
 	}
 
 	if request.IsPromoted != nil && !*request.IsPromoted {
-		var startPeriod, endPeriod interface{}
-		if request.StartPeriod != "" && request.EndPeriod != "" {
-			startPeriod = request.StartPeriod
-			endPeriod = request.EndPeriod
-		} else {
-			now := time.Now()
-			startPeriod = now
-			endPeriod = now
+		now := time.Now()
+		startPeriod := request.StartPeriod
+		endPeriod := request.EndPeriod
+
+		if startPeriod == "" {
+			startPeriod = now.Format(time.RFC3339)
 		}
-		query = query.Where(`
-        products.id NOT IN (
-            SELECT skus.product_id
-            FROM skus
-            JOIN product_promotions ON product_promotions.sku_id = skus.id
-            JOIN shop_promotions ON shop_promotions.id = product_promotions.promotion_id
-            WHERE (shop_promotions.start_period, shop_promotions.end_period) 
-                  BETWEEN (?, ?) 
-        )
-    `, startPeriod, endPeriod)
+
+		if endPeriod == "" {
+			endPeriod = now.Format(time.RFC3339)
+		}
+
+		query = query.Where(`products.id NOT IN
+			(SELECT skus.product_id
+			FROM skus
+			JOIN product_promotions ON product_promotions.sku_id = skus.id
+			JOIN shop_promotions ON shop_promotions.id = product_promotions.promotion_id 
+			WHERE shop_promotions.start_period <= ? AND shop_promotions.end_period >= ?)`,
+			startPeriod, endPeriod)
 	}
 
 	query = query.Session(&gorm.Session{})
