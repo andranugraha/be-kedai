@@ -56,3 +56,13 @@ type CreateShopPromotionRequest struct {
 	EndPeriod         time.Time `json:"endPeriod" binding:"required"`
 	ProductPromotions []*dto.CreateProductPromotionRequest
 }
+
+func (d *CreateShopPromotionRequest) GenerateShopPromotion() *model.ShopPromotion {
+	shopPromotion := &model.ShopPromotion{
+		Name:        d.Name,
+		StartPeriod: d.StartPeriod,
+		EndPeriod:   d.EndPeriod,
+	}
+
+	return shopPromotion
+}
