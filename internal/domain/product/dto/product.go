@@ -54,7 +54,7 @@ type SellerProductPromotionResponse struct {
 }
 
 func ConvertSellerProductPromotions(sellerProductPromotions []*SellerProductPromotion) []*SellerProductPromotionResponse {
-	result := make([]*SellerProductPromotionResponse, 0, len(sellerProductPromotions))
+	var result []*SellerProductPromotionResponse
 	for _, sellerProductPromotion := range sellerProductPromotions {
 		product := &SellerProductPromotionResponse{
 			ID:       sellerProductPromotion.ID,
