@@ -272,6 +272,11 @@ func NewRouter(cfg *RouterConfig) *gin.Engine {
 					voucher.DELETE("/:code", cfg.ShopHandler.DeleteVoucher)
 				}
 
+				promotion := authenticated.Group("/promotions")
+				{
+					promotion.POST("", cfg.ShopHandler.CreateShopPromotion)
+				}
+
 				order := authenticated.Group("/orders")
 				{
 					order.GET("", cfg.OrderHandler.GetShopOrder)

@@ -9,6 +9,7 @@ import (
 )
 
 type ShopPromotionService interface {
+	CreateShopPromotion(userID int, request *dto.CreateShopPromotionRequest) (*model.ShopPromotion, error)
 }
 
 type shopPromotionServiceImpl struct {
