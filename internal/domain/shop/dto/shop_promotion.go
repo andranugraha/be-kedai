@@ -56,6 +56,10 @@ type CreateShopPromotionRequest struct {
 	EndPeriod         time.Time                            `json:"endPeriod" binding:"required"`
 	ProductPromotions []*dto.CreateProductPromotionRequest `json:"productPromotions" binding:"required,dive"`
 }
+type CreateShopPromotionResponse struct {
+	model.ShopPromotion
+	ProductPromotions []*productModel.ProductPromotion `json:"productPromotions"`
+}
 
 func (d *CreateShopPromotionRequest) GenerateShopPromotion() *model.ShopPromotion {
 	shopPromotion := &model.ShopPromotion{

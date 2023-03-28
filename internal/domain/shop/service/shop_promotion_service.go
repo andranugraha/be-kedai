@@ -3,13 +3,12 @@ package service
 import (
 	commonErr "kedai/backend/be-kedai/internal/common/error"
 	"kedai/backend/be-kedai/internal/domain/shop/dto"
-	"kedai/backend/be-kedai/internal/domain/shop/model"
 	"kedai/backend/be-kedai/internal/domain/shop/repository"
 	productUtils "kedai/backend/be-kedai/internal/utils/product"
 )
 
 type ShopPromotionService interface {
-	CreateShopPromotion(userID int, request *dto.CreateShopPromotionRequest) (*model.ShopPromotion, error)
+	CreateShopPromotion(userID int, request *dto.CreateShopPromotionRequest) (*dto.CreateShopPromotionResponse, error)
 }
 
 type shopPromotionServiceImpl struct {
@@ -29,7 +28,7 @@ func NewShopPromotionService(cfg *ShopPromotionSConfig) ShopPromotionService {
 	}
 }
 
-func (s *shopPromotionServiceImpl) CreateShopPromotion(userID int, request *dto.CreateShopPromotionRequest) (*model.ShopPromotion, error) {
+func (s *shopPromotionServiceImpl) CreateShopPromotion(userID int, request *dto.CreateShopPromotionRequest) (*dto.CreateShopPromotionResponse, error) {
 	if isPromotionNameValid := productUtils.ValidateProductName(request.Name); !isPromotionNameValid {
 		return nil, commonErr.ErrInvalidPromotionNamePattern
 	}

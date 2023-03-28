@@ -3,13 +3,12 @@ package repository
 import (
 	productModel "kedai/backend/be-kedai/internal/domain/product/model"
 	"kedai/backend/be-kedai/internal/domain/shop/dto"
-	"kedai/backend/be-kedai/internal/domain/shop/model"
 
 	"gorm.io/gorm"
 )
 
 type ShopPromotionRepository interface {
-	Create(shopID int, request *dto.CreateShopPromotionRequest) (*model.ShopPromotion, error)
+	Create(shopID int, request *dto.CreateShopPromotionRequest) (*dto.CreateShopPromotionResponse, error)
 }
 
 type shopPromotionRepositoryImpl struct {
@@ -26,7 +25,7 @@ func NewShopPromotionRepository(cfg *ShopPromotionRConfig) ShopPromotionReposito
 	}
 }
 
-func (r *shopPromotionRepositoryImpl) Create(shopID int, request *dto.CreateShopPromotionRequest) (*model.ShopPromotion, error) {
+func (r *shopPromotionRepositoryImpl) Create(shopID int, request *dto.CreateShopPromotionRequest) (*dto.CreateShopPromotionResponse, error) {
 	tx := r.db.Begin()
 	defer tx.Commit()
 
@@ -59,5 +58,10 @@ func (r *shopPromotionRepositoryImpl) Create(shopID int, request *dto.CreateShop
 		return nil, err
 	}
 
-	return shopPromotion, nil
+	response := &dto.CreateShopPromotionResponse{
+		ShopPromotion:     *shopPromotion,
+		ProductPromotions: productPromotions,
+	}
+
+	return response, nil
 }
