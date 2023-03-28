@@ -60,11 +60,7 @@ func (r *shopPromotionRepositoryImpl) GetSellerPromotions(shopId int, request *d
 		query = query.Where("shop_promotions.end_period < ?", now)
 	}
 
-	query = query.Select("shop_promotions.*, "+
-		"CASE WHEN start_period <= ? AND end_period >= ? THEN ? "+
-		"WHEN start_period > ? THEN ? "+
-		"ELSE ? "+
-		"END as status", now, now, constant.VoucherPromotionStatusOngoing, now, constant.VoucherPromotionStatusUpcoming, constant.VoucherPromotionStatusExpired)
+	query = query.Select("shop_promotions.*, ?", request.Status)
 
 	query = query.Session(&gorm.Session{})
 
