@@ -35,6 +35,7 @@ func NewRouter(cfg *RouterConfig) *gin.Engine {
 	corsCfg.AllowMethods = []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"}
 	corsCfg.AllowHeaders = []string{"Content-Type", "Authorization"}
 	corsCfg.ExposeHeaders = []string{"Content-Length"}
+	corsCfg.AllowCredentials = true
 	r.Use(cors.New(corsCfg))
 
 	socketServer := connection.SocketIO()
