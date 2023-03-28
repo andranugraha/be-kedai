@@ -94,11 +94,71 @@ func (h *Handler) CreateVoucher(c *gin.Context) {
 			return
 		}
 
+		if errors.Is(err, commonErr.ErrInvalidVoucherDateRange) {
+			response.Error(c, http.StatusUnprocessableEntity, code.INVALID_DATE_RANGE, err.Error())
+			return
+		}
+
+		if errors.Is(err, commonErr.ErrDuplicateVoucherCode) {
+			response.Error(c, http.StatusConflict, code.DUPLICATE_VOUCHER_CODE, err.Error())
+			return
+		}
+
 		response.Error(c, http.StatusInternalServerError, code.INTERNAL_SERVER_ERROR, commonErr.ErrInternalServerError.Error())
 		return
 	}
 
 	response.Success(c, http.StatusCreated, code.CREATED, "voucher created", product)
+}
+
+func (h *Handler) UpdateVoucher(c *gin.Context) {
+	userId := c.GetInt("userId")
+	voucherCode := c.Param("code")
+
+	var req dto.UpdateVoucherRequest
+	err := c.ShouldBindJSON(&req)
+	if err != nil {
+		response.ErrorValidator(c, http.StatusBadRequest, err)
+		return
+	}
+
+	res, err := h.shopVoucherService.UpdateVoucher(userId, voucherCode, &req)
+	if err != nil {
+		if errors.Is(err, commonErr.ErrShopNotFound) {
+			response.Error(c, http.StatusNotFound, code.SHOP_NOT_REGISTERED, err.Error())
+			return
+		}
+
+		if errors.Is(err, commonErr.ErrVoucherNotFound) {
+			response.Error(c, http.StatusNotFound, code.VOUCHER_NOT_FOUND, err.Error())
+			return
+		}
+
+		if errors.Is(err, commonErr.ErrInvalidVoucherNamePattern) {
+			response.Error(c, http.StatusUnprocessableEntity, code.INVALID_VOUCHER_NAME, err.Error())
+			return
+		}
+
+		if errors.Is(err, commonErr.ErrVoucherStatusConflict) {
+			response.Error(c, http.StatusConflict, code.VOUCHER_STATUS_CONFLICT, err.Error())
+			return
+		}
+
+		if errors.Is(err, commonErr.ErrInvalidVoucherDateRange) {
+			response.Error(c, http.StatusUnprocessableEntity, code.INVALID_DATE_RANGE, err.Error())
+			return
+		}
+
+		if errors.Is(err, commonErr.ErrVoucherFieldsCantBeEdited) {
+			response.Error(c, http.StatusUnprocessableEntity, code.VOUCHER_FIELDS_CANT_BE_EDITED, err.Error())
+			return
+		}
+
+		response.Error(c, http.StatusInternalServerError, code.INTERNAL_SERVER_ERROR, commonErr.ErrInternalServerError.Error())
+		return
+	}
+
+	response.Success(c, http.StatusOK, code.UPDATED, "update voucher succesful", res)
 }
 
 func (h *Handler) DeleteVoucher(c *gin.Context) {
@@ -117,8 +177,8 @@ func (h *Handler) DeleteVoucher(c *gin.Context) {
 			return
 		}
 
-		if errors.Is(err, commonErr.ErrVoucherIsOngoing) {
-			response.Error(c, http.StatusConflict, code.VOUCHER_IS_ONGOING, err.Error())
+		if errors.Is(err, commonErr.ErrVoucherStatusConflict) {
+			response.Error(c, http.StatusConflict, code.VOUCHER_STATUS_CONFLICT, err.Error())
 			return
 		}
 
