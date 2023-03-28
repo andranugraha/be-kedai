@@ -5431,7 +5431,7 @@ paths:
                   message:
                     type: string
                     example: "error message"
-    /v1/marketplaces/banners:
+  /v1/marketplaces/banners:
     get:
       tags:
         - Marketplace
