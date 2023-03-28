@@ -9,28 +9,16 @@ import (
 
 type SellerPromotion struct {
 	model.ShopPromotion
-	Status  string                        `json:"status" gorm:"column:status"`
-	Product []*dto.SellerProductPromotion `json:"products"`
+	Status  string                                `json:"status" gorm:"column:status"`
+	Product []*dto.SellerProductPromotionResponse `json:"products"`
 }
 
 func (SellerPromotion) TableName() string {
 	return "shop_promotions"
 }
 
-type Product struct {
-	ID       int                 `json:"id"`
-	Name     string              `json:"name"`
-	Code     string              `json:"code"`
-	ImageURL string              `json:"imageUrl,omitempty"`
-	SKUs     []*productModel.Sku `json:"skus,omitempty"`
-}
-
-func (Product) TableName() string {
-	return "products"
-}
-
 type SellerPromotionFilterRequest struct {
-	Limit  int    `form:"limit"`
+	Limit  int    `form:"limit,max=100"`
 	Page   int    `form:"page"`
 	Status string `form:"status"`
 	Name   string `form:"name"`

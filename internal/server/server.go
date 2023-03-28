@@ -195,15 +195,6 @@ func createRouter() *gin.Engine {
 		ShopService:           shopService,
 	})
 
-	shopPromotionRepo := shopRepoPackage.NewShopPromotionRepository(&shopRepoPackage.ShopPromotionRConfig{
-		DB: db,
-	})
-
-	shopPromotionService := shopServicePackage.NewShopPromotionService(&shopServicePackage.ShopPromotionSConfig{
-		ShopPromotionRepository: shopPromotionRepo,
-		ShopService:             shopService,
-	})
-
 	skuService := productServicePackage.NewSkuService(&productServicePackage.SkuSConfig{
 		SkuRepository: skuRepo,
 	})
@@ -247,6 +238,16 @@ func createRouter() *gin.Engine {
 		CategoryService:       categoryService,
 		CourierServiceService: courierServiceService,
 		DiscussionService:     discussionService,
+	})
+
+	shopPromotionRepo := shopRepoPackage.NewShopPromotionRepository(&shopRepoPackage.ShopPromotionRConfig{
+		DB:                db,
+		ProductRepository: productRepo,
+	})
+
+	shopPromotionService := shopServicePackage.NewShopPromotionService(&shopServicePackage.ShopPromotionSConfig{
+		ShopPromotionRepository: shopPromotionRepo,
+		ShopService:             shopService,
 	})
 
 	shopHandler := shopHandlerPackage.New(&shopHandlerPackage.HandlerConfig{
