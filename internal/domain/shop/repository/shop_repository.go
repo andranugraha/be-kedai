@@ -310,7 +310,7 @@ func (r *shopRepositoryImpl) UpdateShop(shop *model.Shop) error {
 }
 
 func (r *shopRepositoryImpl) Create(shop *model.Shop) error {
-	*shop.JoinedDate = time.Now()
+	shop.JoinedDate = time.Now()
 
 	res := r.db.Clauses(clause.OnConflict{DoNothing: true}).Create(shop)
 	if res.Error != nil {

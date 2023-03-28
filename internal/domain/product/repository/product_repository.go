@@ -22,7 +22,7 @@ type ProductRepository interface {
 	GetRecommendationByCategory(productId int, categoryId int) ([]*dto.ProductResponse, error)
 	ProductSearchFiltering(req dto.ProductSearchFilterRequest, shopId int) ([]*dto.ProductResponse, int64, int, error)
 	GetBySellerID(shopID int, request *dto.SellerProductFilterRequest) ([]*dto.SellerProduct, int64, int, error)
-	GetWithPromotions(shopID int, promotionID int) ([]*dto.SellerProductPromotion, error)
+	GetWithPromotions(shopID int, promotionID int) ([]*dto.SellerProductPromotionResponse, error)
 	SearchAutocomplete(req dto.ProductSearchAutocomplete) ([]*dto.ProductResponse, error)
 	GetSellerProductByCode(shopID int, productCode string) (*model.Product, error)
 	AddViewCount(productID int) error
@@ -376,7 +376,7 @@ func (r *productRepositoryImpl) GetBySellerID(shopID int, request *dto.SellerPro
 	return products, totalRows, totalPages, nil
 }
 
-func (r *productRepositoryImpl) GetWithPromotions(shopID int, promotionID int) ([]*dto.SellerProductPromotion, error) {
+func (r *productRepositoryImpl) GetWithPromotions(shopID int, promotionID int) ([]*dto.SellerProductPromotionResponse, error) {
 	var (
 		products []*dto.SellerProductPromotion
 	)
@@ -399,7 +399,9 @@ func (r *productRepositoryImpl) GetWithPromotions(shopID int, promotionID int) (
 		return nil, err
 	}
 
-	return products, nil
+	convertedProducts := dto.ConvertSellerProductPromotions(products)
+
+	return convertedProducts, nil
 }
 
 func (r *productRepositoryImpl) SearchAutocomplete(req dto.ProductSearchAutocomplete) ([]*dto.ProductResponse, error) {

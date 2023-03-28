@@ -7,8 +7,8 @@ import (
 
 type SellerPromotion struct {
 	model.ShopPromotion
-	Status  string                        `json:"status" gorm:"column:status"`
-	Product []*dto.SellerProductPromotion `json:"products"`
+	Status  string                                `json:"status" gorm:"column:status"`
+	Product []*dto.SellerProductPromotionResponse `json:"products"`
 }
 
 func (SellerPromotion) TableName() string {

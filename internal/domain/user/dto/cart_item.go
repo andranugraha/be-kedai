@@ -149,7 +149,7 @@ func (d *GetCartItemsResponse) ToGetCartItemsResponse(cartItems []CartItemRespon
 		ID:         shop.ID,
 		Name:       shop.Name,
 		Rating:     shop.Rating,
-		JoinedDate: *shop.JoinedDate,
+		JoinedDate: shop.JoinedDate,
 		Address:    shop.Address.City.Name + ", " + shop.Address.Province.Name,
 		Slug:       shop.Slug,
 		PostalCode: shop.Address.Subdistrict.PostalCode,

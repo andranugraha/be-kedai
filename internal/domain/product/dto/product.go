@@ -44,6 +44,30 @@ func (SellerProductPromotion) TableName() string {
 	return "products"
 }
 
+type SellerProductPromotionResponse struct {
+	ID       int    `json:"id"`
+	Code     string `json:"code"`
+	Name     string `json:"name"`
+	ImageURL string `json:"imageUrl,omitempty"`
+
+	SKUs []*model.Sku `json:"skus,omitempty"`
+}
+
+func ConvertSellerProductPromotions(sellerProductPromotions []*SellerProductPromotion) []*SellerProductPromotionResponse {
+	result := make([]*SellerProductPromotionResponse, 0, len(sellerProductPromotions))
+	for _, sellerProductPromotion := range sellerProductPromotions {
+		product := &SellerProductPromotionResponse{
+			ID:       sellerProductPromotion.ID,
+			Code:     sellerProductPromotion.Code,
+			Name:     sellerProductPromotion.Name,
+			SKUs:     sellerProductPromotion.SKUs,
+			ImageURL: sellerProductPromotion.ImageURL,
+		}
+		result = append(result, product)
+	}
+	return result
+}
+
 type SellerProductFilterRequest struct {
 	Limit       int    `form:"limit"`
 	Page        int    `form:"page"`
