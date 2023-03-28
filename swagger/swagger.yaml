@@ -7587,6 +7587,8 @@ paths:
                     example: "error message"
   /v1/admins/categories:
     post:
+      security:
+        - BearerAuth: []
       tags:
         - Product
       summary: Add product category
