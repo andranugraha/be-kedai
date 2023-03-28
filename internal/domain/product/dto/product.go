@@ -35,15 +35,51 @@ func (SellerProduct) TableName() string {
 	return "products"
 }
 
+type SellerProductPromotion struct {
+	model.Product
+	ImageURL string `json:"imageUrl,omitempty"`
+}
+
+func (SellerProductPromotion) TableName() string {
+	return "products"
+}
+
+type SellerProductPromotionResponse struct {
+	ID       int    `json:"id"`
+	Code     string `json:"code"`
+	Name     string `json:"name"`
+	ImageURL string `json:"imageUrl,omitempty"`
+
+	SKUs []*model.Sku `json:"skus,omitempty"`
+}
+
+func ConvertSellerProductPromotions(sellerProductPromotions []*SellerProductPromotion) []*SellerProductPromotionResponse {
+	var result []*SellerProductPromotionResponse
+	for _, sellerProductPromotion := range sellerProductPromotions {
+		product := &SellerProductPromotionResponse{
+			ID:       sellerProductPromotion.ID,
+			Code:     sellerProductPromotion.Code,
+			Name:     sellerProductPromotion.Name,
+			SKUs:     sellerProductPromotion.SKUs,
+			ImageURL: sellerProductPromotion.ImageURL,
+		}
+		result = append(result, product)
+	}
+	return result
+}
+
 type SellerProductFilterRequest struct {
-	Limit  int    `form:"limit"`
-	Page   int    `form:"page"`
-	Sales  int    `form:"sales"`
-	Stock  int    `form:"stock"`
-	Sort   string `form:"sort"`
-	Status string `form:"status"`
-	Sku    string `form:"sku"`
-	Name   string `form:"name"`
+	Limit       int    `form:"limit"`
+	Page        int    `form:"page"`
+	Sales       int    `form:"sales"`
+	Stock       int    `form:"stock"`
+	Sort        string `form:"sort"`
+	Status      string `form:"status"`
+	Sku         string `form:"sku"`
+	Name        string `form:"name"`
+	IsPromoted  *bool  `form:"isPromoted"`
+	StartPeriod string `form:"startPeriod"`
+	EndPeriod   string `form:"endPeriod"`
 }
 
 func (r *SellerProductFilterRequest) Validate() {
