@@ -26,7 +26,10 @@ func TestPreCheckCartItem(t *testing.T) {
 		sku = &productModel.Sku{
 			ID:        1,
 			ProductId: 1,
-			Stock:     10,
+			Product: &productModel.Product{
+				ShopID: 1,
+			},
+			Stock: 10,
 		}
 		product = &productModel.Product{
 			ID:       1,
@@ -160,7 +163,7 @@ func TestPreCheckCartItem(t *testing.T) {
 					mockSkuService.On("GetByID", sku.ID).Return(sku, nil)
 					mockProductService.On("GetActiveByID", product.ID).Return(product, nil)
 					mockShopService.On("FindShopByUserId", req.UserId).Return(&shopModel.Shop{
-						ID:     1,
+						ID:     2,
 						UserID: 2,
 					}, nil)
 					mockUserCartItemRepo.On("GetCartItemByUserIdAndSkuId", req.UserId, sku.ID).Return(nil, errs.ErrInternalServerError)
@@ -184,7 +187,7 @@ func TestPreCheckCartItem(t *testing.T) {
 					mockSkuService.On("GetByID", sku.ID).Return(sku, nil)
 					mockProductService.On("GetActiveByID", product.ID).Return(product, nil)
 					mockShopService.On("FindShopByUserId", req.UserId).Return(&shopModel.Shop{
-						ID:     1,
+						ID:     2,
 						UserID: 2,
 					}, nil)
 					mockUserCartItemRepo.On("GetCartItemByUserIdAndSkuId", req.UserId, sku.ID).Return(&model.CartItem{
@@ -211,7 +214,7 @@ func TestPreCheckCartItem(t *testing.T) {
 					mockSkuService.On("GetByID", sku.ID).Return(sku, nil)
 					mockProductService.On("GetActiveByID", product.ID).Return(product, nil)
 					mockShopService.On("FindShopByUserId", req.UserId).Return(&shopModel.Shop{
-						ID:     1,
+						ID:     2,
 						UserID: 2,
 					}, nil)
 					mockUserCartItemRepo.On("GetCartItemByUserIdAndSkuId", req.UserId, sku.ID).Return(&model.CartItem{
@@ -239,7 +242,7 @@ func TestPreCheckCartItem(t *testing.T) {
 					mockSkuService.On("GetByID", sku.ID).Return(sku, nil)
 					mockProductService.On("GetActiveByID", product.ID).Return(product, nil)
 					mockShopService.On("FindShopByUserId", req.UserId).Return(&shopModel.Shop{
-						ID:     1,
+						ID:     2,
 						UserID: 2,
 					}, nil)
 					mockUserCartItemRepo.On("GetCartItemByUserIdAndSkuId", req.UserId, sku.ID).Return(nil, errs.ErrCartItemNotFound)
@@ -263,7 +266,7 @@ func TestPreCheckCartItem(t *testing.T) {
 					mockSkuService.On("GetByID", sku.ID).Return(sku, nil)
 					mockProductService.On("GetActiveByID", product.ID).Return(product, nil)
 					mockShopService.On("FindShopByUserId", req.UserId).Return(&shopModel.Shop{
-						ID:     1,
+						ID:     2,
 						UserID: 2,
 					}, nil)
 					mockUserCartItemRepo.On("GetCartItemByUserIdAndSkuId", req.UserId, sku.ID).Return(nil, errs.ErrInternalServerError)
@@ -312,7 +315,10 @@ func TestCreateCartItem(t *testing.T) {
 		sku = &productModel.Sku{
 			ID:        1,
 			ProductId: 1,
-			Stock:     10,
+			Product: &productModel.Product{
+				ShopID: 1,
+			},
+			Stock: 10,
 		}
 		product = &productModel.Product{
 			ID:       1,
@@ -347,7 +353,7 @@ func TestCreateCartItem(t *testing.T) {
 					mockSkuService.On("GetByID", sku.ID).Return(sku, nil)
 					mockProductService.On("GetActiveByID", product.ID).Return(product, nil)
 					shopService.On("FindShopByUserId", req.UserId).Return(&shopModel.Shop{
-						ID:     1,
+						ID:     2,
 						UserID: 2,
 					}, nil)
 					mockUserCartItemRepo.On("GetCartItemByUserIdAndSkuId", req.UserId, sku.ID).Return(nil, errs.ErrInternalServerError)
@@ -372,7 +378,7 @@ func TestCreateCartItem(t *testing.T) {
 					mockSkuService.On("GetByID", sku.ID).Return(sku, nil)
 					mockProductService.On("GetActiveByID", product.ID).Return(product, nil)
 					shopService.On("FindShopByUserId", req.UserId).Return(&shopModel.Shop{
-						ID:     1,
+						ID:     2,
 						UserID: 2,
 					}, nil)
 					mockUserCartItemRepo.On("GetCartItemByUserIdAndSkuId", req.UserId, sku.ID).Return(nil, errs.ErrCartItemNotFound)
@@ -401,7 +407,7 @@ func TestCreateCartItem(t *testing.T) {
 					mockSkuService.On("GetByID", sku.ID).Return(sku, nil)
 					mockProductService.On("GetActiveByID", product.ID).Return(product, nil)
 					shopService.On("FindShopByUserId", req.UserId).Return(&shopModel.Shop{
-						ID:     1,
+						ID:     2,
 						UserID: 2,
 					}, nil)
 					mockUserCartItemRepo.On("GetCartItemByUserIdAndSkuId", req.UserId, sku.ID).Return(nil, errs.ErrCartItemNotFound)
@@ -437,7 +443,7 @@ func TestCreateCartItem(t *testing.T) {
 					mockSkuService.On("GetByID", sku.ID).Return(sku, nil)
 					mockProductService.On("GetActiveByID", product.ID).Return(product, nil)
 					shopService.On("FindShopByUserId", req.UserId).Return(&shopModel.Shop{
-						ID:     1,
+						ID:     2,
 						UserID: 2,
 					}, nil)
 					mockUserCartItemRepo.On("GetCartItemByUserIdAndSkuId", req.UserId, sku.ID).Return(&model.CartItem{
@@ -475,7 +481,7 @@ func TestCreateCartItem(t *testing.T) {
 					mockSkuService.On("GetByID", sku.ID).Return(sku, nil)
 					mockProductService.On("GetActiveByID", product.ID).Return(product, nil)
 					shopService.On("FindShopByUserId", req.UserId).Return(&shopModel.Shop{
-						ID:     1,
+						ID:     2,
 						UserID: 2,
 					}, nil)
 					mockUserCartItemRepo.On("GetCartItemByUserIdAndSkuId", req.UserId, sku.ID).Return(&model.CartItem{
@@ -787,4 +793,62 @@ func TestDeleteCartItem(t *testing.T) {
 		})
 	}
 
+}
+
+func TestGetCartItemByIdAndUserId(t *testing.T) {
+	type input struct {
+		cartItemId int
+		userId     int
+		beforeTest func(ucir *mocks.UserCartItemRepository)
+	}
+	type expected struct {
+		err  error
+		data *model.CartItem
+	}
+	tests := []struct {
+		description string
+		input       input
+		expected    expected
+	}{
+		{
+			description: "should return error when failed to get cart item",
+			input: input{
+				cartItemId: 1,
+				userId:     1,
+				beforeTest: func(ucir *mocks.UserCartItemRepository) {
+					ucir.On("GetCartItemByIdAndUserId", 1, 1).Return(nil, errors.New("failed to get cart item"))
+				},
+			},
+			expected: expected{
+				err:  errors.New("failed to get cart item"),
+				data: nil,
+			},
+		},
+		{
+			description: "should return cart item when success",
+			input: input{
+				cartItemId: 1,
+				userId:     1,
+				beforeTest: func(ucir *mocks.UserCartItemRepository) {
+					ucir.On("GetCartItemByIdAndUserId", 1, 1).Return(&model.CartItem{}, nil)
+				},
+			},
+			expected: expected{
+				err:  nil,
+				data: &model.CartItem{},
+			},
+		},
+	}
+	for _, tc := range tests {
+		t.Run(tc.description, func(t *testing.T) {
+			cartItemRepo := mocks.NewUserCartItemRepository(t)
+			tc.input.beforeTest(cartItemRepo)
+			cartItemService := service.NewUserCartItemService(&service.UserCartItemSConfig{
+				CartItemRepository: cartItemRepo,
+			})
+			cartItem, err := cartItemService.GetCartItemByIdAndUserId(tc.input.cartItemId, tc.input.userId)
+			assert.Equal(t, tc.expected.err, err)
+			assert.Equal(t, tc.expected.data, cartItem)
+		})
+	}
 }
