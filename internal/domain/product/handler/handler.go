@@ -30,6 +30,3 @@ func New(cfg *Config) *Handler {
 		discussionService:        cfg.DiscussionService,
 	}
 }
-
-
-

@@ -149,7 +149,6 @@ func NewRouter(cfg *RouterConfig) *gin.Engine {
 			category := product.Group("/categories")
 			{
 				category.GET("", cfg.ProductHandler.GetCategories)
-				category.POST("", cfg.ProductHandler.AddCategory)
 			}
 			sku := product.Group("/skus")
 			{
@@ -226,6 +225,10 @@ func NewRouter(cfg *RouterConfig) *gin.Engine {
 			admin.POST("/login", cfg.UserHandler.AdminSignIn)
 			authenticated := admin.Group("", middleware.AdminJWTAuthorization, cfg.UserHandler.GetSession)
 			{
+				category := authenticated.Group("/categories")
+				{
+					category.POST("", cfg.ProductHandler.AddCategory)
+				}
 				order := authenticated.Group("/orders")
 				{
 					order.POST("/:orderId/cancel-commit", cfg.OrderHandler.UpdateToCanceled)
