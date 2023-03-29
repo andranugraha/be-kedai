@@ -74,7 +74,7 @@ func (h *Handler) CreateShopPromotion(c *gin.Context) {
 			return
 		}
 
-		if errors.Is(err, commonErr.ErrInvalidVoucherDateRange) {
+		if errors.Is(err, commonErr.ErrInvalidPromotionDateRange) {
 			response.Error(c, http.StatusUnprocessableEntity, code.INVALID_DATE_RANGE, err.Error())
 			return
 		}
