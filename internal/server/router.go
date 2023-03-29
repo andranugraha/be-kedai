@@ -286,6 +286,7 @@ func NewRouter(cfg *RouterConfig) *gin.Engine {
 				{
 					promotion.GET("", cfg.ShopHandler.GetSellerPromotions)
 					promotion.GET("/:promotionId", cfg.ShopHandler.GetSellerPromotionById)
+					promotion.PUT("/:promotionId", cfg.ShopHandler.UpdatePromotion)
 				}
 
 				order := authenticated.Group("/orders")

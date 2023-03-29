@@ -2,10 +2,12 @@ package service
 
 import (
 	commonDto "kedai/backend/be-kedai/internal/common/dto"
+	errs "kedai/backend/be-kedai/internal/common/error"
 	productModel "kedai/backend/be-kedai/internal/domain/product/model"
 	"kedai/backend/be-kedai/internal/domain/shop/dto"
 	"kedai/backend/be-kedai/internal/domain/shop/model"
 	"kedai/backend/be-kedai/internal/domain/shop/repository"
+	productUtils "kedai/backend/be-kedai/internal/utils/product"
 )
 
 type ShopPromotionService interface {
@@ -66,6 +68,10 @@ func (s *shopPromotionServiceImpl) GetSellerPromotionById(userId int, promotionI
 }
 
 func (s *shopPromotionServiceImpl) UpdatePromotion(userId int, promotionId int, req dto.UpdateShopPromotionRequest) error {
+	if isPromotionNameValid := productUtils.ValidateProductName(req.Name); !isPromotionNameValid {
+		return errs.ErrInvalidPromotionNamePattern
+	}
+
 	shop, err := s.shopService.FindShopByUserId(userId)
 	if err != nil {
 		return err

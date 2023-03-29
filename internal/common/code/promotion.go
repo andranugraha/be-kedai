@@ -1,0 +1,5 @@
+package code
+
+var (
+	INVALID_PROMOTION_NAME = "INVALID_PROMOTION_NAME"
+)

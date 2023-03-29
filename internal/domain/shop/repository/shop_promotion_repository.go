@@ -12,6 +12,7 @@ import (
 	productRepo "kedai/backend/be-kedai/internal/domain/product/repository"
 
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 type ShopPromotionRepository interface {
@@ -128,14 +129,15 @@ func (r *shopPromotionRepositoryImpl) Update(shopPromotion *model.ShopPromotion,
 	tx := r.db.Begin()
 	defer tx.Commit()
 
-	err := tx.Where("id = ?", shopPromotion.ID).Where("shop_id = ?", shopPromotion.ShopId).Save(shopPromotion).Error
-	if err != nil {
+	err := tx.Where("id = ?", shopPromotion.ID).Where("shop_id = ?", shopPromotion.ShopId).Clauses(clause.Returning{}).Updates(shopPromotion)
+	if err := err.Error; err != nil {
 		tx.Rollback()
 		return err
 	}
 
 	for _, productPromotion := range productPromotions {
-		if err := tx.Save(productPromotion).Error; err != nil {
+		err := tx.Clauses(clause.Returning{}).Updates(productPromotion)
+		if err := err.Error; err != nil {
 			tx.Rollback()
 			return err
 		}
