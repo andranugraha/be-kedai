@@ -9,3 +9,6 @@ test:
 
 lint:
 	golangci-lint run
+
+performance:
+	go run cmd/performance/performance.go
