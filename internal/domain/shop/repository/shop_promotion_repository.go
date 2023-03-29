@@ -19,6 +19,7 @@ type ShopPromotionRepository interface {
 	GetSellerPromotions(shopId int, request *dto.SellerPromotionFilterRequest) ([]*dto.SellerPromotion, int64, int, error)
 	GetSellerPromotionById(shopId int, promotionId int) (*dto.SellerPromotion, error)
 	Create(shopID int, request *dto.CreateShopPromotionRequest) (*dto.CreateShopPromotionResponse, error)
+	Delete(shopId int, promotionId int) error
 }
 
 type shopPromotionRepositoryImpl struct {

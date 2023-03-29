@@ -12,6 +12,7 @@ type ShopPromotionService interface {
 	GetSellerPromotions(userID int, request *dto.SellerPromotionFilterRequest) (*commonDto.PaginationResponse, error)
 	GetSellerPromotionById(userId int, promotionId int) (*dto.SellerPromotion, error)
 	CreateShopPromotion(userID int, request *dto.CreateShopPromotionRequest) (*dto.CreateShopPromotionResponse, error)
+	DeletePromotion(userID int, promotionID int) error
 }
 
 type shopPromotionServiceImpl struct {
@@ -81,4 +82,18 @@ func (s *shopPromotionServiceImpl) CreateShopPromotion(userID int, request *dto.
 	}
 
 	return promotion, nil
+}
+
+func (s *shopPromotionServiceImpl) DeletePromotion(userID int, promotionID int) error {
+	shop, err := s.shopService.FindShopByUserId(userID)
+	if err != nil {
+		return err
+	}
+
+	err = s.shopPromotionRepository.Delete(shop.ID, promotionID)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
