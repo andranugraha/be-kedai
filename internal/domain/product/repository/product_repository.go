@@ -392,9 +392,6 @@ func (r *productRepositoryImpl) GetSellerProductByCode(shopID int, productCode s
 
 		return nil, err
 	}
-
-	// log.Println(product.SKUs[0].Variants[0])
-
 	return &product, nil
 }
 
