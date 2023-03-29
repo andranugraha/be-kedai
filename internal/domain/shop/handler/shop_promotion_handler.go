@@ -103,7 +103,7 @@ func (h *Handler) DeletePromotion(c *gin.Context) {
 		}
 
 		if errors.Is(err, commonErr.ErrPromotionStatusConflict) {
-			response.Error(c, http.StatusConflict, code.VOUCHER_STATUS_CONFLICT, err.Error())
+			response.Error(c, http.StatusConflict, code.PROMOTION_STATUS_CONFLICT, err.Error())
 			return
 		}
 

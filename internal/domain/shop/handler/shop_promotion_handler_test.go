@@ -386,3 +386,127 @@ func TestCreatePromotion(t *testing.T) {
 		})
 	}
 }
+
+func TestDeletePromotion(t *testing.T) {
+	type input struct {
+		beforeTests func(mockShopPromotionService *mocks.ShopPromotionService)
+	}
+
+	type expected struct {
+		data       *response.Response
+		statusCode int
+	}
+
+	type testCase struct {
+		description string
+		input       input
+		expected    expected
+	}
+
+	cases := []testCase{
+		{
+			description: "should return error with status code 404 when failed to get shop",
+			input: input{
+				beforeTests: func(ps *mocks.ShopPromotionService) {
+					ps.On("DeletePromotion", 1, 1).Return(errs.ErrShopNotFound)
+				},
+			},
+			expected: expected{
+				data: &response.Response{
+					Code:    code.SHOP_NOT_REGISTERED,
+					Message: errs.ErrShopNotFound.Error(),
+				},
+				statusCode: http.StatusNotFound,
+			},
+		},
+		{
+			description: "response status not found when error ErrPromotionNotFound when delete promotion",
+			input: input{
+				beforeTests: func(vs *mocks.ShopPromotionService) {
+					vs.On("DeletePromotion", 1, 1).Return(errs.ErrPromotionNotFound)
+				},
+			},
+			expected: expected{
+				data: &response.Response{
+					Code:    code.PROMOTION_NOT_FOUND,
+					Message: errs.ErrPromotionNotFound.Error(),
+				},
+				statusCode: http.StatusNotFound,
+			},
+		},
+		{
+			description: "response status conflict when error ErrPromotionStatusConflict when delete promotion",
+			input: input{
+				beforeTests: func(vs *mocks.ShopPromotionService) {
+					vs.On("DeletePromotion", 1, 1).Return(errs.ErrPromotionStatusConflict)
+				},
+			},
+			expected: expected{
+				data: &response.Response{
+					Code:    code.PROMOTION_STATUS_CONFLICT,
+					Message: errs.ErrPromotionStatusConflict.Error(),
+				},
+				statusCode: http.StatusConflict,
+			},
+		},
+		{
+			description: "response status Internal Server Error when DeletePromotion return other error",
+			input: input{
+				beforeTests: func(vs *mocks.ShopPromotionService) {
+					vs.On("DeletePromotion", 1, 1).Return(errs.ErrInternalServerError)
+				},
+			},
+			expected: expected{
+				data: &response.Response{
+					Code:    code.INTERNAL_SERVER_ERROR,
+					Message: errs.ErrInternalServerError.Error(),
+				},
+				statusCode: http.StatusInternalServerError,
+			},
+		},
+		{
+			description: "response status OK when delete promotion success",
+			input: input{
+				beforeTests: func(vs *mocks.ShopPromotionService) {
+					vs.On("DeletePromotion", 1, 1).Return(nil)
+				},
+			},
+			expected: expected{
+				data: &response.Response{
+					Code:    code.OK,
+					Message: "success",
+				},
+				statusCode: http.StatusOK,
+			},
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.description, func(t *testing.T) {
+			rec := httptest.NewRecorder()
+			c, _ := gin.CreateTestContext(rec)
+			c.Set("userId", 1)
+			c.Params = gin.Params{
+				{
+					Key:   "promotionId",
+					Value: "1",
+				},
+			}
+
+			c.Request, _ = http.NewRequest(http.MethodDelete, "/selleres/promotions", nil)
+
+			mockShopPromotionService := new(mocks.ShopPromotionService)
+			tc.input.beforeTests(mockShopPromotionService)
+
+			handler := handler.New(&handler.HandlerConfig{
+				ShopPromotionService: mockShopPromotionService,
+			})
+			handler.DeletePromotion(c)
+
+			expectedJson, _ := json.Marshal(tc.expected.data)
+			assert.Equal(t, tc.expected.statusCode, rec.Code)
+			assert.Equal(t, string(expectedJson), rec.Body.String())
+
+		})
+	}
+}
