@@ -7799,6 +7799,87 @@ paths:
                   message:
                     type: string
                     example: "error message"
+  /v1/admins/refund:
+    get:
+      security:
+        - BearerAuth: []
+      tags:
+        - Admin
+      summary: Get refund request list
+      description: Get refund request list
+      parameters:
+        - in: query
+          name: limit
+          required: false
+          schema:
+            type: integer
+        - in: query
+          name: page
+          required: false
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Response'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            requestRefundId:
+                              type: integer
+                              example: 1
+                            requestRefundStatus:
+                              type: string
+                              example: "PENDING"
+                            requestRefundType:
+                              type: string
+                              example: "CANCEL"
+                            invoicePerShopId:
+                              type: integer
+                              example: 1
+                            refundAmount:
+                              type: integer
+                              example: 10000
+                            invoiceCode:
+                              type: string
+                              example: "INV-0001"
+                            invoiceTotal:
+                              type: integer
+                              example: 10000
+                            shippingCost:
+                              type: integer
+                              example: 10000
+                            productName:
+                              type: string
+                              example: "product name"
+                            productMedia:
+                              type: string
+                              example: "https://www.google.com"
+                            username:
+                              type: string
+                              example: "username"
+        '401':
+          description: unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "UNAUTHORIZED"
+                  message:
+                    type: string
+                    example: "invalid credential"    
+                      
   /v1/admins/refund/{refundRequestId}:
     post:
       security:

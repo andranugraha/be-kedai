@@ -8,6 +8,7 @@ import (
 	walletModel "kedai/backend/be-kedai/internal/domain/user/model"
 	userRepo "kedai/backend/be-kedai/internal/domain/user/repository"
 	"log"
+	"math"
 	"strconv"
 
 	"gorm.io/gorm"
@@ -18,6 +19,7 @@ type RefundRequestRepository interface {
 	PostComplain(tx *gorm.DB, ref *model.RefundRequest) error
 	ApproveRejectRefund(shopId int, invoiceId int, refundStatus string) error
 	RefundAdmin(requestRefundId int) error
+	GetRefund(req *model.GetRefundReq) ([]*model.GetRefund, int, int, error)
 }
 
 type refundRequestRepositoryImpl struct {
@@ -128,14 +130,14 @@ func (r *refundRequestRepositoryImpl) RefundAdmin(requestRefundId int) error {
 	if err != nil {
 		return commonErr.ErrRefundRequestNotFound
 	}
-	
+
 	refundAmount := refundRequests.RefundAmount
-	
+
 	if refundRequests.RequestRefundType == constant.RefundTypeCancel {
 		refundAmount += refundRequests.ShippingCost
 	}
-	
-	if refundRequests.RequestRefundStatus!= constant.RequestStatusSellerApproved {
+
+	if refundRequests.RequestRefundStatus != constant.RequestStatusSellerApproved {
 
 		return commonErr.ErrRefunded
 	}
@@ -212,4 +214,41 @@ func (r *refundRequestRepositoryImpl) RefundAdmin(requestRefundId int) error {
 	tx.Commit()
 
 	return nil
+}
+
+func (r *refundRequestRepositoryImpl) GetRefund(req *model.GetRefundReq) ([]*model.GetRefund, int, int, error) {
+
+	var totalRows int64
+	var totalPage int
+
+	req.Validate()
+
+	var refundRequests []*model.GetRefund
+
+	query := r.db.Table("refund_requests rr").
+		Joins("join invoice_per_shops ips on ips.id = rr.invoice_id").
+		Joins("join users u on u.id = ips.user_id").
+		Joins("join transactions t on t.invoice_id = ips.id").
+		Joins("join  skus s on s.id = t.sku_id").
+		Joins("join products p on p.id = s.product_id").
+		Joins("join product_medias pm on p.id =pm.product_id").
+		Select("rr.id , rr.status , rr.created_at , rr.type , ips.id , rr.refund_amount , ips.code , ips.total ,  ips.shipping_cost, p.name , pm.url , u.username ")
+
+	if query.Error != nil {
+		return nil, 0, 0, query.Error
+	}
+
+	if req.Search != "" {
+		query = query.Where("p.name LIKE ?", "%"+req.Search+"%")
+	}
+
+	query.Count(&totalRows)
+	err := query.Limit(req.Limit).Offset(req.Limit * (req.Page - 1)).Find(&refundRequests).Error
+	if err != nil {
+		return nil, 0, 0, err
+	}
+	totalPage = int(math.Ceil(float64(totalRows) / float64(req.Limit)))
+
+	return refundRequests, int(totalRows), totalPage, nil
+
 }

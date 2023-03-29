@@ -4,6 +4,7 @@ import (
 	"errors"
 	commonErr "kedai/backend/be-kedai/internal/common/error"
 	"kedai/backend/be-kedai/internal/domain/order/dto"
+	refundModel "kedai/backend/be-kedai/internal/domain/order/model"
 	"kedai/backend/be-kedai/internal/domain/order/service"
 	"kedai/backend/be-kedai/internal/domain/shop/model"
 	"kedai/backend/be-kedai/mocks"
@@ -106,8 +107,7 @@ func TestApproveRejectRefund(t *testing.T) {
 	}
 }
 
-
-func TestRefundAdmin(t *testing.T){
+func TestRefundAdmin(t *testing.T) {
 	type input struct {
 		requestRefundId int
 	}
@@ -139,7 +139,6 @@ func TestRefundAdmin(t *testing.T){
 				err: nil,
 			},
 		},
-
 	}
 
 	for _, c := range cases {
@@ -159,3 +158,59 @@ func TestRefundAdmin(t *testing.T){
 	}
 }
 
+func TestGetRefund(t *testing.T) {
+	type input struct {
+		req *refundModel.GetRefundReq
+	}
+
+	type expected struct {
+		err error
+	}
+
+	cases := []struct {
+		description string
+		input       input
+		expected    expected
+	}{
+		{
+			description: "should return error when fails to get refund",
+			input: input{
+				req: &refundModel.GetRefundReq{
+					Limit: 0,
+					Page:  0,
+				},
+			},
+			expected: expected{
+				err: errors.New("refund request not found"),
+			},
+		},
+		{
+			description: "should return success when refund found",
+			input: input{
+				req: &refundModel.GetRefundReq{
+					Limit: 0,
+					Page:  0,
+				},
+			},
+			expected: expected{
+				err: nil,
+			},
+		},
+	}
+
+	for _, c := range cases {
+		t.Run(c.description, func(t *testing.T) {
+			mockRefundRequestRepo := new(mocks.RefundRequestRepository)
+
+			mockRefundRequestRepo.On("GetRefund", c.input.req).Return(nil, 0, 0, c.expected.err)
+
+			refundRequestService := service.NewRefundRequestService(&service.RefundRequestSConfig{
+				RefundRequestRepo: mockRefundRequestRepo,
+			})
+
+			_, err := refundRequestService.GetRefund(c.input.req)
+
+			assert.Equal(t, c.expected.err, err)
+		})
+	}
+}

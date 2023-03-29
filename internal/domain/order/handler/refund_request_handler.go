@@ -5,6 +5,7 @@ import (
 	"kedai/backend/be-kedai/internal/common/code"
 	commonErr "kedai/backend/be-kedai/internal/common/error"
 	"kedai/backend/be-kedai/internal/domain/order/dto"
+	"kedai/backend/be-kedai/internal/domain/order/model"
 	"kedai/backend/be-kedai/internal/utils/response"
 	"net/http"
 	"strconv"
@@ -42,9 +43,8 @@ func (h *Handler) UpdateRefundStatus(c *gin.Context) {
 
 }
 
-func (h *Handler) RefundAdmin (c *gin.Context) {
+func (h *Handler) RefundAdmin(c *gin.Context) {
 	requestRefundId, _ := strconv.Atoi(c.Param("refundId"))
-
 
 	err := h.refundRequestService.RefundAdmin(requestRefundId)
 
@@ -54,7 +54,7 @@ func (h *Handler) RefundAdmin (c *gin.Context) {
 			return
 		}
 
-		if errors.Is(err, commonErr.ErrRefunded){
+		if errors.Is(err, commonErr.ErrRefunded) {
 			response.Error(c, http.StatusBadRequest, code.REFUNDED, err.Error())
 			return
 		}
@@ -64,4 +64,24 @@ func (h *Handler) RefundAdmin (c *gin.Context) {
 
 	response.Success(c, http.StatusOK, code.OK, "refund completed", nil)
 
+}
+
+func (h *Handler) GetRefund(c *gin.Context) {
+	var req model.GetRefundReq
+
+	limit, _ := strconv.Atoi(c.Query("limit"))
+	page, _ := strconv.Atoi(c.Query("page"))
+
+	req.Limit = limit
+	req.Page = page
+
+
+	refundRequest, err := h.refundRequestService.GetRefund(&req)
+
+	if err != nil {
+		response.Error(c, http.StatusInternalServerError, code.INTERNAL_SERVER_ERROR, commonErr.ErrInternalServerError.Error())
+		return
+	}
+
+	response.Success(c, http.StatusOK, code.OK, "refund request found", refundRequest)
 }

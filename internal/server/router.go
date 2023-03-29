@@ -232,6 +232,8 @@ func NewRouter(cfg *RouterConfig) *gin.Engine {
 					category.POST("", cfg.ProductHandler.AddCategory)
 				}
 				authenticated.POST("/refund/:refundId", cfg.OrderHandler.RefundAdmin)
+				authenticated.GET("/refund", cfg.OrderHandler.GetRefund)
+
 				order := authenticated.Group("/orders")
 				{
 					order.POST("/:orderId/cancel-commit", cfg.OrderHandler.UpdateToCanceled)

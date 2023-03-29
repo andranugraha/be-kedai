@@ -6,7 +6,9 @@ import (
 	"kedai/backend/be-kedai/internal/common/code"
 	commonErr "kedai/backend/be-kedai/internal/common/error"
 	"kedai/backend/be-kedai/internal/domain/order/dto"
+	commonDto "kedai/backend/be-kedai/internal/common/dto"
 	"kedai/backend/be-kedai/internal/domain/order/handler"
+	"kedai/backend/be-kedai/internal/domain/order/model"
 	"kedai/backend/be-kedai/internal/utils/response"
 	"kedai/backend/be-kedai/internal/utils/test"
 	"kedai/backend/be-kedai/mocks"
@@ -257,6 +259,71 @@ func TestRefundAdmin(t *testing.T) {
 			})
 
 			handler.RefundAdmin(c)
+
+			assert.Equal(t, tc.expected.statusCode, rec.Code)
+			assert.Equal(t, string(expectedJson), rec.Body.String())
+		})
+	}
+}
+
+func TestGetRefund(t *testing.T) {
+	type input struct {
+		err error
+	}
+
+	type expected struct {
+		statusCode int
+		response   response.Response
+	}
+
+	tests := []struct {
+		description string
+		input       input
+		expected    expected
+	}{
+		{
+			description: "should return error with status code 500 when refund request fails",
+			input: input{
+				err: commonErr.ErrInternalServerError,
+			},
+			expected: expected{
+				statusCode: http.StatusInternalServerError,
+				response: response.Response{
+					Code:    code.INTERNAL_SERVER_ERROR,
+					Message: commonErr.ErrInternalServerError.Error(),
+				},
+			},
+		},
+		{
+			description: "should return success with status code 200 when refund request is successfully refunded",
+			input: input{
+				err: nil,
+			},
+			expected: expected{
+				statusCode: http.StatusOK,
+				response: response.Response{
+					Code:    code.OK,
+					Message: "refund request found",
+					Data: 	&commonDto.PaginationResponse{},
+				},
+			},
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.description, func(t *testing.T) {
+			expectedJson, _ := json.Marshal(tc.expected.response)
+			refundRequestService := mocks.NewRefundRequestService(t)
+			refundRequestService.On("GetRefund", &model.GetRefundReq{}).Return(&commonDto.PaginationResponse{}, tc.input.err)
+			rec := httptest.NewRecorder()
+			c, _ := gin.CreateTestContext(rec)
+
+			c.Request, _ = http.NewRequest(http.MethodGet, "/admins/refund?limit=0&page=0", nil)
+			handler := handler.New(&handler.Config{
+				RefundRequestService: refundRequestService,
+			})
+
+			handler.GetRefund(c)
 
 			assert.Equal(t, tc.expected.statusCode, rec.Code)
 			assert.Equal(t, string(expectedJson), rec.Body.String())
