@@ -7,6 +7,7 @@ import (
 
 type RefundRequestService interface {
 	UpdateRefundStatus(userId int, invoiceId int, refundStatus string) error
+	RefundAdmin(requestRefundId int) error
 }
 
 type refundRequestServiceImpl struct {
@@ -34,6 +35,18 @@ func (s *refundRequestServiceImpl) UpdateRefundStatus(userId int, invoiceId int,
 	}
 
 	err := s.refundRequestRepo.ApproveRejectRefund(shop.ID, invoiceId, refundStatus)
+
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+
+func (s *refundRequestServiceImpl) RefundAdmin(requestRefundId int) error {
+	
+	err := s.refundRequestRepo.RefundAdmin(requestRefundId)
 
 	if err != nil {
 		return err

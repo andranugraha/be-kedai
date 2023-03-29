@@ -145,11 +145,6 @@ func createRouter() *gin.Engine {
 		InvoiceRepo:       invoiceRepo,
 	})
 
-	refundRequestRepo = orderRepoPackage.NewRefundRequestRepository(&orderRepoPackage.RefundRequestRConfig{
-		DB:                 db,
-		InvoicePerShopRepo: invoicePerShopRepo,
-	})
-
 	shopGuestRepo := shopRepoPackage.NewShopGuestRepository(&shopRepoPackage.ShopGuestRConfig{
 		DB: db,
 	})
@@ -220,7 +215,7 @@ func createRouter() *gin.Engine {
 	})
 	discussionService := productServicePackage.NewDiscussionService(&productServicePackage.DiscussionSConfig{
 		DiscussionRepository: discussionRepo,
-		ShopService: 				shopService,
+		ShopService:          shopService,
 	})
 
 	productRepo := productRepoPackage.NewProductRepository(&productRepoPackage.ProductRConfig{
@@ -247,10 +242,7 @@ func createRouter() *gin.Engine {
 		ShopGuestService:   shopGuestService,
 	})
 
-	refundRequestService := orderServicePackage.NewRefundRequestService(&orderServicePackage.RefundRequestSConfig{
-		RefundRequestRepo: refundRequestRepo,
-		ShopService:       shopService,
-	})
+
 
 	userProfileRepo := userRepoPackage.NewUserProfileRepository(&userRepoPackage.UserProfileRConfig{
 		DB: db,
@@ -262,6 +254,18 @@ func createRouter() *gin.Engine {
 		UserProfileRepo: userProfileRepo,
 	})
 
+	refundRequestRepo = orderRepoPackage.NewRefundRequestRepository(&orderRepoPackage.RefundRequestRConfig{
+		DB:                 db,
+		InvoicePerShopRepo: invoicePerShopRepo,
+		InvoiceStatusRepo:  invoiceStatusRepo,
+		UserRepo:           walletRepo,
+		ProductRepo:        skuRepo,
+	})
+
+	refundRequestService := orderServicePackage.NewRefundRequestService(&orderServicePackage.RefundRequestSConfig{
+		RefundRequestRepo: refundRequestRepo,
+		ShopService:       shopService,
+	})
 	userService := userServicePackage.NewUserService(&userServicePackage.UserSConfig{
 		Repository:  userRepo,
 		Redis:       userCache,
@@ -373,7 +377,7 @@ func createRouter() *gin.Engine {
 		ProductService:           productService,
 		SkuService:               skuService,
 		TransactionReviewService: transactionReviewService,
-		DiscussionService: 			discussionService,
+		DiscussionService:        discussionService,
 	})
 
 	invoiceService := orderServicePackage.NewInvoiceService(&orderServicePackage.InvoiceSConfig{

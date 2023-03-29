@@ -8,4 +8,6 @@ const (
 	RefundStatusPending         = "PENDING"
 	RequestStatusSellerApproved = "SELLER_APPROVED"
 	RefundStatusRefunded        = "REFUNDED"
+
+	WalletRefundStatus = "Refund"
 )

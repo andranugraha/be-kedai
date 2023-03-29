@@ -225,6 +225,7 @@ func NewRouter(cfg *RouterConfig) *gin.Engine {
 			admin.POST("/login", cfg.UserHandler.AdminSignIn)
 			authenticated := admin.Group("", middleware.AdminJWTAuthorization, cfg.UserHandler.GetSession)
 			{
+				authenticated.POST("/refund/:refundId", cfg.OrderHandler.RefundAdmin)
 				order := authenticated.Group("/orders")
 				{
 					order.POST("/:orderId/cancel-commit", cfg.OrderHandler.UpdateToCanceled)

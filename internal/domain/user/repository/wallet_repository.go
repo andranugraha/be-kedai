@@ -17,6 +17,7 @@ type WalletRepository interface {
 	TopUp(history *model.WalletHistory, wallet *model.Wallet) (*model.WalletHistory, error)
 	MultipleTopUp(history []*model.WalletHistory, wallet *model.Wallet) ([]*model.WalletHistory, error)
 	ChangePin(userID int, pin string) error
+	TopUpTransaction(tx *gorm.DB, history *model.WalletHistory, wallet *model.Wallet) (*model.WalletHistory, error)
 }
 
 type walletRepositoryImpl struct {
@@ -110,6 +111,20 @@ func (r *walletRepositoryImpl) TopUp(history *model.WalletHistory, wallet *model
 	})
 
 	if err != nil {
+		return nil, err
+	}
+
+	return history, nil
+}
+
+func (r *walletRepositoryImpl) TopUpTransaction(tx *gorm.DB, history *model.WalletHistory, wallet *model.Wallet) (*model.WalletHistory, error) {
+	history.Date = time.Now()
+
+	if err := tx.Model(&model.Wallet{}).Where("id = ?", wallet.ID).Update("balance", gorm.Expr("balance + ?", history.Amount)).Error; err != nil {
+		return nil, err
+	}
+
+	if err := r.walletHistoryRepo.Create(tx, history); err != nil {
 		return nil, err
 	}
 
