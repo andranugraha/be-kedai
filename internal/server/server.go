@@ -115,8 +115,14 @@ func createRouter() *gin.Engine {
 		DB: db,
 	})
 
+	productPromotionRepo := productRepoPackage.NewProductPromotionRepository(&productRepoPackage.ProductPromotionRConfig{
+		DB: db,
+	})
+
 	skuRepo := productRepoPackage.NewSkuRepository(&productRepoPackage.SkuRConfig{
-		DB: db})
+		DB:                         db,
+		ProductPromotionRepository: productPromotionRepo,
+	})
 
 	userCartItemRepo := userRepoPackage.NewUserCartItemRepository(&userRepoPackage.UserCartItemRConfig{
 		DB: db,
@@ -338,6 +344,7 @@ func createRouter() *gin.Engine {
 		ProductService:     productService,
 		ShopService:        shopService,
 	})
+
 	transactionRepo := orderRepoPackage.NewTransactionRepository(&orderRepoPackage.TransactionRConfig{
 		DB: db,
 	})

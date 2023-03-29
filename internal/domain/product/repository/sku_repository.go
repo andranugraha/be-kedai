@@ -20,16 +20,19 @@ type SkuRepository interface {
 }
 
 type skuRepositoryImpl struct {
-	db *gorm.DB
+	db                         *gorm.DB
+	productPromotionRepository ProductPromotionRepository
 }
 
 type SkuRConfig struct {
-	DB *gorm.DB
+	DB                         *gorm.DB
+	ProductPromotionRepository ProductPromotionRepository
 }
 
 func NewSkuRepository(cfg *SkuRConfig) SkuRepository {
 	return &skuRepositoryImpl{
-		db: cfg.DB,
+		db:                         cfg.DB,
+		productPromotionRepository: cfg.ProductPromotionRepository,
 	}
 }
 
@@ -161,6 +164,11 @@ func (r *skuRepositoryImpl) Update(tx *gorm.DB, productId int, skus []*model.Sku
 			if err != nil {
 				tx.Rollback()
 				return err
+			}
+
+			if errDeletePromotion := r.productPromotionRepository.Delete(tx, sku.ID); errDeletePromotion != nil {
+				tx.Rollback()
+				return errDeletePromotion
 			}
 
 			if errDelete := tx.Model(sku).Unscoped().Association("Variants").Clear(); errDelete != nil {
