@@ -18,9 +18,10 @@ type Transaction struct {
 	UserID    int `json:"userId"`
 	SkuID     int `json:"skuId"`
 
-	Review *TransactionReview `json:"review,omitempty"`
-	User   *userModel.User    `json:"user,omitempty" gorm:"foreignKey:UserID"`
-	Sku    *productModel.Sku  `json:"sku,omitempty" gorm:"foreignKey:SkuID"`
+	Review   *TransactionReview   `json:"review,omitempty"`
+	User     *userModel.User      `json:"user,omitempty" gorm:"foreignKey:UserID"`
+	Sku      *productModel.Sku    `json:"sku,omitempty" gorm:"foreignKey:SkuID"`
+	Variants []TransactionVariant `json:"variants,omitempty" gorm:"foreignKey:TransactionID"`
 
 	gorm.Model `json:"-"`
 }

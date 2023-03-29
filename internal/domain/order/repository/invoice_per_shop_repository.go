@@ -116,7 +116,7 @@ func (r *invoicePerShopRepositoryImpl) GetByUserID(userID int, request *dto.Invo
 		`).
 			Joins("JOIN skus ON skus.id = transactions.sku_id").
 			Joins("JOIN products ON skus.product_id = products.id")
-	}).Preload("TransactionItems.Sku.Variants")
+	}).Preload("TransactionItems.Sku.Variants").Preload("TransactionItems.Variants")
 
 	err = query.Preload("Shop").Limit(request.Limit).Offset(request.Offset()).Order("invoices.payment_date DESC").Find(&invoices).Error
 	if err != nil {
@@ -166,7 +166,7 @@ func (r *invoicePerShopRepositoryImpl) GetByUserIDAndCode(userID int, code strin
 			Joins("JOIN skus ON skus.id = transactions.sku_id").
 			Joins("JOIN products ON skus.product_id = products.id")
 	}).
-		Preload("TransactionItems.Sku.Variants")
+		Preload("TransactionItems.Sku.Variants").Preload("TransactionItems.Variants")
 
 	query = query.Preload("Address.Province").
 		Preload("Address.City").
@@ -250,7 +250,7 @@ func (r *invoicePerShopRepositoryImpl) GetByShopId(shopId int, req *dto.InvoiceP
 		`).
 			Joins("JOIN skus ON skus.id = transactions.sku_id").
 			Joins("JOIN products ON skus.product_id = products.id")
-	}).Preload("TransactionItems.Sku.Variants")
+	}).Preload("TransactionItems.Sku.Variants").Preload("TransactionItems.Variants")
 
 	err := db.Preload("Shop").Limit(req.Limit).Offset(req.Offset()).Order("invoices.payment_date DESC").Find(&invoices).Error
 	if err != nil {
@@ -337,6 +337,7 @@ func (r *invoicePerShopRepositoryImpl) GetByShopIdAndId(shopId int, id int) (*dt
 			Joins("JOIN products ON skus.product_id = products.id")
 	}).
 		Preload("TransactionItems.Sku.Variants").
+		Preload("TransactionItems.Variants").
 		Preload("Shop").
 		Preload("Address.Province").
 		Preload("Address.City").
@@ -407,7 +408,7 @@ func (r *invoicePerShopRepositoryImpl) GetShopOrder(shopId int, req *dto.Invoice
 		`).
 			Joins("JOIN skus ON skus.id = transactions.sku_id").
 			Joins("JOIN products ON skus.product_id = products.id")
-	}).Preload("TransactionItems.Sku.Variants")
+	}).Preload("TransactionItems.Sku.Variants").Preload("TransactionItems.Variants")
 
 	queryCount := db.Session(&gorm.Session{})
 	queryCount.Model(&model.InvoicePerShop{}).Distinct("invoice_per_shops.id").Count(&totalRows)
