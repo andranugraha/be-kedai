@@ -163,7 +163,7 @@ func (r *productRepositoryImpl) GetByShopID(shopID int, request *dto.ShopProduct
 		query.Joins("left join shop_category_products scp on products.id = scp.product_id").Where("scp.id = ?", request.ShopProductCategoryID)
 	}
 
-	query = query.Where("is_active = ?", active)
+	query = query.Where("products.is_active = ?", active)
 	query = query.Group("products.id")
 
 	query = query.Where("products.shop_id = ?", shopID)
