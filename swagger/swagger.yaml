@@ -19,6 +19,7 @@ tags:
   - name: Marketplace
   - name: Order
   - name: Seller
+  - name: User
 paths:
   /v1/orders/transactions/reviews:
     post:
@@ -3411,7 +3412,285 @@ paths:
                     example: "INTERNAL_SERVER_ERROR"
                   message:
                     type: string
-                    example: "error message"                    
+                    example: "error message" 
+  /v1/products/discussions/replies/{parentId}:
+    get:
+      tags:
+        - Product
+      summary: Get product discussion replies by parent id
+      description: Get product discussion replies by parent id
+      parameters:
+        - in: path
+          name: parentId
+          required: true
+          schema:
+            type: integer
+            example: 1
+      responses:
+        '200':
+          description: operation successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: 'OK'
+                  message:
+                    type: string
+                    example: "ok"
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: integer
+                          example: 1
+                        username:
+                          type: string
+                          example: "username"
+                        userUrl:
+                          type: string
+                          example: "https://www.example.com"
+                        shopName:
+                          type: string
+                          example: "shop name"
+                        shopUrl:
+                          type: string
+                          example: "https://www.example.com"
+                        productId:
+                          type: integer
+                          example: 1
+                        message:
+                          type: string
+                          example: "message"
+                        date:
+                          type: string
+                          example: "2020-01-01 00:00:00"
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "BAD_REQUEST"
+                  message:
+                    type: string
+                    example: "error message"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "INTERNAL_SERVER_ERROR"
+                  message:
+                    type: string
+                    example: "error message"
+  /v1/products/discussions/:
+    post:
+      tags:
+        - Product
+      summary: Create product discussion
+      description: Create product discussion
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                productId:
+                  type: integer
+                  example: 1
+                message:
+                  type: string
+                  example: "message"
+                isSeller:
+                  type: boolean
+                  example: true
+                parentId:
+                  type: integer
+                  example: 1
+      responses:
+        '200':
+          description: operation successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: 'OK'
+                  message:
+                    type: string
+                    example: "ok"
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "BAD_REQUEST"
+                  message:
+                    type: string
+                    example: "error message"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "INTERNAL_SERVER_ERROR"
+                  message:
+                    type: string
+                    example: "error message"
+  /v1/products/discussions/{productId}:
+    get:
+      tags:
+        - Product
+      summary: Get product discussions by product id
+      description: Get product discussions by product id
+      parameters:
+        - in: path
+          name: productId
+          required: true
+          schema:
+            type: integer
+            example: 1
+      responses:
+        '200':
+          description: operation successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: 'OK'
+                  message:
+                    type: string
+                    example: "ok"
+                  data:
+                    type: object
+                    properties:
+                      limit:
+                        type: integer
+                        example: 1
+                      page:
+                        type: integer
+                        example: 1
+                      totalRows:
+                        type: integer
+                        example: 1
+                      totalPages:
+                        type: integer
+                        example: 1
+                      Data:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            id:
+                              type: integer
+                              example: 1
+                            username:
+                              type: string
+                              example: "username"
+                            userUrl:
+                              type: string
+                              example: "https://www.example.com"
+                            shopName:
+                              type: string
+                              example: "shop name"
+                            shopUrl:
+                              type: string
+                              example: "https://www.example.com"
+                            productId:
+                              type: integer
+                              example: 1
+                            message:
+                              type: string
+                              example: "message"
+                            date:
+                              type: string
+                              example: "2020-01-01 00:00:00"
+                            replyCount:
+                              type: integer
+                              example: 1
+                            reply:
+                              type: object
+                              properties:
+                                id:
+                                  type: integer
+                                  example: 1
+                                username:
+                                  type: string
+                                  example: "username"
+                                userUrl:
+                                  type: string
+                                  example: "https://www.example.com"
+                                shopName:
+                                  type: string
+                                  example: "shop name"
+                                shopUrl:
+                                  type: string
+                                  example: "https://www.example.com"
+                                productId:
+                                  type: integer
+                                  example: 1
+                                message:
+                                  type: string
+                                  example: "message"
+                                date:
+                                  type: string
+                                  example: "2020-01-01 00:00:00"
+
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "BAD_REQUEST"
+                  message:
+                    type: string
+                    example: "error message"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "INTERNAL_SERVER_ERROR"
+                  message:
+                    type: string
+                    example: "error message"
+
+
+
   /v1/products:
     post:
       security:
@@ -4678,7 +4957,322 @@ paths:
                   message:
                     type: string
                     example: "error message"
+  /v1/users/chats:
+    get:
+      security:
+        - BearerAuth: []
+      tags:
+        - User
+      summary: As a user, retrieve chat list
+      description: As a user, retrieve chat list with recent message, type, and unread message count
+      parameters:
+        - in: query
+          name: search
+          schema:
+            type: string
+            example: bakmi acong cong cong
+          description: default empty string
+        - in: query
+          name: status
+          schema:
+            type: string
+            example: read
+          description: default empty string (all), other status is "unread" or "read"
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Response'
+                  - type: object
+                    properties:
+                      code:
+                        example: 'SUCCESS'
+                      message:
+                        example: 'success'
+                      data:
+                        type: array
+                        items:
+                          allOf:
+                            - $ref: '#/components/schemas/UserListOfChat'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "BAD_REQUEST"
+                  message:
+                    type: string
+                    example: "error message"
+        '401':
+          description: unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "UNAUTHORIZED"
+                  message:
+                    type: string
+                    example: "error message"        
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "INTERNAL_SERVER_ERROR"
+                  message:
+                    type: string
+                    example: "error message"
+  /v1/users/chats/{shopSlug}:
+    get:
+      security:
+        - BearerAuth: []
+      tags:
+        - User
+      summary: As a user, retrieve chat with spesific shop
+      description: As a user, retrieve chat with spesific shop by shop-slug identifier
+      parameters:
+        - in: query
+          name: limitByDay
+          schema:
+            type: integer
+            default: 366
+          description: No default limit, will get chat from last 1 year calendar
+        - in: query
+          name: page
+          schema:
+            type: integer
+            default: 1
+          description: No default page, will be set to 1
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Response'
+                  - type: object
+                    properties:
+                      code:
+                        example: 'SUCCESS'
+                      message:
+                        example: 'success'
+                      data:
+                        allOf:
+                          - $ref: '#/components/schemas/PaginationResponse'
+                          - type: object
+                            properties:
+                              data:
+                                type: array
+                                items:
+                                  allOf:
+                                    - $ref: '#/components/schemas/Chat'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "BAD_REQUEST"
+                  message:
+                    type: string
+                    example: "error message"
+        '401':
+          description: unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "UNAUTHORIZED"
+                  message:
+                    type: string
+                    example: "error message"    
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "NOT_FOUND"
+                  message:
+                    type: string
+                    example: "error message"    
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "INTERNAL_SERVER_ERROR"
+                  message:
+                    type: string
+                    example: "error message"
+    post:
+      security:
+        - BearerAuth: []
+      tags:
+        - User
+      summary: User send chat to seller
+      description: User send chat to seller contains message and type of message
+      requestBody:
+        $ref: '#/components/requestBodies/ChatRequestBody'
+      responses:
+        '201':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Response'
+                  - type: object
+                    properties:
+                      code:
+                        example: 'CREATED'
+                      message:
+                        example: 'success'
+                      data:
+                        $ref: '#/components/schemas/Chat'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "BAD_REQUEST"
+                  message:
+                    type: string
+                    example: "error message"
+        '401':
+          description: unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "UNAUTHORIZED"
+                  message:
+                    type: string
+                    example: "error message" 
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "NOT_FOUND"
+                  message:
+                    type: string
+                    example: "error message"          
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "INTERNAL_SERVER_ERROR"
+                  message:
+                    type: string
+                    example: "error message"
   /v1/marketplaces/couriers:
+    post:
+      tags:
+        - Marketplace
+      summary: Add courier
+      description: Add courier to marketplace
+      requestBody:
+        $ref: '#/components/requestBodies/AddCourierBody'
+      responses:
+        '201':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: OK
+                  message:
+                    type: string
+                    example: success
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "BAD_REQUEST"
+                  message:
+                    type: string
+                    example: "error message"                     
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "SHOP_NOT_REGISTERED"
+                  message:
+                    type: string
+                    example: "shop not found"                     
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "INTERNAL_SERVER_ERROR"
+                  message:
+                    type: string
+                    example: "error message"
+
+
     get:
       security:
         - BearerAuth: []
@@ -4824,6 +5418,43 @@ paths:
                         type: array
                         items:
                           $ref: '#/components/schemas/MarketplaceVoucher'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "INTERNAL_SERVER_ERROR"
+                  message:
+                    type: string
+                    example: "error message"
+  /v1/marketplaces/banners:
+    get:
+      tags:
+        - Marketplace
+      summary: Get active marketplace banners
+      description: Get list of active marketplace banners
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Response'
+                  - type: object
+                    properties:
+                      code:
+                        example: "OK"
+                      message:
+                        example: "success"
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/MarketplaceBanner'
         '500':
           description: Internal server error
           content:
@@ -5297,6 +5928,387 @@ paths:
                   message:
                     type: string
                     example: "error message"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "INTERNAL_SERVER_ERROR"
+                  message:
+                    type: string
+                    example: "error message"
+    post:
+      security:
+        - BearerAuth: []
+      tags:
+        - Seller
+      summary: Create seller's voucher
+      description: Create a new seller's voucher
+      requestBody:
+        $ref: '#/components/requestBodies/CreateVoucherBody'
+      responses:
+        '201':
+          description: voucher created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: CREATED
+                  message:
+                    type: string
+                    example: success message
+                  data:
+                    allOf:
+                      - $ref: '#/components/schemas/ShopVoucher'
+                        properties:
+                          variantGroups:
+                            type: array
+                            items:
+                              allOf:
+                                - $ref: '#/components/schemas/GroupVariant'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "BAD_REQUEST"
+                  message:
+                    type: string
+                    example: "error message"
+        '401':
+          description: unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "UNAUTHORIZED"
+                  message:
+                    type: string
+                    example: "invalid credential"
+        '404':
+          description: shop not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "NOT_FOUND"
+                  message:
+                    type: string
+                    example: "error message"
+        '409':
+          description: duplicate voucher code
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "DUPLICATE_VOUCHER_CODE"
+                  message:
+                    type: string
+                    example: "duplicate voucher code"
+        '422':
+          description: invalid voucher name pattern / invalid voucher date range
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "INVALID"
+                  message:
+                    type: string
+                    example: "error message"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "INTERNAL_SERVER_ERROR"
+                  message:
+                    type: string
+                    example: "error message"
+  /v1/sellers/vouchers/{code}:
+    get:
+      security:
+        - BearerAuth: []
+      tags:
+        - Seller
+      summary: Get seller voucher detail
+      description: Get seller voucher detail by using voucher code
+      parameters:
+        - in: path
+          name: code
+          required: true
+          schema:
+            type: string
+            example: voucher-code
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - type: object
+                    properties:
+                      code:
+                        example: "OK"
+                      message:
+                        example: "ok"
+                      data:
+                        allOf:
+                          - $ref: '#/components/schemas/ShopVoucher'
+                          - type: object
+                            properties:
+                              status:
+                                type: string
+                                example: "ongoing"
+        '401':
+          description: unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "UNAUTHORIZED"
+                  message:
+                    type: string
+                    example: "invalid credential"
+        '404':
+          description: not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "NOT_FOUND"
+                  message:
+                    type: string
+                    example: "error message"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "INTERNAL_SERVER_ERROR"
+                  message:
+                    type: string
+                    example: "error message"
+    put:
+      security:
+        - BearerAuth: []
+      tags:
+        - Seller
+      summary: Update seller's voucher
+      description: Update seller's voucher by using voucher code
+      parameters:
+        - in: path
+          name: code
+          required: true
+          schema:
+            type: string
+            example: voucher-code
+      requestBody:
+        $ref: '#/components/requestBodies/UpdateVoucherBody'
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - type: object
+                    properties:
+                      code:
+                        example: "UPDATED"
+                      message:
+                        example: "update voucher succesful"
+                      data:
+                        allOf:
+                          - $ref: '#/components/schemas/ShopVoucher'
+                          - type: object
+                            properties:
+                              status:
+                                type: string
+                                example: "ongoing"
+        '401':
+          description: unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "UNAUTHORIZED"
+                  message:
+                    type: string
+                    example: "invalid credential"
+        '404':
+          description: shop not found / voucher not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "NOT_FOUND"
+                  message:
+                    type: string
+                    example: "error message"
+        '409':
+          description: voucher status conflict
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: VOUCHER_STATUS_CONFLICT
+                  message:
+                    type: string
+                    example: voucher status conflict
+        '422':
+          description: invalid voucher name pattern / invalid date range
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "INVALID"
+                  message:
+                    type: string
+                    example: "error message"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "INTERNAL_SERVER_ERROR"
+                  message:
+                    type: string
+                    example: "error message"
+    delete:
+      security:
+        - BearerAuth: []
+      tags:
+        - Seller
+      summary: Delete seller's voucher
+      description: Delete seller's voucher using voucher code. Cannot delete voucher that has an ongoing or expired status.
+      parameters:
+        - in: path
+          name: code
+          required: true
+          description: Voucher Code of the voucher to be deleted
+          schema:
+            type: string
+            example: "voucher-code"
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "OK"
+                  message:
+                    type: string
+                    example: "success"
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "BAD_REQUEST"
+                  message:
+                    type: string
+                    example: "error message"
+        '401':
+          description: unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "UNAUTHORIZED"
+                  message:
+                    type: string
+                    example: "invalid credential"            
+        '404':
+          description: shop not found / voucher not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "NOT_FOUND"
+                  message:
+                    type: string
+                    example: "error message"         
+        '409':
+          description: voucher status conflict (either is ongoing or expired)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "VOUCHER_STATUS_CONFLICT"
+                  message:
+                    type: string
+                    example: "voucher status conflict"            
         '500':
           description: Internal server error
           content:
@@ -6563,7 +7575,54 @@ paths:
                   message:
                     type: string
                     example: "error message"
-  /v1/admin/orders/{orderId}/cancel-commit:
+  /v1/admins/login:
+    post:
+      tags:
+        - Admin
+      summary: Admin login
+      description: Admin login with email and password to get token
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - type: object
+                    properties:
+                      code:
+                        example: 'OK'
+                      message:
+                        example: 'ok'
+                      data:
+                        $ref: '#/components/schemas/Token'
+        '400':
+          description: unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "BAD_REQUEST"
+                  message:
+                    type: string
+                    example: "error message"  
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "INTERNAL_SERVER_ERROR"
+                  message:
+                    type: string
+                    example: "error message"
+  /v1/admins/orders/{orderId}/cancel-commit:
     post:
       security:
         - BearerAuth: []
@@ -6830,7 +7889,354 @@ paths:
                     example: "INTERNAL_SERVER_ERROR"
                   message:
                     type: string
-                    example: "error message"                                    
+                    example: "error message"
+  /v1/sellers/orders/{orderId}/refund:
+    put:
+      security:
+        - BearerAuth: []
+      tags:
+        - Order
+      summary: Approve or reject refund request
+      parameters:
+        - in: path
+          name: orderId
+          required: true
+          schema:
+            type: integer
+            example: 1
+      description: Update refund status to 'SELLER_APPROVED' or 'REJECTED'
+      requestBody: 
+        $ref: '#/components/requestBodies/UpdateRefundStatusBody'
+      responses:
+        '200':
+          description: Successful operation
+          content: 
+            application/json:
+              schema:
+                  type: object
+                  properties:
+                      code:
+                        example: 'OK'
+                      message:
+                        example: 'refund status updated'             
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "BAD_REQUEST"
+                  message:
+                    type: string
+                    example: "error message"
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "UNAUTHORIZED"
+                  message:
+                    type: string
+                    example: "invalid credential"  
+        '404':
+          description: Record not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "NOT_FOUND"
+                  message:
+                    type: string
+                    example: "error message"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "INTERNAL_SERVER_ERROR"
+                  message:
+                    type: string
+                    example: "error message" 
+  /v1/sellers/chats:
+    get:
+      security:
+        - BearerAuth: []
+      tags:
+        - Seller
+      summary: As a seller, retrieve chat list
+      description: As a seller, retrieve chat list with recent message, type, and unread message count
+      parameters:
+        - in: query
+          name: search
+          schema:
+            type: string
+            example: mamakmu
+          description: default empty string
+        - in: query
+          name: status
+          schema:
+            type: string
+            example: read
+          description: default empty string (all), other status is "unread" or "read"
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Response'
+                  - type: object
+                    properties:
+                      code:
+                        example: 'SUCCESS'
+                      message:
+                        example: 'success'
+                      data:
+                        type: array
+                        items:
+                          allOf:
+                            - $ref: '#/components/schemas/SellerListOfChat'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "BAD_REQUEST"
+                  message:
+                    type: string
+                    example: "error message"
+        '401':
+          description: unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "UNAUTHORIZED"
+                  message:
+                    type: string
+                    example: "error message"      
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "NOT_FOUND"
+                  message:
+                    type: string
+                    example: "error message"     
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "INTERNAL_SERVER_ERROR"
+                  message:
+                    type: string
+                    example: "error message"    
+  /v1/sellers/chats/{username}:
+    get:
+      security:
+        - BearerAuth: []
+      tags:
+        - Seller
+      summary: As a seller, retrieve chat with spesific user
+      description: As a seller, retrieve chat with spesific user by username identifier
+      parameters:
+        - in: query
+          name: limitByDay
+          schema:
+            type: integer
+            default: 366
+          description: No default limit, will get chat from last 1 year calendar
+        - in: query
+          name: page
+          schema:
+            type: integer
+            default: 1
+          description: No default page, will be set to 1
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Response'
+                  - type: object
+                    properties:
+                      code:
+                        example: 'SUCCESS'
+                      message:
+                        example: 'success'
+                      data:
+                        allOf:
+                          - $ref: '#/components/schemas/PaginationResponse'
+                          - type: object
+                            properties:
+                              data:
+                                type: array
+                                items:
+                                  allOf:
+                                    - $ref: '#/components/schemas/Chat'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "BAD_REQUEST"
+                  message:
+                    type: string
+                    example: "error message"
+        '401':
+          description: unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "UNAUTHORIZED"
+                  message:
+                    type: string
+                    example: "error message"    
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "NOT_FOUND"
+                  message:
+                    type: string
+                    example: "error message"       
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "INTERNAL_SERVER_ERROR"
+                  message:
+                    type: string
+                    example: "error message"
+    post:
+      security:
+        - BearerAuth: []
+      tags:
+        - Seller
+      summary: Seller send chat to user
+      description: Seller send chat to user contains message
+      requestBody:
+        $ref: '#/components/requestBodies/ChatRequestBody'
+      responses:
+        '201':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Response'
+                  - type: object
+                    properties:
+                      code:
+                        example: 'CREATED'
+                      message:
+                        example: 'success'
+                      data:
+                        $ref: '#/components/schemas/Chat'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "BAD_REQUEST"
+                  message:
+                    type: string
+                    example: "error message"
+        '401':
+          description: unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "UNAUTHORIZED"
+                  message:
+                    type: string
+                    example: "error message"       
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "NOT_FOUND"
+                  message:
+                    type: string
+                    example: "error message"    
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "INTERNAL_SERVER_ERROR"
+                  message:
+                    type: string
+                    example: "error message"                               
   /v1/orders/invoices:
     post:
       security:
@@ -7669,6 +9075,69 @@ paths:
                     example: "error message"                   
 components:
   schemas:
+    Chat:
+      type: object
+      properties:
+        id:
+          type: number
+          example: 1
+        message:
+          type: string
+          example: "Ada apa sayang"
+        time:
+          type: string
+          example: "2023-03-23T09:36:13.333895Z"
+        type:
+          type: string
+          example: complaint
+        isIncoming:
+          type: boolean
+          example: false
+    UserListOfChat:
+      type: object
+      properties:
+        shop:
+          type: object
+          properties:
+            name:
+              type: string
+              example: "Halal Shop 69"
+            imageUrl:
+              type: string | null
+              example: null
+            shopSlug:
+              type: string
+              example: "halal-shop-69"
+        recentMessage:
+          type: string
+          example: "Ada apa sayang"
+        recentMessageType:
+          type: string
+          example: "text"
+        unreadCount:
+          type: integer
+          example: 1
+    SellerListOfChat:
+      type: object
+      properties:
+        user:
+          type: object
+          properties:
+            username:
+              type: string
+              example: "mamakmu"
+            imageUrl:
+              type: string | null
+              example: null
+        recentMessage:
+          type: string
+          example: "Ada apa sayang"
+        recentMessageType:
+          type: string
+          example: "text"
+        unreadCount:
+          type: integer
+          example: 1
     User:
       type: object
       properties:
@@ -7839,6 +9308,23 @@ components:
         paymentMethodId:
           type: integer
           example: 2
+    MarketplaceBanner:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 2
+        mediaUrl:
+          type: string
+          example: "https://image.png"
+        startDate:
+          type: string
+          format: dateTime
+          example: "2006-01-02T00:00:00Z"
+        endDate:
+          type: string
+          format: dateTime
+          example: "2006-01-02T00:00:00Z"
     Token:
       type: object
       properties:
@@ -9163,6 +10649,45 @@ components:
                 format: numeric
                 minLength: 6
                 maxLength: 6
+    AddCourierBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - name
+              - code
+              - service
+            properties:
+              name:
+                type: string
+                example: JNE
+              code:
+                type: string
+                example: jne
+              service:
+                type: array
+                items:
+                  type: object
+                  required:
+                    - name
+                    - code
+                    - minDuration
+                    - maxDuration
+                  properties:
+                    name:
+                      type: string
+                      example: REG
+                    code:
+                      type: string
+                      example: reg
+                    minDuration:
+                      type: integer
+                      example: 1
+                    maxDuration:
+                      type: integer
+                      example: 3
     ChangePinRequestBody:
       required: true
       content:
@@ -9333,6 +10858,19 @@ components:
             properties:
               courierId:
                 type: integer
+    UpdateRefundStatusBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required:   
+              - refundStatus
+            properties:
+              refundStatus:
+                type: string
+                enum: [SELLER_APPROVED, REJECTED]
+                example: SELLER_APPROVED 
     VariantBody:
       type: object
       required:
@@ -9496,6 +11034,139 @@ components:
                 type: array
                 items:
                   $ref: '#/components/requestBodies/SkuBody'
+    CreateVoucherBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - name
+              - code
+              - amount
+              - type
+              - isHidden
+              - description
+              - minimumSpend
+              - totalQuota
+              - startFrom
+              - expiredAt
+            properties:
+              name:
+                type: string
+                minLength: 1
+                maxLength: 100
+                example: voucher name
+              code:
+                type: string
+                minLength: 1
+                maxLength: 9
+                example: BAKM1234A
+              amount:
+                type: integer
+                minimum: 0
+                maximum: 500000000
+                example: 1000
+              type:
+                type: string
+                example: nominal
+              isHidden:
+                type: boolean
+                example: false
+              description:
+                type: string
+                minLength: 5
+                maxLength: 1000
+                example: voucher bakmi kejaksaan enak
+              minimumSpend:
+                type: integer
+                minimum: 0
+                maximum: 500000000
+                example: 1000
+              totalQuota:
+                type: integer
+                minimum: 1
+                maximum: 200000
+                example: 10
+              startFrom:
+                type: string
+                format: datetime
+                example: "2006-01-02T00:00:00.000Z"
+              expiredAt:
+                type: string
+                format: datetime
+                example: "2006-01-02T00:00:00.000Z"
+    ChatRequestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - message
+            properties:
+              message:
+                type: string
+                example: "hai sayang"
+              type:
+                type: string
+                example: "complaint"
+    UpdateVoucherBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - name
+              - amount
+              - type
+              - isHidden
+              - description
+              - minimumSpend
+              - totalQuota
+              - startFrom
+              - expiredAt
+            properties:
+              name:
+                type: string
+                minLength: 1
+                maxLength: 100
+                example: voucher name
+              amount:
+                type: integer
+                minimum: 0
+                maximum: 500000000
+                example: 1000
+              type:
+                type: string
+                example: nominal
+              isHidden:
+                type: boolean
+                example: false
+              description:
+                type: string
+                minLength: 5
+                maxLength: 1000
+                example: voucher bakmi kejaksaan enak
+              minimumSpend:
+                type: integer
+                minimum: 0
+                maximum: 500000000
+                example: 1000
+              totalQuota:
+                type: integer
+                minimum: 1
+                maximum: 200000
+                example: 10
+              startFrom:
+                type: string
+                format: datetime
+                example: "2006-01-02T00:00:00.000Z"
+              expiredAt:
+                type: string
+                format: datetime
+                example: "2006-01-02T00:00:00.000Z"
   securitySchemes:
     BearerAuth:
       type: http

@@ -20,20 +20,63 @@ type CourierRepository interface {
 	GetMatchingCouriersByShopIDAndProductIDs(*dto.MatchingProductCourierRequest) ([]*model.Courier, error)
 	GetByID(id int) (*model.Courier, error)
 	ToggleShopCourier(shopCouriers []*model.ShopCourier) error
+	AddCourier(req *dto.ShipmentCourierRequest) (*model.Courier, error)
 }
 
 type courierRepositoryImpl struct {
-	db *gorm.DB
+	db                       *gorm.DB
+	courierServiceRepository CourierServiceRepository
 }
 
 type CourierRConfig struct {
-	DB *gorm.DB
+	DB                       *gorm.DB
+	CourierServiceRepository CourierServiceRepository
 }
 
 func NewCourierRepository(cfg *CourierRConfig) CourierRepository {
 	return &courierRepositoryImpl{
-		db: cfg.DB,
+		db:                       cfg.DB,
+		courierServiceRepository: cfg.CourierServiceRepository,
 	}
+}
+
+func (r *courierRepositoryImpl) AddCourier(req *dto.ShipmentCourierRequest) (*model.Courier, error) {
+	courier := &model.Courier{
+		Name: req.Name,
+		Code: req.Code,
+	}
+
+	err := r.db.Transaction(func(tx *gorm.DB) error {
+		err := tx.Create(courier).Error
+		if err != nil {
+			return err
+		}
+
+		var serviceCouriers []*model.CourierService
+
+		for _, service := range req.Service {
+			serviceCouriers = append(serviceCouriers, &model.CourierService{
+				CourierID:   courier.ID,
+				Name:        service.Name,
+				Code:        service.Code,
+				MinDuration: service.MinDuration,
+				MaxDuration: service.MaxDuration,
+			})
+		}
+
+		err = r.courierServiceRepository.CreateCourierService(tx, serviceCouriers)
+		if err != nil {
+			return err
+		}
+		return nil
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	return courier, nil
+
 }
 
 func (r *courierRepositoryImpl) GetAll() ([]*model.Courier, error) {

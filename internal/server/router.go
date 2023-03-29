@@ -2,8 +2,10 @@ package server
 
 import (
 	"kedai/backend/be-kedai/config"
+	"kedai/backend/be-kedai/connection"
 	"kedai/backend/be-kedai/internal/server/middleware"
 
+	chatHandler "kedai/backend/be-kedai/internal/domain/chat/handler"
 	locationHandler "kedai/backend/be-kedai/internal/domain/location/handler"
 	marketplaceHandler "kedai/backend/be-kedai/internal/domain/marketplace/handler"
 	orderHandler "kedai/backend/be-kedai/internal/domain/order/handler"
@@ -22,6 +24,7 @@ type RouterConfig struct {
 	ShopHandler        *shopHandler.Handler
 	OrderHandler       *orderHandler.Handler
 	MarketplaceHandler *marketplaceHandler.Handler
+	ChatHandler        *chatHandler.Handler
 }
 
 func NewRouter(cfg *RouterConfig) *gin.Engine {
@@ -33,6 +36,13 @@ func NewRouter(cfg *RouterConfig) *gin.Engine {
 	corsCfg.AllowHeaders = []string{"Content-Type", "Authorization"}
 	corsCfg.ExposeHeaders = []string{"Content-Length"}
 	r.Use(cors.New(corsCfg))
+
+	socketServer := connection.SocketIO()
+	socket := r.Group("/socket.io")
+	{
+		socket.GET("/*any", gin.WrapH(socketServer))
+		socket.POST("/*any", gin.WrapH(socketServer))
+	}
 
 	v1 := r.Group("/v1")
 	{
@@ -105,6 +115,12 @@ func NewRouter(cfg *RouterConfig) *gin.Engine {
 					sealabsPay.GET("", cfg.UserHandler.GetSealabsPaysByUserID)
 					sealabsPay.POST("", cfg.UserHandler.RegisterSealabsPay)
 				}
+				chat := userAuthenticated.Group("/chats")
+				{
+					chat.GET("/", cfg.ChatHandler.UserGetListOfChats)
+					chat.GET("/:shopSlug", cfg.ChatHandler.UserGetChat)
+					chat.POST("/:shopSlug", cfg.ChatHandler.UserAddChat)
+				}
 			}
 		}
 
@@ -126,8 +142,11 @@ func NewRouter(cfg *RouterConfig) *gin.Engine {
 			product.GET("/:code/reviews/stats", cfg.ProductHandler.GetProductReviewStats)
 			product.GET("/recommendations/categories", cfg.ProductHandler.GetRecommendationByCategory)
 			product.GET("/autocompletes", cfg.ProductHandler.SearchAutocomplete)
+			product.GET("/recommended", cfg.ProductHandler.GetRecommendedProducts)
 			product.POST("/views", cfg.ProductHandler.AddProductView)
-
+			product.GET("/discussions/:productId", cfg.ProductHandler.GetDiscussionByProductID)
+			product.GET("/discussions/replies/:parentId", cfg.ProductHandler.GetDiscussionByParentID)
+			product.POST("/discussions", middleware.JWTAuthorization, cfg.ProductHandler.PostDiscussion)
 			category := product.Group("/categories")
 			{
 				category.GET("", cfg.ProductHandler.GetCategories)
@@ -165,6 +184,8 @@ func NewRouter(cfg *RouterConfig) *gin.Engine {
 		marketplace := v1.Group("/marketplaces")
 		{
 			marketplace.GET("/vouchers", cfg.MarketplaceHandler.GetMarketplaceVoucher)
+			marketplace.POST("/couriers", cfg.ShopHandler.AddCourier)
+			marketplace.GET("/banners", cfg.MarketplaceHandler.GetMarketplaceBanner)
 			authenticated := marketplace.Group("", middleware.JWTAuthorization, cfg.UserHandler.GetSession)
 			{
 				authenticated.GET("/vouchers/valid", cfg.MarketplaceHandler.GetValidMarketplaceVoucher)
@@ -202,9 +223,14 @@ func NewRouter(cfg *RouterConfig) *gin.Engine {
 		// TODO ADD MIDLEWARE FOR AUTH ADMIN
 		admin := v1.Group("/admins")
 		{
-			order := admin.Group("/orders")
+			admin.POST("/login", cfg.UserHandler.AdminSignIn)
+			authenticated := admin.Group("", middleware.AdminJWTAuthorization, cfg.UserHandler.GetSession)
 			{
-				order.POST("/:orderId/cancel-commit", cfg.OrderHandler.UpdateToCanceled)
+				order := authenticated.Group("/orders")
+				{
+					order.POST("/:orderId/cancel-commit", cfg.OrderHandler.UpdateToCanceled)
+				}
+
 			}
 		}
 
@@ -236,12 +262,17 @@ func NewRouter(cfg *RouterConfig) *gin.Engine {
 				{
 					product.GET("", cfg.ProductHandler.GetSellerProducts)
 					product.GET("/:code", cfg.ProductHandler.GetSellerProductDetailByCode)
+					product.PUT("/:code", cfg.ProductHandler.UpdateProduct)
 					product.PUT("/:code/activations", cfg.ProductHandler.UpdateProductActivation)
 				}
 
 				voucher := authenticated.Group("/vouchers")
 				{
 					voucher.GET("", cfg.ShopHandler.GetSellerVoucher)
+					voucher.GET("/:code", cfg.ShopHandler.GetVoucherByCodeAndShopId)
+					voucher.POST("", cfg.ShopHandler.CreateVoucher)
+					voucher.PUT("/:code", cfg.ShopHandler.UpdateVoucher)
+					voucher.DELETE("/:code", cfg.ShopHandler.DeleteVoucher)
 				}
 
 				order := authenticated.Group("/orders")
@@ -250,6 +281,13 @@ func NewRouter(cfg *RouterConfig) *gin.Engine {
 					order.GET("/:orderId", cfg.OrderHandler.GetInvoiceByShopIdAndOrderId)
 					order.PUT("/:orderId/delivery", cfg.OrderHandler.UpdateToDelivery)
 					order.POST("/:orderId/cancel-request", cfg.OrderHandler.UpdateToRefundPendingSellerCancel)
+					order.PUT("/:orderId/refund", cfg.OrderHandler.UpdateRefundStatus)
+				}
+				chat := authenticated.Group("/chats")
+				{
+					chat.GET("/", cfg.ChatHandler.SellerGetListOfChats)
+					chat.GET("/:username", cfg.ChatHandler.SellerGetChat)
+					chat.POST("/:username", cfg.ChatHandler.SellerAddChat)
 				}
 			}
 		}

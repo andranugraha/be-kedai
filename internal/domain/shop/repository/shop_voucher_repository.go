@@ -13,6 +13,7 @@ import (
 	userRepo "kedai/backend/be-kedai/internal/domain/user/repository"
 
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 type ShopVoucherRepository interface {
@@ -20,6 +21,11 @@ type ShopVoucherRepository interface {
 	GetSellerVoucher(shopId int, request *dto.SellerVoucherFilterRequest) ([]*dto.SellerVoucher, int64, int, error)
 	GetValidByIdAndUserId(id, userId int) (*model.ShopVoucher, error)
 	GetValidByUserIDAndShopID(dto.GetValidShopVoucherRequest, int) ([]*model.ShopVoucher, error)
+	GetVoucherByCodeAndShopId(voucherCode string, shopId int) (*dto.SellerVoucher, error)
+	ValidateVoucherDateRange(startFrom, expiredAt time.Time) error
+	Create(shopId int, request *dto.CreateVoucherRequest) (*model.ShopVoucher, error)
+	Update(voucher *model.ShopVoucher) (*model.ShopVoucher, error)
+	Delete(shopId int, voucherCode string) error
 }
 
 type shopVoucherRepositoryImpl struct {
@@ -99,6 +105,102 @@ func (r *shopVoucherRepositoryImpl) GetSellerVoucher(shopId int, request *dto.Se
 	}
 
 	return vouchers, totalRows, totalPages, nil
+}
+
+func (r *shopVoucherRepositoryImpl) GetVoucherByCodeAndShopId(voucherCode string, shopId int) (*dto.SellerVoucher, error) {
+	var voucher dto.SellerVoucher
+
+	now := time.Now()
+	query := r.db.Where("shop_id = ? AND code = ?", shopId, voucherCode)
+
+	query = query.Select("shop_vouchers.*, "+
+		"CASE WHEN start_from <= ? AND expired_at >= ? THEN ? "+
+		"WHEN start_from > ? THEN ? "+
+		"ELSE ? "+
+		"END as status", now, now, constant.VoucherPromotionStatusOngoing, now, constant.VoucherPromotionStatusUpcoming, constant.VoucherPromotionStatusExpired)
+
+	err := query.First(&voucher).Error
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, errs.ErrVoucherNotFound
+		}
+		return nil, err
+	}
+
+	return &voucher, nil
+}
+
+func (r *shopVoucherRepositoryImpl) Create(shopId int, request *dto.CreateVoucherRequest) (*model.ShopVoucher, error) {
+	tx := r.db.Begin()
+	defer tx.Commit()
+
+	voucher := &model.ShopVoucher{
+		Name:         request.Name,
+		Code:         request.Code,
+		Amount:       request.Amount,
+		Type:         request.Type,
+		IsHidden:     *request.IsHidden,
+		Description:  request.Description,
+		MinimumSpend: request.MinimumSpend,
+		UsedQuota:    0,
+		TotalQuota:   request.TotalQuota,
+		StartFrom:    request.StartFrom,
+		ExpiredAt:    request.ExpiredAt,
+		ShopId:       shopId,
+	}
+
+	err := tx.Create(voucher).Error
+	if err != nil {
+		tx.Rollback()
+		return nil, err
+	}
+
+	return voucher, nil
+}
+
+func (r *shopVoucherRepositoryImpl) Update(voucher *model.ShopVoucher) (*model.ShopVoucher, error) {
+	res := r.db.Where("code = ?", voucher.Code).Where("shop_id = ?", voucher.ShopId).Clauses(clause.Returning{}).Updates(voucher)
+	if err := res.Error; err != nil {
+		return nil, err
+	}
+
+	if res.RowsAffected < 1 {
+		return nil, errs.ErrVoucherNotFound
+	}
+
+	return voucher, nil
+}
+
+func (r *shopVoucherRepositoryImpl) Delete(shopId int, voucherCode string) error {
+	voucher, err := r.GetVoucherByCodeAndShopId(voucherCode, shopId)
+	if err != nil {
+		return err
+	}
+
+	if voucher.Status == constant.VoucherPromotionStatusOngoing || voucher.Status == constant.VoucherPromotionStatusExpired {
+		return errs.ErrVoucherStatusConflict
+	}
+
+	res := r.db.Delete(&model.ShopVoucher{}, "code = ? AND shop_id = ?", voucherCode, shopId)
+	if err := res.Error; err != nil {
+		return err
+	}
+
+	if res.RowsAffected == 0 {
+		return errs.ErrVoucherNotFound
+	}
+
+	return nil
+}
+
+func (r *shopVoucherRepositoryImpl) ValidateVoucherDateRange(startFrom, expiredAt time.Time) error {
+	now := time.Now().UTC()
+
+	if startFrom.After(expiredAt) || (startFrom.Before(now) && expiredAt.Before(now)) || expiredAt.Before(startFrom) {
+		return errs.ErrInvalidVoucherDateRange
+	}
+
+	return nil
 }
 
 func (r *shopVoucherRepositoryImpl) GetValidByIdAndUserId(id, userId int) (*model.ShopVoucher, error) {

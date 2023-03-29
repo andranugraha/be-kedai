@@ -379,3 +379,24 @@ func (h *Handler) CompletePasswordReset(c *gin.Context) {
 
 	response.Success(c, http.StatusOK, code.OK, "ok", nil)
 }
+
+func (h *Handler) AdminSignIn(c *gin.Context) {
+	var request dto.UserLogin
+	err := c.ShouldBindJSON(&request)
+	if err != nil {
+		response.ErrorValidator(c, http.StatusBadRequest, err)
+		return
+	}
+
+	res, err := h.userService.AdminSignIn(&request)
+	if err != nil {
+		if errors.Is(err, errs.ErrInvalidCredential) {
+			response.Error(c, http.StatusBadRequest, code.WRONG_PASSWORD, err.Error())
+			return
+		}
+		response.Error(c, http.StatusInternalServerError, code.INTERNAL_SERVER_ERROR, errs.ErrInternalServerError.Error())
+		return
+	}
+
+	response.Success(c, http.StatusOK, code.OK, "ok", res)
+}

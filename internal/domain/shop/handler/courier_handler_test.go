@@ -21,6 +21,115 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func TestAddCourier(t *testing.T) {
+	var (
+		courierName = "JNE"
+		courierCode = "jne"
+		service     = []dto.ShipmentCourierService{
+			{
+				Name: "REG",
+				Code: "REG",
+			},
+		}
+		courier = &dto.ShipmentCourierRequest{
+			Name:    courierName,
+			Code:    courierCode,
+			Service: service,
+		}
+		courierResponse = &model.Courier{
+			Name: courierName,
+			Code: courierCode,
+		}
+	)
+
+	type input struct {
+		request *dto.ShipmentCourierRequest
+		result  *model.Courier
+		err     error
+	}
+	type expected struct {
+		statusCode int
+		response   response.Response
+	}
+	type cases struct {
+		description string
+		input
+		expected
+	}
+
+	for _, tc := range []cases{
+		{
+			description: "should return courier with code 200 when success",
+			input: input{
+				result:  courierResponse,
+				request: courier,
+				err:     nil,
+			},
+			expected: expected{
+				statusCode: http.StatusOK,
+				response: response.Response{
+					Code:    code.OK,
+					Message: "success",
+					Data:    courierResponse,
+				},
+			},
+		},
+		{
+			description: "should return error with code 400 when request is invalid",
+			input: input{
+				result: nil,
+				request: &dto.ShipmentCourierRequest{
+					Name: "",
+					Code: "",
+				},
+				err: errs.ErrBadRequest,
+			},
+			expected: expected{
+				statusCode: http.StatusBadRequest,
+				response: response.Response{
+					Code:    code.BAD_REQUEST,
+					Message: "Service is required",
+				},
+			},
+		},
+		{
+			description: "should return error with code 500 when internal server error",
+			input: input{
+				result:  nil,
+				request: courier,
+				err:     errs.ErrInternalServerError,
+			},
+			expected: expected{
+				statusCode: http.StatusInternalServerError,
+				response: response.Response{
+					Code:    code.INTERNAL_SERVER_ERROR,
+					Message: errs.ErrInternalServerError.Error(),
+				},
+			},
+		},
+	} {
+		t.Run(tc.description, func(t *testing.T) {
+			expectedBody, _ := json.Marshal(tc.expected.response)
+			payload := test.MakeRequestBody(tc.input.request)
+			rec := httptest.NewRecorder()
+			c, _ := gin.CreateTestContext(rec)
+			c.Set("userId", 1)
+			mockService := new(mocks.CourierService)
+			mockService.On("AddCourier", tc.input.request).Return(tc.input.result, tc.input.err)
+			handler := handler.New(&handler.HandlerConfig{
+				CourierService: mockService,
+			})
+			c.Request, _ = http.NewRequest("POST", "/merketplaces/couriers", payload)
+
+			handler.AddCourier(c)
+
+			assert.Equal(t, tc.expected.statusCode, rec.Code)
+			assert.Equal(t, string(expectedBody), rec.Body.String())
+		})
+	}
+
+}
+
 func TestGetShipmentList(t *testing.T) {
 	var (
 		status  = "active"

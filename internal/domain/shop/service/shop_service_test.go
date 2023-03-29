@@ -17,16 +17,12 @@ import (
 )
 
 func TestGetShopRating(t *testing.T) {
+
 	var (
 		userId     = 1
 		shopRating = &dto.ShopRatingResponse{
 			ShopRating:  1,
 			ProductItem: []*dto.ProductItem{},
-		}
-		response = &commonDto.PaginationResponse{
-			Data: shopRating,
-			Limit: 10,
-			Page: 1,
 		}
 
 		filter = &dto.GetShopRatingFilterRequest{
@@ -42,11 +38,11 @@ func TestGetShopRating(t *testing.T) {
 	}
 
 	type expected struct {
-		shopRatingResponse  *dto.ShopRatingResponse
-		paginationResponse *commonDto.PaginationResponse
-		totalRows  int64
-		totalPage  int
-		err        error
+		shopRatingResponse *dto.ShopRatingResponse
+		paginationResponse *dto.GetShopRatingResponse
+		totalRows          int64
+		totalPage          int
+		err                error
 	}
 
 	type cases struct {
@@ -65,8 +61,16 @@ func TestGetShopRating(t *testing.T) {
 			},
 			expected: expected{
 				shopRatingResponse: shopRating,
-				paginationResponse: response,
-				err:        nil,
+				paginationResponse: &dto.GetShopRatingResponse{
+					ShopRating: 1,
+					Data: &commonDto.PaginationResponse{
+						Data:      []*dto.ProductItem{},
+						Limit:     10,
+						Page:      1,
+						TotalRows: 0,
+					},
+				},
+				err: nil,
 			},
 		},
 	} {
@@ -83,7 +87,6 @@ func TestGetShopRating(t *testing.T) {
 			assert.Equal(t, tc.expected.err, err)
 		})
 	}
-
 }
 
 func TestFindShopById(t *testing.T) {

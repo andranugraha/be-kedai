@@ -1,6 +1,8 @@
 package dto
 
 import (
+	"kedai/backend/be-kedai/internal/common/constant"
+	commonDto "kedai/backend/be-kedai/internal/common/dto"
 	"kedai/backend/be-kedai/internal/domain/shop/model"
 	stringsUtil "kedai/backend/be-kedai/internal/utils/strings"
 	"strings"
@@ -32,13 +34,18 @@ type ShopFinanceReleased struct {
 }
 
 func (req *FindShopRequest) Validate() {
+	if req.Limit < 1 {
+		req.Limit = constant.DefaultFindShopLimit
+	}
+
+	if req.Limit > 50 {
+		req.Limit = constant.MaxFindShopLimit
+	}
+
 	if req.Page < 1 {
 		req.Page = 1
 	}
 
-	if req.Limit < 1 {
-		req.Limit = 10
-	}
 }
 
 func (req *FindShopRequest) Offset() int {
@@ -95,23 +102,32 @@ type ProductItem struct {
 	ReviewMedia   []string `json:"reviewMedia"`
 }
 
+type GetShopRatingResponse struct {
+	ShopRating float64                       `json:"shopRating"`
+	Data       *commonDto.PaginationResponse `json:"data"`
+}
 type GetShopRatingFilterRequest struct {
 	Search    string `form:"search"`
-	StartDate string `form:"startDate" binding:"required_with=EndDate,omitempty,datetime=2006-01-02"`
-	EndDate   string `form:"endDate" binding:"required_with=StartDate,omitempty,datetime=2006-01-02"`
+	StartDate string `form:"startDate"`
+	EndDate   string `form:"endDate"`
 	Limit     int    `form:"limit"`
 	Page      int    `form:"page"`
 	Filter    int    `form:"filter"`
 }
 
 func (req *GetShopRatingFilterRequest) Validate() {
+	if req.Limit < 1 {
+		req.Limit = constant.DefaultShopRatingLimit
+	}
+
+	if req.Limit > 20 {
+		req.Limit = constant.MaxShopRatingLimit
+	}
+
 	if req.Page < 1 {
 		req.Page = 1
 	}
 
-	if req.Limit < 1 {
-		req.Limit = 5
-	}
 }
 
 const (

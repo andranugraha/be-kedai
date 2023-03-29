@@ -24,6 +24,8 @@ type ProductService interface {
 	AddViewCount(id int) error
 	UpdateProductActivation(userID int, code string, request *dto.UpdateProductActivationRequest) error
 	CreateProduct(userID int, request *dto.CreateProductRequest) (*model.Product, error)
+	GetRecommendedProducts(limit int) ([]*dto.ProductResponse, error)
+	UpdateProduct(userID int, code string, request *dto.CreateProductRequest) (*model.Product, error)
 }
 
 type productServiceImpl struct {
@@ -33,6 +35,7 @@ type productServiceImpl struct {
 	courierService        service.CourierService
 	courierServiceService service.CourierServiceService
 	categoryService       CategoryService
+	DiscussionService     DiscussionService
 }
 
 type ProductSConfig struct {
@@ -42,6 +45,7 @@ type ProductSConfig struct {
 	CourierService        service.CourierService
 	CourierServiceService service.CourierServiceService
 	CategoryService       CategoryService
+	DiscussionService     DiscussionService
 }
 
 func NewProductService(cfg *ProductSConfig) ProductService {
@@ -52,6 +56,7 @@ func NewProductService(cfg *ProductSConfig) ProductService {
 		shopService:           cfg.ShopService,
 		categoryService:       cfg.CategoryService,
 		courierServiceService: cfg.CourierServiceService,
+		DiscussionService:     cfg.DiscussionService,
 	}
 }
 
@@ -230,6 +235,39 @@ func (s *productServiceImpl) CreateProduct(userID int, request *dto.CreateProduc
 	}
 
 	product, err := s.productRepository.Create(shop.ID, request, couriers)
+	if err != nil {
+		return nil, err
+	}
+
+	return product, nil
+}
+
+func (s *productServiceImpl) GetRecommendedProducts(limit int) ([]*dto.ProductResponse, error) {
+
+	recommendedProducts, err := s.productRepository.GetRecommended(limit)
+	if err != nil {
+		return nil, err
+	}
+
+	return recommendedProducts, nil
+}
+
+func (s *productServiceImpl) UpdateProduct(userID int, code string, request *dto.CreateProductRequest) (*model.Product, error) {
+	if isProductNameValid := productUtils.ValidateProductName(request.Name); !isProductNameValid {
+		return nil, commonErr.ErrInvalidProductNamePattern
+	}
+
+	shop, err := s.shopService.FindShopByUserId(userID)
+	if err != nil {
+		return nil, err
+	}
+
+	couriers, err := s.courierServiceService.GetCourierServicesByCourierIDs(request.CourierIDs)
+	if err != nil {
+		return nil, err
+	}
+
+	product, err := s.productRepository.Update(shop.ID, code, request, couriers)
 	if err != nil {
 		return nil, err
 	}

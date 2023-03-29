@@ -14,6 +14,7 @@ type CourierService interface {
 	GetCouriersByProductID(productID int) ([]*model.Courier, error)
 	GetMatchingCouriersByShopIDAndProductIDs(*dto.MatchingProductCourierRequest) ([]*model.Courier, error)
 	ToggleShopCourier(userId, courierId int) (*dto.ToggleShopCourierResponse, error)
+	AddCourier(req *dto.ShipmentCourierRequest) (*model.Courier, error)
 }
 
 type courierServiceImpl struct {
@@ -56,6 +57,10 @@ func (s *courierServiceImpl) GetCourierByServiceIDAndShopID(courierID, shopID in
 
 func (s *courierServiceImpl) GetCouriersByProductID(productID int) ([]*model.Courier, error) {
 	return s.courierRepository.GetByProductID(productID)
+}
+
+func (s *courierServiceImpl) AddCourier(req *dto.ShipmentCourierRequest) (*model.Courier, error) {
+	return s.courierRepository.AddCourier(req)
 }
 
 func (s *courierServiceImpl) GetMatchingCouriersByShopIDAndProductIDs(req *dto.MatchingProductCourierRequest) ([]*model.Courier, error) {
