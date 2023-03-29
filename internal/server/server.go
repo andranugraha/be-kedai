@@ -220,7 +220,7 @@ func createRouter() *gin.Engine {
 	})
 	discussionService := productServicePackage.NewDiscussionService(&productServicePackage.DiscussionSConfig{
 		DiscussionRepository: discussionRepo,
-		ShopService: 				shopService,
+		ShopService:          shopService,
 	})
 
 	productRepo := productRepoPackage.NewProductRepository(&productRepoPackage.ProductRConfig{
@@ -384,7 +384,7 @@ func createRouter() *gin.Engine {
 		ProductService:           productService,
 		SkuService:               skuService,
 		TransactionReviewService: transactionReviewService,
-		DiscussionService: 			discussionService,
+		DiscussionService:        discussionService,
 	})
 
 	invoiceService := orderServicePackage.NewInvoiceService(&orderServicePackage.InvoiceSConfig{

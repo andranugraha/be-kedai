@@ -51,3 +51,37 @@ func (h *Handler) GetSellerPromotionById(c *gin.Context) {
 
 	response.Success(c, http.StatusOK, code.OK, "success", res)
 }
+
+func (h *Handler) CreateShopPromotion(c *gin.Context) {
+	var request dto.CreateShopPromotionRequest
+	err := c.ShouldBindJSON(&request)
+	if err != nil {
+		response.ErrorValidator(c, http.StatusBadRequest, err)
+		return
+	}
+
+	userID := c.GetInt("userId")
+
+	promotion, err := h.shopPromotionService.CreateShopPromotion(userID, &request)
+	if err != nil {
+		if errors.Is(err, commonErr.ErrShopNotFound) {
+			response.Error(c, http.StatusNotFound, code.SHOP_NOT_REGISTERED, err.Error())
+			return
+		}
+
+		if errors.Is(err, commonErr.ErrInvalidPromotionNamePattern) {
+			response.Error(c, http.StatusUnprocessableEntity, code.INVALID_PROMOTION_NAME, err.Error())
+			return
+		}
+
+		if errors.Is(err, commonErr.ErrInvalidPromotionDateRange) {
+			response.Error(c, http.StatusUnprocessableEntity, code.INVALID_DATE_RANGE, err.Error())
+			return
+		}
+
+		response.Error(c, http.StatusInternalServerError, code.INTERNAL_SERVER_ERROR, commonErr.ErrInternalServerError.Error())
+		return
+	}
+
+	response.Success(c, http.StatusCreated, code.CREATED, "promotion created", promotion)
+}

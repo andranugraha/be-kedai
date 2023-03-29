@@ -325,19 +325,19 @@ func (r *productRepositoryImpl) GetBySellerID(shopID int, request *dto.SellerPro
 		startPeriod := request.StartPeriod
 		endPeriod := request.EndPeriod
 
-		if startPeriod == "" {
-			startPeriod = now.Format(time.RFC3339)
+		if startPeriod.IsZero() {
+			startPeriod = now
 		}
 
-		if endPeriod == "" {
-			endPeriod = now.Format(time.RFC3339)
+		if endPeriod.IsZero() {
+			endPeriod = now
 		}
 
 		query = query.Where(`products.id NOT IN
 			(SELECT skus.product_id
 			FROM skus
 			JOIN product_promotions ON product_promotions.sku_id = skus.id
-			JOIN shop_promotions ON shop_promotions.id = product_promotions.promotion_id 
+			JOIN shop_promotions ON shop_promotions.id = product_promotions.promotion_id
 			WHERE shop_promotions.start_period <= ? AND shop_promotions.end_period >= ?)`,
 			startPeriod, endPeriod)
 	}
