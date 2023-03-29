@@ -246,11 +246,22 @@ func createRouter() *gin.Engine {
 		DiscussionService:     discussionService,
 	})
 
+	shopPromotionRepo := shopRepoPackage.NewShopPromotionRepository(&shopRepoPackage.ShopPromotionRConfig{
+		DB:                db,
+		ProductRepository: productRepo,
+	})
+
+	shopPromotionService := shopServicePackage.NewShopPromotionService(&shopServicePackage.ShopPromotionSConfig{
+		ShopPromotionRepository: shopPromotionRepo,
+		ShopService:             shopService,
+	})
+
 	shopHandler := shopHandlerPackage.New(&shopHandlerPackage.HandlerConfig{
-		ShopService:        shopService,
-		ShopVoucherService: shopVoucherService,
-		CourierService:     courierService,
-		ShopGuestService:   shopGuestService,
+		ShopService:          shopService,
+		ShopVoucherService:   shopVoucherService,
+		ShopPromotionService: shopPromotionService,
+		CourierService:       courierService,
+		ShopGuestService:     shopGuestService,
 	})
 
 	refundRequestService := orderServicePackage.NewRefundRequestService(&orderServicePackage.RefundRequestSConfig{

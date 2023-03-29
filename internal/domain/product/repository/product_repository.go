@@ -9,6 +9,7 @@ import (
 	model "kedai/backend/be-kedai/internal/domain/product/model"
 	shopModel "kedai/backend/be-kedai/internal/domain/shop/model"
 	"math"
+	"time"
 
 	"gorm.io/gorm"
 )
@@ -21,6 +22,7 @@ type ProductRepository interface {
 	GetRecommendationByCategory(productId int, categoryId int) ([]*dto.ProductResponse, error)
 	ProductSearchFiltering(req dto.ProductSearchFilterRequest, shopId int) ([]*dto.ProductResponse, int64, int, error)
 	GetBySellerID(shopID int, request *dto.SellerProductFilterRequest) ([]*dto.SellerProduct, int64, int, error)
+	GetWithPromotions(shopID int, promotionID int) ([]*dto.SellerProductPromotionResponse, error)
 	SearchAutocomplete(req dto.ProductSearchAutocomplete) ([]*dto.ProductResponse, error)
 	GetSellerProductByCode(shopID int, productCode string) (*model.Product, error)
 	AddViewCount(productID int) error
@@ -322,6 +324,28 @@ func (r *productRepositoryImpl) GetBySellerID(shopID int, request *dto.SellerPro
 		query = query.Where("skus.stock = 0")
 	}
 
+	if request.IsPromoted != nil && !*request.IsPromoted {
+		now := time.Now()
+		startPeriod := request.StartPeriod
+		endPeriod := request.EndPeriod
+
+		if startPeriod.IsZero() {
+			startPeriod = now
+		}
+
+		if endPeriod.IsZero() {
+			endPeriod = now
+		}
+
+		query = query.Where(`products.id NOT IN
+			(SELECT skus.product_id
+			FROM skus
+			JOIN product_promotions ON product_promotions.sku_id = skus.id
+			JOIN shop_promotions ON shop_promotions.id = product_promotions.promotion_id
+			WHERE shop_promotions.start_period <= ? AND shop_promotions.end_period >= ?)`,
+			startPeriod, endPeriod)
+	}
+
 	query = query.Session(&gorm.Session{})
 
 	err := query.Model(&model.Product{}).Distinct("products.id").Count(&totalRows).Error
@@ -354,6 +378,34 @@ func (r *productRepositoryImpl) GetBySellerID(shopID int, request *dto.SellerPro
 	}
 
 	return products, totalRows, totalPages, nil
+}
+
+func (r *productRepositoryImpl) GetWithPromotions(shopID int, promotionID int) ([]*dto.SellerProductPromotionResponse, error) {
+	var (
+		products []*dto.SellerProductPromotion
+	)
+
+	query := r.db.
+		Select(`products.id,
+			products.name,
+			products.code,
+			(SELECT url FROM product_medias pm WHERE pm.product_id = products.id LIMIT 1) AS image_url
+		`).
+		Joins(`
+		JOIN skus ON skus.product_id = products.id
+		JOIN product_promotions ON product_promotions.sku_id = skus.id
+	`).
+		Group("products.id").
+		Where("products.shop_id = ? AND product_promotions.promotion_id = ?", shopID, promotionID)
+
+	err := query.Preload("SKUs.Variants").Preload("SKUs.Promotion").Find(&products).Error
+	if err != nil {
+		return nil, err
+	}
+
+	convertedProducts := dto.ConvertSellerProductPromotions(products)
+
+	return convertedProducts, nil
 }
 
 func (r *productRepositoryImpl) SearchAutocomplete(req dto.ProductSearchAutocomplete) ([]*dto.ProductResponse, error) {

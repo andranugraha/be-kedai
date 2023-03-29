@@ -6322,6 +6322,321 @@ paths:
                   message:
                     type: string
                     example: "error message"
+  /v1/sellers/promotions:
+    get:
+      security:
+        - BearerAuth: []
+      tags:
+        - Seller
+      summary: Get seller's promotions
+      description: Get all seller's promotions
+      parameters:
+        - in: query
+          name: page
+          schema:
+            type: integer
+            default: 1
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            default: 10
+        - in: query
+          name: status
+          description: promotion status. Will return all promotions regardless of status when not given
+          schema:
+            type: string
+            enum: [ongoing, upcoming, expired]
+        - in: query
+          name: name
+          schema:
+            type: string
+            example: promotion name
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - type: object
+                    properties:
+                      code:
+                        example: "OK"
+                      message:
+                        example: "ok"
+                      data:
+                        allOf:
+                          - $ref: '#/components/schemas/PaginationResponse'
+                          - type: object
+                            properties:
+                              data:
+                                type: array
+                                items:
+                                  allOf:
+                                    - $ref: '#/components/schemas/ShopPromotion'
+                                    - type: object
+                                      properties:
+                                        products:
+                                          type: array
+                                          items:
+                                            allOf:
+                                              - $ref: '#/components/schemas/ProductWithPromotion'
+                                              - type: object
+                                                properties:
+                                                  skus:
+                                                    type: array
+                                                    items:
+                                                      allOf:
+                                                      - $ref: '#/components/schemas/SKU'
+                                                      - type: object
+                                                        properties:
+                                                          variants:
+                                                            type: array
+                                                            items:
+                                                              $ref: '#/components/schemas/Variant'
+                                                      - type: object
+                                                        properties:
+                                                          promotion:
+                                                            type: array
+                                                            items:
+                                                              $ref: '#/components/schemas/Promotion'
+                                              - type: object
+                                                properties:
+                                                  imageUrl:
+                                                    type: string
+                                                    example: "https://images.com"
+        '401':
+          description: unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "UNAUTHORIZED"
+                  message:
+                    type: string
+                    example: "invalid credential"
+        '404':
+          description: shop not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "SHOP_NOT_REGISTERED"
+                  message:
+                    type: string
+                    example: "shop not found"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "INTERNAL_SERVER_ERROR"
+                  message:
+                    type: string
+                    example: "error message"
+    post:
+      security:
+        - BearerAuth: []
+      tags:
+        - Seller
+      summary: Create seller's promotion
+      description: Create a new seller's promotion
+      requestBody:
+        $ref: '#/components/requestBodies/CreatePromotionBody'
+      responses:
+        '201':
+          description: promotion created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: CREATED
+                  message:
+                    type: string
+                    example: success message
+                  data:
+                    allOf:
+                      - $ref: '#/components/schemas/CreatePromotionResponse'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "BAD_REQUEST"
+                  message:
+                    type: string
+                    example: "error message"
+        '401':
+          description: unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "UNAUTHORIZED"
+                  message:
+                    type: string
+                    example: "invalid credential"
+        '404':
+          description: shop not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "NOT_FOUND"
+                  message:
+                    type: string
+                    example: "error message"
+        '422':
+          description: invalid voucher name pattern / invalid voucher date range
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "INVALID"
+                  message:
+                    type: string
+                    example: "error message"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "INTERNAL_SERVER_ERROR"
+                  message:
+                    type: string
+                    example: "error message"
+  /v1/sellers/promotions/{promotionId}:
+    get:
+      security:
+        - BearerAuth: []
+      tags:
+        - Seller
+      summary: Get seller's promotion detail
+      description: Get seller's promotions detail
+      parameters:
+        - in: path
+          name: promotionId
+          required: true
+          schema:
+            type: integer
+            example: 1
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - type: object
+                    properties:
+                      code:
+                        example: "OK"
+                      message:
+                        example: "ok"
+                      data:
+                        allOf:
+                          - $ref: '#/components/schemas/ShopPromotion'
+                          - type: object
+                            properties:
+                              products:
+                                type: array
+                                items:
+                                  allOf:
+                                    - $ref: '#/components/schemas/ProductWithPromotion'
+                                    - type: object
+                                      properties:
+                                        skus:
+                                          type: array
+                                          items:
+                                            allOf:
+                                            - $ref: '#/components/schemas/SKU'
+                                            - type: object
+                                              properties:
+                                                variants:
+                                                  type: array
+                                                  items:
+                                                    $ref: '#/components/schemas/Variant'
+                                            - type: object
+                                              properties:
+                                                promotion:
+                                                  type: array
+                                                  items:
+                                                    $ref: '#/components/schemas/Promotion'
+                                    - type: object
+                                      properties:
+                                        imageUrl:
+                                          type: string
+                                          example: "https://images.com"
+        '401':
+          description: unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "UNAUTHORIZED"
+                  message:
+                    type: string
+                    example: "invalid credential"
+        '404':
+          description: shop not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "SHOP_NOT_REGISTERED"
+                  message:
+                    type: string
+                    example: "shop not found"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "INTERNAL_SERVER_ERROR"
+                  message:
+                    type: string
+                    example: "error message"
   /v1/sellers/products/{code}:
     get:
       security:
@@ -7622,6 +7937,55 @@ paths:
                   message:
                     type: string
                     example: "error message"
+  /v1/admins/categories:
+    post:
+      security:
+        - BearerAuth: []
+      tags:
+        - Product
+      summary: Add product category
+      description: Add product category using product id and category id as request body
+      requestBody:
+        $ref: '#/components/requestBodies/AddProductCategoryRequestBody'
+      responses:
+        '201':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - type: object
+                    properties:
+                      code:
+                        example: 'OK'
+                      message:
+                        example: 'ok'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "BAD_REQUEST"
+                  message:
+                    type: string
+                    example: "error message"          
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "INTERNAL_SERVER_ERROR"
+                  message:
+                    type: string
+                    example: "error message"
   /v1/admins/orders/{orderId}/cancel-commit:
     post:
       security:
@@ -7675,6 +8039,68 @@ paths:
                   message:
                     type: string
                     example: "invoice not found"            
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "INTERNAL_SERVER_ERROR"
+                  message:
+                    type: string
+                    example: "error message"
+  /v1/admins/marketplaces/banners:
+    post:
+      tags:
+        - Admin
+      summary: Admin add banner
+      description: Admin add banner with imageUrl, startDate, and endDate
+      requestBody:
+        $ref: '#/components/requestBodies/BannerRequestBody'
+      responses:
+        '201':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - type: object
+                    properties:
+                      code:
+                        example: 'CREATED'
+                      message:
+                        example: 'success'
+                      data:
+                        $ref: '#/components/schemas/Banner'                            
+        '400':
+          description: bad request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "BAD_REQUEST"
+                  message:
+                    type: string
+                    example: "error message"  
+        '401':
+          description: unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "UNAUTHORIZED"
+                  message:
+                    type: string
+                    example: "error message"  
         '500':
           description: Internal server error
           content:
@@ -9093,6 +9519,21 @@ components:
         isIncoming:
           type: boolean
           example: false
+    Banner:
+      type: object
+      properties:
+        id:
+          type: number
+          example: 1
+        mediaUrl:
+          type: string
+          example: "https://a.com"
+        startDate:
+          type: string
+          example: "2023-03-23T09:36:13.333895Z"
+        endDate:
+          type: string
+          example: "2023-03-29T09:36:13.333895Z"
     UserListOfChat:
       type: object
       properties:
@@ -9308,6 +9749,63 @@ components:
         paymentMethodId:
           type: integer
           example: 2
+    ShopPromotion:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        name:
+          type: string
+          example: "voucher"
+        startPeriod:
+          type: string
+          example: "2006-03-19T00:00:00Z"
+        endPeriod:
+          type: string
+          example: "2006-03-19T00:00:00Z"
+        shopId:
+          type: number
+          example: 1
+        status:
+          type: string
+          example: "ongoing"
+    ProductWithPromotion:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        code:
+          type: string
+          example: "voucher"
+        name:
+          type: string
+          example: "2006-03-19T00:00:00Z"
+    Promotion:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        type:
+          type: string
+          example: "nominal"
+        amount:
+          type: integer
+          example: 5000
+        stock:
+          type: integer
+          example: 100
+        purchaseLimit:
+          type: integer
+          example: 100
+        skuId:
+          type: integer
+          example: 4
+        promotionId:
+          type: integer
+          example: 1
     MarketplaceBanner:
       type: object
       properties:
@@ -10151,7 +10649,101 @@ components:
           type: string
         description:
           type: string
+    CreatePromotionResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        name:
+          type: string
+          example: sebelas sebelas
+        startPeriod:
+          type: string
+          example: 2023-12-12T00:00:00Z
+        endPeriod:
+          type: string
+          example: 2023-12-12T00:00:00Z
+        shopId:
+          type: integer
+          example: 1
+        productPromotions:
+          $ref: '#/components/schemas/ProductPromotionResponse'
+    ProductPromotionResponse:
+      type: object
+      required:
+        - type
+        - amount
+        - stock
+        - isActive
+        - purchaseLimit
+        - skuId
+      properties:
+        id:
+          type: integer
+          example: 1
+        type:
+          type: string
+          minLength: 1
+          maxLength: 100
+          example: discount
+        amount:
+          type: integer
+          example: 11
+        stock:
+          type: integer
+          example: 111
+        isActive:
+          type: boolean
+          example: true
+        purchaseLimit:
+          type: integer
+          example: 1
+        skuId:
+          type: integer
+          example: 1
+        promotionId:
+          type: integer
+          example: 1
   requestBodies:
+    AddProductCategoryRequestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - name
+              - image_url
+            properties:
+              name:
+                type: string
+                example: "category name"
+              image_url:
+                type: string
+                example: "https://example.com/image.jpg"
+              children:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    name:
+                      type: string
+                      example: "category name"
+                    image_url:
+                      type: string
+                      example: "https://example.com/image.jpg"
+                    children:
+                      type: array
+                      items:
+                        type: object
+                        properties:
+                          name:
+                            type: string
+                            example: "category name"
+                          image_url:
+                            type: string
+                            example: "https://example.com/image.jpg"
     WalletBody:
       required: true
       content:
@@ -11111,6 +11703,26 @@ components:
               type:
                 type: string
                 example: "complaint"
+    BannerRequestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - mediaUrl
+              - startDate
+              - endDate
+            properties:
+              mediaUrl:
+                type: string
+                example: "https://a.com"
+              startDate:
+                type: string
+                example: "2023-03-23T09:36:13.333895Z"
+              endDate:
+                type: string
+                example: "2023-03-29T09:36:13.333895Z"
     UpdateVoucherBody:
       required: true
       content:
@@ -11167,6 +11779,63 @@ components:
                 type: string
                 format: datetime
                 example: "2006-01-02T00:00:00.000Z"
+    CreatePromotionBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - name
+              - startPeriod
+              - endPeriod
+              - productPromotions
+            properties:
+              name:
+                type: string
+                minLength: 1
+                maxLength: 100
+                example: sebelas sebelas
+              startPeriod:
+                type: string
+                example: 2023-12-12T00:00:00Z
+              endPeriod:
+                type: string
+                example: 2023-12-30T00:00:00Z
+              productPromotions:
+                type: array
+                items:
+                  $ref: '#/components/requestBodies/ProductPromotionBody'
+    ProductPromotionBody:
+      type: object
+      required:
+        - type
+        - amount
+        - stock
+        - isActive
+        - purchaseLimit
+        - skuId
+      properties:
+        type:
+          type: string
+          minLength: 1
+          maxLength: 100
+          example: discount
+        amount:
+          type: integer
+          example: 11
+        stock:
+          type: integer
+          example: 111
+        isActive:
+          type: boolean
+          example: true
+        purchaseLimit:
+          type: integer
+          example: 1
+        skuId:
+          type: integer
+          example: 1
   securitySchemes:
     BearerAuth:
       type: http
