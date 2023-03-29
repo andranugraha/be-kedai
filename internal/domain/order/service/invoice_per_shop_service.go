@@ -182,7 +182,7 @@ func (s *invoicePerShopServiceImpl) UpdateStatusToProcessing(userId int, orderId
 		Status:           status,
 	})
 
-	err = s.invoicePerShopRepo.UpdateStatusToDelivery(shop.ID, orderId, invoiceStatuses)
+	err = s.invoicePerShopRepo.UpdateStatusToProcessing(shop.ID, orderId, invoiceStatuses)
 	if err != nil {
 		return err
 	}
