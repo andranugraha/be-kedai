@@ -253,3 +253,38 @@ func (h *Handler) GetRecommendedProducts(c *gin.Context) {
 
 	response.Success(c, http.StatusOK, code.OK, "success", res)
 }
+
+func (h *Handler) UpdateProduct(c *gin.Context) {
+	var request dto.CreateProductRequest
+	err := c.ShouldBindJSON(&request)
+	if err != nil {
+		response.ErrorValidator(c, http.StatusBadRequest, err)
+		return
+	}
+
+	userID := c.GetInt("userId")
+	productCode := c.Param("code")
+
+	product, err := h.productService.UpdateProduct(userID, productCode, &request)
+	if err != nil {
+		if errors.Is(err, errs.ErrShopNotFound) {
+			response.Error(c, http.StatusNotFound, code.SHOP_NOT_REGISTERED, err.Error())
+			return
+		}
+
+		if errors.Is(err, errs.ErrSKUUsed) {
+			response.Error(c, http.StatusConflict, code.SKU_USED, err.Error())
+			return
+		}
+
+		if errors.Is(err, errs.ErrInvalidProductNamePattern) {
+			response.Error(c, http.StatusUnprocessableEntity, code.INVALID_PRODUCT_NAME, err.Error())
+			return
+		}
+
+		response.Error(c, http.StatusInternalServerError, code.INTERNAL_SERVER_ERROR, errs.ErrInternalServerError.Error())
+		return
+	}
+
+	response.Success(c, http.StatusOK, code.OK, "product updated", product)
+}
