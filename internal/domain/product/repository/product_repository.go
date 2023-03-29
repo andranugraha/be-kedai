@@ -325,12 +325,12 @@ func (r *productRepositoryImpl) GetBySellerID(shopID int, request *dto.SellerPro
 		startPeriod := request.StartPeriod
 		endPeriod := request.EndPeriod
 
-		if startPeriod == "" {
-			startPeriod = now.Format(time.RFC3339)
+		if startPeriod.IsZero() {
+			startPeriod = now
 		}
 
-		if endPeriod == "" {
-			endPeriod = now.Format(time.RFC3339)
+		if endPeriod.IsZero() {
+			endPeriod = now
 		}
 
 		query = query.Where(`products.id NOT IN
