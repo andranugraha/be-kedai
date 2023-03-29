@@ -352,3 +352,119 @@ func TestUpdatePromotion(t *testing.T) {
 		})
 	}
 }
+
+func TestCreatePromotion(t *testing.T) {
+	type input struct {
+		userID  int
+		request *dto.CreateShopPromotionRequest
+	}
+	type expected struct {
+		data *dto.CreateShopPromotionResponse
+		err  error
+	}
+
+	var (
+		userID        = 1
+		shopID        = 1
+		promotionName = "promotion name"
+	)
+
+	tests := []struct {
+		description string
+		input
+		beforeTest func(*mocks.ShopService, *mocks.ShopPromotionRepository)
+		expected
+	}{
+		{
+			description: "should return error when promotion name is invalid",
+			input: input{
+				userID: userID,
+				request: &dto.CreateShopPromotionRequest{
+					Name: "127.0.0.1",
+				},
+			},
+			beforeTest: func(ss *mocks.ShopService, pr *mocks.ShopPromotionRepository) {},
+			expected: expected{
+				data: nil,
+				err:  errs.ErrInvalidPromotionNamePattern,
+			},
+		},
+		{
+			description: "should return error when failed to get shop",
+			input: input{
+				userID: userID,
+				request: &dto.CreateShopPromotionRequest{
+					Name: promotionName,
+				},
+			},
+			beforeTest: func(ss *mocks.ShopService, pr *mocks.ShopPromotionRepository) {
+				ss.On("FindShopByUserId", userID).Return(nil, errors.New("failed to get shop"))
+			},
+			expected: expected{
+				data: nil,
+				err:  errors.New("failed to get shop"),
+			},
+		},
+		{
+			description: "should return error when failed to create voucher",
+			input: input{
+				userID: userID,
+				request: &dto.CreateShopPromotionRequest{
+					Name: promotionName,
+				},
+			},
+			beforeTest: func(ss *mocks.ShopService, pr *mocks.ShopPromotionRepository) {
+				ss.On("FindShopByUserId", userID).Return(&model.Shop{ID: shopID}, nil)
+				pr.On("Create", shopID, &dto.CreateShopPromotionRequest{Name: promotionName}).Return(nil, errors.New("failed to create promotion"))
+			},
+			expected: expected{
+				data: nil,
+				err:  errors.New("failed to create promotion"),
+			},
+		},
+		{
+			description: "should return created voucher when succeed to create voucher",
+			input: input{
+				userID: userID,
+				request: &dto.CreateShopPromotionRequest{
+					Name: promotionName,
+				},
+			},
+			beforeTest: func(ss *mocks.ShopService, pr *mocks.ShopPromotionRepository) {
+				ss.On("FindShopByUserId", userID).Return(&model.Shop{ID: shopID}, nil)
+				pr.On("Create", shopID, &dto.CreateShopPromotionRequest{Name: promotionName}).Return(&dto.CreateShopPromotionResponse{
+					ShopPromotion: model.ShopPromotion{
+						Name: promotionName,
+					},
+					ProductPromotions: []*productModel.ProductPromotion{},
+				}, nil)
+			},
+			expected: expected{
+				data: &dto.CreateShopPromotionResponse{
+					ShopPromotion: model.ShopPromotion{
+						Name: promotionName,
+					},
+					ProductPromotions: []*productModel.ProductPromotion{},
+				},
+				err: nil,
+			},
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.description, func(t *testing.T) {
+			shopService := mocks.NewShopService(t)
+			shopPromotionRepo := mocks.NewShopPromotionRepository(t)
+			tc.beforeTest(shopService, shopPromotionRepo)
+			shopPromotionService := service.NewShopPromotionService(&service.ShopPromotionSConfig{
+				ShopPromotionRepository: shopPromotionRepo,
+				ShopService:             shopService,
+			})
+
+			data, err := shopPromotionService.CreateShopPromotion(tc.input.userID, tc.input.request)
+
+			assert.Equal(t, tc.expected.data, data)
+			assert.Equal(t, tc.expected.err, err)
+		})
+	}
+}

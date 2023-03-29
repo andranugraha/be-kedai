@@ -429,3 +429,163 @@ func TestUpdatePromotion(t *testing.T) {
 		})
 	}
 }
+
+func TestCreatePromotion(t *testing.T) {
+	type input struct {
+		userID  int
+		request *dto.CreateShopPromotionRequest
+	}
+	type expected struct {
+		statusCode int
+		response   response.Response
+	}
+
+	var (
+		userID         = 1
+		promotionName  = "promotion name"
+		startPeriod, _ = time.Parse("2006-01-02", "2006-01-02")
+		endPeriod, _   = time.Parse("2006-01-02", "2006-01-14")
+
+		request = &dto.CreateShopPromotionRequest{
+			Name:              promotionName,
+			StartPeriod:       startPeriod,
+			EndPeriod:         endPeriod,
+			ProductPromotions: []*productDto.CreateProductPromotionRequest{},
+		}
+	)
+
+	tests := []struct {
+		description string
+		input
+		beforeTest func(*mocks.ShopPromotionService)
+		expected
+	}{
+		{
+			description: "should return error with status code 400 when given invalid request body",
+			input: input{
+				userID: userID,
+				request: &dto.CreateShopPromotionRequest{
+					Name:              "",
+					StartPeriod:       startPeriod,
+					EndPeriod:         endPeriod,
+					ProductPromotions: request.ProductPromotions,
+				},
+			},
+			beforeTest: func(vs *mocks.ShopPromotionService) {},
+			expected: expected{
+				statusCode: http.StatusBadRequest,
+				response: response.Response{
+					Code:    code.BAD_REQUEST,
+					Message: "Name is required",
+				},
+			},
+		},
+		{
+			description: "should return error with status code 404 when failed to get shop",
+			input: input{
+				userID:  userID,
+				request: request,
+			},
+			beforeTest: func(ps *mocks.ShopPromotionService) {
+				ps.On("CreateShopPromotion", userID, request).Return(nil, errs.ErrShopNotFound)
+			},
+			expected: expected{
+				statusCode: http.StatusNotFound,
+				response: response.Response{
+					Code:    code.SHOP_NOT_REGISTERED,
+					Message: errs.ErrShopNotFound.Error(),
+				},
+			},
+		},
+		{
+			description: "should return error with status code 422 when promotion name is invalid",
+			input: input{
+				userID:  userID,
+				request: request,
+			},
+			beforeTest: func(ps *mocks.ShopPromotionService) {
+				ps.On("CreateShopPromotion", userID, request).Return(nil, errs.ErrInvalidPromotionNamePattern)
+			},
+			expected: expected{
+				statusCode: http.StatusUnprocessableEntity,
+				response: response.Response{
+					Code:    code.INVALID_PROMOTION_NAME,
+					Message: errs.ErrInvalidPromotionNamePattern.Error(),
+				},
+			},
+		},
+		{
+			description: "should return error with status code 422 when promotion date range is invalid",
+			input: input{
+				userID:  userID,
+				request: request,
+			},
+			beforeTest: func(ps *mocks.ShopPromotionService) {
+				ps.On("CreateShopPromotion", userID, request).Return(nil, errs.ErrInvalidPromotionDateRange)
+			},
+			expected: expected{
+				statusCode: http.StatusUnprocessableEntity,
+				response: response.Response{
+					Code:    code.INVALID_DATE_RANGE,
+					Message: errs.ErrInvalidPromotionDateRange.Error(),
+				},
+			},
+		},
+		{
+			description: "should return error with status code 500 when failed to create promotion",
+			input: input{
+				userID:  userID,
+				request: request,
+			},
+			beforeTest: func(ps *mocks.ShopPromotionService) {
+				ps.On("CreateShopPromotion", userID, request).Return(nil, errors.New("failed to create promotion"))
+			},
+			expected: expected{
+				statusCode: http.StatusInternalServerError,
+				response: response.Response{
+					Code:    code.INTERNAL_SERVER_ERROR,
+					Message: errs.ErrInternalServerError.Error(),
+				},
+			},
+		},
+		{
+			description: "should return promotion data with status code 201 when succeed to create promotion",
+			input: input{
+				userID:  userID,
+				request: request,
+			},
+			beforeTest: func(vs *mocks.ShopPromotionService) {
+				vs.On("CreateShopPromotion", userID, request).Return(&dto.CreateShopPromotionResponse{}, nil)
+			},
+			expected: expected{
+				statusCode: http.StatusCreated,
+				response: response.Response{
+					Code:    code.CREATED,
+					Message: "promotion created",
+					Data:    &dto.CreateShopPromotionResponse{},
+				},
+			},
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.description, func(t *testing.T) {
+			expectedRes, _ := json.Marshal(tc.expected.response)
+			shopPromotionService := mocks.NewShopPromotionService(t)
+			tc.beforeTest(shopPromotionService)
+			rec := httptest.NewRecorder()
+			c, _ := gin.CreateTestContext(rec)
+			c.Set("userId", tc.input.userID)
+			h := handler.New(&handler.HandlerConfig{
+				ShopPromotionService: shopPromotionService,
+			})
+			payload := test.MakeRequestBody(tc.input.request)
+			c.Request = httptest.NewRequest(http.MethodPost, "/v1/sellers/promotions", payload)
+
+			h.CreateShopPromotion(c)
+
+			assert.Equal(t, tc.expected.statusCode, rec.Code)
+			assert.Equal(t, string(expectedRes), rec.Body.String())
+		})
+	}
+}

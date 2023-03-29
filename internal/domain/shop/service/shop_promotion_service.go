@@ -14,6 +14,7 @@ type ShopPromotionService interface {
 	GetSellerPromotions(userID int, request *dto.SellerPromotionFilterRequest) (*commonDto.PaginationResponse, error)
 	GetSellerPromotionById(userId int, promotionId int) (*dto.SellerPromotion, error)
 	UpdatePromotion(userId int, promotionId int, req dto.UpdateShopPromotionRequest) error
+	CreateShopPromotion(userID int, request *dto.CreateShopPromotionRequest) (*dto.CreateShopPromotionResponse, error)
 }
 
 type shopPromotionServiceImpl struct {
@@ -110,4 +111,22 @@ func (s *shopPromotionServiceImpl) UpdatePromotion(userId int, promotionId int, 
 	}
 
 	return s.shopPromotionRepository.Update(shopPromotion, productPromotions)
+}
+
+func (s *shopPromotionServiceImpl) CreateShopPromotion(userID int, request *dto.CreateShopPromotionRequest) (*dto.CreateShopPromotionResponse, error) {
+	if isPromotionNameValid := productUtils.ValidateProductName(request.Name); !isPromotionNameValid {
+		return nil, errs.ErrInvalidPromotionNamePattern
+	}
+
+	shop, err := s.shopService.FindShopByUserId(userID)
+	if err != nil {
+		return nil, err
+	}
+
+	promotion, err := s.shopPromotionRepository.Create(shop.ID, request)
+	if err != nil {
+		return nil, err
+	}
+
+	return promotion, nil
 }

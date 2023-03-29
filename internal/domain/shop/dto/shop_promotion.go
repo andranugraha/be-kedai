@@ -3,6 +3,7 @@ package dto
 import (
 	errs "kedai/backend/be-kedai/internal/common/error"
 	"kedai/backend/be-kedai/internal/domain/product/dto"
+	productModel "kedai/backend/be-kedai/internal/domain/product/model"
 	"kedai/backend/be-kedai/internal/domain/shop/model"
 	"time"
 )
@@ -53,4 +54,36 @@ func (p *UpdateShopPromotionRequest) ValidateDateRange() error {
 	}
 
 	return nil
+}
+
+type CreateShopPromotionRequest struct {
+	Name              string                               `json:"name" binding:"required,min=1,max=100"`
+	StartPeriod       time.Time                            `json:"startPeriod" binding:"required"`
+	EndPeriod         time.Time                            `json:"endPeriod" binding:"required"`
+	ProductPromotions []*dto.CreateProductPromotionRequest `json:"productPromotions" binding:"required,dive"`
+}
+
+func (p *CreateShopPromotionRequest) ValidateDateRange() error {
+	now := time.Now().UTC()
+
+	if p.StartPeriod.After(p.EndPeriod) || (p.StartPeriod.Before(now) && p.EndPeriod.Before(now)) || p.EndPeriod.Before(p.StartPeriod) {
+		return errs.ErrInvalidVoucherDateRange
+	}
+
+	return nil
+}
+
+type CreateShopPromotionResponse struct {
+	model.ShopPromotion
+	ProductPromotions []*productModel.ProductPromotion `json:"productPromotions"`
+}
+
+func (d *CreateShopPromotionRequest) GenerateShopPromotion() *model.ShopPromotion {
+	shopPromotion := &model.ShopPromotion{
+		Name:        d.Name,
+		StartPeriod: d.StartPeriod,
+		EndPeriod:   d.EndPeriod,
+	}
+
+	return shopPromotion
 }
