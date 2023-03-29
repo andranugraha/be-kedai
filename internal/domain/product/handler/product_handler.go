@@ -267,13 +267,12 @@ func (h *Handler) UpdateProduct(c *gin.Context) {
 
 	product, err := h.productService.UpdateProduct(userID, productCode, &request)
 	if err != nil {
-		if errors.Is(err, errs.ErrShopNotFound) {
-			response.Error(c, http.StatusNotFound, code.SHOP_NOT_REGISTERED, err.Error())
+		if errors.Is(err, errs.ErrProductDoesNotExist) {
+			response.Error(c, http.StatusNotFound, code.PRODUCT_NOT_EXISTS, err.Error())
 			return
 		}
-
-		if errors.Is(err, errs.ErrSKUUsed) {
-			response.Error(c, http.StatusConflict, code.SKU_USED, err.Error())
+		if errors.Is(err, errs.ErrShopNotFound) {
+			response.Error(c, http.StatusNotFound, code.SHOP_NOT_REGISTERED, err.Error())
 			return
 		}
 
