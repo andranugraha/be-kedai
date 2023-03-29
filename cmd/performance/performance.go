@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"kedai/backend/be-kedai/config"
 	"kedai/backend/be-kedai/internal/server"
 	"log"
 	"os"
@@ -52,7 +53,7 @@ func generateEndpointPath(r *gin.Engine, filename string) gin.RoutesInfo {
 
 func main() {
 	const REPORT_DIR = "./cmd/performance/report"
-	const BASE_URL = "https://dev-kedai-y3gq8.ondigitalocean.app"
+	var BASE_URL = config.GetEnv("BACKEND_URL", "https://dev-kedai-y3gq8.ondigitalocean.app")
 
 	// Clear previous reports
 	err := os.RemoveAll(REPORT_DIR)
