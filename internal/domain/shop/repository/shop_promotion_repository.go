@@ -3,6 +3,7 @@ package repository
 import (
 	"fmt"
 	"kedai/backend/be-kedai/internal/common/constant"
+	errs "kedai/backend/be-kedai/internal/common/error"
 	productModel "kedai/backend/be-kedai/internal/domain/product/model"
 	"kedai/backend/be-kedai/internal/domain/shop/dto"
 	"kedai/backend/be-kedai/internal/domain/shop/model"
@@ -167,4 +168,39 @@ func (r *shopPromotionRepositoryImpl) Create(shopID int, request *dto.CreateShop
 	}
 
 	return response, nil
+}
+
+func (r *shopPromotionRepositoryImpl) Delete(shopId int, promotionId int) error {
+	voucher, err := r.GetSellerPromotionById(shopId, promotionId)
+	if err != nil {
+		return err
+	}
+
+	if voucher.Status == constant.VoucherPromotionStatusOngoing || voucher.Status == constant.VoucherPromotionStatusExpired {
+		return errs.ErrPromotionStatusConflict
+	}
+
+	tx := r.db.Begin()
+	defer tx.Commit()
+
+	res := tx.Delete(&model.ShopPromotion{}, "id = ? AND shop_id = ?", promotionId, shopId)
+	if err := res.Error; err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	var productPromotions []*productModel.ProductPromotion
+	for _, productPromotion := range productPromotions {
+		res := tx.Delete(productPromotion, "promotion_id = ?", promotionId)
+		if err := res.Error; err != nil {
+			tx.Rollback()
+			return err
+		}
+	}
+
+	if res.RowsAffected == 0 {
+		return errs.ErrPromotionNotFound
+	}
+
+	return nil
 }
