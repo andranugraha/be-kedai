@@ -45,6 +45,11 @@ func (h *Handler) GetSellerPromotionById(c *gin.Context) {
 			return
 		}
 
+		if errors.Is(err, commonErr.ErrPromotionNotFound) {
+			response.Error(c, http.StatusNotFound, code.PROMOTION_NOT_FOUND, err.Error())
+			return
+		}
+
 		response.Error(c, http.StatusInternalServerError, code.INTERNAL_SERVER_ERROR, commonErr.ErrInternalServerError.Error())
 		return
 	}
@@ -67,6 +72,11 @@ func (h *Handler) UpdatePromotion(c *gin.Context) {
 	if err != nil {
 		if errors.Is(err, commonErr.ErrShopNotFound) {
 			response.Error(c, http.StatusNotFound, code.SHOP_NOT_REGISTERED, err.Error())
+			return
+		}
+
+		if errors.Is(err, commonErr.ErrPromotionNotFound) {
+			response.Error(c, http.StatusNotFound, code.PROMOTION_NOT_FOUND, err.Error())
 			return
 		}
 

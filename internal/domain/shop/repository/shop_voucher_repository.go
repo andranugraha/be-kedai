@@ -121,10 +121,7 @@ func (r *shopVoucherRepositoryImpl) GetVoucherByCodeAndShopId(voucherCode string
 
 	err := query.First(&voucher).Error
 	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, errs.ErrVoucherNotFound
-		}
-		return nil, err
+		return nil, errs.ErrVoucherNotFound
 	}
 
 	return &voucher, nil

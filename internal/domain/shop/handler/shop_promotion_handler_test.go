@@ -170,6 +170,22 @@ func TestGetSellerPromotionById(t *testing.T) {
 			},
 		},
 		{
+			description: "should return error with status code 404 when promotion not found",
+			input: input{
+				userID:      userID,
+				promotionId: promotionId,
+				mockData:    nil,
+				mockErr:     errs.ErrPromotionNotFound,
+			},
+			expected: expected{
+				statusCode: http.StatusNotFound,
+				response: response.Response{
+					Code:    code.PROMOTION_NOT_FOUND,
+					Message: errs.ErrPromotionNotFound.Error(),
+				},
+			},
+		},
+		{
 			description: "should return error with status code 500 when something went wrong",
 			input: input{
 				userID:      userID,

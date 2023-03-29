@@ -114,7 +114,7 @@ func (r *shopPromotionRepositoryImpl) GetSellerPromotionById(shopId int, promoti
 
 	err := query.First(&promotion).Error
 	if err != nil {
-		return nil, err
+		return nil, errs.ErrPromotionNotFound
 	}
 
 	products, err := r.productRepository.GetWithPromotions(shopId, promotion.ID)
