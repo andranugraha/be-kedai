@@ -135,6 +135,9 @@ func (r *userCartItemRepository) GetCartItemByIdAndUserId(id, userId int) (*mode
 		Joins("join skus s on cart_items.sku_id = s.id").
 		Joins("join products p on s.product_id = p.id").
 		Where("p.is_active = ?", true).
+		Preload("Sku", func(db *gorm.DB) *gorm.DB {
+			return db.Unscoped()
+		}).
 		Preload("Sku.Product.Bulk").Preload("Sku.Promotion").First(&cartItem).Error
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {

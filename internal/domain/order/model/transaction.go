@@ -8,11 +8,12 @@ import (
 )
 
 type Transaction struct {
-	ID         int     `json:"id"`
-	Price      float64 `json:"price"`
-	TotalPrice float64 `json:"totalPrice"`
-	Quantity   int     `json:"quantity"`
-	Note       *string `json:"note"`
+	ID               int     `json:"id"`
+	Price            float64 `json:"price"`
+	TotalPrice       float64 `json:"totalPrice"`
+	Quantity         int     `json:"quantity"`
+	PromotedQuantity int     `json:"promotedQuantity"`
+	Note             *string `json:"note"`
 
 	InvoiceID int `json:"invoiceId"`
 	UserID    int `json:"userId"`

@@ -13,6 +13,7 @@ import (
 	userDto "kedai/backend/be-kedai/internal/domain/user/dto"
 	userModel "kedai/backend/be-kedai/internal/domain/user/model"
 	"kedai/backend/be-kedai/mocks"
+	"log"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -80,7 +81,9 @@ func TestCheckout(t *testing.T) {
 							},
 						},
 						Promotion: &productModel.ProductPromotion{
-							Type: shopModel.PromotionTypePercent,
+							Type:          shopModel.PromotionTypePercent,
+							PurchaseLimit: 1,
+							Stock:         1,
 						},
 					},
 				}, nil).Once()
@@ -445,7 +448,9 @@ func TestCheckout(t *testing.T) {
 							},
 						},
 						Promotion: &productModel.ProductPromotion{
-							Type: shopModel.PromotionTypePercent,
+							Type:          shopModel.PromotionTypePercent,
+							Stock:         1,
+							PurchaseLimit: 1,
 						},
 					},
 				}, nil).Once()
@@ -479,6 +484,7 @@ func TestCheckout(t *testing.T) {
 
 			got, err := service.Checkout(test.req)
 
+			log.Println(err)
 			assert.Equal(t, test.want, got)
 			assert.ErrorIs(t, test.wantErr, err)
 		})
