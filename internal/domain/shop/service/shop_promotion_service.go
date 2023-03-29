@@ -77,7 +77,7 @@ func (s *shopPromotionServiceImpl) UpdatePromotion(userId int, promotionId int, 
 		return err
 	}
 
-	promotion, err := s.GetSellerPromotionById(shop.ID, promotionId)
+	promotion, err := s.shopPromotionRepository.GetSellerPromotionById(shop.ID, promotionId)
 	if err != nil {
 		return err
 	}
