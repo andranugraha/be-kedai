@@ -443,6 +443,40 @@ func TestCreateVoucher(t *testing.T) {
 			},
 		},
 		{
+			description: "should return error with status code 422 when voucher date range is invalid",
+			input: input{
+				userID:  userID,
+				request: request,
+			},
+			beforeTest: func(vs *mocks.ShopVoucherService) {
+				vs.On("CreateVoucher", userID, request).Return(nil, errs.ErrInvalidVoucherDateRange)
+			},
+			expected: expected{
+				statusCode: http.StatusUnprocessableEntity,
+				response: response.Response{
+					Code:    code.INVALID_DATE_RANGE,
+					Message: errs.ErrInvalidVoucherDateRange.Error(),
+				},
+			},
+		},
+		{
+			description: "should return error with status code 409 when duplicate voucher code",
+			input: input{
+				userID:  userID,
+				request: request,
+			},
+			beforeTest: func(vs *mocks.ShopVoucherService) {
+				vs.On("CreateVoucher", userID, request).Return(nil, errs.ErrDuplicateVoucherCode)
+			},
+			expected: expected{
+				statusCode: http.StatusConflict,
+				response: response.Response{
+					Code:    code.DUPLICATE_VOUCHER_CODE,
+					Message: errs.ErrDuplicateVoucherCode.Error(),
+				},
+			},
+		},
+		{
 			description: "should return error with status code 500 when failed to create voucher",
 			input: input{
 				userID:  userID,
@@ -549,16 +583,16 @@ func TestDeleteVoucher(t *testing.T) {
 			},
 		},
 		{
-			description: "response status conflict when error ErrVoucherIsOngoing when delete voucher",
+			description: "response status conflict when error ErrVoucherStatusConflict when delete voucher",
 			input: input{
 				beforeTests: func(vs *mocks.ShopVoucherService) {
-					vs.On("DeleteVoucher", 1, "BAKM12a").Return(errs.ErrVoucherIsOngoing)
+					vs.On("DeleteVoucher", 1, "BAKM12a").Return(errs.ErrVoucherStatusConflict)
 				},
 			},
 			expected: expected{
 				data: &response.Response{
-					Code:    code.VOUCHER_IS_ONGOING,
-					Message: errs.ErrVoucherIsOngoing.Error(),
+					Code:    code.VOUCHER_STATUS_CONFLICT,
+					Message: errs.ErrVoucherStatusConflict.Error(),
 				},
 				statusCode: http.StatusConflict,
 			},
@@ -621,6 +655,245 @@ func TestDeleteVoucher(t *testing.T) {
 			assert.Equal(t, tc.expected.statusCode, rec.Code)
 			assert.Equal(t, string(expectedJson), rec.Body.String())
 
+		})
+	}
+}
+
+func TestUpdateVoucher(t *testing.T) {
+	type input struct {
+		userID      int
+		voucherCode string
+		request     *dto.UpdateVoucherRequest
+	}
+	type expected struct {
+		statusCode int
+		response   response.Response
+	}
+
+	var (
+		userID      = 1
+		voucherCode = "voucher-code"
+
+		voucherName          = "voucher name"
+		amount       float64 = 15
+		voucherType          = "percent"
+		isHidden             = false
+		description          = "description"
+		minimumSpend float64 = 1000
+		totalQuota           = 10
+		startFrom, _         = time.Parse("2006-01-02", "2006-01-02")
+		expiredAt, _         = time.Parse("2006-01-02", "2006-01-14")
+
+		request = &dto.UpdateVoucherRequest{
+			Name:         voucherName,
+			Amount:       amount,
+			Type:         voucherType,
+			IsHidden:     &isHidden,
+			Description:  description,
+			MinimumSpend: minimumSpend,
+			TotalQuota:   totalQuota,
+			StartFrom:    startFrom,
+			ExpiredAt:    expiredAt,
+		}
+	)
+
+	tests := []struct {
+		description string
+		input
+		beforeTest func(*mocks.ShopVoucherService)
+		expected
+	}{
+		{
+			description: "should return error with status code 400 when given invalid request body",
+			input: input{
+				userID: userID,
+				request: &dto.UpdateVoucherRequest{
+					Name:         voucherName,
+					Amount:       amount,
+					Type:         voucherType,
+					IsHidden:     &isHidden,
+					Description:  "desc",
+					MinimumSpend: minimumSpend,
+					TotalQuota:   totalQuota,
+					StartFrom:    startFrom,
+					ExpiredAt:    expiredAt,
+				},
+			},
+			beforeTest: func(vs *mocks.ShopVoucherService) {},
+			expected: expected{
+				statusCode: http.StatusBadRequest,
+				response: response.Response{
+					Code:    code.BAD_REQUEST,
+					Message: "Description must be greater than 5",
+				},
+			},
+		},
+		{
+			description: "should return error with status code 404 when failed to get shop",
+			input: input{
+				userID:      userID,
+				voucherCode: voucherCode,
+				request:     request,
+			},
+			beforeTest: func(vs *mocks.ShopVoucherService) {
+				vs.On("UpdateVoucher", userID, voucherCode, request).Return(nil, errs.ErrShopNotFound)
+			},
+			expected: expected{
+				statusCode: http.StatusNotFound,
+				response: response.Response{
+					Code:    code.SHOP_NOT_REGISTERED,
+					Message: errs.ErrShopNotFound.Error(),
+				},
+			},
+		},
+		{
+			description: "should return error with status code 404 and VOUCHER_NOT_FOUND code when voucher is not found",
+			input: input{
+				userID:      userID,
+				voucherCode: voucherCode,
+				request:     request,
+			},
+			beforeTest: func(vs *mocks.ShopVoucherService) {
+				vs.On("UpdateVoucher", userID, voucherCode, request).Return(nil, errs.ErrVoucherNotFound)
+			},
+			expected: expected{
+				statusCode: http.StatusNotFound,
+				response: response.Response{
+					Code:    code.VOUCHER_NOT_FOUND,
+					Message: errs.ErrVoucherNotFound.Error(),
+				},
+			},
+		},
+		{
+			description: "should return error with status code 422 when voucher name is invalid",
+			input: input{
+				userID:      userID,
+				voucherCode: voucherCode,
+				request:     request,
+			},
+			beforeTest: func(vs *mocks.ShopVoucherService) {
+				vs.On("UpdateVoucher", userID, voucherCode, request).Return(nil, errs.ErrInvalidVoucherNamePattern)
+			},
+			expected: expected{
+				statusCode: http.StatusUnprocessableEntity,
+				response: response.Response{
+					Code:    code.INVALID_VOUCHER_NAME,
+					Message: errs.ErrInvalidVoucherNamePattern.Error(),
+				},
+			},
+		},
+		{
+			description: "should return error with status code 422 when voucher date range is invalid",
+			input: input{
+				userID:      userID,
+				voucherCode: voucherCode,
+				request:     request,
+			},
+			beforeTest: func(vs *mocks.ShopVoucherService) {
+				vs.On("UpdateVoucher", userID, voucherCode, request).Return(nil, errs.ErrInvalidVoucherDateRange)
+			},
+			expected: expected{
+				statusCode: http.StatusUnprocessableEntity,
+				response: response.Response{
+					Code:    code.INVALID_DATE_RANGE,
+					Message: errs.ErrInvalidVoucherDateRange.Error(),
+				},
+			},
+		},
+		{
+			description: "should return error with status code 422 when voucher fields cant be edited",
+			input: input{
+				userID:      userID,
+				voucherCode: voucherCode,
+				request:     request,
+			},
+			beforeTest: func(vs *mocks.ShopVoucherService) {
+				vs.On("UpdateVoucher", userID, voucherCode, request).Return(nil, errs.ErrVoucherFieldsCantBeEdited)
+			},
+			expected: expected{
+				statusCode: http.StatusUnprocessableEntity,
+				response: response.Response{
+					Code:    code.VOUCHER_FIELDS_CANT_BE_EDITED,
+					Message: errs.ErrVoucherFieldsCantBeEdited.Error(),
+				},
+			},
+		},
+		{
+			description: "should return error with status code 409 and VOUCHER_STATUS_CONFLICT code when voucher status conflict",
+			input: input{
+				userID:      userID,
+				voucherCode: voucherCode,
+				request:     request,
+			},
+			beforeTest: func(vs *mocks.ShopVoucherService) {
+				vs.On("UpdateVoucher", userID, voucherCode, request).Return(nil, errs.ErrVoucherStatusConflict)
+			},
+			expected: expected{
+				statusCode: http.StatusConflict,
+				response: response.Response{
+					Code:    code.VOUCHER_STATUS_CONFLICT,
+					Message: errs.ErrVoucherStatusConflict.Error(),
+				},
+			},
+		},
+		{
+			description: "should return error with status code 500 when something went wrong",
+			input: input{
+				userID:      userID,
+				voucherCode: voucherCode,
+				request:     request,
+			},
+			beforeTest: func(vs *mocks.ShopVoucherService) {
+				vs.On("UpdateVoucher", userID, voucherCode, request).Return(nil, errors.New("something went wrong"))
+			},
+			expected: expected{
+				statusCode: http.StatusInternalServerError,
+				response: response.Response{
+					Code:    code.INTERNAL_SERVER_ERROR,
+					Message: errs.ErrInternalServerError.Error(),
+				},
+			},
+		},
+		{
+			description: "should return success with status code 200 and UPDATED code when voucher is updated successfully",
+			input: input{
+				userID:      userID,
+				voucherCode: voucherCode,
+				request:     request,
+			},
+			beforeTest: func(vs *mocks.ShopVoucherService) {
+				vs.On("UpdateVoucher", userID, voucherCode, request).Return(&model.ShopVoucher{}, nil)
+			},
+			expected: expected{
+				statusCode: http.StatusOK,
+				response: response.Response{
+					Code:    code.UPDATED,
+					Message: "update voucher succesful",
+					Data:    &model.ShopVoucher{},
+				},
+			},
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.description, func(t *testing.T) {
+			expectedRes, _ := json.Marshal(tc.expected.response)
+			shopVoucherService := mocks.NewShopVoucherService(t)
+			tc.beforeTest(shopVoucherService)
+			rec := httptest.NewRecorder()
+			c, _ := gin.CreateTestContext(rec)
+			c.Set("userId", tc.input.userID)
+			c.AddParam("code", tc.input.voucherCode)
+			h := handler.New(&handler.HandlerConfig{
+				ShopVoucherService: shopVoucherService,
+			})
+			payload := test.MakeRequestBody(tc.input.request)
+			c.Request = httptest.NewRequest(http.MethodPut, fmt.Sprintf("/v1/sellers/vouchers?%s", tc.input.voucherCode), payload)
+
+			h.UpdateVoucher(c)
+
+			assert.Equal(t, tc.expected.statusCode, rec.Code)
+			assert.Equal(t, string(expectedRes), rec.Body.String())
 		})
 	}
 }

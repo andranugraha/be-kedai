@@ -13,7 +13,7 @@ type ShopPromotion struct {
 	EndPeriod   time.Time `json:"endPeriod"`
 	ShopId      int       `json:"shopId"`
 
-	Shop Shop `json:"shop" gorm:"foreignKey:ShopId"`
+	Shop *Shop `json:"shop,omitempty" gorm:"foreignKey:ShopId"`
 
 	gorm.Model `json:"-"`
 }

@@ -13,6 +13,7 @@ import (
 	userRepo "kedai/backend/be-kedai/internal/domain/user/repository"
 
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 type ShopVoucherRepository interface {
@@ -21,7 +22,9 @@ type ShopVoucherRepository interface {
 	GetValidByIdAndUserId(id, userId int) (*model.ShopVoucher, error)
 	GetValidByUserIDAndShopID(dto.GetValidShopVoucherRequest, int) ([]*model.ShopVoucher, error)
 	GetVoucherByCodeAndShopId(voucherCode string, shopId int) (*dto.SellerVoucher, error)
+	ValidateVoucherDateRange(startFrom, expiredAt time.Time) error
 	Create(shopId int, request *dto.CreateVoucherRequest) (*model.ShopVoucher, error)
+	Update(voucher *model.ShopVoucher) (*model.ShopVoucher, error)
 	Delete(shopId int, voucherCode string) error
 }
 
@@ -156,6 +159,19 @@ func (r *shopVoucherRepositoryImpl) Create(shopId int, request *dto.CreateVouche
 	return voucher, nil
 }
 
+func (r *shopVoucherRepositoryImpl) Update(voucher *model.ShopVoucher) (*model.ShopVoucher, error) {
+	res := r.db.Where("code = ?", voucher.Code).Where("shop_id = ?", voucher.ShopId).Clauses(clause.Returning{}).Updates(voucher)
+	if err := res.Error; err != nil {
+		return nil, err
+	}
+
+	if res.RowsAffected < 1 {
+		return nil, errs.ErrVoucherNotFound
+	}
+
+	return voucher, nil
+}
+
 func (r *shopVoucherRepositoryImpl) Delete(shopId int, voucherCode string) error {
 	voucher, err := r.GetVoucherByCodeAndShopId(voucherCode, shopId)
 	if err != nil {
@@ -163,7 +179,7 @@ func (r *shopVoucherRepositoryImpl) Delete(shopId int, voucherCode string) error
 	}
 
 	if voucher.Status == constant.VoucherPromotionStatusOngoing || voucher.Status == constant.VoucherPromotionStatusExpired {
-		return errs.ErrVoucherIsOngoing
+		return errs.ErrVoucherStatusConflict
 	}
 
 	res := r.db.Delete(&model.ShopVoucher{}, "code = ? AND shop_id = ?", voucherCode, shopId)
@@ -173,6 +189,16 @@ func (r *shopVoucherRepositoryImpl) Delete(shopId int, voucherCode string) error
 
 	if res.RowsAffected == 0 {
 		return errs.ErrVoucherNotFound
+	}
+
+	return nil
+}
+
+func (r *shopVoucherRepositoryImpl) ValidateVoucherDateRange(startFrom, expiredAt time.Time) error {
+	now := time.Now().UTC()
+
+	if startFrom.After(expiredAt) || (startFrom.Before(now) && expiredAt.Before(now)) || expiredAt.Before(startFrom) {
+		return errs.ErrInvalidVoucherDateRange
 	}
 
 	return nil

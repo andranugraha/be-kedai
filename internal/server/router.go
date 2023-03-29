@@ -35,6 +35,7 @@ func NewRouter(cfg *RouterConfig) *gin.Engine {
 	corsCfg.AllowMethods = []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"}
 	corsCfg.AllowHeaders = []string{"Content-Type", "Authorization"}
 	corsCfg.ExposeHeaders = []string{"Content-Length"}
+	corsCfg.AllowCredentials = true
 	r.Use(cors.New(corsCfg))
 
 	socketServer := connection.SocketIO()
@@ -117,6 +118,7 @@ func NewRouter(cfg *RouterConfig) *gin.Engine {
 				}
 				chat := userAuthenticated.Group("/chats")
 				{
+					chat.GET("/", cfg.ChatHandler.UserGetListOfChats)
 					chat.GET("/:shopSlug", cfg.ChatHandler.UserGetChat)
 					chat.POST("/:shopSlug", cfg.ChatHandler.UserAddChat)
 				}
@@ -225,12 +227,19 @@ func NewRouter(cfg *RouterConfig) *gin.Engine {
 			admin.POST("/login", cfg.UserHandler.AdminSignIn)
 			authenticated := admin.Group("", middleware.AdminJWTAuthorization, cfg.UserHandler.GetSession)
 			{
+				category := authenticated.Group("/categories")
+				{
+					category.POST("", cfg.ProductHandler.AddCategory)
+				}
 				authenticated.POST("/refund/:refundId", cfg.OrderHandler.RefundAdmin)
 				order := authenticated.Group("/orders")
 				{
 					order.POST("/:orderId/cancel-commit", cfg.OrderHandler.UpdateToCanceled)
 				}
-
+				marketplace := authenticated.Group("/marketplaces")
+				{
+					marketplace.POST("/banners", cfg.MarketplaceHandler.AddMarketplaceBanner)
+				}
 			}
 		}
 
@@ -270,7 +279,14 @@ func NewRouter(cfg *RouterConfig) *gin.Engine {
 					voucher.GET("", cfg.ShopHandler.GetSellerVoucher)
 					voucher.GET("/:code", cfg.ShopHandler.GetVoucherByCodeAndShopId)
 					voucher.POST("", cfg.ShopHandler.CreateVoucher)
+					voucher.PUT("/:code", cfg.ShopHandler.UpdateVoucher)
 					voucher.DELETE("/:code", cfg.ShopHandler.DeleteVoucher)
+				}
+
+				promotion := authenticated.Group("/promotions")
+				{
+					promotion.GET("", cfg.ShopHandler.GetSellerPromotions)
+					promotion.GET("/:promotionId", cfg.ShopHandler.GetSellerPromotionById)
 				}
 
 				order := authenticated.Group("/orders")
@@ -283,6 +299,7 @@ func NewRouter(cfg *RouterConfig) *gin.Engine {
 				}
 				chat := authenticated.Group("/chats")
 				{
+					chat.GET("/", cfg.ChatHandler.SellerGetListOfChats)
 					chat.GET("/:username", cfg.ChatHandler.SellerGetChat)
 					chat.POST("/:username", cfg.ChatHandler.SellerAddChat)
 				}
