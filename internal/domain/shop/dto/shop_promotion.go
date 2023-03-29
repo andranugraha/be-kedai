@@ -3,6 +3,7 @@ package dto
 import (
 	"kedai/backend/be-kedai/internal/domain/product/dto"
 	"kedai/backend/be-kedai/internal/domain/shop/model"
+	"time"
 )
 
 type SellerPromotion struct {
@@ -34,4 +35,11 @@ func (p *SellerPromotionFilterRequest) Validate() {
 
 func (p *SellerPromotionFilterRequest) Offset() int {
 	return (p.Page - 1) * p.Limit
+}
+
+type UpdateShopPromotionRequest struct {
+	Name              string                               `json:"name" binding:"min=1,max=100"`
+	StartPeriod       time.Time                            `json:"startPeriod"`
+	EndPeriod         time.Time                            `json:"endPeriod"`
+	ProductPromotions []*dto.UpdateProductPromotionRequest `json:"productPromotions"`
 }

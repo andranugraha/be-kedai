@@ -3,6 +3,7 @@ package repository
 import (
 	"fmt"
 	"kedai/backend/be-kedai/internal/common/constant"
+	productModel "kedai/backend/be-kedai/internal/domain/product/model"
 	"kedai/backend/be-kedai/internal/domain/shop/dto"
 	"kedai/backend/be-kedai/internal/domain/shop/model"
 	"math"
@@ -16,6 +17,7 @@ import (
 type ShopPromotionRepository interface {
 	GetSellerPromotions(shopId int, request *dto.SellerPromotionFilterRequest) ([]*dto.SellerPromotion, int64, int, error)
 	GetSellerPromotionById(shopId int, promotionId int) (*dto.SellerPromotion, error)
+	Update(shopPromotion *model.ShopPromotion, productPromotion *productModel.ProductPromotion) error
 }
 
 type shopPromotionRepositoryImpl struct {
@@ -120,4 +122,21 @@ func (r *shopPromotionRepositoryImpl) GetSellerPromotionById(shopId int, promoti
 	promotion.Product = products
 
 	return promotion, nil
+}
+
+func (r *shopPromotionRepositoryImpl) Update(shopPromotion *model.ShopPromotion, productPromotion *productModel.ProductPromotion) error {
+	tx := r.db.Begin()
+	defer tx.Commit()
+
+	err := tx.Where("id = ?", shopPromotion.ID).Where("shop_id = ?", shopPromotion.ShopId).Save(shopPromotion).Error
+	if err != nil {
+		return err
+	}
+
+	err = tx.Where("promotion_id = ?", shopPromotion.ID).Save(productPromotion).Error
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
