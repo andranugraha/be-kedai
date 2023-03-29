@@ -491,7 +491,7 @@ func (r *invoicePerShopRepositoryImpl) UpdateStatusToDelivery(shopId int, orderI
 	var duration time.Duration
 
 	query := r.db.Table("courier_services").
-		Select(`FLOOR(courier_services.min_duration - (courier_services.max_duration - courier_services.min_duration + 1) * RANDOM())`).
+		Select(`FLOOR(courier_services.min_duration + (courier_services.max_duration - courier_services.min_duration) * RANDOM())`).
 		Joins("JOIN invoice_per_shops ips ON ips.courier_service_id = courier_services.id").
 		Where("ips.id = ?", orderId)
 
