@@ -71,6 +71,7 @@ type CartItemResponse struct {
 	Length          float64                `json:"length"`
 	Width           float64                `json:"width"`
 	Height          float64                `json:"height"`
+	IsModified      bool                   `json:"isModified"`
 }
 
 func (r *GetCartItemsRequest) Validate() {
@@ -123,6 +124,7 @@ func (d *CartItemResponse) ToCartItemResponse(cartItem model.CartItem) {
 	d.Length = cartItem.Sku.Product.Length
 	d.Width = cartItem.Sku.Product.Width
 	d.Height = cartItem.Sku.Product.Height
+	d.IsModified = cartItem.Sku.DeletedAt.Valid
 
 	if cartItem.Sku.Promotion != nil {
 		d.PromotionType = cartItem.Sku.Promotion.Type
