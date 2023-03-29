@@ -1,6 +1,7 @@
 package service
 
 import (
+	"kedai/backend/be-kedai/internal/common/constant"
 	commonDto "kedai/backend/be-kedai/internal/common/dto"
 	errs "kedai/backend/be-kedai/internal/common/error"
 	productModel "kedai/backend/be-kedai/internal/domain/product/model"
@@ -83,12 +84,26 @@ func (s *shopPromotionServiceImpl) UpdatePromotion(userId int, promotionId int, 
 		return err
 	}
 
-	shopPromotion := &model.ShopPromotion{
-		ID:          promotion.ID,
-		Name:        req.Name,
-		StartPeriod: req.StartPeriod,
-		EndPeriod:   req.EndPeriod,
-		ShopId:      shop.ID,
+	var shopPromotion *model.ShopPromotion
+	if promotion.Status == constant.VoucherPromotionStatusOngoing {
+		if !req.StartPeriod.IsZero() {
+			return errs.ErrPromotionFieldsCantBeEdited
+		}
+		shopPromotion = &model.ShopPromotion{
+			ID:          promotion.ID,
+			Name:        req.Name,
+			StartPeriod: promotion.StartPeriod,
+			EndPeriod:   req.EndPeriod,
+			ShopId:      shop.ID,
+		}
+	} else {
+		shopPromotion = &model.ShopPromotion{
+			ID:          promotion.ID,
+			Name:        req.Name,
+			StartPeriod: req.StartPeriod,
+			EndPeriod:   req.EndPeriod,
+			ShopId:      shop.ID,
+		}
 	}
 
 	var productPromotions []*productModel.ProductPromotion

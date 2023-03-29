@@ -351,6 +351,24 @@ func TestUpdatePromotion(t *testing.T) {
 			},
 		},
 		{
+			description: "should return error with status code 422 when promotion fields cant be edited",
+			input: input{
+				userID:      userID,
+				promotionID: promotionID,
+				request:     request,
+			},
+			beforeTest: func(vs *mocks.ShopPromotionService) {
+				vs.On("UpdatePromotion", userID, promotionID, request).Return(errs.ErrPromotionFieldsCantBeEdited)
+			},
+			expected: expected{
+				statusCode: http.StatusUnprocessableEntity,
+				response: response.Response{
+					Code:    code.PROMOTION_FIELDS_CANT_BE_EDITED,
+					Message: errs.ErrPromotionFieldsCantBeEdited.Error(),
+				},
+			},
+		},
+		{
 			description: "should return error with status code 422 when voucher date range is invalid",
 			input: input{
 				userID:      userID,

@@ -8,4 +8,5 @@ var (
 	ErrPromotionNotFound           = errors.New("promotion not found")
 	ErrProductPromotionNotFound    = errors.New("product promotion not found")
 	ErrInvalidProductPromotionID   = errors.New("invalid product promotion ID")
+	ErrPromotionFieldsCantBeEdited = errors.New("promotion fields cant be edited")
 )

@@ -89,6 +89,10 @@ func (h *Handler) UpdatePromotion(c *gin.Context) {
 			response.Error(c, http.StatusUnprocessableEntity, code.INVALID_DATE_RANGE, err.Error())
 			return
 		}
+		if errors.Is(err, commonErr.ErrPromotionFieldsCantBeEdited) {
+			response.Error(c, http.StatusUnprocessableEntity, code.PROMOTION_FIELDS_CANT_BE_EDITED, err.Error())
+			return
+		}
 
 		response.Error(c, http.StatusInternalServerError, code.INTERNAL_SERVER_ERROR, commonErr.ErrInternalServerError.Error())
 		return
