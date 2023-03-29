@@ -525,9 +525,11 @@ func (r *productRepositoryImpl) Create(shopID int, request *dto.CreateProductReq
 		}
 	}
 
-	err = r.productVariantRepository.Create(tx, productVariants)
-	if err != nil {
-		return nil, err
+	if len(productVariants) > 0 {
+		err = r.productVariantRepository.Create(tx, productVariants)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	product.VariantGroup = variantGroups
