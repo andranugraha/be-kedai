@@ -65,6 +65,12 @@ func (r *invoiceRepositoryImpl) Create(invoice *model.Invoice) (*model.Invoice, 
 				tx.Rollback()
 				return nil, err
 			}
+
+			for _, variant := range transaction.Sku.Variants {
+				transaction.Variants = append(transaction.Variants, model.TransactionVariant{
+					Value: variant.Value,
+				})
+			}
 		}
 	}
 

@@ -21,9 +21,10 @@ func (InvoicePerShopDetail) TableName() string {
 
 type TransactionItem struct {
 	model.Transaction
-	ProductName string            `json:"productName"`
-	ImageUrl    string            `json:"imageUrl"`
-	Sku         *productModel.Sku `json:"sku"`
+	ProductName string                      `json:"productName"`
+	ImageUrl    string                      `json:"imageUrl"`
+	Sku         *productModel.Sku           `json:"sku"`
+	Variants    []*model.TransactionVariant `json:"variants,omitempty" gorm:"foreignKey:TransactionID"`
 }
 
 func (TransactionItem) TableName() string {
