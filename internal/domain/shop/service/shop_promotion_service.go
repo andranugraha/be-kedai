@@ -91,15 +91,22 @@ func (s *shopPromotionServiceImpl) UpdatePromotion(userId int, promotionId int, 
 	}
 
 	var productPromotions []*productModel.ProductPromotion
-	for _, pp := range req.ProductPromotions {
-		productPromotions = append(productPromotions, &productModel.ProductPromotion{
-			Type:          pp.Type,
-			Amount:        pp.Amount,
-			Stock:         pp.Stock,
-			PurchaseLimit: pp.PurchaseLimit,
-			SkuId:         pp.PurchaseLimit,
-			PromotionId:   promotion.ID,
-		})
+	for _, products := range promotion.Product {
+		for _, skus := range products.SKUs {
+			productPromotionID := skus.Promotion.ID
+
+			for _, pp := range req.ProductPromotions {
+				productPromotions = append(productPromotions, &productModel.ProductPromotion{
+					ID:            productPromotionID,
+					Type:          pp.Type,
+					Amount:        pp.Amount,
+					Stock:         pp.Stock,
+					PurchaseLimit: pp.PurchaseLimit,
+					SkuId:         pp.PurchaseLimit,
+					PromotionId:   promotion.ID,
+				})
+			}
+		}
 	}
 
 	return s.shopPromotionRepository.Update(shopPromotion, productPromotions)
