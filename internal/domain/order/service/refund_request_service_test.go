@@ -105,3 +105,57 @@ func TestApproveRejectRefund(t *testing.T) {
 		})
 	}
 }
+
+
+func TestRefundAdmin(t *testing.T){
+	type input struct {
+		requestRefundId int
+	}
+
+	type expected struct {
+		err error
+	}
+
+	cases := []struct {
+		description string
+		input       input
+		expected    expected
+	}{
+		{
+			description: "should return error when fails to update refund status",
+			input: input{
+				requestRefundId: 1,
+			},
+			expected: expected{
+				err: errors.New("refund request not found"),
+			},
+		},
+		{
+			description: "should return success when refund status updated",
+			input: input{
+				requestRefundId: 1,
+			},
+			expected: expected{
+				err: nil,
+			},
+		},
+
+	}
+
+	for _, c := range cases {
+		t.Run(c.description, func(t *testing.T) {
+			mockRefundRequestRepo := new(mocks.RefundRequestRepository)
+
+			mockRefundRequestRepo.On("RefundAdmin", 1).Return(c.expected.err)
+
+			refundRequestService := service.NewRefundRequestService(&service.RefundRequestSConfig{
+				RefundRequestRepo: mockRefundRequestRepo,
+			})
+
+			err := refundRequestService.RefundAdmin(c.input.requestRefundId)
+
+			assert.Equal(t, c.expected.err, err)
+		})
+	}
+}
+

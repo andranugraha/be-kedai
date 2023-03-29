@@ -43,14 +43,8 @@ func (s *refundRequestServiceImpl) UpdateRefundStatus(userId int, invoiceId int,
 	return nil
 }
 
-
 func (s *refundRequestServiceImpl) RefundAdmin(requestRefundId int) error {
-	
-	err := s.refundRequestRepo.RefundAdmin(requestRefundId)
 
-	if err != nil {
-		return err
-	}
+	return s.refundRequestRepo.RefundAdmin(requestRefundId)
 
-	return nil
 }
