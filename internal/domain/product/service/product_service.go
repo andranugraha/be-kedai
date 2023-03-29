@@ -25,6 +25,7 @@ type ProductService interface {
 	UpdateProductActivation(userID int, code string, request *dto.UpdateProductActivationRequest) error
 	CreateProduct(userID int, request *dto.CreateProductRequest) (*model.Product, error)
 	GetRecommendedProducts(limit int) ([]*dto.ProductResponse, error)
+	UpdateProduct(userID int, code string, request *dto.CreateProductRequest) (*model.Product, error)
 }
 
 type productServiceImpl struct {
@@ -249,4 +250,27 @@ func (s *productServiceImpl) GetRecommendedProducts(limit int) ([]*dto.ProductRe
 	}
 
 	return recommendedProducts, nil
+}
+
+func (s *productServiceImpl) UpdateProduct(userID int, code string, request *dto.CreateProductRequest) (*model.Product, error) {
+	if isProductNameValid := productUtils.ValidateProductName(request.Name); !isProductNameValid {
+		return nil, commonErr.ErrInvalidProductNamePattern
+	}
+
+	shop, err := s.shopService.FindShopByUserId(userID)
+	if err != nil {
+		return nil, err
+	}
+
+	couriers, err := s.courierServiceService.GetCourierServicesByCourierIDs(request.CourierIDs)
+	if err != nil {
+		return nil, err
+	}
+
+	product, err := s.productRepository.Update(shop.ID, code, request, couriers)
+	if err != nil {
+		return nil, err
+	}
+
+	return product, nil
 }
