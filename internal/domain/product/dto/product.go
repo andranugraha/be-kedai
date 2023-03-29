@@ -95,19 +95,6 @@ func (r *SellerProductFilterRequest) Validate() {
 		r.Page = 1
 	}
 
-	now := time.Now().UTC()
-
-	minDate := now.AddDate(-1, 0, 0) // One year ago from now
-	maxDate := now
-
-	if r.StartPeriod.Before(minDate) || r.StartPeriod.After(maxDate) {
-		r.StartPeriod = minDate
-	}
-
-	if r.EndPeriod.Before(minDate) || r.EndPeriod.After(maxDate) {
-		r.EndPeriod = maxDate
-	}
-
 	if r.StartPeriod.After(r.EndPeriod) {
 		r.StartPeriod = r.EndPeriod
 	} else if r.EndPeriod.Before(r.StartPeriod) {
