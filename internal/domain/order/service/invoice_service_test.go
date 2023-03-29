@@ -13,7 +13,6 @@ import (
 	userDto "kedai/backend/be-kedai/internal/domain/user/dto"
 	userModel "kedai/backend/be-kedai/internal/domain/user/model"
 	"kedai/backend/be-kedai/mocks"
-	"log"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -484,7 +483,6 @@ func TestCheckout(t *testing.T) {
 
 			got, err := service.Checkout(test.req)
 
-			log.Println(err)
 			assert.Equal(t, test.want, got)
 			assert.ErrorIs(t, test.wantErr, err)
 		})
