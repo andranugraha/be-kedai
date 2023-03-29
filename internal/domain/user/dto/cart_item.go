@@ -75,6 +75,7 @@ type CartItemResponse struct {
 	BulkPrice       *productModel.ProductBulkPrice `json:"bulkPrice,omitempty"`
 	PurchaseLimit   int                            `json:"purchaseLimit"`
 	PromotionStock  int                            `json:"promotionStock"`
+	IsModified      bool                           `json:"isModified"`
 }
 
 func (r *GetCartItemsRequest) Validate() {
@@ -131,6 +132,7 @@ func (d *CartItemResponse) ToCartItemResponse(cartItem model.CartItem) {
 	d.Length = cartItem.Sku.Product.Length
 	d.Width = cartItem.Sku.Product.Width
 	d.Height = cartItem.Sku.Product.Height
+	d.IsModified = cartItem.Sku.DeletedAt.Valid
 
 	if cartItem.Sku.Product.Bulk != nil {
 		d.BulkPrice = cartItem.Sku.Product.Bulk
