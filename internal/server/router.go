@@ -35,6 +35,7 @@ func NewRouter(cfg *RouterConfig) *gin.Engine {
 	corsCfg.AllowMethods = []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"}
 	corsCfg.AllowHeaders = []string{"Content-Type", "Authorization"}
 	corsCfg.ExposeHeaders = []string{"Content-Length"}
+	corsCfg.AllowCredentials = true
 	r.Use(cors.New(corsCfg))
 
 	socketServer := connection.SocketIO()
@@ -226,11 +227,18 @@ func NewRouter(cfg *RouterConfig) *gin.Engine {
 			admin.POST("/login", cfg.UserHandler.AdminSignIn)
 			authenticated := admin.Group("", middleware.AdminJWTAuthorization, cfg.UserHandler.GetSession)
 			{
+				category := authenticated.Group("/categories")
+				{
+					category.POST("", cfg.ProductHandler.AddCategory)
+				}
 				order := authenticated.Group("/orders")
 				{
 					order.POST("/:orderId/cancel-commit", cfg.OrderHandler.UpdateToCanceled)
 				}
-
+				marketplace := authenticated.Group("/marketplaces")
+				{
+					marketplace.POST("/banners", cfg.MarketplaceHandler.AddMarketplaceBanner)
+				}
 			}
 		}
 

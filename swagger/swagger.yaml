@@ -7846,6 +7846,55 @@ paths:
                   message:
                     type: string
                     example: "error message"
+  /v1/admins/categories:
+    post:
+      security:
+        - BearerAuth: []
+      tags:
+        - Product
+      summary: Add product category
+      description: Add product category using product id and category id as request body
+      requestBody:
+        $ref: '#/components/requestBodies/AddProductCategoryRequestBody'
+      responses:
+        '201':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - type: object
+                    properties:
+                      code:
+                        example: 'OK'
+                      message:
+                        example: 'ok'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "BAD_REQUEST"
+                  message:
+                    type: string
+                    example: "error message"          
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "INTERNAL_SERVER_ERROR"
+                  message:
+                    type: string
+                    example: "error message"
   /v1/admins/orders/{orderId}/cancel-commit:
     post:
       security:
@@ -7899,6 +7948,68 @@ paths:
                   message:
                     type: string
                     example: "invoice not found"            
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "INTERNAL_SERVER_ERROR"
+                  message:
+                    type: string
+                    example: "error message"
+  /v1/admins/marketplaces/banners:
+    post:
+      tags:
+        - Admin
+      summary: Admin add banner
+      description: Admin add banner with imageUrl, startDate, and endDate
+      requestBody:
+        $ref: '#/components/requestBodies/BannerRequestBody'
+      responses:
+        '201':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - type: object
+                    properties:
+                      code:
+                        example: 'CREATED'
+                      message:
+                        example: 'success'
+                      data:
+                        $ref: '#/components/schemas/Banner'                            
+        '400':
+          description: bad request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "BAD_REQUEST"
+                  message:
+                    type: string
+                    example: "error message"  
+        '401':
+          description: unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "UNAUTHORIZED"
+                  message:
+                    type: string
+                    example: "error message"  
         '500':
           description: Internal server error
           content:
@@ -9317,6 +9428,21 @@ components:
         isIncoming:
           type: boolean
           example: false
+    Banner:
+      type: object
+      properties:
+        id:
+          type: number
+          example: 1
+        mediaUrl:
+          type: string
+          example: "https://a.com"
+        startDate:
+          type: string
+          example: "2023-03-23T09:36:13.333895Z"
+        endDate:
+          type: string
+          example: "2023-03-29T09:36:13.333895Z"
     UserListOfChat:
       type: object
       properties:
@@ -10433,6 +10559,44 @@ components:
         description:
           type: string
   requestBodies:
+    AddProductCategoryRequestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - name
+              - image_url
+            properties:
+              name:
+                type: string
+                example: "category name"
+              image_url:
+                type: string
+                example: "https://example.com/image.jpg"
+              children:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    name:
+                      type: string
+                      example: "category name"
+                    image_url:
+                      type: string
+                      example: "https://example.com/image.jpg"
+                    children:
+                      type: array
+                      items:
+                        type: object
+                        properties:
+                          name:
+                            type: string
+                            example: "category name"
+                          image_url:
+                            type: string
+                            example: "https://example.com/image.jpg"
     WalletBody:
       required: true
       content:
@@ -11392,6 +11556,26 @@ components:
               type:
                 type: string
                 example: "complaint"
+    BannerRequestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - mediaUrl
+              - startDate
+              - endDate
+            properties:
+              mediaUrl:
+                type: string
+                example: "https://a.com"
+              startDate:
+                type: string
+                example: "2023-03-23T09:36:13.333895Z"
+              endDate:
+                type: string
+                example: "2023-03-29T09:36:13.333895Z"
     UpdateVoucherBody:
       required: true
       content:
