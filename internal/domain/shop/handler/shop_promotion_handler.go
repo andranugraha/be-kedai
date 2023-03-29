@@ -85,3 +85,31 @@ func (h *Handler) CreateShopPromotion(c *gin.Context) {
 
 	response.Success(c, http.StatusCreated, code.CREATED, "promotion created", promotion)
 }
+
+func (h *Handler) DeletePromotion(c *gin.Context) {
+	userId := c.GetInt("userId")
+	promotionId, _ := strconv.Atoi(c.Param("promotionId"))
+
+	err := h.shopPromotionService.DeletePromotion(userId, promotionId)
+	if err != nil {
+		if errors.Is(err, commonErr.ErrShopNotFound) {
+			response.Error(c, http.StatusNotFound, code.SHOP_NOT_REGISTERED, err.Error())
+			return
+		}
+
+		if errors.Is(err, commonErr.ErrPromotionNotFound) {
+			response.Error(c, http.StatusNotFound, code.PROMOTION_NOT_FOUND, err.Error())
+			return
+		}
+
+		if errors.Is(err, commonErr.ErrPromotionStatusConflict) {
+			response.Error(c, http.StatusConflict, code.VOUCHER_STATUS_CONFLICT, err.Error())
+			return
+		}
+
+		response.Error(c, http.StatusInternalServerError, code.INTERNAL_SERVER_ERROR, commonErr.ErrInternalServerError.Error())
+		return
+	}
+
+	response.Success(c, http.StatusOK, code.OK, "success", nil)
+}
