@@ -231,11 +231,18 @@ func NewRouter(cfg *RouterConfig) *gin.Engine {
 			admin.POST("/login", cfg.UserHandler.AdminSignIn)
 			authenticated := admin.Group("", middleware.AdminJWTAuthorization, cfg.UserHandler.GetSession)
 			{
+				category := authenticated.Group("/categories")
+				{
+					category.POST("", cfg.ProductHandler.AddCategory)
+				}
 				order := authenticated.Group("/orders")
 				{
 					order.POST("/:orderId/cancel-commit", cfg.OrderHandler.UpdateToCanceled)
 				}
-
+				marketplace := authenticated.Group("/marketplaces")
+				{
+					marketplace.POST("/banners", cfg.MarketplaceHandler.AddMarketplaceBanner)
+				}
 			}
 		}
 
@@ -277,6 +284,12 @@ func NewRouter(cfg *RouterConfig) *gin.Engine {
 					voucher.POST("", cfg.ShopHandler.CreateVoucher)
 					voucher.PUT("/:code", cfg.ShopHandler.UpdateVoucher)
 					voucher.DELETE("/:code", cfg.ShopHandler.DeleteVoucher)
+				}
+
+				promotion := authenticated.Group("/promotions")
+				{
+					promotion.GET("", cfg.ShopHandler.GetSellerPromotions)
+					promotion.GET("/:promotionId", cfg.ShopHandler.GetSellerPromotionById)
 				}
 
 				order := authenticated.Group("/orders")

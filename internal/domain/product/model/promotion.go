@@ -15,7 +15,7 @@ type ProductPromotion struct {
 	SkuId         int     `json:"skuId"`
 	PromotionId   int     `json:"promotionId"`
 
-	ShopPromotion shopModel.ShopPromotion `json:"shopPromotion" gorm:"foreignKey:PromotionId"`
+	ShopPromotion *shopModel.ShopPromotion `json:"shopPromotion,omitempty" gorm:"foreignKey:PromotionId"`
 
 	gorm.Model `json:"-"`
 }
