@@ -125,6 +125,10 @@ func (r *shopPromotionRepositoryImpl) GetSellerPromotionById(shopId int, promoti
 }
 
 func (r *shopPromotionRepositoryImpl) Create(shopID int, request *dto.CreateShopPromotionRequest) (*dto.CreateShopPromotionResponse, error) {
+	if err := request.ValidateDateRange(); err != nil {
+		return nil, err
+	}
+
 	tx := r.db.Begin()
 	defer tx.Commit()
 
