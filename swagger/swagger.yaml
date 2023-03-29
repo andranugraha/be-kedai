@@ -6637,6 +6637,87 @@ paths:
                   message:
                     type: string
                     example: "error message"
+    put:
+      security:
+        - BearerAuth: []
+      tags:
+        - Seller
+      summary: Update seller's promotion
+      description: Update seller's promotion by using promotion ID
+      parameters:
+        - in: path
+          name: promotionId
+          required: true
+          schema:
+            type: integer
+            example: 1
+      requestBody:
+        $ref: '#/components/requestBodies/UpdatePromotionBody'
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - type: object
+                    properties:
+                      code:
+                        example: "UPDATED"
+                      message:
+                        example: "update promotion succesful"
+        '401':
+          description: unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "UNAUTHORIZED"
+                  message:
+                    type: string
+                    example: "invalid credential"
+        '404':
+          description: shop not found / promotion not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "NOT_FOUND"
+                  message:
+                    type: string
+                    example: "error message"
+        '422':
+          description: invalid promotion name pattern / invalid date range
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "INVALID"
+                  message:
+                    type: string
+                    example: "error message"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "INTERNAL_SERVER_ERROR"
+                  message:
+                    type: string
+                    example: "error message"
   /v1/sellers/products/{code}:
     get:
       security:
@@ -11806,6 +11887,33 @@ components:
                 type: array
                 items:
                   $ref: '#/components/requestBodies/ProductPromotionBody'
+    UpdatePromotionBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - name
+              - startPeriod
+              - endPeriod
+              - productPromotions
+            properties:
+              name:
+                type: string
+                minLength: 1
+                maxLength: 100
+                example: sebelas sebelas
+              startPeriod:
+                type: string
+                example: 2023-12-12T00:00:00Z
+              endPeriod:
+                type: string
+                example: 2023-12-30T00:00:00Z
+              productPromotions:
+                type: array
+                items:
+                  $ref: '#/components/requestBodies/UpdateProductPromotionBody'
     ProductPromotionBody:
       type: object
       required:
@@ -11834,6 +11942,39 @@ components:
           type: integer
           example: 1
         skuId:
+          type: integer
+          example: 1
+    UpdateProductPromotionBody:
+      type: object
+      required:
+        - type
+        - amount
+        - stock
+        - isActive
+        - purchaseLimit
+        - skuId
+      properties:
+        type:
+          type: string
+          minLength: 1
+          maxLength: 100
+          example: discount
+        amount:
+          type: integer
+          example: 11
+        stock:
+          type: integer
+          example: 111
+        isActive:
+          type: boolean
+          example: true
+        purchaseLimit:
+          type: integer
+          example: 1
+        skuId:
+          type: integer
+          example: 1
+        promotionId:
           type: integer
           example: 1
   securitySchemes:
