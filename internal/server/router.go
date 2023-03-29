@@ -230,7 +230,10 @@ func NewRouter(cfg *RouterConfig) *gin.Engine {
 				{
 					order.POST("/:orderId/cancel-commit", cfg.OrderHandler.UpdateToCanceled)
 				}
-
+				marketplace := authenticated.Group("/marketplaces")
+				{
+					marketplace.POST("/banners", cfg.MarketplaceHandler.AddMarketplaceBanner)
+				}
 			}
 		}
 
