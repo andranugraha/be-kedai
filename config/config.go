@@ -28,5 +28,5 @@ var (
 		API_BASE_URL:    GetEnv("MAILGUN_API_BASE_URL", ""),
 		SENDER:          GetEnv("MAILGUN_SENDER", ""),
 	}
-	Origin = GetArrayENV("ORIGIN", []string{"http://localhost:5173"})
+	Origin = GetArrayENV("ORIGIN", []string{"http://localhost:3000"})
 )

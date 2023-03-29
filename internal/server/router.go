@@ -1,13 +1,9 @@
 package server
 
 import (
-	"fmt"
 	"kedai/backend/be-kedai/config"
 	"kedai/backend/be-kedai/connection"
 	"kedai/backend/be-kedai/internal/server/middleware"
-	"log"
-	"os"
-	"strings"
 
 	chatHandler "kedai/backend/be-kedai/internal/domain/chat/handler"
 	locationHandler "kedai/backend/be-kedai/internal/domain/location/handler"
@@ -308,23 +304,6 @@ func NewRouter(cfg *RouterConfig) *gin.Engine {
 				}
 			}
 		}
-	}
-
-	routes := r.Routes()
-	// Generate output text
-	var output strings.Builder
-	for _, route := range routes {
-		output.WriteString(route.Method + "\t" + route.Path + "\n")
-	}
-	fmt.Println("AWOWOW", output.String())
-	// Generate a text file
-	file, err := os.Create("endpoint-paths.txt")
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer file.Close()
-	for _, route := range routes {
-		file.WriteString(route.Method + "\t" + route.Path + "\n")
 	}
 
 	return r
