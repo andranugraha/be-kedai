@@ -368,7 +368,7 @@ func (r *productRepositoryImpl) GetBySellerID(shopID int, request *dto.SellerPro
 		query = query.Order("products.created_at DESC")
 	}
 
-	err = query.Preload("Bulk").Preload("SKUs.Variants").Find(&products).Error
+	err = query.Preload("Bulk").Preload("SKUs.Variants").Limit(request.Limit).Offset((request.Page - 1) * request.Limit).Find(&products).Error
 	if err != nil {
 		return nil, 0, 0, err
 	}
