@@ -212,8 +212,6 @@ func TestCreatePromotion(t *testing.T) {
 		userID        = 1
 		shopID        = 1
 		promotionName = "promotion name"
-		// startPeriod, _ = time.Parse(time.RFC3339Nano, "2023-03-25T10:08:28.905Z")
-		// endPeriod, _   = time.Parse(time.RFC3339Nano, "2023-03-25T10:08:28.905Z")
 	)
 
 	tests := []struct {
