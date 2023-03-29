@@ -20,6 +20,7 @@ type InvoicePerShopService interface {
 	GetInvoiceByUserIdAndId(userId int, id int) (*dto.InvoicePerShopDetail, error)
 	GetShopOrder(userId int, req *dto.InvoicePerShopFilterRequest) (*commonDto.PaginationResponse, error)
 	RefundRequest(invoiceCode string, userId int) (*model.RefundRequest, error)
+	UpdateStatusToProcessing(userId int, orderId int) error
 	UpdateStatusToDelivery(userId int, orderId int) error
 	UpdateStatusToRefundPendingSellerCancel(userId int, orderId int) error
 	UpdateStatusToCanceled(orderId int) error
@@ -165,6 +166,28 @@ func (s *invoicePerShopServiceImpl) RefundRequest(invoiceCode string, userId int
 	}
 
 	return result, nil
+}
+
+func (s *invoicePerShopServiceImpl) UpdateStatusToProcessing(userId int, orderId int) error {
+	shop, err := s.shopService.FindShopByUserId(userId)
+	if err != nil {
+		return err
+	}
+
+	var invoiceStatuses []*model.InvoiceStatus
+	var status = constant.TransactionStatusProcessing
+
+	invoiceStatuses = append(invoiceStatuses, &model.InvoiceStatus{
+		InvoicePerShopID: orderId,
+		Status:           status,
+	})
+
+	err = s.invoicePerShopRepo.UpdateStatusToDelivery(shop.ID, orderId, invoiceStatuses)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (s *invoicePerShopServiceImpl) UpdateStatusToDelivery(userId int, orderId int) error {
