@@ -2,13 +2,16 @@ package service
 
 import (
 	commonDto "kedai/backend/be-kedai/internal/common/dto"
+	productModel "kedai/backend/be-kedai/internal/domain/product/model"
 	"kedai/backend/be-kedai/internal/domain/shop/dto"
+	"kedai/backend/be-kedai/internal/domain/shop/model"
 	"kedai/backend/be-kedai/internal/domain/shop/repository"
 )
 
 type ShopPromotionService interface {
 	GetSellerPromotions(userID int, request *dto.SellerPromotionFilterRequest) (*commonDto.PaginationResponse, error)
 	GetSellerPromotionById(userId int, promotionId int) (*dto.SellerPromotion, error)
+	UpdatePromotion(userId int, promotionId int, req dto.UpdateShopPromotionRequest) error
 }
 
 type shopPromotionServiceImpl struct {
@@ -60,4 +63,38 @@ func (s *shopPromotionServiceImpl) GetSellerPromotionById(userId int, promotionI
 	}
 
 	return promotion, nil
+}
+
+func (s *shopPromotionServiceImpl) UpdatePromotion(userId int, promotionId int, req dto.UpdateShopPromotionRequest) error {
+	shop, err := s.shopService.FindShopByUserId(userId)
+	if err != nil {
+		return err
+	}
+
+	promotion, err := s.GetSellerPromotionById(shop.ID, promotionId)
+	if err != nil {
+		return err
+	}
+
+	shopPromotion := &model.ShopPromotion{
+		ID:          promotion.ID,
+		Name:        req.Name,
+		StartPeriod: req.StartPeriod,
+		EndPeriod:   req.EndPeriod,
+		ShopId:      shop.ID,
+	}
+
+	var productPromotions []*productModel.ProductPromotion
+	for _, pp := range req.ProductPromotions {
+		productPromotions = append(productPromotions, &productModel.ProductPromotion{
+			Type:          pp.Type,
+			Amount:        pp.Amount,
+			Stock:         pp.Stock,
+			PurchaseLimit: pp.PurchaseLimit,
+			SkuId:         pp.PurchaseLimit,
+			PromotionId:   promotion.ID,
+		})
+	}
+
+	return s.shopPromotionRepository.Update(shopPromotion, productPromotions)
 }

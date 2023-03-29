@@ -17,7 +17,7 @@ import (
 type ShopPromotionRepository interface {
 	GetSellerPromotions(shopId int, request *dto.SellerPromotionFilterRequest) ([]*dto.SellerPromotion, int64, int, error)
 	GetSellerPromotionById(shopId int, promotionId int) (*dto.SellerPromotion, error)
-	Update(shopPromotion *model.ShopPromotion, productPromotion *productModel.ProductPromotion) error
+	Update(shopPromotion *model.ShopPromotion, productPromotion []*productModel.ProductPromotion) error
 }
 
 type shopPromotionRepositoryImpl struct {
@@ -124,18 +124,21 @@ func (r *shopPromotionRepositoryImpl) GetSellerPromotionById(shopId int, promoti
 	return promotion, nil
 }
 
-func (r *shopPromotionRepositoryImpl) Update(shopPromotion *model.ShopPromotion, productPromotion *productModel.ProductPromotion) error {
+func (r *shopPromotionRepositoryImpl) Update(shopPromotion *model.ShopPromotion, productPromotions []*productModel.ProductPromotion) error {
 	tx := r.db.Begin()
 	defer tx.Commit()
 
 	err := tx.Where("id = ?", shopPromotion.ID).Where("shop_id = ?", shopPromotion.ShopId).Save(shopPromotion).Error
 	if err != nil {
+		tx.Rollback()
 		return err
 	}
 
-	err = tx.Where("promotion_id = ?", shopPromotion.ID).Save(productPromotion).Error
-	if err != nil {
-		return err
+	for _, productPromotion := range productPromotions {
+		if err := tx.Save(productPromotion).Error; err != nil {
+			tx.Rollback()
+			return err
+		}
 	}
 
 	return nil
