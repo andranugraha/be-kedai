@@ -17,6 +17,7 @@ type MarketplaceVoucherService interface {
 	GetValidByUserID(req *dto.GetMarketplaceVoucherRequest) ([]*model.MarketplaceVoucher, error)
 	GetValidForCheckout(id, userID, PaymentMethodID int) (*model.MarketplaceVoucher, error)
 	UpdateVoucher(voucherCode string, request *dto.UpdateVoucherRequest) error
+	CreateMarketplaceVoucher(req *dto.CreateMarketplaceVoucherRequest) (*model.MarketplaceVoucher, error)
 }
 
 type marketplaceVoucherServiceImpl struct {
@@ -116,4 +117,9 @@ func (s *marketplaceVoucherServiceImpl) UpdateVoucher(voucherCode string, reques
 	}
 
 	return nil
+}
+
+func (s *marketplaceVoucherServiceImpl) CreateMarketplaceVoucher(req *dto.CreateMarketplaceVoucherRequest) (*model.MarketplaceVoucher, error) {
+	voucher := req.ToVoucher()
+	return s.marketplaceVoucherRepository.CreateMarketplaceVoucher(voucher)
 }

@@ -23,6 +23,7 @@ type MarketplaceVoucherRepository interface {
 	GetValidByUserID(req *dto.GetMarketplaceVoucherRequest) ([]*model.MarketplaceVoucher, error)
 	GetValid(id, userID, PaymentMethodID int) (*model.MarketplaceVoucher, error)
 	Update(voucher *model.MarketplaceVoucher) error
+	CreateMarketplaceVoucher(req *model.MarketplaceVoucher) (*model.MarketplaceVoucher, error)
 }
 
 type marketplaceVoucherRepositoryImpl struct {
@@ -224,4 +225,17 @@ func (r *marketplaceVoucherRepositoryImpl) Update(voucher *model.MarketplaceVouc
 	}
 
 	return nil
+}
+
+func (r *marketplaceVoucherRepositoryImpl) CreateMarketplaceVoucher(req *model.MarketplaceVoucher) (*model.MarketplaceVoucher, error) {
+	err := r.db.Clauses(clause.OnConflict{DoNothing: true}).Create(&req)
+	if err.Error != nil {
+		return nil, err.Error
+	}
+
+	if err.RowsAffected == 0 {
+		return nil, commonErr.ErrDuplicateVoucherCode
+	}
+
+	return req, nil
 }

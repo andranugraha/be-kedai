@@ -1,6 +1,7 @@
 package date_test
 
 import (
+	"fmt"
 	. "kedai/backend/be-kedai/internal/utils/date"
 	"testing"
 	"time"
@@ -55,4 +56,39 @@ func TestParseRFC3999NanoTime(t *testing.T) {
 	expected = defaultValue
 	result = ParseRFC3999NanoTime("invalid datetime string", defaultValue)
 	assert.Equal(t, expected, result)
+}
+
+func BenchmarkIsValidRFC3999NanoDate(b *testing.B) {
+	var table = []struct {
+		name string
+		date string
+	}{
+		{name: "valid", date: "2023-03-30T08:00:00Z"},
+		{name: "invalid", date: "2023-03-30T08:00:00.123456789Z1"},
+	}
+	for _, v := range table {
+		b.Run(fmt.Sprintf("date_"+v.name), func(b *testing.B) {
+			for i := 0; i < b.N; i++ {
+				IsValidRFC3999NanoDate(v.date)
+			}
+		})
+	}
+}
+
+func BenchmarkParseRFC3999NanoTime(b *testing.B) {
+	var table = []struct {
+		name         string
+		str          string
+		defaultValue time.Time
+	}{
+		{name: "valid", str: "2023-03-30T10:45:30.123456789Z", defaultValue: time.Date(2023, time.March, 1, 0, 0, 0, 0, time.UTC)},
+		{name: "invalid", str: "invalid_time", defaultValue: time.Date(2023, time.March, 1, 0, 0, 0, 0, time.UTC)},
+	}
+	for _, v := range table {
+		b.Run(fmt.Sprintf("input_type_"+v.name), func(b *testing.B) {
+			for i := 0; i < b.N; i++ {
+				ParseRFC3999NanoTime(v.str, v.defaultValue)
+			}
+		})
+	}
 }

@@ -14,6 +14,20 @@ type GetMarketplaceVoucherRequest struct {
 	Code            string `form:"code"`
 }
 
+type CreateMarketplaceVoucherRequest struct {
+	Code         string    `json:"code" binding:"required"`
+	Name         string    `json:"name" binding:"required"`
+	Amount       float64   `json:"amount" binding:"required"`
+	Type         string    `json:"type" binding:"required"`
+	IsHidden     *bool     `json:"isHidden" binding:"required"`
+	Description  string    `json:"description" binding:"required"`
+	MinimumSpend float64   `json:"minimumSpend" binding:"required"`
+	ExpiredAt    time.Time `json:"expiredAt" binding:"required"`
+
+	CategoryID      *int `json:"categoryId"`
+	PaymentMethodID *int `json:"paymentMethodId"`
+}
+
 func (r *GetMarketplaceVoucherRequest) Validate() {
 
 	if r.CategoryId < 0 {
@@ -82,4 +96,19 @@ func (p *AdminVoucherFilterRequest) Validate() {
 
 func (p *AdminVoucherFilterRequest) Offset() int {
 	return (p.Page - 1) * p.Limit
+}
+
+func (r *CreateMarketplaceVoucherRequest) ToVoucher() *model.MarketplaceVoucher {
+	return &model.MarketplaceVoucher{
+		Name:            r.Name,
+		Code:            r.Code,
+		Amount:          r.Amount,
+		Type:            r.Type,
+		IsHidden:        *r.IsHidden,
+		Description:     r.Description,
+		MinimumSpend:    r.MinimumSpend,
+		ExpiredAt:       r.ExpiredAt,
+		CategoryID:      r.CategoryID,
+		PaymentMethodID: r.PaymentMethodID,
+	}
 }
