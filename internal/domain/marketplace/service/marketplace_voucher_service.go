@@ -8,6 +8,7 @@ import (
 
 type MarketplaceVoucherService interface {
 	GetMarketplaceVoucher(req *dto.GetMarketplaceVoucherRequest) ([]*model.MarketplaceVoucher, error)
+	GetMarketplaceVoucherAdmin(req *dto.GetMarketplaceVoucherRequest) ([]*model.MarketplaceVoucher, error)
 	GetValidByUserID(req *dto.GetMarketplaceVoucherRequest) ([]*model.MarketplaceVoucher, error)
 	GetValidForCheckout(id, userID, PaymentMethodID int) (*model.MarketplaceVoucher, error)
 }
@@ -28,6 +29,10 @@ func NewMarketplaceVoucherService(cfg *MarketplaceVoucherSConfig) MarketplaceVou
 
 func (s *marketplaceVoucherServiceImpl) GetMarketplaceVoucher(req *dto.GetMarketplaceVoucherRequest) ([]*model.MarketplaceVoucher, error) {
 	return s.marketplaceVoucherRepository.GetMarketplaceVoucher(req)
+}
+
+func (s *marketplaceVoucherServiceImpl) GetMarketplaceVoucherAdmin(req *dto.GetMarketplaceVoucherRequest) ([]*model.MarketplaceVoucher, error) {
+	return s.marketplaceVoucherRepository.GetMarketplaceVoucherAdmin(req)
 }
 
 func (s *marketplaceVoucherServiceImpl) GetValidByUserID(req *dto.GetMarketplaceVoucherRequest) ([]*model.MarketplaceVoucher, error) {

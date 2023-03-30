@@ -14,6 +14,7 @@ import (
 
 type MarketplaceVoucherRepository interface {
 	GetMarketplaceVoucher(req *dto.GetMarketplaceVoucherRequest) ([]*model.MarketplaceVoucher, error)
+	GetMarketplaceVoucherAdmin(req *dto.GetMarketplaceVoucherRequest) ([]*model.MarketplaceVoucher, error)
 	GetValidByUserID(req *dto.GetMarketplaceVoucherRequest) ([]*model.MarketplaceVoucher, error)
 	GetValid(id, userID, PaymentMethodID int) (*model.MarketplaceVoucher, error)
 }
@@ -49,6 +50,26 @@ func (r *marketplaceVoucherRepositoryImpl) GetMarketplaceVoucher(req *dto.GetMar
 
 	publicVoucher := true
 	err := db.Where("expired_at > ?", time.Now()).Where("is_hidden != ?", publicVoucher).Find(&marketplaceVoucher).Error
+	if err != nil {
+		return nil, err
+	}
+
+	return marketplaceVoucher, nil
+}
+
+func (r *marketplaceVoucherRepositoryImpl) GetMarketplaceVoucherAdmin(req *dto.GetMarketplaceVoucherRequest) ([]*model.MarketplaceVoucher, error) {
+	var marketplaceVoucher []*model.MarketplaceVoucher
+
+	db := r.db
+
+	if req.CategoryId != 0 {
+		db = db.Where("category_id = ?", req.CategoryId)
+	}
+	if req.PaymentMethodId != 0 {
+		db = db.Where("payment_method_id = ?", req.PaymentMethodId)
+	}
+
+	err := db.Find(&marketplaceVoucher).Error
 	if err != nil {
 		return nil, err
 	}

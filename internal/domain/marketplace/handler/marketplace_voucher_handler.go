@@ -25,6 +25,20 @@ func (h *Handler) GetMarketplaceVoucher(c *gin.Context) {
 	response.Success(c, http.StatusOK, code.OK, "ok", result)
 }
 
+func (h *Handler) GetMarketplaceVoucherAdmin(c *gin.Context) {
+	var req dto.GetMarketplaceVoucherRequest
+	_ = c.ShouldBindQuery(&req)
+	req.Validate()
+
+	result, err := h.marketplaceVoucherService.GetMarketplaceVoucherAdmin(&req)
+	if err != nil {
+		response.Error(c, http.StatusInternalServerError, code.INTERNAL_SERVER_ERROR, commonErr.ErrInternalServerError.Error())
+		return
+	}
+
+	response.Success(c, http.StatusOK, code.OK, "ok", result)
+}
+
 func (h *Handler) GetValidMarketplaceVoucher(c *gin.Context) {
 	var req dto.GetMarketplaceVoucherRequest
 	_ = c.ShouldBindQuery(&req)
