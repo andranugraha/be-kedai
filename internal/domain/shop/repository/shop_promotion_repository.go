@@ -146,8 +146,14 @@ func (r *shopPromotionRepositoryImpl) Update(shopPromotion *model.ShopPromotion,
 		return errs.ErrPromotionNotFound
 	}
 
+	deleteRes := tx.Unscoped().Where("promotion_id = ?", shopPromotion.ID).Delete(&productModel.ProductPromotion{})
+	if deleteRes.Error != nil {
+		tx.Rollback()
+		return deleteRes.Error
+	}
+
 	for _, productPromotion := range productPromotions {
-		res := tx.Save(productPromotion)
+		res := tx.Create(productPromotion)
 		if err := res.Error; err != nil {
 			tx.Rollback()
 			return err
