@@ -28,7 +28,7 @@ type ProductRepository interface {
 	AddViewCount(productID int) error
 	UpdateActivation(shopID int, code string, isActive bool) error
 	Create(shopID int, request *dto.CreateProductRequest, courierServices []*shopModel.CourierService) (*model.Product, error)
-	GetRecommended(limit int) ([]*dto.ProductResponse, error)
+	GetRecommended(req *dto.GetRecommendedProductRequest) ([]*dto.ProductResponse, int64, int, error)
 	Update(shopID int, code string, payload *dto.CreateProductRequest, courierServices []*shopModel.CourierService) (*model.Product, error)
 }
 
@@ -541,7 +541,7 @@ func (r *productRepositoryImpl) Create(shopID int, request *dto.CreateProductReq
 	return product, nil
 }
 
-func (r *productRepositoryImpl) GetRecommended(limit int) (recommendedProducts []*dto.ProductResponse, err error) {
+func (r *productRepositoryImpl) GetRecommended(req *dto.GetRecommendedProductRequest) (recommendedProducts []*dto.ProductResponse, totalRows int64, totalPages int, err error) {
 
 	var (
 		isActive = true
@@ -560,16 +560,24 @@ func (r *productRepositoryImpl) GetRecommended(limit int) (recommendedProducts [
 		Joins("left join product_promotions pp on pp.sku_id = s.id and (select count(id) from shop_promotions sp where pp.promotion_id = sp.id and now() between sp.start_period and sp.end_period) > 0").
 		Group("products.id,c.name,p.name")
 
+	errCount := db.Model(&model.Product{}).Where("products.is_active = ?", isActive).Count(&totalRows).Error
+	if errCount != nil {
+		return nil, 0, 0, errCount
+	}
+
+	totalPages = int(math.Ceil(float64(totalRows) / float64(req.Limit)))
+
 	err = db.Where("products.is_active = ?", isActive).
-		Limit(limit).
+		Limit(req.Limit).
+		Offset(req.Offset()).
 		Order("products.sold desc, products.rating desc").
 		Find(&recommendedProducts).Error
 
 	if err != nil {
-		return nil, err
+		return nil, 0, 0, err
 	}
 
-	return recommendedProducts, nil
+	return recommendedProducts, totalRows, totalPages, nil
 }
 
 func (r *productRepositoryImpl) Update(shopID int, code string, payload *dto.CreateProductRequest, courierServices []*shopModel.CourierService) (*model.Product, error) {
