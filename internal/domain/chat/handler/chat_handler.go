@@ -14,7 +14,7 @@ func (h *Handler) UserGetListOfChats(c *gin.Context) {
 	userID := c.GetInt("userId")
 
 	var param dto.ListOfChatsParamRequest
-	c.ShouldBindQuery(&param)
+	_ = c.ShouldBindQuery(&param)
 
 	chatResponses, err := h.chatService.UserGetListOfChats(&param, userID)
 	if err != nil {
@@ -29,7 +29,7 @@ func (h *Handler) SellerGetListOfChats(c *gin.Context) {
 	userID := c.GetInt("userId")
 
 	var param dto.ListOfChatsParamRequest
-	c.ShouldBindQuery(&param)
+	_ = c.ShouldBindQuery(&param)
 
 	chatResponses, err := h.chatService.SellerGetListOfChats(&param, userID)
 	if err != nil {
@@ -50,7 +50,8 @@ func (h *Handler) UserGetChat(c *gin.Context) {
 	shopSlug := c.Param("shopSlug")
 
 	var param dto.ChatParamRequest
-	c.ShouldBindQuery(&param)
+	_ = c.ShouldBindQuery(&param)
+
 	param.Validate()
 
 	paginatedChats, err := h.chatService.UserGetChat(&param, userID, shopSlug)
@@ -72,7 +73,7 @@ func (h *Handler) SellerGetChat(c *gin.Context) {
 	username := c.Param("username")
 
 	var param dto.ChatParamRequest
-	c.ShouldBindQuery(&param)
+	_ = c.ShouldBindQuery(&param)
 	param.Validate()
 
 	paginatedChats, err := h.chatService.SellerGetChat(&param, userID, username)

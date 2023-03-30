@@ -62,8 +62,8 @@ func (r *transactionReviewRepositoryImpl) GetByTransactionID(transactionID int) 
 func (r *transactionReviewRepositoryImpl) GetReviews(req productDto.GetReviewRequest) ([]*model.TransactionReview, int64, int, error) {
 	var (
 		transactionReviews []*model.TransactionReview
-		totalRows          int64 = 0
-		totalPages         int   = 0
+		totalRows          int64
+		totalPages         int
 	)
 
 	const isActive = true
