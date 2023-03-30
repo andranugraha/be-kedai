@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"errors"
 	"kedai/backend/be-kedai/internal/common/code"
 	"kedai/backend/be-kedai/internal/domain/marketplace/dto"
 	"kedai/backend/be-kedai/internal/utils/response"
@@ -38,4 +39,26 @@ func (h *Handler) GetValidMarketplaceVoucher(c *gin.Context) {
 	}
 
 	response.Success(c, http.StatusOK, code.OK, "ok", result)
+}
+
+func (h *Handler) CreateMarketplaceVoucher(c *gin.Context) {
+	var req dto.CreateMarketplaceVoucherRequest
+	errBinding := c.ShouldBindJSON(&req)
+	if errBinding != nil {
+		response.ErrorValidator(c, http.StatusBadRequest, errBinding)
+		return
+	}
+
+	result, err := h.marketplaceVoucherService.CreateMarketplaceVoucher(&req)
+	if err != nil {
+		if errors.Is(err, commonErr.ErrDuplicateVoucherCode) {
+			response.Error(c, http.StatusConflict, code.DUPLICATE_VOUCHER_CODE, err.Error())
+			return
+		}
+
+		response.Error(c, http.StatusInternalServerError, code.INTERNAL_SERVER_ERROR, commonErr.ErrInternalServerError.Error())
+		return
+	}
+
+	response.Success(c, http.StatusCreated, code.CREATED, "created", result)
 }
