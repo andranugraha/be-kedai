@@ -90,7 +90,10 @@ func (r *walletHistoryRepoImpl) GetShopFinanceReleased(shopId int) (*shopDto.Sho
 
 	err := query.Find(&shopFinanceReleased).Error
 	if err != nil {
-		return shopFinanceReleased, err
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return shopFinanceReleased, nil
+		}
+		return nil, err
 	}
 
 	return shopFinanceReleased, nil
