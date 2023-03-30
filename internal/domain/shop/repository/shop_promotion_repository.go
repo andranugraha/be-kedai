@@ -172,31 +172,32 @@ func (r *shopPromotionRepositoryImpl) Create(shopID int, request *dto.CreateShop
 }
 
 func (r *shopPromotionRepositoryImpl) Delete(shopId int, promotionId int) error {
-	voucher, err := r.GetSellerPromotionById(shopId, promotionId)
+	promotion, err := r.GetSellerPromotionById(shopId, promotionId)
 	if err != nil {
 		return err
 	}
 
-	if voucher.Status == constant.VoucherPromotionStatusOngoing || voucher.Status == constant.VoucherPromotionStatusExpired {
+	if promotion.Status == constant.VoucherPromotionStatusOngoing || promotion.Status == constant.VoucherPromotionStatusExpired {
 		return errs.ErrPromotionStatusConflict
 	}
 
 	tx := r.db.Begin()
 	defer tx.Commit()
 
+	for _, product := range promotion.Product {
+		for _, sku := range product.SKUs {
+			res := tx.Delete(&productModel.ProductPromotion{}, "id = ?", sku.Promotion.ID)
+			if err := res.Error; err != nil {
+				tx.Rollback()
+				return err
+			}
+		}
+	}
+
 	res := tx.Delete(&model.ShopPromotion{}, "id = ? AND shop_id = ?", promotionId, shopId)
 	if err := res.Error; err != nil {
 		tx.Rollback()
 		return err
-	}
-
-	var productPromotions []*productModel.ProductPromotion
-	for _, productPromotion := range productPromotions {
-		res := tx.Delete(productPromotion, "promotion_id = ?", promotionId)
-		if err := res.Error; err != nil {
-			tx.Rollback()
-			return err
-		}
 	}
 
 	if res.RowsAffected == 0 {
