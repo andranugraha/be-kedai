@@ -8472,17 +8472,31 @@ paths:
         - Admin
       parameters:
         - in: query
-          name: categoryId
+          name: page
           schema:
             type: integer
-            default: 0
-          description: No default category, will get all if not specified
+            default: 1
         - in: query
-          name: paymentMethodId
+          name: limit
           schema:
             type: integer
-            default: 0
-          description: No default payment method, will get all if not specified
+            default: 10
+        - in: query
+          name: status
+          description: voucher status. Will return all vouchers regardless of status when not given
+          schema:
+            type: string
+            enum: [ongoing, expired]
+        - in: query
+          name: name
+          schema:
+            type: string
+            example: voucher name
+        - in: query
+          name: code
+          schema:
+            type: string
+            example: voucher code
       summary: Get marketplace vouchers
       description: Get list of available marketplace vouchers
       responses:
@@ -8503,6 +8517,148 @@ paths:
                         type: array
                         items:
                           $ref: '#/components/schemas/MarketplaceVoucher'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "INTERNAL_SERVER_ERROR"
+                  message:
+                    type: string
+                    example: "error message"
+  /v1/admins/marketplaces/vouchers/{code}:
+    get:
+      tags:
+        - Admin
+      parameters:
+        - in: path
+          name: code
+          required: true
+          schema:
+            type: string
+            example: voucher-code
+      summary: Get marketplace voucher by code
+      description: Get list of available marketplace vouchers
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Response'
+                  - type: object
+                    properties:
+                      code:
+                        example: "OK"
+                      message:
+                        example: "ok"
+                      data:
+                        allOf:
+                          - $ref: '#/components/schemas/MarketplaceVoucher'
+                          - type: object
+                            properties:
+                              status:
+                                type: string
+                                example: "ongoing"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "INTERNAL_SERVER_ERROR"
+                  message:
+                    type: string
+                    example: "error message"
+    put:
+      security:
+        - BearerAuth: []
+      tags:
+        - Admin
+      summary: Update marketplace's voucher
+      description: Update marketplace's voucher by using voucher code
+      parameters:
+        - in: path
+          name: code
+          required: true
+          schema:
+            type: string
+            example: voucher-code
+      requestBody:
+        $ref: '#/components/requestBodies/UpdateMarketplaceVoucherBody'
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - type: object
+                    properties:
+                      code:
+                        example: "UPDATED"
+                      message:
+                        example: "update voucher succesful"
+        '401':
+          description: unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "UNAUTHORIZED"
+                  message:
+                    type: string
+                    example: "invalid credential"
+        '404':
+          description: voucher not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "NOT_FOUND"
+                  message:
+                    type: string
+                    example: "error message"
+        '409':
+          description: voucher status conflict
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: VOUCHER_STATUS_CONFLICT
+                  message:
+                    type: string
+                    example: voucher status conflict
+        '422':
+          description: invalid voucher name pattern / invalid date range
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "INVALID"
+                  message:
+                    type: string
+                    example: "error message"
         '500':
           description: Internal server error
           content:
@@ -12238,6 +12394,43 @@ components:
         skuId:
           type: integer
           example: 1
+    UpdateMarketplaceVoucherBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - name
+              - isHidden
+              - description
+              - expiredAt
+              - categoryId
+              - paymentMethodId
+            properties:
+              name:
+                type: string
+                minLength: 1
+                maxLength: 100
+                example: voucher name
+              isHidden:
+                type: boolean
+                example: false
+              description:
+                type: string
+                minLength: 5
+                maxLength: 1000
+                example: voucher bakmi kejaksaan enak
+              expiredAt:
+                type: string
+                format: datetime
+                example: "2006-01-02T00:00:00.000Z"
+              categoryId:
+                type: integer
+                example: 1
+              paymentMethodId:
+                type: string
+                example: 2
   securitySchemes:
     BearerAuth:
       type: http
