@@ -74,6 +74,10 @@ func (s *shopPromotionServiceImpl) UpdatePromotion(userId int, promotionId int, 
 		return errs.ErrInvalidPromotionNamePattern
 	}
 
+	if err := req.ValidateDateRange(); err != nil {
+		return err
+	}
+
 	shop, err := s.shopService.FindShopByUserId(userId)
 	if err != nil {
 		return err
