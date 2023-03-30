@@ -100,6 +100,12 @@ func (r *userCartItemRepository) GetAllCartItem(req *dto.GetCartItemsRequest) (c
 			WHERE ci.user_id = ?
 			ORDER BY sh.id LIMIT ? OFFSET ?)`, req.UserId, req.Limit, req.Offset()).
 		Order("cart_items.created_at desc").
+		Preload("Sku", func(db *gorm.DB) *gorm.DB {
+			return db.Unscoped()
+		}).
+		Preload("Sku.Variants", func(db *gorm.DB) *gorm.DB {
+			return db.Unscoped()
+		}).
 		Preload("Sku.Product.Shop.Address.City").
 		Preload("Sku.Product.Shop.Address.Province").
 		Preload("Sku.Product.Shop.Address.Subdistrict").
@@ -129,6 +135,9 @@ func (r *userCartItemRepository) GetCartItemByIdAndUserId(id, userId int) (*mode
 		Joins("join skus s on cart_items.sku_id = s.id").
 		Joins("join products p on s.product_id = p.id").
 		Where("p.is_active = ?", true).
+		Preload("Sku", func(db *gorm.DB) *gorm.DB {
+			return db.Unscoped()
+		}).
 		Preload("Sku.Product.Bulk").Preload("Sku.Promotion").First(&cartItem).Error
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
