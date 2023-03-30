@@ -27,6 +27,7 @@ type InvoicePerShopRepository interface {
 	GetByShopId(shopId int, req *dto.InvoicePerShopFilterRequest) ([]*dto.InvoicePerShopDetail, int64, int, error)
 	WithdrawFromInvoice(invoicePerShopIds []int, shopId int, walletId int) error
 	GetByShopIdAndId(shopId int, id int) (*dto.InvoicePerShopDetail, error)
+	GetByShopIdAndCode(shopId int, code string) (*dto.InvoicePerShopDetail, error)
 	GetShopOrder(shopId int, req *dto.InvoicePerShopFilterRequest) ([]*dto.InvoicePerShopDetail, int64, int, error)
 	RefundRequest(ref *model.RefundRequest, invoiceStatus []*model.InvoiceStatus) (*model.RefundRequest, error)
 	UpdateStatusToDelivery(shopId int, orderId int, invoiceStatuses []*model.InvoiceStatus) error
@@ -326,6 +327,58 @@ func (r *invoicePerShopRepositoryImpl) GetByShopIdAndId(shopId int, id int) (*dt
 		Joins("JOIN invoices ON invoices.id = invoice_per_shops.invoice_id").
 		Where("invoice_per_shops.shop_id = ?", shopId).
 		Where("invoice_per_shops.id = ?", id)
+
+	query = query.Preload("TransactionItems", func(query *gorm.DB) *gorm.DB {
+		return query.Select(`
+			transactions.*,
+			(SELECT url FROM product_medias WHERE products.id = product_medias.product_id LIMIT 1) AS image_url,
+			products.name AS product_name
+		`).
+			Joins("JOIN skus ON skus.id = transactions.sku_id").
+			Joins("JOIN products ON skus.product_id = products.id")
+	}).
+		Preload("TransactionItems.Sku.Variants").
+		Preload("Shop").
+		Preload("Address.Province").
+		Preload("Address.City").
+		Preload("Address.District").
+		Preload("Address.Subdistrict").
+		Preload("User").
+		Preload("CourierService.Courier").
+		Preload("StatusList")
+
+	err := query.First(&invoice).Error
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, commonErr.ErrInvoiceNotFound
+		}
+
+		return nil, err
+	}
+
+	return &invoice, nil
+}
+
+func (r *invoicePerShopRepositoryImpl) GetByShopIdAndCode(shopId int, code string) (*dto.InvoicePerShopDetail, error) {
+	var invoice dto.InvoicePerShopDetail
+
+	query := r.db.
+		Select(`invoice_per_shops.*, case when invoices.voucher_type = ?
+		THEN ROUND(invoice_per_shops.shipping_cost  / (
+			select SUM(ips2.shipping_cost) from invoice_per_shops ips2 where ips2.invoice_id = invoice_per_shops.invoice_id 
+			group by ips2.invoice_id 
+		) * invoices.voucher_amount) when invoices.voucher_type = ?
+		THEN ROUND(invoice_per_shops.subtotal / (
+			select SUM(ips2.subtotal) from invoice_per_shops ips2 where ips2.invoice_id = invoice_per_shops.invoice_id 
+			group by ips2.invoice_id 
+		) * invoices.voucher_amount) 
+		ELSE invoices.voucher_amount 
+		END AS marketplace_voucher_amount, 
+		invoices.voucher_type AS marketplace_voucher_type, 
+		invoices.payment_date AS payment_date`, marketplaceModel.VoucherTypeShipping, marketplaceModel.VoucherTypeNominal).
+		Joins("JOIN invoices ON invoices.id = invoice_per_shops.invoice_id").
+		Where("invoice_per_shops.shop_id = ?", shopId).
+		Where("invoice_per_shops.code = ?", code)
 
 	query = query.Preload("TransactionItems", func(query *gorm.DB) *gorm.DB {
 		return query.Select(`
