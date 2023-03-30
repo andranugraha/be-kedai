@@ -10,12 +10,14 @@ import (
 	userRepo "kedai/backend/be-kedai/internal/domain/user/repository"
 
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 type MarketplaceVoucherRepository interface {
 	GetMarketplaceVoucher(req *dto.GetMarketplaceVoucherRequest) ([]*model.MarketplaceVoucher, error)
 	GetValidByUserID(req *dto.GetMarketplaceVoucherRequest) ([]*model.MarketplaceVoucher, error)
 	GetValid(id, userID, PaymentMethodID int) (*model.MarketplaceVoucher, error)
+	Update(voucher *model.MarketplaceVoucher) error
 }
 
 type marketplaceVoucherRepositoryImpl struct {
@@ -135,4 +137,17 @@ func (r *marketplaceVoucherRepositoryImpl) GetValid(id, userID, PaymentMethodID 
 	}
 
 	return &marketplaceVoucher, nil
+}
+
+func (r *marketplaceVoucherRepositoryImpl) Update(voucher *model.MarketplaceVoucher) error {
+	res := r.db.Where("code = ?", voucher.Code).Clauses(clause.Returning{}).Updates(voucher)
+	if err := res.Error; err != nil {
+		return err
+	}
+
+	if res.RowsAffected < 1 {
+		return commonErr.ErrVoucherNotFound
+	}
+
+	return nil
 }
