@@ -149,7 +149,7 @@ func (s *shopPromotionServiceImpl) UpdatePromotion(userId int, promotionId int, 
 					Amount:        pp.Amount,
 					Stock:         pp.Stock,
 					PurchaseLimit: pp.PurchaseLimit,
-					SkuId:         pp.PurchaseLimit,
+					SkuId:         pp.SkuId,
 					PromotionId:   promotion.ID,
 				})
 			}
