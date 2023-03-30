@@ -1159,15 +1159,25 @@ func TestCreateProduct(t *testing.T) {
 
 func TestGetRecommendedProducts(t *testing.T) {
 	type input struct {
-		limit int
+		request dto.GetRecommendedProductRequest
 	}
 	type expected struct {
 		statusCode int
 		response   response.Response
 	}
 	var (
-		defaultLimit        = 18
-		recommendedProducts = []*dto.ProductResponse{}
+		defaultLimit                = 18
+		recommendedProductsResponse = &commonDto.PaginationResponse{
+			Data:       []*dto.ProductResponse{},
+			Limit:      defaultLimit,
+			Page:       1,
+			TotalRows:  1,
+			TotalPages: 1,
+		}
+		request = dto.GetRecommendedProductRequest{
+			Limit: defaultLimit,
+			Page:  1,
+		}
 	)
 	test := []struct {
 		description string
@@ -1178,10 +1188,12 @@ func TestGetRecommendedProducts(t *testing.T) {
 		{
 			description: "should return error with status code 500 when server fails to fetch recommended products",
 			input: input{
-				limit: defaultLimit,
+				request: dto.GetRecommendedProductRequest{
+					Limit: defaultLimit,
+				},
 			},
 			beforeTest: func(ps *mocks.ProductService) {
-				ps.On("GetRecommendedProducts", defaultLimit).Return(nil, errors.New("failed to fetch recommended products"))
+				ps.On("GetRecommendedProducts", &request).Return(nil, errors.New("failed to fetch recommended products"))
 			},
 			expected: expected{
 				statusCode: http.StatusInternalServerError,
@@ -1194,17 +1206,19 @@ func TestGetRecommendedProducts(t *testing.T) {
 		{
 			description: "should return success with status code 200 when server succeed to fetch recommended products",
 			input: input{
-				limit: defaultLimit,
+				request: dto.GetRecommendedProductRequest{
+					Limit: defaultLimit,
+				},
 			},
 			beforeTest: func(ps *mocks.ProductService) {
-				ps.On("GetRecommendedProducts", defaultLimit).Return(recommendedProducts, nil)
+				ps.On("GetRecommendedProducts", &request).Return(recommendedProductsResponse, nil)
 			},
 			expected: expected{
 				statusCode: http.StatusOK,
 				response: response.Response{
 					Code:    code.OK,
 					Message: "success",
-					Data:    recommendedProducts,
+					Data:    recommendedProductsResponse,
 				},
 			},
 		},
@@ -1216,8 +1230,9 @@ func TestGetRecommendedProducts(t *testing.T) {
 			tc.beforeTest(productService)
 			rec := httptest.NewRecorder()
 			c, _ := gin.CreateTestContext(rec)
-			c.AddParam("limit", strconv.Itoa(tc.input.limit))
-			c.Request = httptest.NewRequest(http.MethodGet, fmt.Sprintf("/v1/products/recommended?limit=%d", tc.input.limit), nil)
+			c.AddParam("limit", strconv.Itoa(tc.input.request.Limit))
+			c.AddParam("page", strconv.Itoa(tc.input.request.Page))
+			c.Request = httptest.NewRequest(http.MethodGet, fmt.Sprintf("/v1/products/recommended?limit=%d&page=%d", tc.input.request.Limit, tc.input.request.Page), nil)
 			h := handler.New(&handler.Config{
 				ProductService: productService,
 			})

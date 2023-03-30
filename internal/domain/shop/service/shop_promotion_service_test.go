@@ -313,3 +313,86 @@ func TestCreatePromotion(t *testing.T) {
 		})
 	}
 }
+
+func TestDeletePromotion(t *testing.T) {
+	type input struct {
+		promotionID int
+		userID      int
+	}
+	type expected struct {
+		err error
+	}
+
+	var (
+		userID      = 1
+		shopID      = 1
+		promotionID = 1
+	)
+
+	tests := []struct {
+		description string
+		input
+		beforeTest func(*mocks.ShopService, *mocks.ShopPromotionRepository)
+		expected
+	}{
+		{
+			description: "should return error when failed to get shop",
+			input: input{
+				userID:      userID,
+				promotionID: promotionID,
+			},
+			beforeTest: func(ss *mocks.ShopService, vr *mocks.ShopPromotionRepository) {
+				ss.On("FindShopByUserId", userID).Return(nil, errors.New("failed to get shop"))
+			},
+			expected: expected{
+				err: errors.New("failed to get shop"),
+			},
+		},
+		{
+			description: "should return error when failed to delete promotion",
+			input: input{
+				userID:      userID,
+				promotionID: promotionID,
+			},
+			beforeTest: func(ss *mocks.ShopService, vr *mocks.ShopPromotionRepository) {
+				shop := &model.Shop{ID: shopID}
+				ss.On("FindShopByUserId", userID).Return(shop, nil)
+				vr.On("Delete", shopID, promotionID).Return(errors.New("failed to delete promotion"))
+			},
+			expected: expected{
+				err: errors.New("failed to delete promotion"),
+			},
+		},
+		{
+			description: "should return nil when promotion is successfully deleted",
+			input: input{
+				userID:      userID,
+				promotionID: promotionID,
+			},
+			beforeTest: func(ss *mocks.ShopService, vr *mocks.ShopPromotionRepository) {
+				shop := &model.Shop{ID: shopID}
+				ss.On("FindShopByUserId", userID).Return(shop, nil)
+				vr.On("Delete", shopID, promotionID).Return(nil)
+			},
+			expected: expected{
+				err: nil,
+			},
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.description, func(t *testing.T) {
+			shopPromotionRepo := mocks.NewShopPromotionRepository(t)
+			shopService := mocks.NewShopService(t)
+			tc.beforeTest(shopService, shopPromotionRepo)
+			shopPromotionService := service.NewShopPromotionService(&service.ShopPromotionSConfig{
+				ShopPromotionRepository: shopPromotionRepo,
+				ShopService:             shopService,
+			})
+
+			err := shopPromotionService.DeletePromotion(tc.input.userID, tc.input.promotionID)
+
+			assert.Equal(t, tc.expected.err, err)
+		})
+	}
+}
