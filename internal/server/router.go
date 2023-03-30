@@ -5,6 +5,8 @@ import (
 	"kedai/backend/be-kedai/connection"
 	"kedai/backend/be-kedai/internal/server/middleware"
 
+	"github.com/gin-contrib/pprof"
+
 	chatHandler "kedai/backend/be-kedai/internal/domain/chat/handler"
 	locationHandler "kedai/backend/be-kedai/internal/domain/location/handler"
 	marketplaceHandler "kedai/backend/be-kedai/internal/domain/marketplace/handler"
@@ -29,6 +31,8 @@ type RouterConfig struct {
 
 func NewRouter(cfg *RouterConfig) *gin.Engine {
 	r := gin.Default()
+
+	pprof.Register(r)
 
 	corsCfg := cors.DefaultConfig()
 	corsCfg.AllowOrigins = config.Origin

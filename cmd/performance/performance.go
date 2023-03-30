@@ -10,6 +10,7 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/gin-gonic/gin"
 )
@@ -65,8 +66,10 @@ func main() {
 
 	routes := generateEndpointPath(server.NewRouter(&server.RouterConfig{}), REPORT_DIR+"/endpoint-paths")
 
+	start := time.Now()
+
 	for i, route := range routes {
-		fmt.Print("Testing on endpoint " + strconv.Itoa(i) + " of " + strconv.Itoa(len(routes)) + ": " + route.Method + " " + route.Path)
+		fmt.Print("Testing on endpoint " + strconv.Itoa(i+1) + " of " + strconv.Itoa(len(routes)) + ": " + route.Method + " " + route.Path)
 		// High traffic:
 		// 	This refers to a situation where a large number of users are simultaneously accessing a web server,
 		// 	creating a high level of traffic. Hey can be used to simulate high traffic by sending a large number
@@ -119,6 +122,9 @@ func main() {
 		}
 		createReport(string(output), REPORT_DIR+"/sustained-traffic/"+route.Method+route.Path)
 
-		fmt.Println(": DONE")
+		fmt.Println(": DONE " + time.Now().String())
 	}
+
+	elapsed := time.Since(start)
+	fmt.Println("Execution time: " + strconv.Itoa(int(elapsed.Minutes())) + " min " + strconv.Itoa(int(elapsed.Seconds())) + " sec\n")
 }
