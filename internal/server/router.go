@@ -244,6 +244,7 @@ func NewRouter(cfg *RouterConfig) *gin.Engine {
 					marketplace.POST("/banners", cfg.MarketplaceHandler.AddMarketplaceBanner)
 					voucher := marketplace.Group("/vouchers")
 					{
+						voucher.POST("", cfg.MarketplaceHandler.CreateMarketplaceVoucher)
 						voucher.GET("", cfg.MarketplaceHandler.GetMarketplaceVoucherAdmin)
 						voucher.GET("/:code", cfg.MarketplaceHandler.GetMarketplaceVoucherAdminByCode)
 					}

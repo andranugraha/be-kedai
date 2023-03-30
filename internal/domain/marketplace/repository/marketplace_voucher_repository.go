@@ -13,6 +13,7 @@ import (
 	userRepo "kedai/backend/be-kedai/internal/domain/user/repository"
 
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 type MarketplaceVoucherRepository interface {
@@ -21,6 +22,7 @@ type MarketplaceVoucherRepository interface {
 	GetMarketplaceVoucherAdmin(request *dto.AdminVoucherFilterRequest) ([]*dto.AdminMarketplaceVoucher, int64, int, error)
 	GetValidByUserID(req *dto.GetMarketplaceVoucherRequest) ([]*model.MarketplaceVoucher, error)
 	GetValid(id, userID, PaymentMethodID int) (*model.MarketplaceVoucher, error)
+	CreateMarketplaceVoucher(req *model.MarketplaceVoucher) (*model.MarketplaceVoucher, error)
 }
 
 type marketplaceVoucherRepositoryImpl struct {
@@ -209,4 +211,17 @@ func (r *marketplaceVoucherRepositoryImpl) GetValid(id, userID, PaymentMethodID 
 	}
 
 	return &marketplaceVoucher, nil
+}
+
+func (r *marketplaceVoucherRepositoryImpl) CreateMarketplaceVoucher(req *model.MarketplaceVoucher) (*model.MarketplaceVoucher, error) {
+	err := r.db.Clauses(clause.OnConflict{DoNothing: true}).Create(&req)
+	if err.Error != nil {
+		return nil, err.Error
+	}
+
+	if err.RowsAffected == 0 {
+		return nil, commonErr.ErrDuplicateVoucherCode
+	}
+
+	return req, nil
 }
