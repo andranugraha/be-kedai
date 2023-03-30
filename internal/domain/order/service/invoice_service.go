@@ -165,26 +165,10 @@ func (s *invoiceServiceImpl) Checkout(req dto.CheckoutRequest) (*dto.CheckoutRes
 				totalPrice = price * float64(product.Quantity)
 			}
 
-			var (
-				totalPrice    float64
-				totalPromoted int = product.Quantity
-			)
-			if product.Quantity > cartItem.Sku.Promotion.PurchaseLimit || product.Quantity > cartItem.Sku.Promotion.Stock {
-				if cartItem.Sku.Promotion.PurchaseLimit < cartItem.Sku.Promotion.Stock {
-					totalPromoted = cartItem.Sku.Promotion.PurchaseLimit
-					totalPrice = basePrice*float64(product.Quantity-cartItem.Sku.Promotion.PurchaseLimit) + price*float64(cartItem.Sku.Promotion.PurchaseLimit)
-				} else {
-					totalPromoted = cartItem.Sku.Promotion.Stock
-					totalPrice = basePrice*float64(product.Quantity-cartItem.Sku.Promotion.Stock) + price*float64(cartItem.Sku.Promotion.Stock)
-				}
-			} else {
-				totalPrice = price * float64(product.Quantity)
-			}
-
 			transactions = append(transactions, &model.Transaction{
 				SkuID: cartItem.SkuId,
 				Price: func() float64 {
-					if cartItem.Sku.Promotion != nil && product.Quantity > cartItem.Sku.Promotion.PurchaseLimit || product.Quantity > cartItem.Sku.Promotion.Stock {
+					if cartItem.Sku.Promotion != nil && (product.Quantity > cartItem.Sku.Promotion.PurchaseLimit || product.Quantity > cartItem.Sku.Promotion.Stock) {
 						return basePrice
 					}
 					return price
