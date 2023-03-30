@@ -185,6 +185,29 @@ func (h *Handler) Refund(c *gin.Context) {
 	response.Success(c, http.StatusCreated, code.CREATED, "created", result)
 }
 
+func (h *Handler) UpdateToProcessing(c *gin.Context) {
+	userId := c.GetInt("userId")
+	orderId, _ := strconv.Atoi(c.Param("orderId"))
+
+	err := h.invoicePerShopService.UpdateStatusToProcessing(userId, orderId)
+	if err != nil {
+		if errors.Is(err, errs.ErrShopNotFound) {
+			response.Error(c, http.StatusNotFound, code.SHOP_NOT_REGISTERED, err.Error())
+			return
+		}
+
+		if errors.Is(err, errs.ErrInvoiceNotFound) {
+			response.Error(c, http.StatusNotFound, code.INVOICE_NOT_FOUND, err.Error())
+			return
+		}
+
+		response.Error(c, http.StatusInternalServerError, code.INTERNAL_SERVER_ERROR, errs.ErrInternalServerError.Error())
+		return
+	}
+
+	response.Success(c, http.StatusOK, code.OK, "ok", nil)
+}
+
 func (h *Handler) UpdateToDelivery(c *gin.Context) {
 	userId := c.GetInt("userId")
 	orderId, _ := strconv.Atoi(c.Param("orderId"))
