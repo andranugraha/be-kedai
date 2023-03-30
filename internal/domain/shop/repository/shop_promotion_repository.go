@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"errors"
 	"fmt"
 	"kedai/backend/be-kedai/internal/common/constant"
 	errs "kedai/backend/be-kedai/internal/common/error"
@@ -115,7 +116,10 @@ func (r *shopPromotionRepositoryImpl) GetSellerPromotionById(shopId int, promoti
 
 	err := query.First(&promotion).Error
 	if err != nil {
-		return nil, errs.ErrPromotionNotFound
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, errs.ErrPromotionNotFound
+		}
+		return nil, err
 	}
 
 	products, err := r.productRepository.GetWithPromotions(shopId, promotion.ID)
