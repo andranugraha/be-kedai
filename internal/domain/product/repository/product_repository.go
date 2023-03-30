@@ -558,16 +558,17 @@ func (r *productRepositoryImpl) GetRecommended(req *dto.GetRecommendedProductReq
 		Joins("join cities c ON c.id = ua.city_id").
 		Joins("join provinces p ON p.id = c.province_id").
 		Joins("left join product_promotions pp on pp.sku_id = s.id and (select count(id) from shop_promotions sp where pp.promotion_id = sp.id and now() between sp.start_period and sp.end_period) > 0").
+		Where("products.is_active = ?", isActive).
 		Group("products.id,c.name,p.name")
 
-	errCount := db.Model(&model.Product{}).Where("products.is_active = ?", isActive).Count(&totalRows).Error
+	errCount := db.Model(&model.Product{}).Count(&totalRows).Error
 	if errCount != nil {
 		return nil, 0, 0, errCount
 	}
 
 	totalPages = int(math.Ceil(float64(totalRows) / float64(req.Limit)))
 
-	err = db.Where("products.is_active = ?", isActive).
+	err = db.
 		Limit(req.Limit).
 		Offset(req.Offset()).
 		Order("products.sold desc, products.rating desc").
