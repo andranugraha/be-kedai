@@ -1062,16 +1062,22 @@ func TestCreateProduct(t *testing.T) {
 
 func TestGetRecommendedProducts(t *testing.T) {
 	type input struct {
-		limit int
+		request *dto.GetRecommendedProductRequest
 	}
 	type expected struct {
-		data []*dto.ProductResponse
+		data *commonDto.PaginationResponse
 		err  error
 	}
 
 	var (
 		defaultLimit        = 18
 		recommendedProducts = []*dto.ProductResponse{}
+		totalRows           = int64(10)
+		totalPages          = int(1)
+		request             = dto.GetRecommendedProductRequest{
+			Limit: defaultLimit,
+			Page:  1,
+		}
 	)
 
 	test := []struct {
@@ -1083,10 +1089,13 @@ func TestGetRecommendedProducts(t *testing.T) {
 		{
 			description: "should return error when failed to get recommended products",
 			input: input{
-				limit: defaultLimit,
+				request: &dto.GetRecommendedProductRequest{
+					Limit: defaultLimit,
+					Page:  1,
+				},
 			},
 			beforeTest: func(pr *mocks.ProductRepository) {
-				pr.On("GetRecommended", defaultLimit).Return(nil, errors.New("failed to get recommended products"))
+				pr.On("GetRecommended", &request).Return(nil, int64(0), 0, errors.New("failed to get recommended products"))
 			},
 			expected: expected{
 				data: nil,
@@ -1094,16 +1103,25 @@ func TestGetRecommendedProducts(t *testing.T) {
 			},
 		},
 		{
-			description: "should recommended products when successful",
+			description: "should recommended products with pagination when successful",
 			input: input{
-				limit: defaultLimit,
+				request: &dto.GetRecommendedProductRequest{
+					Limit: defaultLimit,
+					Page:  1,
+				},
 			},
 			beforeTest: func(pr *mocks.ProductRepository) {
-				pr.On("GetRecommended", defaultLimit).Return(recommendedProducts, nil)
+				pr.On("GetRecommended", &request).Return(recommendedProducts, totalRows, totalPages, nil)
 			},
 			expected: expected{
-				data: recommendedProducts,
-				err:  nil,
+				data: &commonDto.PaginationResponse{
+					Data:       recommendedProducts,
+					Limit:      defaultLimit,
+					TotalRows:  totalRows,
+					TotalPages: totalPages,
+					Page:       1,
+				},
+				err: nil,
 			},
 		},
 	}
@@ -1116,7 +1134,7 @@ func TestGetRecommendedProducts(t *testing.T) {
 				ProductRepository: productRepo,
 			})
 
-			data, err := productService.GetRecommendedProducts(tc.input.limit)
+			data, err := productService.GetRecommendedProducts(tc.input.request)
 
 			assert.Equal(t, tc.expected.data, data)
 			assert.Equal(t, tc.expected.err, err)

@@ -238,6 +238,11 @@ func NewRouter(cfg *RouterConfig) *gin.Engine {
 				marketplace := authenticated.Group("/marketplaces")
 				{
 					marketplace.POST("/banners", cfg.MarketplaceHandler.AddMarketplaceBanner)
+					voucher := marketplace.Group("/vouchers")
+					{
+						voucher.GET("", cfg.MarketplaceHandler.GetMarketplaceVoucherAdmin)
+						voucher.GET("/:code", cfg.MarketplaceHandler.GetMarketplaceVoucherAdminByCode)
+					}
 				}
 			}
 		}
@@ -288,6 +293,7 @@ func NewRouter(cfg *RouterConfig) *gin.Engine {
 					promotion.GET("", cfg.ShopHandler.GetSellerPromotions)
 					promotion.GET("/:promotionId", cfg.ShopHandler.GetSellerPromotionById)
 					promotion.POST("", cfg.ShopHandler.CreateShopPromotion)
+					promotion.DELETE("/:promotionId", cfg.ShopHandler.DeletePromotion)
 				}
 
 				order := authenticated.Group("/orders")

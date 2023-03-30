@@ -1170,7 +1170,7 @@ func TestUpdateStatusCRONJob(t *testing.T) {
 			InvoicePerShopRepo: mockRepo,
 		})
 
-		service.UpdateStatusCRONJob()
+		_ = service.UpdateStatusCRONJob()
 
 		mockRepo.AssertNumberOfCalls(t, "UpdateStatusCRONJob", 1)
 	})
@@ -1184,7 +1184,7 @@ func TestAutoReceivedCRONJob(t *testing.T) {
 			InvoicePerShopRepo: mockRepo,
 		})
 
-		service.AutoReceivedCRONJob()
+		_ = service.AutoReceivedCRONJob()
 
 		mockRepo.AssertNumberOfCalls(t, "AutoReceivedCRONJob", 1)
 	})
@@ -1198,7 +1198,7 @@ func TestAutoCompletedCRONJob(t *testing.T) {
 			InvoicePerShopRepo: mockRepo,
 		})
 
-		service.AutoCompletedCRONJob()
+		_ = service.AutoCompletedCRONJob()
 
 		mockRepo.AssertNumberOfCalls(t, "AutoCompletedCRONJob", 1)
 	})
