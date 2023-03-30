@@ -3,6 +3,7 @@ package repository
 import (
 	"fmt"
 	"kedai/backend/be-kedai/internal/common/constant"
+	errs "kedai/backend/be-kedai/internal/common/error"
 	productModel "kedai/backend/be-kedai/internal/domain/product/model"
 	"kedai/backend/be-kedai/internal/domain/shop/dto"
 	"kedai/backend/be-kedai/internal/domain/shop/model"
@@ -18,6 +19,7 @@ type ShopPromotionRepository interface {
 	GetSellerPromotions(shopId int, request *dto.SellerPromotionFilterRequest) ([]*dto.SellerPromotion, int64, int, error)
 	GetSellerPromotionById(shopId int, promotionId int) (*dto.SellerPromotion, error)
 	Create(shopID int, request *dto.CreateShopPromotionRequest) (*dto.CreateShopPromotionResponse, error)
+	Delete(shopId int, promotionId int) error
 }
 
 type shopPromotionRepositoryImpl struct {
@@ -167,4 +169,40 @@ func (r *shopPromotionRepositoryImpl) Create(shopID int, request *dto.CreateShop
 	}
 
 	return response, nil
+}
+
+func (r *shopPromotionRepositoryImpl) Delete(shopId int, promotionId int) error {
+	promotion, err := r.GetSellerPromotionById(shopId, promotionId)
+	if err != nil {
+		return err
+	}
+
+	if promotion.Status == constant.VoucherPromotionStatusOngoing || promotion.Status == constant.VoucherPromotionStatusExpired {
+		return errs.ErrPromotionStatusConflict
+	}
+
+	tx := r.db.Begin()
+	defer tx.Commit()
+
+	for _, product := range promotion.Product {
+		for _, sku := range product.SKUs {
+			res := tx.Delete(&productModel.ProductPromotion{}, "id = ?", sku.Promotion.ID)
+			if err := res.Error; err != nil {
+				tx.Rollback()
+				return err
+			}
+		}
+	}
+
+	res := tx.Delete(&model.ShopPromotion{}, "id = ? AND shop_id = ?", promotionId, shopId)
+	if err := res.Error; err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	if res.RowsAffected == 0 {
+		return errs.ErrPromotionNotFound
+	}
+
+	return nil
 }
