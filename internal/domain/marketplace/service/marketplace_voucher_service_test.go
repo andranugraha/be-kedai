@@ -165,8 +165,8 @@ func TestGetValidForCheckout(t *testing.T) {
 }
 
 func TestCreateMarketplaceVoucher(t *testing.T) {
-	var(
-		val = true
+	var (
+		val   = true
 		catId = 1
 		payId = 1
 	)
@@ -189,23 +189,23 @@ func TestCreateMarketplaceVoucher(t *testing.T) {
 			description: "should return created voucher or error when called",
 			input: input{
 				req: dto.CreateMarketplaceVoucherRequest{
-					Code: "A",
-					IsHidden: &val,
-					CategoryID: &catId,
+					Code:            "A",
+					IsHidden:        &val,
+					CategoryID:      &catId,
 					PaymentMethodID: &payId,
 				},
 				voucher: &model.MarketplaceVoucher{
-					Code: "A",
-					IsHidden: val,
-					CategoryID: &catId,
+					Code:            "A",
+					IsHidden:        val,
+					CategoryID:      &catId,
 					PaymentMethodID: &payId,
 				},
 			},
 			expected: expected{
 				result: &model.MarketplaceVoucher{
-					Code: "A",
-					IsHidden: val,
-					CategoryID: &catId,
+					Code:            "A",
+					IsHidden:        val,
+					CategoryID:      &catId,
 					PaymentMethodID: &payId,
 				},
 				err: errs.ErrInternalServerError,

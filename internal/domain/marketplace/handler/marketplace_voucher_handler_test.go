@@ -178,43 +178,43 @@ func TestGetValidMarketplaceVoucher(t *testing.T) {
 }
 
 func TestCreateMarketplaceVoucher(t *testing.T) {
-	var(
+	var (
 		boolValue = true
-		value = 1
-		time, _ = time.Parse("2006-03-02", "2022-11-22")
-		req = dto.CreateMarketplaceVoucherRequest{
-			Code: "A",
-			Name: "A",
-			Amount: 1,
-			Type: "A",
-			IsHidden: &boolValue,
-			Description: "A",
-			MinimumSpend: 1,
-			ExpiredAt: time,
-			CategoryID: &value,
+		value     = 1
+		time, _   = time.Parse("2006-03-02", "2022-11-22")
+		req       = dto.CreateMarketplaceVoucherRequest{
+			Code:            "A",
+			Name:            "A",
+			Amount:          1,
+			Type:            "A",
+			IsHidden:        &boolValue,
+			Description:     "A",
+			MinimumSpend:    1,
+			ExpiredAt:       time,
+			CategoryID:      &value,
 			PaymentMethodID: &value,
 		}
 		res = &model.MarketplaceVoucher{
-			Code: "A",
-			Name: "A",
-			Amount: 1,
-			Type: "A",
-			IsHidden: boolValue,
-			Description: "A",
-			MinimumSpend: 1,
-			ExpiredAt: time,
-			CategoryID: &value,
+			Code:            "A",
+			Name:            "A",
+			Amount:          1,
+			Type:            "A",
+			IsHidden:        boolValue,
+			Description:     "A",
+			MinimumSpend:    1,
+			ExpiredAt:       time,
+			CategoryID:      &value,
 			PaymentMethodID: &value,
 		}
 	)
 	type input struct {
-		req dto.CreateMarketplaceVoucherRequest
-		result *model.MarketplaceVoucher
+		req        dto.CreateMarketplaceVoucherRequest
+		result     *model.MarketplaceVoucher
 		beforeTest func(*mocks.MarketplaceVoucherService)
 	}
-	type expected struct{
+	type expected struct {
 		statusCode int
-		response response.Response
+		response   response.Response
 	}
 	type cases struct {
 		description string
@@ -226,7 +226,7 @@ func TestCreateMarketplaceVoucher(t *testing.T) {
 		{
 			description: "should return created voucher with code 201 when success",
 			input: input{
-				req: req,
+				req:    req,
 				result: res,
 				beforeTest: func(mvs *mocks.MarketplaceVoucherService) {
 					mvs.On("CreateMarketplaceVoucher", &req).Return(res, nil)
@@ -235,23 +235,23 @@ func TestCreateMarketplaceVoucher(t *testing.T) {
 			expected: expected{
 				statusCode: http.StatusCreated,
 				response: response.Response{
-					Code: code.CREATED,
+					Code:    code.CREATED,
 					Message: "created",
-					Data: res,
+					Data:    res,
 				},
 			},
 		},
 		{
 			description: "should return error with code 400 when invalid input requested",
 			input: input{
-				req: dto.CreateMarketplaceVoucherRequest{},
-				result: nil,
+				req:        dto.CreateMarketplaceVoucherRequest{},
+				result:     nil,
 				beforeTest: func(mvs *mocks.MarketplaceVoucherService) {},
 			},
 			expected: expected{
 				statusCode: http.StatusBadRequest,
 				response: response.Response{
-					Code: code.BAD_REQUEST,
+					Code:    code.BAD_REQUEST,
 					Message: "ExpiredAt is required",
 				},
 			},
@@ -259,7 +259,7 @@ func TestCreateMarketplaceVoucher(t *testing.T) {
 		{
 			description: "should return error with code 409 when voucher code duplicate",
 			input: input{
-				req: req,
+				req:    req,
 				result: nil,
 				beforeTest: func(mvs *mocks.MarketplaceVoucherService) {
 					mvs.On("CreateMarketplaceVoucher", &req).Return(nil, errs.ErrDuplicateVoucherCode)
@@ -268,7 +268,7 @@ func TestCreateMarketplaceVoucher(t *testing.T) {
 			expected: expected{
 				statusCode: http.StatusConflict,
 				response: response.Response{
-					Code: code.DUPLICATE_VOUCHER_CODE,
+					Code:    code.DUPLICATE_VOUCHER_CODE,
 					Message: errs.ErrDuplicateVoucherCode.Error(),
 				},
 			},
@@ -276,7 +276,7 @@ func TestCreateMarketplaceVoucher(t *testing.T) {
 		{
 			description: "should return error with code 500 when internal server error",
 			input: input{
-				req: req,
+				req:    req,
 				result: nil,
 				beforeTest: func(mvs *mocks.MarketplaceVoucherService) {
 					mvs.On("CreateMarketplaceVoucher", &req).Return(nil, errs.ErrInternalServerError)
@@ -285,7 +285,7 @@ func TestCreateMarketplaceVoucher(t *testing.T) {
 			expected: expected{
 				statusCode: http.StatusInternalServerError,
 				response: response.Response{
-					Code: code.INTERNAL_SERVER_ERROR,
+					Code:    code.INTERNAL_SERVER_ERROR,
 					Message: errs.ErrInternalServerError.Error(),
 				},
 			},
