@@ -1,10 +1,13 @@
 package service
 
 import (
+	"kedai/backend/be-kedai/internal/common/constant"
 	commonDto "kedai/backend/be-kedai/internal/common/dto"
+	commonErr "kedai/backend/be-kedai/internal/common/error"
 	"kedai/backend/be-kedai/internal/domain/marketplace/dto"
 	"kedai/backend/be-kedai/internal/domain/marketplace/model"
 	"kedai/backend/be-kedai/internal/domain/marketplace/repository"
+	productUtils "kedai/backend/be-kedai/internal/utils/product"
 )
 
 type MarketplaceVoucherService interface {
@@ -13,6 +16,7 @@ type MarketplaceVoucherService interface {
 	GetMarketplaceVoucherAdmin(request *dto.AdminVoucherFilterRequest) (*commonDto.PaginationResponse, error)
 	GetValidByUserID(req *dto.GetMarketplaceVoucherRequest) ([]*model.MarketplaceVoucher, error)
 	GetValidForCheckout(id, userID, PaymentMethodID int) (*model.MarketplaceVoucher, error)
+	UpdateVoucher(voucherCode string, request *dto.UpdateVoucherRequest) error
 }
 
 type marketplaceVoucherServiceImpl struct {
@@ -58,4 +62,58 @@ func (s *marketplaceVoucherServiceImpl) GetValidByUserID(req *dto.GetMarketplace
 
 func (s *marketplaceVoucherServiceImpl) GetValidForCheckout(id, userID, PaymentMethodID int) (*model.MarketplaceVoucher, error) {
 	return s.marketplaceVoucherRepository.GetValid(id, userID, PaymentMethodID)
+}
+
+func (s *marketplaceVoucherServiceImpl) UpdateVoucher(voucherCode string, request *dto.UpdateVoucherRequest) error {
+	if isVoucherNameValid := productUtils.ValidateProductName(request.Name); !isVoucherNameValid {
+		return commonErr.ErrInvalidVoucherNamePattern
+	}
+
+	voucher, err := s.marketplaceVoucherRepository.GetMarketplaceVoucherAdminByCode(voucherCode)
+	if err != nil {
+		return err
+	}
+
+	if voucher.Status == constant.VoucherPromotionStatusExpired {
+		return commonErr.ErrVoucherStatusConflict
+	}
+
+	isZero := 0
+
+	if request.Name == "" {
+		request.Name = voucher.Name
+	}
+	if request.IsHidden == nil {
+		request.IsHidden = &voucher.IsHidden
+	}
+	if request.Description == "" {
+		request.Description = voucher.Description
+	}
+	if err := request.ValidateDateRange(voucher.ExpiredAt); err != nil {
+		return err
+	}
+	if request.CategoryId == &isZero {
+		request.CategoryId = voucher.CategoryID
+	}
+	if request.PaymentMethodId == &isZero {
+		request.PaymentMethodId = voucher.PaymentMethodID
+	}
+
+	payload := &model.MarketplaceVoucher{
+		ID:              voucher.ID,
+		Name:            request.Name,
+		Code:            voucher.Code,
+		IsHidden:        *request.IsHidden,
+		Description:     request.Description,
+		ExpiredAt:       request.ExpiredAt,
+		CategoryID:      request.CategoryId,
+		PaymentMethodID: request.PaymentMethodId,
+	}
+
+	err = s.marketplaceVoucherRepository.Update(payload)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
