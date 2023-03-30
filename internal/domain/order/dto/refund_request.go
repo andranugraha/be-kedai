@@ -53,6 +53,7 @@ type GetRefundReq struct {
 	Search string `json:"search"`
 	Limit  int    `json:"limit"`
 	Page   int    `json:"page"`
+	Status string `json:"status"`
 }
 
 func (g *GetRefundReq) Validate() {

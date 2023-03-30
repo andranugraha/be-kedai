@@ -168,14 +168,14 @@ func (r *refundRequestRepositoryImpl) RefundAdmin(requestRefundId int) error {
 	var history = &walletModel.WalletHistory{
 		WalletId:  refundRequests.WalletId,
 		Amount:    refundAmount,
-		Type:      constant.WalletRefundStatus,
+		Type:      walletModel.WalletHistoryTypeRefund,
 		Reference: rand.GenerateNumericString(5),
 	}
 
 	var wallet = &walletModel.Wallet{
 		UserID: refundRequests.UserId,
 	}
-	
+
 	_, err = r.userRepo.TopUpTransaction(tx, history, wallet)
 	if err != nil {
 		tx.Rollback()
@@ -241,6 +241,10 @@ func (r *refundRequestRepositoryImpl) GetRefund(req *dto.GetRefundReq) ([]*dto.G
 
 	if req.Search != "" {
 		query = query.Where("p.name LIKE ?", "%"+req.Search+"%")
+	}
+
+	if req.Status != "" {
+		query = query.Where("rr.status = ?", req.Status)
 	}
 
 	query.Count(&totalRows)

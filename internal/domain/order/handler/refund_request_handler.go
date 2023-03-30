@@ -70,9 +70,11 @@ func (h *Handler) GetRefund(c *gin.Context) {
 
 	limit, _ := strconv.Atoi(c.Query("limit"))
 	page, _ := strconv.Atoi(c.Query("page"))
+	status := c.Query("status")
 
 	req.Limit = limit
 	req.Page = page
+	req.Status = status
 
 	refundRequest, err := h.refundRequestService.GetRefund(&req)
 

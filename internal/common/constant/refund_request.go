@@ -9,7 +9,6 @@ const (
 	RequestStatusSellerApproved = "SELLER_APPROVED"
 	RefundStatusRefunded        = "REFUNDED"
 
-	WalletRefundStatus = "Refund"
 
 	MinLimitGetRefundRequest = 1
 	MaxLimitGetRefundRequest = 50
