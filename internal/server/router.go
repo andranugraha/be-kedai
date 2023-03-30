@@ -297,6 +297,7 @@ func NewRouter(cfg *RouterConfig) *gin.Engine {
 				{
 					promotion.GET("", cfg.ShopHandler.GetSellerPromotions)
 					promotion.GET("/:promotionId", cfg.ShopHandler.GetSellerPromotionById)
+					promotion.PUT("/:promotionId", cfg.ShopHandler.UpdatePromotion)
 					promotion.POST("", cfg.ShopHandler.CreateShopPromotion)
 					promotion.DELETE("/:promotionId", cfg.ShopHandler.DeletePromotion)
 				}

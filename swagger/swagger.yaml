@@ -3405,7 +3405,6 @@ paths:
                   message:
                     type: string
                     example: "error message"
-      
   /v1/products/{code}/reviews:
     get:
       tags:
@@ -5945,6 +5944,24 @@ paths:
           schema:
             type: string
             example: product name
+        - in: query
+          name: isPromoted
+          description: will return unpromoted products if the value is false
+          schema:
+            type: boolean
+            example: false
+        - in: query
+          name: startPeriod
+          description: will return unpromoted products with a range of period. the default is current time. `must be used with isPromoted`
+          schema:
+            type: string
+            example: 2023-12-12T00:00:00Z
+        - in: query
+          name: endPeriod
+          description: will return unpromoted products with a range of period. the default is current time. `must be used with isPromoted`
+          schema:
+            type: string
+            example: 2023-12-12T00:00:00Z
       responses:
         '200':
           description: successful operation
@@ -6828,21 +6845,102 @@ paths:
                   message:
                     type: string
                     example: "error message"
+    put:
+      security:
+        - BearerAuth: []
+      tags:
+        - Seller
+      summary: Update seller's promotion
+      description: Update seller's promotion by using promotion ID
+      parameters:
+        - in: path
+          name: promotionId
+          required: true
+          schema:
+            type: integer
+            example: 1
+      requestBody:
+        $ref: '#/components/requestBodies/UpdatePromotionBody'
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - type: object
+                    properties:
+                      code:
+                        example: "UPDATED"
+                      message:
+                        example: "update promotion succesful"
+        '401':
+          description: unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "UNAUTHORIZED"
+                  message:
+                    type: string
+                    example: "invalid credential"
+        '404':
+          description: shop not found / promotion not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "NOT_FOUND"
+                  message:
+                    type: string
+                    example: "error message"
+        '422':
+          description: invalid promotion name pattern / invalid date range
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "INVALID"
+                  message:
+                    type: string
+                    example: "error message"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "INTERNAL_SERVER_ERROR"
+                  message:
+                    type: string
+                    example: "error message"
     delete:
       security:
         - BearerAuth: []
       tags:
         - Seller
       summary: Delete seller's promotion
-      description: Delete seller's promotion using promotionId. Cannot delete promotion that has an ongoing or expired status.
+      description: Delete seller's promotion using promotion code. Cannot delete promotion that has an ongoing or expired status.
       parameters:
         - in: path
-          name: promotionId
+          name: code
           required: true
-          description: Promotion ID of the promotion to be deleted
+          description: promotion Code of the promotion to be deleted
           schema:
-            type: integer
-            example: 1
+            type: string
+            example: "promotion-code"
       responses:
         '200':
           description: successful operation
@@ -8108,8 +8206,7 @@ paths:
                     example: "INTERNAL_SERVER_ERROR"
                   message:
                     type: string
-                    example: "error message"
-
+                    example: "error message"              
   /v1/sellers/orders/{orderId}/process:
     put:
       security:
@@ -8175,7 +8272,6 @@ paths:
                   message:
                     type: string
                     example: "error message"
-
   /v1/sellers/orders/{orderId}/cancel:
     put:
       security:
@@ -8337,72 +8433,6 @@ paths:
                   message:
                     type: string
                     example: "error message"
-            
-  /v1/admins/marketplaces/vouchers:
-    post:
-      security:
-        - BearerAuth: []
-      tags:
-        - Admin
-      summary: Add marketplace voucher
-      description: Add new marketplace voucher
-      requestBody:
-        $ref: '#/components/requestBodies/AddMarketplaceVoucherBody'
-      responses:
-        '201':
-          description: successful operation
-          content:
-            application/json:
-              schema:
-                allOf:
-                  - type: object
-                    properties:
-                      code:
-                        example: 'CREATED'
-                      message:
-                        example: 'created'
-                      data:
-                        $ref: '#/components/schemas/MarketplaceVoucher'
-        '400':
-          description: Bad Request
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  code:
-                    type: string
-                    example: "BAD_REQUEST"
-                  message:
-                    type: string
-                    example: "error message"          
-        '409':
-          description: Conflict voucher code
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  code:
-                    type: string
-                    example: "VOUCHER_DUPLICATE"
-                  message:
-                    type: string
-                    example: "error message"   
-        '500':
-          description: Internal server error
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  code:
-                    type: string
-                    example: "INTERNAL_SERVER_ERROR"
-                  message:
-                    type: string
-                    example: "error message"
-                    
   /v1/admins/orders/{orderId}/cancel-commit:
     post:
       security:
@@ -8532,42 +8562,56 @@ paths:
                     type: string
                     example: "error message"
   /v1/admins/marketplaces/vouchers:
-    get:
+    post:
+      security:
+        - BearerAuth: []
       tags:
         - Admin
-      parameters:
-        - in: query
-          name: categoryId
-          schema:
-            type: integer
-            default: 0
-          description: No default category, will get all if not specified
-        - in: query
-          name: paymentMethodId
-          schema:
-            type: integer
-            default: 0
-          description: No default payment method, will get all if not specified
-      summary: Get marketplace vouchers
-      description: Get list of available marketplace vouchers
+      summary: Add marketplace voucher
+      description: Add new marketplace voucher
+      requestBody:
+        $ref: '#/components/requestBodies/AddMarketplaceVoucherBody'
       responses:
-        '200':
+        '201':
           description: successful operation
           content:
             application/json:
               schema:
                 allOf:
-                  - $ref: '#/components/schemas/Response'
                   - type: object
                     properties:
                       code:
-                        example: "OK"
+                        example: 'CREATED'
                       message:
-                        example: "ok"
+                        example: 'created'
                       data:
-                        type: array
-                        items:
-                          $ref: '#/components/schemas/MarketplaceVoucher'
+                        $ref: '#/components/schemas/MarketplaceVoucher'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "BAD_REQUEST"
+                  message:
+                    type: string
+                    example: "error message"          
+        '409':
+          description: Conflict voucher code
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "VOUCHER_DUPLICATE"
+                  message:
+                    type: string
+                    example: "error message"   
         '500':
           description: Internal server error
           content:
@@ -11211,48 +11255,6 @@ components:
                           image_url:
                             type: string
                             example: "https://example.com/image.jpg"
-    AddMarketplaceVoucherBody:
-      required: true
-      content:
-        application/json:
-          schema:
-            type: object
-            required:
-              - code
-              - name
-              - amount
-              - type
-              - isHidden
-              - description
-              - minimumSpend
-              - expiredAt
-            properties:
-              code:
-                type: string
-                example: "code"
-              name:
-                type: string
-                example: "name"
-              amount:
-                type: integer
-                example: 1000
-              type:
-                type: string
-                example: "nominal"
-                description: "percent or nominal"
-              isHidden:
-                type: boolean
-                example: false
-              description:
-                type: string
-                example: "description"
-              minimumSpend:
-                type: integer
-                example: 1000
-              expiredAt:
-                type: string
-                format: datetime
-                example: "2006-01-02T00:00:00.000Z"
     WalletBody:
       required: true
       content:
@@ -12315,6 +12317,75 @@ components:
                 type: array
                 items:
                   $ref: '#/components/requestBodies/ProductPromotionBody'
+    AddMarketplaceVoucherBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - code
+              - name
+              - amount
+              - type
+              - isHidden
+              - description
+              - minimumSpend
+              - expiredAt
+            properties:
+              code:
+                type: string
+                example: "code"
+              name:
+                type: string
+                example: "name"
+              amount:
+                type: integer
+                example: 1000
+              type:
+                type: string
+                example: "nominal"
+                description: "percent or nominal"
+              isHidden:
+                type: boolean
+                example: false
+              description:
+                type: string
+                example: "description"
+              minimumSpend:
+                type: integer
+                example: 1000
+              expiredAt:
+                type: string
+                format: datetime
+                example: "2006-01-02T00:00:00.000Z"
+    UpdatePromotionBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - name
+              - startPeriod
+              - endPeriod
+              - productPromotions
+            properties:
+              name:
+                type: string
+                minLength: 1
+                maxLength: 100
+                example: sebelas sebelas
+              startPeriod:
+                type: string
+                example: 2023-12-12T00:00:00Z
+              endPeriod:
+                type: string
+                example: 2023-12-30T00:00:00Z
+              productPromotions:
+                type: array
+                items:
+                  $ref: '#/components/requestBodies/UpdateProductPromotionBody'
     ProductPromotionBody:
       type: object
       required:
@@ -12343,6 +12414,39 @@ components:
           type: integer
           example: 1
         skuId:
+          type: integer
+          example: 1
+    UpdateProductPromotionBody:
+      type: object
+      required:
+        - type
+        - amount
+        - stock
+        - isActive
+        - purchaseLimit
+        - skuId
+      properties:
+        type:
+          type: string
+          minLength: 1
+          maxLength: 100
+          example: discount
+        amount:
+          type: integer
+          example: 11
+        stock:
+          type: integer
+          example: 111
+        isActive:
+          type: boolean
+          example: true
+        purchaseLimit:
+          type: integer
+          example: 1
+        skuId:
+          type: integer
+          example: 1
+        promotionId:
           type: integer
           example: 1
   securitySchemes:

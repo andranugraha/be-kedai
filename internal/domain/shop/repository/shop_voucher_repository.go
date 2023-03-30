@@ -194,7 +194,7 @@ func (r *shopVoucherRepositoryImpl) Delete(shopId int, voucherCode string) error
 }
 
 func (r *shopVoucherRepositoryImpl) ValidateVoucherDateRange(startFrom, expiredAt time.Time) error {
-	now := time.Now().UTC()
+	now := time.Now().Truncate(24 * time.Hour)
 
 	if startFrom.After(expiredAt) || (startFrom.Before(now) && expiredAt.Before(now)) || expiredAt.Before(startFrom) {
 		return errs.ErrInvalidVoucherDateRange

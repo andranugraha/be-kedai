@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"errors"
 	"fmt"
 	"kedai/backend/be-kedai/internal/common/constant"
 	errs "kedai/backend/be-kedai/internal/common/error"
@@ -13,11 +14,13 @@ import (
 	productRepo "kedai/backend/be-kedai/internal/domain/product/repository"
 
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 type ShopPromotionRepository interface {
 	GetSellerPromotions(shopId int, request *dto.SellerPromotionFilterRequest) ([]*dto.SellerPromotion, int64, int, error)
 	GetSellerPromotionById(shopId int, promotionId int) (*dto.SellerPromotion, error)
+	Update(shopPromotion *model.ShopPromotion, productPromotion []*productModel.ProductPromotion) error
 	Create(shopID int, request *dto.CreateShopPromotionRequest) (*dto.CreateShopPromotionResponse, error)
 	Delete(shopId int, promotionId int) error
 }
@@ -114,6 +117,9 @@ func (r *shopPromotionRepositoryImpl) GetSellerPromotionById(shopId int, promoti
 
 	err := query.First(&promotion).Error
 	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, errs.ErrPromotionNotFound
+		}
 		return nil, err
 	}
 
@@ -124,6 +130,31 @@ func (r *shopPromotionRepositoryImpl) GetSellerPromotionById(shopId int, promoti
 	promotion.Product = products
 
 	return promotion, nil
+}
+
+func (r *shopPromotionRepositoryImpl) Update(shopPromotion *model.ShopPromotion, productPromotions []*productModel.ProductPromotion) error {
+	tx := r.db.Begin()
+	defer tx.Commit()
+
+	res := tx.Clauses(clause.Returning{}).Updates(shopPromotion)
+	if err := res.Error; err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	if res.RowsAffected < 1 {
+		return errs.ErrPromotionNotFound
+	}
+
+	for _, productPromotion := range productPromotions {
+		res := tx.Save(productPromotion)
+		if err := res.Error; err != nil {
+			tx.Rollback()
+			return err
+		}
+	}
+
+	return nil
 }
 
 func (r *shopPromotionRepositoryImpl) Create(shopID int, request *dto.CreateShopPromotionRequest) (*dto.CreateShopPromotionResponse, error) {

@@ -173,6 +173,22 @@ func TestGetSellerPromotionById(t *testing.T) {
 			},
 		},
 		{
+			description: "should return error with status code 404 when promotion not found",
+			input: input{
+				userID:      userID,
+				promotionId: promotionId,
+				mockData:    nil,
+				mockErr:     errs.ErrPromotionNotFound,
+			},
+			expected: expected{
+				statusCode: http.StatusNotFound,
+				response: response.Response{
+					Code:    code.PROMOTION_NOT_FOUND,
+					Message: errs.ErrPromotionNotFound.Error(),
+				},
+			},
+		},
+		{
 			description: "should return error with status code 500 when something went wrong",
 			input: input{
 				userID:      userID,
@@ -224,6 +240,211 @@ func TestGetSellerPromotionById(t *testing.T) {
 
 		assert.Equal(t, tc.expected.statusCode, rec.Code)
 		assert.Equal(t, string(expectedRes), rec.Body.String())
+	}
+}
+
+func TestUpdatePromotion(t *testing.T) {
+	type input struct {
+		userID      int
+		promotionID int
+		request     dto.UpdateShopPromotionRequest
+	}
+	type expected struct {
+		statusCode int
+		response   response.Response
+	}
+
+	var (
+		userID         = 1
+		promotionID    = 1
+		promotionName  = "promotion name"
+		startPeriod, _ = time.Parse("2006-01-02", "2006-01-02")
+		endPeriod, _   = time.Parse("2006-01-02", "2006-01-14")
+
+		request = dto.UpdateShopPromotionRequest{
+			Name:              promotionName,
+			StartPeriod:       startPeriod,
+			EndPeriod:         endPeriod,
+			ProductPromotions: []*productDto.UpdateProductPromotionRequest{},
+		}
+	)
+
+	tests := []struct {
+		description string
+		input
+		beforeTest func(*mocks.ShopPromotionService)
+		expected
+	}{
+		{
+			description: "should return error with status code 400 when given invalid request body",
+			input: input{
+				userID:      userID,
+				promotionID: promotionID,
+				request: dto.UpdateShopPromotionRequest{
+					Name:              "",
+					StartPeriod:       startPeriod,
+					EndPeriod:         endPeriod,
+					ProductPromotions: request.ProductPromotions,
+				},
+			},
+			beforeTest: func(vs *mocks.ShopPromotionService) {},
+			expected: expected{
+				statusCode: http.StatusBadRequest,
+				response: response.Response{
+					Code:    code.BAD_REQUEST,
+					Message: "Name must be greater than 1",
+				},
+			},
+		},
+		{
+			description: "should return error with status code 404 when failed to get shop",
+			input: input{
+				userID:      userID,
+				promotionID: promotionID,
+				request:     request,
+			},
+			beforeTest: func(ps *mocks.ShopPromotionService) {
+				ps.On("UpdatePromotion", userID, promotionID, request).Return(errs.ErrShopNotFound)
+			},
+			expected: expected{
+				statusCode: http.StatusNotFound,
+				response: response.Response{
+					Code:    code.SHOP_NOT_REGISTERED,
+					Message: errs.ErrShopNotFound.Error(),
+				},
+			},
+		},
+		{
+			description: "should return error with status code 404 and PROMOTION_NOT_FOUND code when promotion is not found",
+			input: input{
+				userID:      userID,
+				promotionID: promotionID,
+				request:     request,
+			},
+			beforeTest: func(ps *mocks.ShopPromotionService) {
+				ps.On("UpdatePromotion", userID, promotionID, request).Return(errs.ErrPromotionNotFound)
+			},
+			expected: expected{
+				statusCode: http.StatusNotFound,
+				response: response.Response{
+					Code:    code.PROMOTION_NOT_FOUND,
+					Message: errs.ErrPromotionNotFound.Error(),
+				},
+			},
+		},
+		{
+			description: "should return error with status code 422 when promotion name is invalid",
+			input: input{
+				userID:      userID,
+				promotionID: promotionID,
+				request:     request,
+			},
+			beforeTest: func(ps *mocks.ShopPromotionService) {
+				ps.On("UpdatePromotion", userID, promotionID, request).Return(errs.ErrInvalidPromotionNamePattern)
+			},
+			expected: expected{
+				statusCode: http.StatusUnprocessableEntity,
+				response: response.Response{
+					Code:    code.INVALID_PROMOTION_NAME,
+					Message: errs.ErrInvalidPromotionNamePattern.Error(),
+				},
+			},
+		},
+		{
+			description: "should return error with status code 422 when promotion fields cant be edited",
+			input: input{
+				userID:      userID,
+				promotionID: promotionID,
+				request:     request,
+			},
+			beforeTest: func(vs *mocks.ShopPromotionService) {
+				vs.On("UpdatePromotion", userID, promotionID, request).Return(errs.ErrPromotionFieldsCantBeEdited)
+			},
+			expected: expected{
+				statusCode: http.StatusUnprocessableEntity,
+				response: response.Response{
+					Code:    code.PROMOTION_FIELDS_CANT_BE_EDITED,
+					Message: errs.ErrPromotionFieldsCantBeEdited.Error(),
+				},
+			},
+		},
+		{
+			description: "should return error with status code 422 when voucher date range is invalid",
+			input: input{
+				userID:      userID,
+				promotionID: promotionID,
+				request:     request,
+			},
+			beforeTest: func(ps *mocks.ShopPromotionService) {
+				ps.On("UpdatePromotion", userID, promotionID, request).Return(errs.ErrInvalidPromotionDateRange)
+			},
+			expected: expected{
+				statusCode: http.StatusUnprocessableEntity,
+				response: response.Response{
+					Code:    code.INVALID_DATE_RANGE,
+					Message: errs.ErrInvalidPromotionDateRange.Error(),
+				},
+			},
+		},
+		{
+			description: "should return error with status code 500 when something went wrong",
+			input: input{
+				userID:      userID,
+				promotionID: promotionID,
+				request:     request,
+			},
+			beforeTest: func(ps *mocks.ShopPromotionService) {
+				ps.On("UpdatePromotion", userID, promotionID, request).Return(errors.New("something went wrong"))
+			},
+			expected: expected{
+				statusCode: http.StatusInternalServerError,
+				response: response.Response{
+					Code:    code.INTERNAL_SERVER_ERROR,
+					Message: errs.ErrInternalServerError.Error(),
+				},
+			},
+		},
+		{
+			description: "should return success with status code 200 and UPDATED code when promotion is updated successfully",
+			input: input{
+				userID:      userID,
+				promotionID: promotionID,
+				request:     request,
+			},
+			beforeTest: func(ps *mocks.ShopPromotionService) {
+				ps.On("UpdatePromotion", userID, promotionID, request).Return(nil)
+			},
+			expected: expected{
+				statusCode: http.StatusOK,
+				response: response.Response{
+					Code:    code.UPDATED,
+					Message: "update promotion succesful",
+					Data:    nil,
+				},
+			},
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.description, func(t *testing.T) {
+			expectedRes, _ := json.Marshal(tc.expected.response)
+			shopPromotionService := mocks.NewShopPromotionService(t)
+			tc.beforeTest(shopPromotionService)
+			rec := httptest.NewRecorder()
+			c, _ := gin.CreateTestContext(rec)
+			c.Set("userId", tc.input.userID)
+			c.AddParam("promotionId", "1")
+			h := handler.New(&handler.HandlerConfig{
+				ShopPromotionService: shopPromotionService,
+			})
+			payload := test.MakeRequestBody(tc.input.request)
+			c.Request = httptest.NewRequest(http.MethodPut, fmt.Sprintf("/v1/sellers/promotions?%d", tc.input.promotionID), payload)
+
+			h.UpdatePromotion(c)
+
+			assert.Equal(t, tc.expected.statusCode, rec.Code)
+			assert.Equal(t, string(expectedRes), rec.Body.String())
+		})
 	}
 }
 
