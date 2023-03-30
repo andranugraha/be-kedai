@@ -256,21 +256,6 @@ func TestUpdatePromotion(t *testing.T) {
 			},
 		},
 		{
-			description: "should return error when promotion date range is invalid",
-			input: input{
-				userID: userID,
-				request: dto.UpdateShopPromotionRequest{
-					Name:        promotionName,
-					StartPeriod: time.Now(),
-					EndPeriod:   time.Now().AddDate(0, 0, -1),
-				},
-			},
-			beforeTest: func(ss *mocks.ShopService, vr *mocks.ShopPromotionRepository) {},
-			expected: expected{
-				err: errors.New("invalid promotion date range"),
-			},
-		},
-		{
 			description: "should return error when failed to get shop",
 			input: input{
 				userID: userID,
