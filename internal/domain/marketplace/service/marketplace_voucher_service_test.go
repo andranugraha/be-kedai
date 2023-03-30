@@ -1,6 +1,8 @@
 package service_test
 
 import (
+	"errors"
+	commonDto "kedai/backend/be-kedai/internal/common/dto"
 	"kedai/backend/be-kedai/internal/domain/marketplace/dto"
 	"kedai/backend/be-kedai/internal/domain/marketplace/model"
 	"kedai/backend/be-kedai/internal/domain/marketplace/service"
@@ -63,53 +65,80 @@ func TestGetMarketplaceVoucher(t *testing.T) {
 
 func TestGetMarketplaceVoucherAdmin(t *testing.T) {
 	type input struct {
-		req        *dto.GetMarketplaceVoucherRequest
-		err        error
-		beforeTest func(*mocks.MarketplaceVoucherRepository)
+		userID  int
+		request *dto.AdminVoucherFilterRequest
 	}
 	type expected struct {
-		result []*model.MarketplaceVoucher
-		err    error
+		data *commonDto.PaginationResponse
+		err  error
 	}
 
-	cases := []struct {
+	var (
+		userID     = 1
+		limit      = 20
+		page       = 1
+		request    = &dto.AdminVoucherFilterRequest{Limit: limit, Page: page}
+		vouchers   = []*dto.AdminMarketplaceVoucher{}
+		totalRows  = int64(0)
+		totalPages = 0
+	)
+
+	tests := []struct {
 		description string
 		input
+		beforeTest func(*mocks.MarketplaceVoucherRepository)
 		expected
 	}{
 		{
-			description: "should return error and marketplace vouchers",
+			description: "should return error when failed to get vouchers",
 			input: input{
-				err: nil,
-				req: &dto.GetMarketplaceVoucherRequest{},
-				beforeTest: func(m *mocks.MarketplaceVoucherRepository) {
-					m.On("GetMarketplaceVoucherAdmin", &dto.GetMarketplaceVoucherRequest{}).Return(nil, nil)
-				},
+				userID:  userID,
+				request: request,
+			},
+			beforeTest: func(mr *mocks.MarketplaceVoucherRepository) {
+				mr.On("GetMarketplaceVoucherAdmin", request).Return(nil, int64(0), 0, errors.New("failed to get vouchers"))
 			},
 			expected: expected{
-				result: nil,
-				err:    nil,
+				data: nil,
+				err:  errors.New("failed to get vouchers"),
+			},
+		},
+		{
+			description: "should return voucher data when succeed to get vouchers",
+			input: input{
+				userID:  userID,
+				request: request,
+			},
+			beforeTest: func(mr *mocks.MarketplaceVoucherRepository) {
+				mr.On("GetMarketplaceVoucherAdmin", request).Return(vouchers, totalRows, totalPages, nil)
+			},
+			expected: expected{
+				data: &commonDto.PaginationResponse{
+					TotalRows:  totalRows,
+					TotalPages: totalPages,
+					Page:       page,
+					Limit:      limit,
+					Data:       vouchers,
+				},
+				err: nil,
 			},
 		},
 	}
 
-	for _, c := range cases {
-		t.Run(c.description, func(t *testing.T) {
-			m := mocks.NewMarketplaceVoucherRepository(t)
-			c.beforeTest(m)
-
-			s := service.NewMarketplaceVoucherService(&service.MarketplaceVoucherSConfig{
-				MarketplaceVoucherRepository: m,
+	for _, tc := range tests {
+		t.Run(tc.description, func(t *testing.T) {
+			marketplaceVoucherRepo := mocks.NewMarketplaceVoucherRepository(t)
+			tc.beforeTest(marketplaceVoucherRepo)
+			marketplaceVoucherService := service.NewMarketplaceVoucherService(&service.MarketplaceVoucherSConfig{
+				MarketplaceVoucherRepository: marketplaceVoucherRepo,
 			})
 
-			result, err := s.GetMarketplaceVoucherAdmin(c.input.req)
+			data, err := marketplaceVoucherService.GetMarketplaceVoucherAdmin(tc.input.request)
 
-			assert.Equal(t, c.expected.err, err)
-			assert.Equal(t, c.expected.result, result)
-
+			assert.Equal(t, tc.expected.data, data)
+			assert.Equal(t, tc.expected.err, err)
 		})
 	}
-
 }
 
 func TestGetValidByUserID(t *testing.T) {
