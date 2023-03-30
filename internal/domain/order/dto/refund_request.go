@@ -16,8 +16,6 @@ func (c *RefundRequest) Validate() error {
 	return nil
 }
 
-
-
 type RefundInfo struct {
 	RequestRefundId      int     `gorm:"column:id" json:"requestRefundId"`
 	RequestRefundStatus  string  `gorm:"column:status" json:"requestRefundStatus"`
@@ -69,4 +67,9 @@ func (g *GetRefundReq) Validate() {
 	if g.Page < 1 {
 		g.Page = 1
 	}
+
+	if g.Status != constant.RefundStatusRejected && g.Status != constant.RefundStatusPending && g.Status != constant.RequestStatusSellerApproved && g.Status != constant.RefundStatusRefunded {
+		g.Status = ""
+	}
+
 }
