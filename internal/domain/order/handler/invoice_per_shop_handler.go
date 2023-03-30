@@ -9,6 +9,7 @@ import (
 	"log"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 )
@@ -115,7 +116,16 @@ func (h *Handler) GetInvoiceByShopIdAndOrderId(c *gin.Context) {
 	id := c.Param("orderId")
 	idInt, _ := strconv.Atoi(id)
 
-	invoice, err := h.invoicePerShopService.GetInvoiceByUserIdAndId(userId, idInt)
+	var (
+		invoice *dto.InvoicePerShopDetail
+		err     error
+	)
+	if len(id) > 3 && id[:3] == "INV" {
+		id = strings.Replace(id, "-", "/", -1)
+		invoice, err = h.invoicePerShopService.GetInvoiceByUserIdAndCode(userId, id)
+	} else {
+		invoice, err = h.invoicePerShopService.GetInvoiceByUserIdAndId(userId, idInt)
+	}
 	if err != nil {
 		if errors.Is(err, errs.ErrInvoiceNotFound) {
 			response.Error(c, http.StatusNotFound, code.INVOICE_NOT_FOUND, errs.ErrInvoiceNotFound.Error())
@@ -173,6 +183,29 @@ func (h *Handler) Refund(c *gin.Context) {
 	}
 
 	response.Success(c, http.StatusCreated, code.CREATED, "created", result)
+}
+
+func (h *Handler) UpdateToProcessing(c *gin.Context) {
+	userId := c.GetInt("userId")
+	orderId, _ := strconv.Atoi(c.Param("orderId"))
+
+	err := h.invoicePerShopService.UpdateStatusToProcessing(userId, orderId)
+	if err != nil {
+		if errors.Is(err, errs.ErrShopNotFound) {
+			response.Error(c, http.StatusNotFound, code.SHOP_NOT_REGISTERED, err.Error())
+			return
+		}
+
+		if errors.Is(err, errs.ErrInvoiceNotFound) {
+			response.Error(c, http.StatusNotFound, code.INVOICE_NOT_FOUND, err.Error())
+			return
+		}
+
+		response.Error(c, http.StatusInternalServerError, code.INTERNAL_SERVER_ERROR, errs.ErrInternalServerError.Error())
+		return
+	}
+
+	response.Success(c, http.StatusOK, code.OK, "ok", nil)
 }
 
 func (h *Handler) UpdateToDelivery(c *gin.Context) {

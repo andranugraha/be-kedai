@@ -5,6 +5,8 @@ import (
 	"kedai/backend/be-kedai/connection"
 	"kedai/backend/be-kedai/internal/server/middleware"
 
+	"github.com/gin-contrib/pprof"
+
 	chatHandler "kedai/backend/be-kedai/internal/domain/chat/handler"
 	locationHandler "kedai/backend/be-kedai/internal/domain/location/handler"
 	marketplaceHandler "kedai/backend/be-kedai/internal/domain/marketplace/handler"
@@ -29,6 +31,8 @@ type RouterConfig struct {
 
 func NewRouter(cfg *RouterConfig) *gin.Engine {
 	r := gin.Default()
+
+	pprof.Register(r)
 
 	corsCfg := cors.DefaultConfig()
 	corsCfg.AllowOrigins = config.Origin
@@ -238,6 +242,12 @@ func NewRouter(cfg *RouterConfig) *gin.Engine {
 				marketplace := authenticated.Group("/marketplaces")
 				{
 					marketplace.POST("/banners", cfg.MarketplaceHandler.AddMarketplaceBanner)
+					voucher := marketplace.Group("/vouchers")
+					{
+						voucher.POST("", cfg.MarketplaceHandler.CreateMarketplaceVoucher)
+						voucher.GET("", cfg.MarketplaceHandler.GetMarketplaceVoucherAdmin)
+						voucher.GET("/:code", cfg.MarketplaceHandler.GetMarketplaceVoucherAdminByCode)
+					}
 				}
 			}
 		}
@@ -270,6 +280,7 @@ func NewRouter(cfg *RouterConfig) *gin.Engine {
 				{
 					product.GET("", cfg.ProductHandler.GetSellerProducts)
 					product.GET("/:code", cfg.ProductHandler.GetSellerProductDetailByCode)
+					product.PUT("/:code", cfg.ProductHandler.UpdateProduct)
 					product.PUT("/:code/activations", cfg.ProductHandler.UpdateProductActivation)
 				}
 
@@ -288,12 +299,14 @@ func NewRouter(cfg *RouterConfig) *gin.Engine {
 					promotion.GET("/:promotionId", cfg.ShopHandler.GetSellerPromotionById)
 					promotion.PUT("/:promotionId", cfg.ShopHandler.UpdatePromotion)
 					promotion.POST("", cfg.ShopHandler.CreateShopPromotion)
+					promotion.DELETE("/:promotionId", cfg.ShopHandler.DeletePromotion)
 				}
 
 				order := authenticated.Group("/orders")
 				{
 					order.GET("", cfg.OrderHandler.GetShopOrder)
 					order.GET("/:orderId", cfg.OrderHandler.GetInvoiceByShopIdAndOrderId)
+					order.PUT("/:orderId/process", cfg.OrderHandler.UpdateToProcessing)
 					order.PUT("/:orderId/delivery", cfg.OrderHandler.UpdateToDelivery)
 					order.POST("/:orderId/cancel-request", cfg.OrderHandler.UpdateToRefundPendingSellerCancel)
 					order.PUT("/:orderId/refund", cfg.OrderHandler.UpdateRefundStatus)

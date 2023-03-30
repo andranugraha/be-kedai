@@ -5,6 +5,7 @@ import (
 	"kedai/backend/be-kedai/internal/common/constant"
 	errs "kedai/backend/be-kedai/internal/common/error"
 	"kedai/backend/be-kedai/internal/domain/order/model"
+	productModel "kedai/backend/be-kedai/internal/domain/product/model"
 	productRepo "kedai/backend/be-kedai/internal/domain/product/repository"
 	"kedai/backend/be-kedai/internal/domain/user/cache"
 	userDto "kedai/backend/be-kedai/internal/domain/user/dto"
@@ -64,6 +65,18 @@ func (r *invoiceRepositoryImpl) Create(invoice *model.Invoice) (*model.Invoice, 
 			if err != nil {
 				tx.Rollback()
 				return nil, err
+			}
+
+			err = tx.Model(&productModel.ProductPromotion{}).Update("stock", gorm.Expr("case when stock > ? then stock - ? else 0 end", transaction.PromotedQuantity)).Where("sku_id = ?", transaction.SkuID).Error
+			if err != nil {
+				tx.Rollback()
+				return nil, err
+			}
+
+			for _, variant := range transaction.Sku.Variants {
+				transaction.Variants = append(transaction.Variants, model.TransactionVariant{
+					Value: variant.Value,
+				})
 			}
 		}
 	}
@@ -161,6 +174,12 @@ func (r *invoiceRepositoryImpl) Delete(invoice *model.Invoice) error {
 	for _, invoicePerShop := range invoice.InvoicePerShops {
 		for _, transaction := range invoicePerShop.Transactions {
 			err := r.skuRepo.IncreaseStock(tx, transaction.SkuID, transaction.Quantity)
+			if err != nil {
+				tx.Rollback()
+				return err
+			}
+
+			err = tx.Model(&productModel.ProductPromotion{}).Update("stock", gorm.Expr("stock + ?", transaction.PromotedQuantity)).Where("sku_id = ?", transaction.SkuID).Error
 			if err != nil {
 				tx.Rollback()
 				return err

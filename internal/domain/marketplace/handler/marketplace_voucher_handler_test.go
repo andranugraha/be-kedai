@@ -2,7 +2,10 @@ package handler_test
 
 import (
 	"encoding/json"
+	"errors"
+	"fmt"
 	"kedai/backend/be-kedai/internal/common/code"
+	commonDto "kedai/backend/be-kedai/internal/common/dto"
 	errs "kedai/backend/be-kedai/internal/common/error"
 	"kedai/backend/be-kedai/internal/domain/marketplace/dto"
 	"kedai/backend/be-kedai/internal/domain/marketplace/handler"
@@ -12,6 +15,7 @@ import (
 	testutil "kedai/backend/be-kedai/internal/utils/test"
 	"kedai/backend/be-kedai/mocks"
 	"testing"
+	"time"
 
 	"net/http"
 	"net/http/httptest"
@@ -95,6 +99,101 @@ func TestGetMarketplaceVoucher(t *testing.T) {
 
 }
 
+func TestGetMarketplaceVoucherAdmin(t *testing.T) {
+	type input struct {
+		userID   int
+		request  *dto.AdminVoucherFilterRequest
+		mockData *commonDto.PaginationResponse
+		mockErr  error
+	}
+	type expected struct {
+		statusCode int
+		response   response.Response
+	}
+
+	var (
+		userID     = 1
+		page       = 2
+		limit      = 10
+		totalRows  = int64(0)
+		vouchers   = []*dto.AdminMarketplaceVoucher{}
+		totalPages = 0
+		request    = &dto.AdminVoucherFilterRequest{
+			Page:  page,
+			Limit: limit,
+		}
+	)
+
+	tests := []struct {
+		description string
+		input
+		expected
+	}{
+		{
+			description: "should return error with status code 500 when something went wrong",
+			input: input{
+				userID:   userID,
+				request:  request,
+				mockData: nil,
+				mockErr:  errors.New("something went wrong"),
+			},
+			expected: expected{
+				statusCode: http.StatusInternalServerError,
+				response: response.Response{
+					Code:    code.INTERNAL_SERVER_ERROR,
+					Message: errs.ErrInternalServerError.Error(),
+				},
+			},
+		},
+		{
+			description: "should return data with status code 200 when succeed fetching vouchers",
+			input: input{
+				userID:  userID,
+				request: request,
+				mockData: &commonDto.PaginationResponse{
+					TotalRows:  totalRows,
+					TotalPages: totalPages,
+					Page:       page,
+					Limit:      limit,
+					Data:       vouchers,
+				},
+				mockErr: nil,
+			},
+			expected: expected{
+				statusCode: http.StatusOK,
+				response: response.Response{
+					Code:    code.OK,
+					Message: "ok",
+					Data: &commonDto.PaginationResponse{
+						TotalRows:  totalRows,
+						TotalPages: totalPages,
+						Page:       page,
+						Limit:      limit,
+						Data:       vouchers,
+					},
+				},
+			},
+		},
+	}
+
+	for _, tc := range tests {
+		expectedRes, _ := json.Marshal(tc.expected.response)
+		marketplaceVoucherService := mocks.NewMarketplaceVoucherService(t)
+		marketplaceVoucherService.On("GetMarketplaceVoucherAdmin", tc.input.request).Return(tc.input.mockData, tc.input.mockErr)
+		rec := httptest.NewRecorder()
+		c, _ := gin.CreateTestContext(rec)
+		h := handler.New(&handler.HandlerConfig{
+			MarketplaceVoucherService: marketplaceVoucherService,
+		})
+		c.Request = httptest.NewRequest("GET", fmt.Sprintf("/v1/admins/marketplaces/vouchers?page=%d&limit=%d", tc.input.request.Page, tc.input.request.Limit), nil)
+
+		h.GetMarketplaceVoucherAdmin(c)
+
+		assert.Equal(t, tc.expected.statusCode, rec.Code)
+		assert.Equal(t, string(expectedRes), rec.Body.String())
+	}
+}
+
 func TestGetValidMarketplaceVoucher(t *testing.T) {
 	type input struct {
 		err        error
@@ -172,6 +271,139 @@ func TestGetValidMarketplaceVoucher(t *testing.T) {
 			assert.Equal(t, tc.expected.statusCode, rec.Code)
 			assert.Equal(t, string(jsonRes), rec.Body.String())
 
+		})
+	}
+}
+
+func TestCreateMarketplaceVoucher(t *testing.T) {
+	var (
+		boolValue = true
+		value     = 1
+		time, _   = time.Parse("2006-03-02", "2022-11-22")
+		req       = dto.CreateMarketplaceVoucherRequest{
+			Code:            "A",
+			Name:            "A",
+			Amount:          1,
+			Type:            "A",
+			IsHidden:        &boolValue,
+			Description:     "A",
+			MinimumSpend:    1,
+			ExpiredAt:       time,
+			CategoryID:      &value,
+			PaymentMethodID: &value,
+		}
+		res = &model.MarketplaceVoucher{
+			Code:            "A",
+			Name:            "A",
+			Amount:          1,
+			Type:            "A",
+			IsHidden:        boolValue,
+			Description:     "A",
+			MinimumSpend:    1,
+			ExpiredAt:       time,
+			CategoryID:      &value,
+			PaymentMethodID: &value,
+		}
+	)
+	type input struct {
+		req        dto.CreateMarketplaceVoucherRequest
+		result     *model.MarketplaceVoucher
+		beforeTest func(*mocks.MarketplaceVoucherService)
+	}
+	type expected struct {
+		statusCode int
+		response   response.Response
+	}
+	type cases struct {
+		description string
+		input
+		expected
+	}
+
+	for _, tc := range []cases{
+		{
+			description: "should return created voucher with code 201 when success",
+			input: input{
+				req:    req,
+				result: res,
+				beforeTest: func(mvs *mocks.MarketplaceVoucherService) {
+					mvs.On("CreateMarketplaceVoucher", &req).Return(res, nil)
+				},
+			},
+			expected: expected{
+				statusCode: http.StatusCreated,
+				response: response.Response{
+					Code:    code.CREATED,
+					Message: "created",
+					Data:    res,
+				},
+			},
+		},
+		{
+			description: "should return error with code 400 when invalid input requested",
+			input: input{
+				req:        dto.CreateMarketplaceVoucherRequest{},
+				result:     nil,
+				beforeTest: func(mvs *mocks.MarketplaceVoucherService) {},
+			},
+			expected: expected{
+				statusCode: http.StatusBadRequest,
+				response: response.Response{
+					Code:    code.BAD_REQUEST,
+					Message: "ExpiredAt is required",
+				},
+			},
+		},
+		{
+			description: "should return error with code 409 when voucher code duplicate",
+			input: input{
+				req:    req,
+				result: nil,
+				beforeTest: func(mvs *mocks.MarketplaceVoucherService) {
+					mvs.On("CreateMarketplaceVoucher", &req).Return(nil, errs.ErrDuplicateVoucherCode)
+				},
+			},
+			expected: expected{
+				statusCode: http.StatusConflict,
+				response: response.Response{
+					Code:    code.DUPLICATE_VOUCHER_CODE,
+					Message: errs.ErrDuplicateVoucherCode.Error(),
+				},
+			},
+		},
+		{
+			description: "should return error with code 500 when internal server error",
+			input: input{
+				req:    req,
+				result: nil,
+				beforeTest: func(mvs *mocks.MarketplaceVoucherService) {
+					mvs.On("CreateMarketplaceVoucher", &req).Return(nil, errs.ErrInternalServerError)
+				},
+			},
+			expected: expected{
+				statusCode: http.StatusInternalServerError,
+				response: response.Response{
+					Code:    code.INTERNAL_SERVER_ERROR,
+					Message: errs.ErrInternalServerError.Error(),
+				},
+			},
+		},
+	} {
+		t.Run(tc.description, func(t *testing.T) {
+			jsonRes, _ := json.Marshal(tc.expected.response)
+			m := mocks.NewMarketplaceVoucherService(t)
+			tc.input.beforeTest(m)
+			rec := httptest.NewRecorder()
+			c, _ := gin.CreateTestContext(rec)
+			c.Request, _ = http.NewRequest(http.MethodPost, "v1/admins/marketplaces/vouchers", testutil.MakeRequestBody(tc.input.req))
+			h := handler.New(&handler.HandlerConfig{
+				MarketplaceVoucherService: m,
+			})
+
+			h.CreateMarketplaceVoucher(c)
+
+			assert.Equal(t, tc.expected.statusCode, rec.Code)
+			assert.Equal(t, string(jsonRes), rec.Body.String())
 		})
 	}
 }

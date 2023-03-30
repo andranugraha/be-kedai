@@ -598,7 +598,7 @@ func TestDeleteVoucher(t *testing.T) {
 			},
 		},
 		{
-			description: "response status Internal Server Error when DeleteUserAddress return other error",
+			description: "response status Internal Server Error when DeleteVoucher return other error",
 			input: input{
 				beforeTests: func(vs *mocks.ShopVoucherService) {
 					vs.On("DeleteVoucher", 1, "BAKM12a").Return(errs.ErrInternalServerError)

@@ -22,6 +22,7 @@ type ShopPromotionRepository interface {
 	GetSellerPromotionById(shopId int, promotionId int) (*dto.SellerPromotion, error)
 	Update(shopPromotion *model.ShopPromotion, productPromotion []*productModel.ProductPromotion) error
 	Create(shopID int, request *dto.CreateShopPromotionRequest) (*dto.CreateShopPromotionResponse, error)
+	Delete(shopId int, promotionId int) error
 }
 
 type shopPromotionRepositoryImpl struct {
@@ -199,4 +200,40 @@ func (r *shopPromotionRepositoryImpl) Create(shopID int, request *dto.CreateShop
 	}
 
 	return response, nil
+}
+
+func (r *shopPromotionRepositoryImpl) Delete(shopId int, promotionId int) error {
+	promotion, err := r.GetSellerPromotionById(shopId, promotionId)
+	if err != nil {
+		return err
+	}
+
+	if promotion.Status == constant.VoucherPromotionStatusOngoing || promotion.Status == constant.VoucherPromotionStatusExpired {
+		return errs.ErrPromotionStatusConflict
+	}
+
+	tx := r.db.Begin()
+	defer tx.Commit()
+
+	for _, product := range promotion.Product {
+		for _, sku := range product.SKUs {
+			res := tx.Delete(&productModel.ProductPromotion{}, "id = ?", sku.Promotion.ID)
+			if err := res.Error; err != nil {
+				tx.Rollback()
+				return err
+			}
+		}
+	}
+
+	res := tx.Delete(&model.ShopPromotion{}, "id = ? AND shop_id = ?", promotionId, shopId)
+	if err := res.Error; err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	if res.RowsAffected == 0 {
+		return errs.ErrPromotionNotFound
+	}
+
+	return nil
 }

@@ -40,7 +40,7 @@ func (h *Handler) GetAllCouriers(c *gin.Context) {
 	response.Success(c, http.StatusOK, code.OK, "success", couriers)
 }
 
-func (h *Handler) AddCourier (c *gin.Context){
+func (h *Handler) AddCourier(c *gin.Context) {
 	var req dto.ShipmentCourierRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		response.ErrorValidator(c, http.StatusBadRequest, err)

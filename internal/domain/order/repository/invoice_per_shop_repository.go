@@ -27,8 +27,10 @@ type InvoicePerShopRepository interface {
 	GetByShopId(shopId int, req *dto.InvoicePerShopFilterRequest) ([]*dto.InvoicePerShopDetail, int64, int, error)
 	WithdrawFromInvoice(invoicePerShopIds []int, shopId int, walletId int) error
 	GetByShopIdAndId(shopId int, id int) (*dto.InvoicePerShopDetail, error)
+	GetByShopIdAndCode(shopId int, code string) (*dto.InvoicePerShopDetail, error)
 	GetShopOrder(shopId int, req *dto.InvoicePerShopFilterRequest) ([]*dto.InvoicePerShopDetail, int64, int, error)
 	RefundRequest(ref *model.RefundRequest, invoiceStatus []*model.InvoiceStatus) (*model.RefundRequest, error)
+	UpdateStatusToProcessing(shopId int, orderId int, invoiceStatuses []*model.InvoiceStatus) error
 	UpdateStatusToDelivery(shopId int, orderId int, invoiceStatuses []*model.InvoiceStatus) error
 	UpdateStatusToCanceled(orderId int, invoiceStatuses []*model.InvoiceStatus) error
 	UpdateStatusToReceived(shopId int, orderId int, invoiceStatuses []*model.InvoiceStatus) error
@@ -116,7 +118,7 @@ func (r *invoicePerShopRepositoryImpl) GetByUserID(userID int, request *dto.Invo
 		`).
 			Joins("JOIN skus ON skus.id = transactions.sku_id").
 			Joins("JOIN products ON skus.product_id = products.id")
-	}).Preload("TransactionItems.Sku.Variants")
+	}).Preload("TransactionItems.Sku.Variants").Preload("TransactionItems.Variants")
 
 	err = query.Preload("Shop").Limit(request.Limit).Offset(request.Offset()).Order("invoices.payment_date DESC").Find(&invoices).Error
 	if err != nil {
@@ -166,7 +168,7 @@ func (r *invoicePerShopRepositoryImpl) GetByUserIDAndCode(userID int, code strin
 			Joins("JOIN skus ON skus.id = transactions.sku_id").
 			Joins("JOIN products ON skus.product_id = products.id")
 	}).
-		Preload("TransactionItems.Sku.Variants")
+		Preload("TransactionItems.Sku.Variants").Preload("TransactionItems.Variants")
 
 	query = query.Preload("Address.Province").
 		Preload("Address.City").
@@ -250,7 +252,7 @@ func (r *invoicePerShopRepositoryImpl) GetByShopId(shopId int, req *dto.InvoiceP
 		`).
 			Joins("JOIN skus ON skus.id = transactions.sku_id").
 			Joins("JOIN products ON skus.product_id = products.id")
-	}).Preload("TransactionItems.Sku.Variants")
+	}).Preload("TransactionItems.Sku.Variants").Preload("TransactionItems.Variants")
 
 	err := db.Preload("Shop").Limit(req.Limit).Offset(req.Offset()).Order("invoices.payment_date DESC").Find(&invoices).Error
 	if err != nil {
@@ -337,6 +339,59 @@ func (r *invoicePerShopRepositoryImpl) GetByShopIdAndId(shopId int, id int) (*dt
 			Joins("JOIN products ON skus.product_id = products.id")
 	}).
 		Preload("TransactionItems.Sku.Variants").
+		Preload("TransactionItems.Variants").
+		Preload("Shop").
+		Preload("Address.Province").
+		Preload("Address.City").
+		Preload("Address.District").
+		Preload("Address.Subdistrict").
+		Preload("User").
+		Preload("CourierService.Courier").
+		Preload("StatusList")
+
+	err := query.First(&invoice).Error
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, commonErr.ErrInvoiceNotFound
+		}
+
+		return nil, err
+	}
+
+	return &invoice, nil
+}
+
+func (r *invoicePerShopRepositoryImpl) GetByShopIdAndCode(shopId int, code string) (*dto.InvoicePerShopDetail, error) {
+	var invoice dto.InvoicePerShopDetail
+
+	query := r.db.
+		Select(`invoice_per_shops.*, case when invoices.voucher_type = ?
+		THEN ROUND(invoice_per_shops.shipping_cost  / (
+			select SUM(ips2.shipping_cost) from invoice_per_shops ips2 where ips2.invoice_id = invoice_per_shops.invoice_id 
+			group by ips2.invoice_id 
+		) * invoices.voucher_amount) when invoices.voucher_type = ?
+		THEN ROUND(invoice_per_shops.subtotal / (
+			select SUM(ips2.subtotal) from invoice_per_shops ips2 where ips2.invoice_id = invoice_per_shops.invoice_id 
+			group by ips2.invoice_id 
+		) * invoices.voucher_amount) 
+		ELSE invoices.voucher_amount 
+		END AS marketplace_voucher_amount, 
+		invoices.voucher_type AS marketplace_voucher_type, 
+		invoices.payment_date AS payment_date`, marketplaceModel.VoucherTypeShipping, marketplaceModel.VoucherTypeNominal).
+		Joins("JOIN invoices ON invoices.id = invoice_per_shops.invoice_id").
+		Where("invoice_per_shops.shop_id = ?", shopId).
+		Where("invoice_per_shops.code = ?", code)
+
+	query = query.Preload("TransactionItems", func(query *gorm.DB) *gorm.DB {
+		return query.Select(`
+			transactions.*,
+			(SELECT url FROM product_medias WHERE products.id = product_medias.product_id LIMIT 1) AS image_url,
+			products.name AS product_name
+		`).
+			Joins("JOIN skus ON skus.id = transactions.sku_id").
+			Joins("JOIN products ON skus.product_id = products.id")
+	}).
+		Preload("TransactionItems.Sku.Variants").
 		Preload("Shop").
 		Preload("Address.Province").
 		Preload("Address.City").
@@ -407,7 +462,7 @@ func (r *invoicePerShopRepositoryImpl) GetShopOrder(shopId int, req *dto.Invoice
 		`).
 			Joins("JOIN skus ON skus.id = transactions.sku_id").
 			Joins("JOIN products ON skus.product_id = products.id")
-	}).Preload("TransactionItems.Sku.Variants")
+	}).Preload("TransactionItems.Sku.Variants").Preload("TransactionItems.Variants")
 
 	queryCount := db.Session(&gorm.Session{})
 	queryCount.Model(&model.InvoicePerShop{}).Distinct("invoice_per_shops.id").Count(&totalRows)
@@ -460,11 +515,37 @@ func (r *invoicePerShopRepositoryImpl) RefundRequest(ref *model.RefundRequest, i
 	return ref, nil
 }
 
+func (r *invoicePerShopRepositoryImpl) UpdateStatusToProcessing(shopId int, orderId int, invoiceStatuses []*model.InvoiceStatus) error {
+	err := r.db.Transaction(func(tx *gorm.DB) error {
+		if err := tx.Model(&model.InvoicePerShop{}).Where("shop_id = ? AND id = ? AND status = ?", shopId, orderId, constant.TransactionStatusCreated).Update("status", constant.TransactionStatusProcessing); err.Error != nil || err.RowsAffected == 0 {
+			if errors.Is(err.Error, gorm.ErrRecordNotFound) {
+				return commonErr.ErrInvoiceNotFound
+			}
+			if err.RowsAffected == 0 {
+				return commonErr.ErrInvoiceNotFound
+			}
+			return err.Error
+		}
+
+		if err := r.invoiceStatusRepo.Create(tx, invoiceStatuses); err != nil {
+			return err
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func (r *invoicePerShopRepositoryImpl) UpdateStatusToDelivery(shopId int, orderId int, invoiceStatuses []*model.InvoiceStatus) error {
 	var duration time.Duration
 
 	query := r.db.Table("courier_services").
-		Select(`FLOOR(courier_services.min_duration - (courier_services.max_duration - courier_services.min_duration + 1) * RANDOM())`).
+		Select(`FLOOR(courier_services.min_duration + (courier_services.max_duration - courier_services.min_duration) * RANDOM())`).
 		Joins("JOIN invoice_per_shops ips ON ips.courier_service_id = courier_services.id").
 		Where("ips.id = ?", orderId)
 
@@ -476,7 +557,7 @@ func (r *invoicePerShopRepositoryImpl) UpdateStatusToDelivery(shopId int, orderI
 	arrivalDate := now.Add(duration * time.Second)
 
 	err := r.db.Transaction(func(tx *gorm.DB) error {
-		if err := tx.Model(&model.InvoicePerShop{}).Where("shop_id = ? AND id = ? AND status = ?", shopId, orderId, constant.TransactionStatusCreated).Updates(map[string]interface{}{"status": constant.TransactionStatusOnDelivery, "arrival_date": arrivalDate}); err.Error != nil || err.RowsAffected == 0 {
+		if err := tx.Model(&model.InvoicePerShop{}).Where("shop_id = ? AND id = ? AND status = ?", shopId, orderId, constant.TransactionStatusProcessing).Updates(map[string]interface{}{"status": constant.TransactionStatusOnDelivery, "arrival_date": arrivalDate}); err.Error != nil || err.RowsAffected == 0 {
 			if errors.Is(err.Error, gorm.ErrRecordNotFound) {
 				return commonErr.ErrInvoiceNotFound
 			}

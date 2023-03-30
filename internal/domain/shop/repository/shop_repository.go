@@ -211,7 +211,7 @@ func (r *shopRepositoryImpl) GetShopInsight(shopId int, req dto.GetShopInsightRe
 		return nil, row.Err()
 	}
 
-	row.Scan(&shopInsight.Visitor, &shopInsight.PageView, &shopInsight.Order)
+	_ = row.Scan(&shopInsight.Visitor, &shopInsight.PageView, &shopInsight.Order)
 
 	sales, err := r.getShopSalesWithinInterval(shopId, req.Timeframe)
 	if err != nil {

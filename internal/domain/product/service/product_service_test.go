@@ -61,6 +61,63 @@ func TestGetByID(t *testing.T) {
 	}
 }
 
+func TestGetActiveByID(t *testing.T) {
+	type input struct {
+		id         int
+		beforeTest func(*mocks.ProductRepository)
+	}
+	type expected struct {
+		data *model.Product
+		err  error
+	}
+	cases := []struct {
+		description string
+		input
+		expected
+	}{
+		{
+			description: "should return error when fails to get product",
+			input: input{
+				id: 1,
+				beforeTest: func(pr *mocks.ProductRepository) {
+					pr.On("GetActiveByID", 1).Return(nil, errors.New("failed to get product"))
+				},
+			},
+			expected: expected{
+				data: nil,
+				err:  errors.New("failed to get product"),
+			},
+		},
+		{
+			description: "should return product on success",
+			input: input{
+				id: 1,
+				beforeTest: func(pr *mocks.ProductRepository) {
+					pr.On("GetActiveByID", 1).Return(&model.Product{}, nil)
+				},
+			},
+			expected: expected{
+				data: &model.Product{},
+				err:  nil,
+			},
+		},
+	}
+	for _, tc := range cases {
+		t.Run(tc.description, func(t *testing.T) {
+			mockProductRepo := mocks.NewProductRepository(t)
+			tc.beforeTest(mockProductRepo)
+			productService := service.NewProductService(&service.ProductSConfig{
+				ProductRepository: mockProductRepo,
+			})
+
+			got, err := productService.GetActiveByID(tc.id)
+
+			assert.Equal(t, tc.data, got)
+			assert.Equal(t, tc.err, err)
+		})
+	}
+}
+
 func TestGetByCode(t *testing.T) {
 	type input struct {
 		productCode string
@@ -1005,16 +1062,22 @@ func TestCreateProduct(t *testing.T) {
 
 func TestGetRecommendedProducts(t *testing.T) {
 	type input struct {
-		limit int
+		request *dto.GetRecommendedProductRequest
 	}
 	type expected struct {
-		data []*dto.ProductResponse
+		data *commonDto.PaginationResponse
 		err  error
 	}
 
 	var (
 		defaultLimit        = 18
 		recommendedProducts = []*dto.ProductResponse{}
+		totalRows           = int64(10)
+		totalPages          = int(1)
+		request             = dto.GetRecommendedProductRequest{
+			Limit: defaultLimit,
+			Page:  1,
+		}
 	)
 
 	test := []struct {
@@ -1026,10 +1089,13 @@ func TestGetRecommendedProducts(t *testing.T) {
 		{
 			description: "should return error when failed to get recommended products",
 			input: input{
-				limit: defaultLimit,
+				request: &dto.GetRecommendedProductRequest{
+					Limit: defaultLimit,
+					Page:  1,
+				},
 			},
 			beforeTest: func(pr *mocks.ProductRepository) {
-				pr.On("GetRecommended", defaultLimit).Return(nil, errors.New("failed to get recommended products"))
+				pr.On("GetRecommended", &request).Return(nil, int64(0), 0, errors.New("failed to get recommended products"))
 			},
 			expected: expected{
 				data: nil,
@@ -1037,16 +1103,25 @@ func TestGetRecommendedProducts(t *testing.T) {
 			},
 		},
 		{
-			description: "should recommended products when successful",
+			description: "should recommended products with pagination when successful",
 			input: input{
-				limit: defaultLimit,
+				request: &dto.GetRecommendedProductRequest{
+					Limit: defaultLimit,
+					Page:  1,
+				},
 			},
 			beforeTest: func(pr *mocks.ProductRepository) {
-				pr.On("GetRecommended", defaultLimit).Return(recommendedProducts, nil)
+				pr.On("GetRecommended", &request).Return(recommendedProducts, totalRows, totalPages, nil)
 			},
 			expected: expected{
-				data: recommendedProducts,
-				err:  nil,
+				data: &commonDto.PaginationResponse{
+					Data:       recommendedProducts,
+					Limit:      defaultLimit,
+					TotalRows:  totalRows,
+					TotalPages: totalPages,
+					Page:       1,
+				},
+				err: nil,
 			},
 		},
 	}
@@ -1059,11 +1134,169 @@ func TestGetRecommendedProducts(t *testing.T) {
 				ProductRepository: productRepo,
 			})
 
-			data, err := productService.GetRecommendedProducts(tc.input.limit)
+			data, err := productService.GetRecommendedProducts(tc.input.request)
 
 			assert.Equal(t, tc.expected.data, data)
 			assert.Equal(t, tc.expected.err, err)
 		})
 	}
 
+}
+
+func TestUpdateProduct(t *testing.T) {
+	type input struct {
+		userID  int
+		code    string
+		request *dto.CreateProductRequest
+	}
+	type expected struct {
+		data *model.Product
+		err  error
+	}
+
+	var (
+		userID          = 1
+		code            = "code"
+		shopID          = 1
+		productName     = "product name"
+		courierIDs      = []int{1, 2, 3}
+		courierServices = []*shopModel.CourierService{
+			{
+				ID:   1,
+				Name: "JNE",
+			},
+			{
+				ID:   2,
+				Name: "TIKI",
+			},
+			{
+				ID:   3,
+				Name: "POS",
+			},
+		}
+		updateReq = &dto.CreateProductRequest{
+			Name:       productName,
+			CourierIDs: courierIDs,
+		}
+	)
+
+	tests := []struct {
+		description string
+		input
+		beforeTest func(*mocks.ShopService, *mocks.CourierServiceService, *mocks.ProductRepository)
+		expected
+	}{
+		{
+			description: "should return error when product name is invalid",
+			input: input{
+				userID: userID,
+				code:   code,
+				request: &dto.CreateProductRequest{
+					Name:       "127.0.0.1",
+					CourierIDs: courierIDs,
+				},
+			},
+			beforeTest: func(ss *mocks.ShopService, css *mocks.CourierServiceService, pr *mocks.ProductRepository) {
+			},
+			expected: expected{
+				data: nil,
+				err:  errorResponse.ErrInvalidProductNamePattern,
+			},
+		},
+		{
+			description: "should return error when failed to get shop",
+			input: input{
+				userID: userID,
+				code:   code,
+				request: &dto.CreateProductRequest{
+					Name:       productName,
+					CourierIDs: courierIDs,
+				},
+			},
+			beforeTest: func(ss *mocks.ShopService, css *mocks.CourierServiceService, pr *mocks.ProductRepository) {
+				ss.On("FindShopByUserId", userID).Return(nil, errors.New("failed to get shop"))
+			},
+			expected: expected{
+				data: nil,
+				err:  errors.New("failed to get shop"),
+			},
+		},
+		{
+			description: "should return error when failed to get courier services",
+			input: input{
+				userID: userID,
+				code:   code,
+				request: &dto.CreateProductRequest{
+					Name:       productName,
+					CourierIDs: courierIDs,
+				},
+			},
+			beforeTest: func(ss *mocks.ShopService, css *mocks.CourierServiceService, pr *mocks.ProductRepository) {
+				ss.On("FindShopByUserId", userID).Return(&shopModel.Shop{ID: int(shopID)}, nil)
+				css.On("GetCourierServicesByCourierIDs", courierIDs).Return(nil, errors.New("failed to get couriers"))
+			},
+			expected: expected{
+				data: nil,
+				err:  errors.New("failed to get couriers"),
+			},
+		},
+		{
+			description: "should return error when failed to update product",
+			input: input{
+				userID: userID,
+				code:   code,
+				request: &dto.CreateProductRequest{
+					Name:       productName,
+					CourierIDs: courierIDs,
+				},
+			},
+			beforeTest: func(ss *mocks.ShopService, css *mocks.CourierServiceService, pr *mocks.ProductRepository) {
+				ss.On("FindShopByUserId", userID).Return(&shopModel.Shop{ID: shopID}, nil)
+				css.On("GetCourierServicesByCourierIDs", courierIDs).Return(courierServices, nil)
+				pr.On("Update", shopID, code, updateReq, courierServices).Return(nil, errors.New("failed to update product"))
+			},
+			expected: expected{
+				data: nil,
+				err:  errors.New("failed to update product"),
+			},
+		},
+		{
+			description: "should return product when successful",
+			input: input{
+				userID: userID,
+				code:   code,
+				request: &dto.CreateProductRequest{
+					Name:       productName,
+					CourierIDs: courierIDs,
+				},
+			},
+			beforeTest: func(ss *mocks.ShopService, css *mocks.CourierServiceService, pr *mocks.ProductRepository) {
+				ss.On("FindShopByUserId", userID).Return(&shopModel.Shop{ID: shopID}, nil)
+				css.On("GetCourierServicesByCourierIDs", courierIDs).Return(courierServices, nil)
+				pr.On("Update", shopID, code, updateReq, courierServices).Return(&model.Product{}, nil)
+			},
+			expected: expected{
+				data: &model.Product{},
+				err:  nil,
+			},
+		},
+	}
+	for _, tc := range tests {
+		t.Run(tc.description, func(t *testing.T) {
+			shopService := mocks.NewShopService(t)
+			courierServiceService := mocks.NewCourierServiceService(t)
+			productRepo := mocks.NewProductRepository(t)
+			tc.beforeTest(shopService, courierServiceService, productRepo)
+			productService := service.NewProductService(&service.ProductSConfig{
+				ShopService:           shopService,
+				CourierServiceService: courierServiceService,
+				ProductRepository:     productRepo,
+			})
+
+			data, err := productService.UpdateProduct(tc.input.userID, tc.input.code, tc.input.request)
+
+			assert.Equal(t, tc.expected.data, data)
+			assert.Equal(t, tc.expected.err, err)
+		})
+	}
 }

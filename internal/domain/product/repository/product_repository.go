@@ -28,7 +28,8 @@ type ProductRepository interface {
 	AddViewCount(productID int) error
 	UpdateActivation(shopID int, code string, isActive bool) error
 	Create(shopID int, request *dto.CreateProductRequest, courierServices []*shopModel.CourierService) (*model.Product, error)
-	GetRecommended(limit int) ([]*dto.ProductResponse, error)
+	GetRecommended(req *dto.GetRecommendedProductRequest) ([]*dto.ProductResponse, int64, int, error)
+	Update(shopID int, code string, payload *dto.CreateProductRequest, courierServices []*shopModel.CourierService) (*model.Product, error)
 }
 
 type productRepositoryImpl struct {
@@ -37,6 +38,7 @@ type productRepositoryImpl struct {
 	skuRepository            SkuRepository
 	productVariantRepository ProductVariantRepository
 	discussionRepository     DiscussionRepository
+	productMediaRepository   ProductMediaRepository
 }
 
 type ProductRConfig struct {
@@ -45,6 +47,7 @@ type ProductRConfig struct {
 	SkuRepository            SkuRepository
 	ProductVariantRepository ProductVariantRepository
 	DiscussionRepository     DiscussionRepository
+	ProductMediaRepository   ProductMediaRepository
 }
 
 func NewProductRepository(cfg *ProductRConfig) ProductRepository {
@@ -54,6 +57,7 @@ func NewProductRepository(cfg *ProductRConfig) ProductRepository {
 		skuRepository:            cfg.SkuRepository,
 		productVariantRepository: cfg.ProductVariantRepository,
 		discussionRepository:     cfg.DiscussionRepository,
+		productMediaRepository:   cfg.ProductMediaRepository,
 	}
 }
 
@@ -161,7 +165,7 @@ func (r *productRepositoryImpl) GetByShopID(shopID int, request *dto.ShopProduct
 		query.Joins("left join shop_category_products scp on products.id = scp.product_id").Where("scp.id = ?", request.ShopProductCategoryID)
 	}
 
-	query = query.Where("is_active = ?", active)
+	query = query.Where("products.is_active = ?", active)
 	query = query.Group("products.id")
 
 	query = query.Where("products.shop_id = ?", shopID)
@@ -368,7 +372,7 @@ func (r *productRepositoryImpl) GetBySellerID(shopID int, request *dto.SellerPro
 		query = query.Order("products.created_at DESC")
 	}
 
-	err = query.Preload("Bulk").Preload("SKUs.Variants").Find(&products).Error
+	err = query.Preload("Bulk").Preload("SKUs.Variants").Limit(request.Limit).Offset((request.Page - 1) * request.Limit).Find(&products).Error
 	if err != nil {
 		return nil, 0, 0, err
 	}
@@ -440,7 +444,6 @@ func (r *productRepositoryImpl) GetSellerProductByCode(shopID int, productCode s
 
 		return nil, err
 	}
-
 	return &product, nil
 }
 
@@ -525,9 +528,11 @@ func (r *productRepositoryImpl) Create(shopID int, request *dto.CreateProductReq
 		}
 	}
 
-	err = r.productVariantRepository.Create(tx, productVariants)
-	if err != nil {
-		return nil, err
+	if len(productVariants) > 0 {
+		err = r.productVariantRepository.Create(tx, productVariants)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	product.VariantGroup = variantGroups
@@ -536,7 +541,7 @@ func (r *productRepositoryImpl) Create(shopID int, request *dto.CreateProductReq
 	return product, nil
 }
 
-func (r *productRepositoryImpl) GetRecommended(limit int) (recommendedProducts []*dto.ProductResponse, err error) {
+func (r *productRepositoryImpl) GetRecommended(req *dto.GetRecommendedProductRequest) (recommendedProducts []*dto.ProductResponse, totalRows int64, totalPages int, err error) {
 
 	var (
 		isActive = true
@@ -553,16 +558,134 @@ func (r *productRepositoryImpl) GetRecommended(limit int) (recommendedProducts [
 		Joins("join cities c ON c.id = ua.city_id").
 		Joins("join provinces p ON p.id = c.province_id").
 		Joins("left join product_promotions pp on pp.sku_id = s.id and (select count(id) from shop_promotions sp where pp.promotion_id = sp.id and now() between sp.start_period and sp.end_period) > 0").
+		Where("products.is_active = ?", isActive).
 		Group("products.id,c.name,p.name")
 
-	err = db.Where("products.is_active = ?", isActive).
-		Limit(limit).
+	errCount := db.Model(&model.Product{}).Count(&totalRows).Error
+	if errCount != nil {
+		return nil, 0, 0, errCount
+	}
+
+	totalPages = int(math.Ceil(float64(totalRows) / float64(req.Limit)))
+
+	err = db.
+		Limit(req.Limit).
+		Offset(req.Offset()).
 		Order("products.sold desc, products.rating desc").
 		Find(&recommendedProducts).Error
 
 	if err != nil {
+		return nil, 0, 0, err
+	}
+
+	return recommendedProducts, totalRows, totalPages, nil
+}
+
+func (r *productRepositoryImpl) Update(shopID int, code string, payload *dto.CreateProductRequest, courierServices []*shopModel.CourierService) (*model.Product, error) {
+
+	tx := r.db.Begin()
+	defer tx.Commit()
+
+	product, err := r.GetSellerProductByCode(shopID, code)
+	if err != nil {
 		return nil, err
 	}
 
-	return recommendedProducts, nil
+	updatedProduct := payload.GenerateProduct()
+	updatedProduct.Code = product.Code
+	updatedProduct.ID = product.ID
+	updatedProduct.ShopID = shopID
+	updatedProduct.CourierService = courierServices
+	updatedProduct.View = product.View
+	updatedProduct.CreatedAt = product.CreatedAt
+	updatedProduct.Rating = product.Rating
+	updatedProduct.Sold = product.Sold
+	updatedProduct.Bulk.ID = product.Bulk.ID
+
+	var media []*model.ProductMedia
+
+	errDelete := r.productMediaRepository.Delete(tx, product.ID)
+	if errDelete != nil {
+		return nil, errDelete
+	}
+
+	for _, value := range product.Media {
+
+		for _, reqMedia := range updatedProduct.Media {
+			if value.Url == reqMedia.Url {
+				media = append(media, value)
+				break
+			}
+		}
+	}
+
+	for _, reqMedia := range updatedProduct.Media {
+		found := false
+		for _, value := range media {
+			if value.Url == reqMedia.Url {
+				found = true
+				break
+			}
+		}
+
+		if !found {
+			media = append(media, &model.ProductMedia{
+				Url: reqMedia.Url,
+			})
+		}
+	}
+
+	variantGroups := payload.GenerateVariantGroups()
+	for _, vg := range variantGroups {
+		vg.ProductID = product.ID
+
+		for _, value := range product.VariantGroup {
+			if vg.Name == value.Name {
+				vg.CreatedAt = value.CreatedAt
+				vg.UpdatedAt = value.UpdatedAt
+				break
+			}
+		}
+	}
+
+	var newVarGroup []*model.VariantGroup
+	if variantGroups != nil {
+		newVarGroup, err = r.variantGroupRepo.Update(tx, product.ID, variantGroups)
+		if err != nil {
+			tx.Rollback()
+			return nil, err
+		}
+	}
+
+	skus := payload.GenerateSKU(variantGroups)
+
+	for _, s := range skus {
+		s.ProductId = product.ID
+		for _, pSKU := range product.SKUs {
+			for idx, sVariant := range s.Variants {
+				for _, varGroup := range newVarGroup {
+					for _, variant := range varGroup.Variant {
+						if variant.ID == sVariant.ID {
+							s.ID = pSKU.ID
+							s.Variants[idx].ID = variant.ID
+						}
+					}
+				}
+			}
+		}
+	}
+
+	err = r.skuRepository.Update(tx, product.ID, skus)
+	if err != nil {
+		tx.Rollback()
+		return nil, err
+	}
+
+	err = tx.Where("id = ?", product.ID).Save(&updatedProduct).Error
+	if err != nil {
+		tx.Rollback()
+		return nil, err
+	}
+
+	return updatedProduct, nil
 }

@@ -654,6 +654,93 @@ func TestUpdateStatusToDelivery(t *testing.T) {
 	}
 }
 
+func TestUpdateStatusToProcessing(t *testing.T) {
+	var (
+		shop = &shopModel.Shop{
+			ID: 1,
+		}
+		invoiceStatuses = []*model.InvoiceStatus{
+			{
+				InvoicePerShopID: 1,
+				Status:           constant.TransactionStatusProcessing,
+			},
+		}
+		userId  = 1
+		orderId = 1
+	)
+	type input struct {
+		userId     int
+		orderId    int
+		beforeTest func(*mocks.ShopService, *mocks.InvoicePerShopRepository)
+	}
+	type expected struct {
+		err error
+	}
+	type cases struct {
+		description string
+		input
+		expected
+	}
+
+	for _, tc := range []cases{
+		{
+			description: "should return nil error when success",
+			input: input{
+				userId:  userId,
+				orderId: orderId,
+				beforeTest: func(ss *mocks.ShopService, ipsr *mocks.InvoicePerShopRepository) {
+					ss.On("FindShopByUserId", userId).Return(shop, nil)
+					ipsr.On("UpdateStatusToProcessing", shop.ID, orderId, invoiceStatuses).Return(nil)
+				},
+			},
+			expected: expected{
+				err: nil,
+			},
+		},
+		{
+			description: "should return error when shop not found",
+			input: input{
+				userId:  userId,
+				orderId: orderId,
+				beforeTest: func(ss *mocks.ShopService, ipsr *mocks.InvoicePerShopRepository) {
+					ss.On("FindShopByUserId", userId).Return(nil, commonErr.ErrShopNotFound)
+				},
+			},
+			expected: expected{
+				err: commonErr.ErrShopNotFound,
+			},
+		},
+		{
+			description: "should return error when internal server error",
+			input: input{
+				userId:  userId,
+				orderId: orderId,
+				beforeTest: func(ss *mocks.ShopService, ipsr *mocks.InvoicePerShopRepository) {
+					ss.On("FindShopByUserId", userId).Return(shop, nil)
+					ipsr.On("UpdateStatusToProcessing", shop.ID, orderId, invoiceStatuses).Return(commonErr.ErrInternalServerError)
+				},
+			},
+			expected: expected{
+				err: commonErr.ErrInternalServerError,
+			},
+		},
+	} {
+		t.Run(tc.description, func(t *testing.T) {
+			invoicePerShopRepo := mocks.NewInvoicePerShopRepository(t)
+			shopService := mocks.NewShopService(t)
+			tc.beforeTest(shopService, invoicePerShopRepo)
+			invoicePerShopService := service.NewInvoicePerShopService(&service.InvoicePerShopSConfig{
+				InvoicePerShopRepo: invoicePerShopRepo,
+				ShopService:        shopService,
+			})
+
+			err := invoicePerShopService.UpdateStatusToProcessing(tc.userId, tc.orderId)
+
+			assert.Equal(t, tc.expected.err, err)
+		})
+	}
+}
+
 func TestUpdateStatusToCanceled(t *testing.T) {
 	var (
 		invoiceStatuses = []*model.InvoiceStatus{
@@ -1083,7 +1170,7 @@ func TestUpdateStatusCRONJob(t *testing.T) {
 			InvoicePerShopRepo: mockRepo,
 		})
 
-		service.UpdateStatusCRONJob()
+		_ = service.UpdateStatusCRONJob()
 
 		mockRepo.AssertNumberOfCalls(t, "UpdateStatusCRONJob", 1)
 	})
@@ -1097,7 +1184,7 @@ func TestAutoReceivedCRONJob(t *testing.T) {
 			InvoicePerShopRepo: mockRepo,
 		})
 
-		service.AutoReceivedCRONJob()
+		_ = service.AutoReceivedCRONJob()
 
 		mockRepo.AssertNumberOfCalls(t, "AutoReceivedCRONJob", 1)
 	})
@@ -1111,7 +1198,7 @@ func TestAutoCompletedCRONJob(t *testing.T) {
 			InvoicePerShopRepo: mockRepo,
 		})
 
-		service.AutoCompletedCRONJob()
+		_ = service.AutoCompletedCRONJob()
 
 		mockRepo.AssertNumberOfCalls(t, "AutoCompletedCRONJob", 1)
 	})

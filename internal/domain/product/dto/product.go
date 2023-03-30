@@ -326,6 +326,7 @@ func (d *CreateProductRequest) GenerateProduct() *model.Product {
 
 type GetRecommendedProductRequest struct {
 	Limit int `json:"limit"`
+	Page  int `json:"page"`
 }
 
 func (p *GetRecommendedProductRequest) Validate() {
@@ -336,4 +337,12 @@ func (p *GetRecommendedProductRequest) Validate() {
 	if p.Limit > 100 {
 		p.Limit = constant.MaxRecommendedProductLimit
 	}
+
+	if p.Page < 1 {
+		p.Page = 1
+	}
+}
+
+func (p *GetRecommendedProductRequest) Offset() int {
+	return (p.Page - 1) * p.Limit
 }
