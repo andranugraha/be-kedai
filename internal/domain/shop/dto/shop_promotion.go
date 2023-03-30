@@ -46,8 +46,16 @@ type UpdateShopPromotionRequest struct {
 	ProductPromotions []*dto.UpdateProductPromotionRequest `json:"productPromotions"`
 }
 
-func (p *UpdateShopPromotionRequest) ValidateDateRange() error {
+func (p *UpdateShopPromotionRequest) ValidateDateRange(startPeriod time.Time, endPeriod time.Time) error {
 	now := time.Now().Truncate(24 * time.Hour)
+
+	if p.StartPeriod.IsZero() {
+		p.StartPeriod = startPeriod
+	}
+
+	if p.EndPeriod.IsZero() {
+		p.EndPeriod = endPeriod
+	}
 
 	if p.StartPeriod.After(p.EndPeriod) || (p.StartPeriod.Before(now) && p.EndPeriod.Before(now)) || p.EndPeriod.Before(p.StartPeriod) {
 		return errs.ErrInvalidPromotionDateRange

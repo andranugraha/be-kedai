@@ -75,10 +75,6 @@ func (s *shopPromotionServiceImpl) UpdatePromotion(userId int, promotionId int, 
 		return errs.ErrInvalidPromotionNamePattern
 	}
 
-	if err := req.ValidateDateRange(); err != nil {
-		return err
-	}
-
 	shop, err := s.shopService.FindShopByUserId(userId)
 	if err != nil {
 		return err
@@ -92,14 +88,13 @@ func (s *shopPromotionServiceImpl) UpdatePromotion(userId int, promotionId int, 
 	var shopPromotion *model.ShopPromotion
 	if promotion.Status == constant.VoucherPromotionStatusOngoing {
 		if !req.StartPeriod.IsZero() {
-			return errs.ErrPromotionFieldsCantBeEdited
-		}
-		shopPromotion = &model.ShopPromotion{
-			ID:          promotion.ID,
-			Name:        req.Name,
-			StartPeriod: promotion.StartPeriod,
-			EndPeriod:   req.EndPeriod,
-			ShopId:      shop.ID,
+			shopPromotion = &model.ShopPromotion{
+				ID:          promotion.ID,
+				Name:        req.Name,
+				StartPeriod: promotion.StartPeriod,
+				EndPeriod:   req.EndPeriod,
+				ShopId:      shop.ID,
+			}
 		}
 	} else {
 		shopPromotion = &model.ShopPromotion{
@@ -114,11 +109,8 @@ func (s *shopPromotionServiceImpl) UpdatePromotion(userId int, promotionId int, 
 	if shopPromotion.Name == "" {
 		shopPromotion.Name = promotion.Name
 	}
-	if shopPromotion.StartPeriod.IsZero() {
-		shopPromotion.StartPeriod = promotion.StartPeriod
-	}
-	if shopPromotion.EndPeriod.IsZero() {
-		shopPromotion.EndPeriod = promotion.EndPeriod
+	if err := req.ValidateDateRange(promotion.StartPeriod, promotion.EndPeriod); err != nil {
+		return err
 	}
 
 	var productPromotions []*productModel.ProductPromotion
