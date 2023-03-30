@@ -2,8 +2,12 @@ package server
 
 import (
 	"kedai/backend/be-kedai/config"
+	"kedai/backend/be-kedai/connection"
 	"kedai/backend/be-kedai/internal/server/middleware"
 
+	"github.com/gin-contrib/pprof"
+
+	chatHandler "kedai/backend/be-kedai/internal/domain/chat/handler"
 	locationHandler "kedai/backend/be-kedai/internal/domain/location/handler"
 	marketplaceHandler "kedai/backend/be-kedai/internal/domain/marketplace/handler"
 	orderHandler "kedai/backend/be-kedai/internal/domain/order/handler"
@@ -22,17 +26,28 @@ type RouterConfig struct {
 	ShopHandler        *shopHandler.Handler
 	OrderHandler       *orderHandler.Handler
 	MarketplaceHandler *marketplaceHandler.Handler
+	ChatHandler        *chatHandler.Handler
 }
 
 func NewRouter(cfg *RouterConfig) *gin.Engine {
 	r := gin.Default()
 
+	pprof.Register(r)
+
 	corsCfg := cors.DefaultConfig()
 	corsCfg.AllowOrigins = config.Origin
-	corsCfg.AllowMethods = []string{"GET", "POST", "PUT", "DELETE"}
+	corsCfg.AllowMethods = []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"}
 	corsCfg.AllowHeaders = []string{"Content-Type", "Authorization"}
 	corsCfg.ExposeHeaders = []string{"Content-Length"}
+	corsCfg.AllowCredentials = true
 	r.Use(cors.New(corsCfg))
+
+	socketServer := connection.SocketIO()
+	socket := r.Group("/socket.io")
+	{
+		socket.GET("/*any", gin.WrapH(socketServer))
+		socket.POST("/*any", gin.WrapH(socketServer))
+	}
 
 	v1 := r.Group("/v1")
 	{
@@ -105,6 +120,12 @@ func NewRouter(cfg *RouterConfig) *gin.Engine {
 					sealabsPay.GET("", cfg.UserHandler.GetSealabsPaysByUserID)
 					sealabsPay.POST("", cfg.UserHandler.RegisterSealabsPay)
 				}
+				chat := userAuthenticated.Group("/chats")
+				{
+					chat.GET("/", cfg.ChatHandler.UserGetListOfChats)
+					chat.GET("/:shopSlug", cfg.ChatHandler.UserGetChat)
+					chat.POST("/:shopSlug", cfg.ChatHandler.UserAddChat)
+				}
 			}
 		}
 
@@ -115,6 +136,7 @@ func NewRouter(cfg *RouterConfig) *gin.Engine {
 			location.GET("/districts", cfg.LocationHandler.GetDistricts)
 			location.GET("/subdistricts", cfg.LocationHandler.GetSubdistricts)
 			location.GET("/addresses", cfg.LocationHandler.SearchAddress)
+			location.GET("/addresses/:placeId", cfg.LocationHandler.SearchAddressDetail)
 		}
 
 		product := v1.Group("/products")
@@ -125,6 +147,11 @@ func NewRouter(cfg *RouterConfig) *gin.Engine {
 			product.GET("/:code/reviews/stats", cfg.ProductHandler.GetProductReviewStats)
 			product.GET("/recommendations/categories", cfg.ProductHandler.GetRecommendationByCategory)
 			product.GET("/autocompletes", cfg.ProductHandler.SearchAutocomplete)
+			product.GET("/recommended", cfg.ProductHandler.GetRecommendedProducts)
+			product.POST("/views", cfg.ProductHandler.AddProductView)
+			product.GET("/discussions/:productId", cfg.ProductHandler.GetDiscussionByProductID)
+			product.GET("/discussions/replies/:parentId", cfg.ProductHandler.GetDiscussionByParentID)
+			product.POST("/discussions", middleware.JWTAuthorization, cfg.ProductHandler.PostDiscussion)
 			category := product.Group("/categories")
 			{
 				category.GET("", cfg.ProductHandler.GetCategories)
@@ -134,22 +161,36 @@ func NewRouter(cfg *RouterConfig) *gin.Engine {
 				sku.GET("", cfg.ProductHandler.GetSKUByVariantIDs)
 			}
 
+			authenticated := product.Group("", middleware.JWTAuthorization, cfg.UserHandler.GetSession)
+			{
+				authenticated.POST("", cfg.ProductHandler.CreateProduct)
+			}
+
 		}
 
 		shop := v1.Group("/shops")
 		{
 			shop.GET("", cfg.ShopHandler.FindShopByKeyword)
+			visitor := shop.Group("/visitors")
+			{
+				visitor.POST("", cfg.ShopHandler.AddShopGuest)
+			}
 			shop.GET("/:slug", cfg.ShopHandler.FindShopBySlug)
 			shop.GET("/:slug/products", cfg.ProductHandler.GetProductsByShopSlug)
 			shop.GET("/:slug/vouchers", cfg.ShopHandler.GetShopVoucher)
 			authenticated := shop.Group("", middleware.JWTAuthorization, cfg.UserHandler.GetSession)
 			{
+				authenticated.GET("/profile", cfg.ShopHandler.GetShopProfile)
+				authenticated.PUT("/profile", cfg.ShopHandler.UpdateShopProfile)
 				authenticated.GET("/:slug/vouchers/valid", cfg.ShopHandler.GetValidShopVoucher)
+				authenticated.GET("/:slug/couriers", cfg.ShopHandler.GetMatchingCouriers)
 			}
 		}
 		marketplace := v1.Group("/marketplaces")
 		{
 			marketplace.GET("/vouchers", cfg.MarketplaceHandler.GetMarketplaceVoucher)
+			marketplace.POST("/couriers", cfg.ShopHandler.AddCourier)
+			marketplace.GET("/banners", cfg.MarketplaceHandler.GetMarketplaceBanner)
 			authenticated := marketplace.Group("", middleware.JWTAuthorization, cfg.UserHandler.GetSession)
 			{
 				authenticated.GET("/vouchers/valid", cfg.MarketplaceHandler.GetValidMarketplaceVoucher)
@@ -168,6 +209,9 @@ func NewRouter(cfg *RouterConfig) *gin.Engine {
 					invoice.POST("/cancel", cfg.OrderHandler.CancelCheckout)
 					invoice.GET("", cfg.OrderHandler.GetInvoicePerShopsByUserID)
 					invoice.GET("/:code", cfg.OrderHandler.GetInvoiceByCode)
+					invoice.PUT("/:code/receive", cfg.OrderHandler.UpdateToReceived)
+					invoice.PUT("/:code/complete", cfg.OrderHandler.UpdateToCompleted)
+					invoice.POST("/:code/refund", cfg.OrderHandler.Refund)
 				}
 
 				transaction := authenticated.Group("/transactions")
@@ -181,11 +225,98 @@ func NewRouter(cfg *RouterConfig) *gin.Engine {
 			}
 		}
 
+		// TODO ADD MIDLEWARE FOR AUTH ADMIN
+		admin := v1.Group("/admins")
+		{
+			admin.POST("/login", cfg.UserHandler.AdminSignIn)
+			authenticated := admin.Group("", middleware.AdminJWTAuthorization, cfg.UserHandler.GetSession)
+			{
+				category := authenticated.Group("/categories")
+				{
+					category.POST("", cfg.ProductHandler.AddCategory)
+				}
+				order := authenticated.Group("/orders")
+				{
+					order.POST("/:orderId/cancel-commit", cfg.OrderHandler.UpdateToCanceled)
+				}
+				marketplace := authenticated.Group("/marketplaces")
+				{
+					marketplace.POST("/banners", cfg.MarketplaceHandler.AddMarketplaceBanner)
+					voucher := marketplace.Group("/vouchers")
+					{
+						voucher.POST("", cfg.MarketplaceHandler.CreateMarketplaceVoucher)
+						voucher.GET("", cfg.MarketplaceHandler.GetMarketplaceVoucherAdmin)
+						voucher.GET("/:code", cfg.MarketplaceHandler.GetMarketplaceVoucherAdminByCode)
+					}
+				}
+			}
+		}
+
 		seller := v1.Group("/sellers")
 		{
 			authenticated := seller.Group("", middleware.JWTAuthorization, cfg.UserHandler.GetSession)
 			{
-				authenticated.GET("/couriers", cfg.ShopHandler.GetShipmentList)
+				authenticated.POST("/register", cfg.ShopHandler.CreateShop)
+				authenticated.GET("/stats", cfg.ShopHandler.GetShopStats)
+				authenticated.GET("/insights", cfg.ShopHandler.GetShopInsights)
+				authenticated.GET("/ratings", cfg.ShopHandler.GetShopRating)
+				finance := authenticated.Group("/finances")
+				{
+					income := finance.Group("/incomes")
+					{
+						income.GET("", cfg.OrderHandler.GetInvoicePerShopsByShopId)
+						income.GET("/overviews", cfg.ShopHandler.GetShopFinanceOverview)
+						income.POST("/withdrawals", cfg.OrderHandler.WithdrawFromInvoice)
+						income.GET("/:orderId", cfg.OrderHandler.GetInvoiceByShopIdAndOrderId)
+					}
+				}
+				courier := authenticated.Group("/couriers")
+				{
+					courier.GET("", cfg.ShopHandler.GetShipmentList)
+					courier.POST("", cfg.ShopHandler.ToggleShopCourier)
+				}
+
+				product := authenticated.Group("/products")
+				{
+					product.GET("", cfg.ProductHandler.GetSellerProducts)
+					product.GET("/:code", cfg.ProductHandler.GetSellerProductDetailByCode)
+					product.PUT("/:code", cfg.ProductHandler.UpdateProduct)
+					product.PUT("/:code/activations", cfg.ProductHandler.UpdateProductActivation)
+				}
+
+				voucher := authenticated.Group("/vouchers")
+				{
+					voucher.GET("", cfg.ShopHandler.GetSellerVoucher)
+					voucher.GET("/:code", cfg.ShopHandler.GetVoucherByCodeAndShopId)
+					voucher.POST("", cfg.ShopHandler.CreateVoucher)
+					voucher.PUT("/:code", cfg.ShopHandler.UpdateVoucher)
+					voucher.DELETE("/:code", cfg.ShopHandler.DeleteVoucher)
+				}
+
+				promotion := authenticated.Group("/promotions")
+				{
+					promotion.GET("", cfg.ShopHandler.GetSellerPromotions)
+					promotion.GET("/:promotionId", cfg.ShopHandler.GetSellerPromotionById)
+					promotion.PUT("/:promotionId", cfg.ShopHandler.UpdatePromotion)
+					promotion.POST("", cfg.ShopHandler.CreateShopPromotion)
+					promotion.DELETE("/:promotionId", cfg.ShopHandler.DeletePromotion)
+				}
+
+				order := authenticated.Group("/orders")
+				{
+					order.GET("", cfg.OrderHandler.GetShopOrder)
+					order.GET("/:orderId", cfg.OrderHandler.GetInvoiceByShopIdAndOrderId)
+					order.PUT("/:orderId/process", cfg.OrderHandler.UpdateToProcessing)
+					order.PUT("/:orderId/delivery", cfg.OrderHandler.UpdateToDelivery)
+					order.POST("/:orderId/cancel-request", cfg.OrderHandler.UpdateToRefundPendingSellerCancel)
+					order.PUT("/:orderId/refund", cfg.OrderHandler.UpdateRefundStatus)
+				}
+				chat := authenticated.Group("/chats")
+				{
+					chat.GET("/", cfg.ChatHandler.SellerGetListOfChats)
+					chat.GET("/:username", cfg.ChatHandler.SellerGetChat)
+					chat.POST("/:username", cfg.ChatHandler.SellerAddChat)
+				}
 			}
 		}
 	}

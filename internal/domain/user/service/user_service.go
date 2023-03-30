@@ -3,6 +3,7 @@ package service
 import (
 	"errors"
 	"fmt"
+	"kedai/backend/be-kedai/config"
 	errs "kedai/backend/be-kedai/internal/common/error"
 	"kedai/backend/be-kedai/internal/domain/user/cache"
 	"kedai/backend/be-kedai/internal/domain/user/dto"
@@ -21,6 +22,7 @@ import (
 
 type UserService interface {
 	GetByID(id int) (*model.User, error)
+	GetByUsername(username string) (*model.User, error)
 	SignUp(*dto.UserRegistrationRequest) (*dto.UserRegistrationResponse, error)
 	SignIn(*dto.UserLogin, string) (*dto.Token, error)
 	SignInWithGoogle(userLogin *dto.UserLoginWithGoogleRequest) (*dto.Token, error)
@@ -35,6 +37,7 @@ type UserService interface {
 	CompletePasswordReset(request *dto.CompletePasswordResetRequest) error
 	ValidatePasswordChange(request *dto.RequestPasswordChangeRequest, user *model.User) error
 	SignOut(*dto.UserLogoutRequest) error
+	AdminSignIn(*dto.UserLogin) (*dto.Token, error)
 }
 
 type userServiceImpl struct {
@@ -62,6 +65,10 @@ func NewUserService(cfg *UserSConfig) UserService {
 
 func (s *userServiceImpl) GetByID(id int) (*model.User, error) {
 	return s.repository.GetByID(id)
+}
+
+func (s *userServiceImpl) GetByUsername(username string) (*model.User, error) {
+	return s.repository.GetByUsername(username)
 }
 
 func (s *userServiceImpl) SignUp(userReg *dto.UserRegistrationRequest) (*dto.UserRegistrationResponse, error) {
@@ -396,4 +403,37 @@ func (s *userServiceImpl) CompletePasswordReset(request *dto.CompletePasswordRes
 	_ = s.redis.DeleteResetPasswordToken(request.Token)
 
 	return nil
+}
+
+func (s *userServiceImpl) AdminSignIn(userLogin *dto.UserLogin) (*dto.Token, error) {
+
+	admin := userLogin.ToUser()
+
+	isValid := hash.ComparePassword(config.AdminPassword, admin.Password)
+
+	if admin.Email == config.AdminEmail && isValid {
+		result := &model.User{
+			ID:       0,
+			Email:    admin.Email,
+			Username: "admin",
+		}
+
+		defaultLevel := 0
+		accessToken, _ := jwttoken.GenerateAccessToken(result, defaultLevel)
+		refreshToken, _ := jwttoken.GenerateRefreshToken(result, defaultLevel)
+
+		token := &dto.Token{
+			AccessToken:  accessToken,
+			RefreshToken: refreshToken,
+		}
+
+		errToken := s.redis.StoreToken(result.ID, accessToken, refreshToken)
+		if errToken != nil {
+			return nil, errToken
+		}
+
+		return token, nil
+	}
+
+	return nil, errs.ErrInvalidCredential
 }

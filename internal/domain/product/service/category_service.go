@@ -9,6 +9,8 @@ import (
 
 type CategoryService interface {
 	GetCategories(categoryDto.GetCategoriesRequest) (*dto.PaginationResponse, error)
+	GetCategoryLineAgesFromBottom(categoryID int) ([]*model.Category, error)
+	AddCategory(category *model.Category) error
 }
 
 type categoryServiceImpl struct {
@@ -52,6 +54,10 @@ func (c *categoryServiceImpl) GetCategories(query categoryDto.GetCategoriesReque
 	return
 }
 
+func (c *categoryServiceImpl) GetCategoryLineAgesFromBottom(categoryID int) ([]*model.Category, error) {
+	return c.categoryRepo.GetLineageFromBottom(categoryID)
+}
+
 func removeChildren(category *model.Category, depth int) {
 	if depth == 0 {
 		category.Children = []*model.Category{}
@@ -79,4 +85,8 @@ func getCategoryMinPrice(category *model.Category) float64 {
 
 	category.MinPrice = &minPrice
 	return minPrice
+}
+
+func (s *categoryServiceImpl) AddCategory(category *model.Category) error {
+	return s.categoryRepo.AddCategory(category)
 }

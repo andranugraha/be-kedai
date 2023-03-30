@@ -5,6 +5,7 @@ import (
 	"kedai/backend/be-kedai/internal/common/constant"
 	errs "kedai/backend/be-kedai/internal/common/error"
 	"kedai/backend/be-kedai/internal/domain/order/model"
+	productModel "kedai/backend/be-kedai/internal/domain/product/model"
 	productRepo "kedai/backend/be-kedai/internal/domain/product/repository"
 	"kedai/backend/be-kedai/internal/domain/user/cache"
 	userDto "kedai/backend/be-kedai/internal/domain/user/dto"
@@ -22,6 +23,7 @@ type InvoiceRepository interface {
 	GetByIDAndUserID(id, userID int) (*model.Invoice, error)
 	Pay(invoice *model.Invoice, skuIds []int, invoiceStatuses []*model.InvoiceStatus, txnID, token string) (*userDto.Token, error)
 	Delete(invoice *model.Invoice) error
+	UpdateInvoice(tx *gorm.DB, invoice *model.Invoice) error
 }
 
 type invoiceRepositoryImpl struct {
@@ -63,6 +65,18 @@ func (r *invoiceRepositoryImpl) Create(invoice *model.Invoice) (*model.Invoice, 
 			if err != nil {
 				tx.Rollback()
 				return nil, err
+			}
+
+			err = tx.Model(&productModel.ProductPromotion{}).Update("stock", gorm.Expr("case when stock > ? then stock - ? else 0 end", transaction.PromotedQuantity)).Where("sku_id = ?", transaction.SkuID).Error
+			if err != nil {
+				tx.Rollback()
+				return nil, err
+			}
+
+			for _, variant := range transaction.Sku.Variants {
+				transaction.Variants = append(transaction.Variants, model.TransactionVariant{
+					Value: variant.Value,
+				})
 			}
 		}
 	}
@@ -165,6 +179,12 @@ func (r *invoiceRepositoryImpl) Delete(invoice *model.Invoice) error {
 				return err
 			}
 
+			err = tx.Model(&productModel.ProductPromotion{}).Update("stock", gorm.Expr("stock + ?", transaction.PromotedQuantity)).Where("sku_id = ?", transaction.SkuID).Error
+			if err != nil {
+				tx.Rollback()
+				return err
+			}
+
 			err = tx.Unscoped().Delete(transaction).Error
 			if err != nil {
 				tx.Rollback()
@@ -216,4 +236,13 @@ func (r *invoiceRepositoryImpl) GetAlreadyCheckoutedWithin15Minute(userID, payme
 	}
 
 	return &invoice.ID, nil
+}
+
+func (r *invoiceRepositoryImpl) UpdateInvoice(tx *gorm.DB, invoice *model.Invoice) error {
+	err := tx.Save(invoice).Error
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

@@ -15,6 +15,9 @@ type ShopVoucher struct {
 	IsHidden     bool      `json:"isHidden"`
 	Description  string    `json:"description"`
 	MinimumSpend float64   `json:"minimumSpend"`
+	UsedQuota    int       `json:"usedQuota"`
+	TotalQuota   int       `json:"totalQuota"`
+	StartFrom    time.Time `json:"startFrom"`
 	ExpiredAt    time.Time `json:"expiredAt"`
 	ShopId       int       `json:"shopId"`
 

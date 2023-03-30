@@ -80,7 +80,9 @@ func TestCheckout(t *testing.T) {
 							},
 						},
 						Promotion: &productModel.ProductPromotion{
-							Type: shopModel.PromotionTypePercent,
+							Type:          shopModel.PromotionTypePercent,
+							PurchaseLimit: 1,
+							Stock:         1,
 						},
 					},
 				}, nil).Once()
@@ -444,7 +446,9 @@ func TestCheckout(t *testing.T) {
 							},
 						},
 						Promotion: &productModel.ProductPromotion{
-							Type: shopModel.PromotionTypePercent,
+							Type:          shopModel.PromotionTypePercent,
+							Stock:         1,
+							PurchaseLimit: 1,
 						},
 					},
 				}, nil).Once()

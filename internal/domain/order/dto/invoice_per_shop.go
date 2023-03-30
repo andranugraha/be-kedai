@@ -21,9 +21,10 @@ func (InvoicePerShopDetail) TableName() string {
 
 type TransactionItem struct {
 	model.Transaction
-	ProductName string            `json:"productName"`
-	ImageUrl    string            `json:"imageUrl"`
-	Sku         *productModel.Sku `json:"sku"`
+	ProductName string                      `json:"productName"`
+	ImageUrl    string                      `json:"imageUrl"`
+	Sku         *productModel.Sku           `json:"sku"`
+	Variants    []*model.TransactionVariant `json:"variants,omitempty" gorm:"foreignKey:TransactionID"`
 }
 
 func (TransactionItem) TableName() string {
@@ -31,17 +32,25 @@ func (TransactionItem) TableName() string {
 }
 
 type InvoicePerShopFilterRequest struct {
-	S         string `form:"s"`
-	Limit     int    `form:"limit"`
-	Page      int    `form:"page"`
-	StartDate string `form:"startDate" binding:"required_with=EndDate,omitempty,datetime=2006-01-02"`
-	EndDate   string `form:"endDate" binding:"required_with=StartDate,omitempty,datetime=2006-01-02"`
-	Status    string `form:"status"`
+	S              string `form:"s"`
+	Username       string `form:"user"`
+	ProductName    string `form:"product"`
+	TrackingNumber string `form:"track"`
+	OrderId        string `form:"orderId"`
+	Limit          int    `form:"limit"`
+	Page           int    `form:"page"`
+	StartDate      string `form:"startDate" binding:"required_with=EndDate,omitempty,datetime=2006-01-02"`
+	EndDate        string `form:"endDate" binding:"required_with=StartDate,omitempty,datetime=2006-01-02"`
+	Status         string `form:"status"`
 }
 
 func (d *InvoicePerShopFilterRequest) Validate() {
 	if d.Limit < 1 {
-		d.Limit = 10
+		d.Limit = constant.DefaultInvoicePerShopLimit
+	}
+
+	if d.Limit > 50 {
+		d.Limit = constant.MaxInvoicePerShopLimit
 	}
 
 	if d.Page < 1 {
@@ -49,17 +58,32 @@ func (d *InvoicePerShopFilterRequest) Validate() {
 	}
 
 	if d.Status != constant.TransactionStatusComplained &&
-		d.Status != constant.TransactionStatusComplaintConfirmed &&
+		d.Status != constant.TransactionStatusRefundPending &&
 		d.Status != constant.TransactionStatusComplaintRejected &&
 		d.Status != constant.TransactionStatusCompleted &&
 		d.Status != constant.TransactionStatusCreated &&
 		d.Status != constant.TransactionStatusReceived &&
-		d.Status != constant.TransactionStatusSent &&
-		d.Status != constant.TransactionStatusCancelled {
+		d.Status != constant.TransactionStatusDelivered &&
+		d.Status != constant.TransactionStatusOnDelivery &&
+		d.Status != constant.TransactionStatusRefunded &&
+		d.Status != constant.TransactionStatusCanceled &&
+		d.Status != constant.Released &&
+		d.Status != constant.TransactionStatusProcessing &&
+		d.Status != constant.ToRelease {
 		d.Status = ""
 	}
 }
 
 func (d *InvoicePerShopFilterRequest) Offset() int {
 	return (d.Page - 1) * d.Limit
+}
+
+type WithdrawInvoiceRequest struct {
+	OrderID []int `json:"orderId" binding:"required,min=1"`
+}
+
+func (d *WithdrawInvoiceRequest) Validate() {
+	if len(d.OrderID) == 0 {
+		d.OrderID = []int{}
+	}
 }

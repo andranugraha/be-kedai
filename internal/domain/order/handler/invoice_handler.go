@@ -40,7 +40,7 @@ func (h *Handler) Checkout(c *gin.Context) {
 			return
 		}
 
-		if errors.Is(err, commonErr.ErrCartItemNotFound) || errors.Is(err, commonErr.ErrQuantityNotMatch) {
+		if errors.Is(err, commonErr.ErrCartItemNotFound) || errors.Is(err, commonErr.ErrQuantityNotMatch) || errors.Is(err, commonErr.ErrProductDoesNotExist) {
 			response.Error(c, http.StatusBadRequest, code.CART_ITEM_MISMATCH, err.Error())
 			return
 		}

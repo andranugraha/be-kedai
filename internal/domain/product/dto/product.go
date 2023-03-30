@@ -1,11 +1,14 @@
 package dto
 
 import (
+	"fmt"
 	"kedai/backend/be-kedai/internal/common/constant"
 	"kedai/backend/be-kedai/internal/domain/product/model"
 	shopModel "kedai/backend/be-kedai/internal/domain/shop/model"
+	stringUtils "kedai/backend/be-kedai/internal/utils/strings"
 	"strconv"
 	"strings"
+	"time"
 )
 
 type ProductDetail struct {
@@ -21,6 +24,82 @@ type ProductDetail struct {
 
 func (ProductDetail) TableName() string {
 	return "products"
+}
+
+type SellerProduct struct {
+	model.Product
+	ImageURL string `json:"imageUrl,omitempty"`
+}
+
+func (SellerProduct) TableName() string {
+	return "products"
+}
+
+type SellerProductPromotion struct {
+	model.Product
+	ImageURL string `json:"imageUrl,omitempty"`
+}
+
+func (SellerProductPromotion) TableName() string {
+	return "products"
+}
+
+type SellerProductPromotionResponse struct {
+	ID       int    `json:"id"`
+	Code     string `json:"code"`
+	Name     string `json:"name"`
+	ImageURL string `json:"imageUrl,omitempty"`
+
+	SKUs []*model.Sku `json:"skus,omitempty"`
+}
+
+func ConvertSellerProductPromotions(sellerProductPromotions []*SellerProductPromotion) []*SellerProductPromotionResponse {
+	var result []*SellerProductPromotionResponse
+	for _, sellerProductPromotion := range sellerProductPromotions {
+		product := &SellerProductPromotionResponse{
+			ID:       sellerProductPromotion.ID,
+			Code:     sellerProductPromotion.Code,
+			Name:     sellerProductPromotion.Name,
+			SKUs:     sellerProductPromotion.SKUs,
+			ImageURL: sellerProductPromotion.ImageURL,
+		}
+		result = append(result, product)
+	}
+	return result
+}
+
+type SellerProductFilterRequest struct {
+	Limit       int       `form:"limit"`
+	Page        int       `form:"page"`
+	Sales       int       `form:"sales"`
+	Stock       int       `form:"stock"`
+	Sort        string    `form:"sort"`
+	Status      string    `form:"status"`
+	Sku         string    `form:"sku"`
+	Name        string    `form:"name"`
+	IsPromoted  *bool     `form:"isPromoted"`
+	StartPeriod time.Time `form:"startPeriod"`
+	EndPeriod   time.Time `form:"endPeriod"`
+}
+
+func (r *SellerProductFilterRequest) Validate() {
+	if r.Limit < 1 {
+		r.Limit = constant.DefaultSellerProductLimit
+	}
+
+	if r.Limit > 100 {
+		r.Limit = constant.MaxSellerProductLimit
+	}
+
+	if r.Page < 1 {
+		r.Page = 1
+	}
+
+	if r.StartPeriod.After(r.EndPeriod) {
+		r.StartPeriod = r.EndPeriod
+	} else if r.EndPeriod.Before(r.StartPeriod) {
+		r.EndPeriod = r.StartPeriod
+	}
 }
 
 type ProductResponse struct {
@@ -76,7 +155,11 @@ type ProductSearchFilterRequest struct {
 
 func (p *ProductSearchFilterRequest) Validate(strCityIds string) {
 	if p.Limit < 1 {
-		p.Limit = 10
+		p.Limit = constant.DefaultProductSearchLimit
+	}
+
+	if p.Limit > 50 {
+		p.Limit = constant.MaxProductSearchLimit
 	}
 
 	if p.Page < 1 {
@@ -133,7 +216,11 @@ type ShopProductFilterRequest struct {
 
 func (p *ShopProductFilterRequest) Validate() {
 	if p.Limit < 1 {
-		p.Limit = 10
+		p.Limit = constant.DefaultShopProductLimit
+	}
+
+	if p.Limit > 50 {
+		p.Limit = constant.MaxShopProductLimit
 	}
 
 	if p.Page < 1 {
@@ -160,6 +247,102 @@ type ProductSearchAutocomplete struct {
 
 func (p *ProductSearchAutocomplete) Validate() {
 	if p.Limit == 0 {
-		p.Limit = 10
+		p.Limit = constant.DefaultProductSearchAutoCompleteLimit
 	}
+}
+
+type SellerProductDetail struct {
+	model.Product
+	Categories []*model.Category    `json:"categories"`
+	Couriers   []*shopModel.Courier `json:"couriers,omitempty"`
+}
+
+type AddProductViewRequest struct {
+	ProductID int `form:"productId" binding:"required"`
+}
+
+func (p *AddProductViewRequest) Validate() {
+	if p.ProductID < 1 {
+		p.ProductID = 0
+	}
+}
+
+type UpdateProductActivationRequest struct {
+	IsActive *bool `json:"isActive" binding:"required"`
+}
+
+type CreateProductRequest struct {
+	Name          string                       `json:"name" binding:"required,min=5,max=255"`
+	Description   string                       `json:"description" binding:"required,min=20,max=3000"`
+	IsHazardous   *bool                        `json:"isHazardous" binding:"required"`
+	Weight        float64                      `json:"weight" binding:"required,gt=0"`
+	Length        float64                      `json:"length" binding:"required,gt=0"`
+	Width         float64                      `json:"width" binding:"required,gt=0"`
+	Height        float64                      `json:"height" binding:"required,gt=0"`
+	IsNew         *bool                        `json:"isNew" binding:"required"`
+	IsActive      *bool                        `json:"isActive" binding:"required"`
+	CategoryID    int                          `json:"categoryId" binding:"required,gte=1"`
+	BulkPrice     *ProductBulkPriceRequest     `json:"bulkPrice" binding:"omitempty,dive"`
+	Media         []string                     `json:"media" binding:"required,min=1,max=10,dive,url"`
+	CourierIDs    []int                        `json:"courierIds" binding:"required,min=1,dive,gte=1"`
+	Stock         int                          `json:"stock" binding:"required_without=VariantGroups,omitempty,gte=0"`
+	Price         float64                      `json:"price" binding:"required_without=VariantGroups,omitempty,gt=0,lte=500000000"`
+	VariantGroups []*CreateVariantGroupRequest `json:"variantGroups" binding:"omitempty,max=2,dive"`
+	SKU           []*CreateSKURequest          `json:"sku" binding:"required_with=VariantGroups,dive"`
+}
+
+func (d *CreateProductRequest) GenerateProduct() *model.Product {
+	code := time.Now().UnixMilli()
+
+	product := model.Product{
+		Name:        d.Name,
+		Code:        stringUtils.GenerateSlug(strings.ToLower(d.Name)) + fmt.Sprintf("-i%d", code),
+		Description: d.Description,
+		IsHazardous: *d.IsHazardous,
+		Weight:      d.Weight,
+		Length:      d.Length,
+		Width:       d.Width,
+		Height:      d.Height,
+		IsNew:       *d.IsNew,
+		IsActive:    *d.IsActive,
+		CategoryID:  d.CategoryID,
+	}
+
+	for _, medium := range d.Media {
+		product.Media = append(product.Media, &model.ProductMedia{
+			Url: medium,
+		})
+	}
+
+	if d.BulkPrice != nil {
+		product.Bulk = &model.ProductBulkPrice{
+			MinQuantity: d.BulkPrice.MinQuantity,
+			Price:       d.BulkPrice.Price,
+		}
+	}
+
+	return &product
+}
+
+type GetRecommendedProductRequest struct {
+	Limit int `json:"limit"`
+	Page  int `json:"page"`
+}
+
+func (p *GetRecommendedProductRequest) Validate() {
+	if p.Limit < 1 {
+		p.Limit = constant.DefaultRecommendedProductLimit
+	}
+
+	if p.Limit > 100 {
+		p.Limit = constant.MaxRecommendedProductLimit
+	}
+
+	if p.Page < 1 {
+		p.Page = 1
+	}
+}
+
+func (p *GetRecommendedProductRequest) Offset() int {
+	return (p.Page - 1) * p.Limit
 }

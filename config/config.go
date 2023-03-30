@@ -1,12 +1,14 @@
 package config
 
 var (
-	AppName      = "Kedai"
-	SecretKey    = GetEnv("SECRET_KEY", "secret_key")
-	HashKey      = GetEnv("HASH_KEY", "secret_key")
-	MerchantCode = GetEnv("MERCHANT_CODE", "code")
-	PlatformFee  = GetEnv("PLATFORM_FEE", "0")
-	DB           = DBConfig{
+	AppName       = "Kedai"
+	SecretKey     = GetEnv("SECRET_KEY", "secret_key")
+	HashKey       = GetEnv("HASH_KEY", "secret_key")
+	MerchantCode  = GetEnv("MERCHANT_CODE", "code")
+	PlatformFee   = GetEnv("PLATFORM_FEE", "0")
+	AdminEmail    = GetEnv("ADMIN_EMAIL", "")
+	AdminPassword = GetEnv("ADMIN_PASSWORD", "")
+	DB            = DBConfig{
 		Host:     GetEnv("DB_HOST", "localhost"),
 		Port:     GetEnv("DB_PORT", "5432"),
 		Username: GetEnv("DB_USER", ""),

@@ -1,5 +1,7 @@
 package dto
 
+import "kedai/backend/be-kedai/internal/common/constant"
+
 type RegisterWalletRequest struct {
 	Pin string `json:"pin" binding:"required,numeric,len=6"`
 }
@@ -31,13 +33,18 @@ type WalletHistoryRequest struct {
 }
 
 func (req *WalletHistoryRequest) Validate() {
+	if req.Limit < 1 {
+		req.Limit = constant.DefaultWalletHistoryLimit
+	}
+
+	if req.Limit > 50 {
+		req.Limit = constant.MaxWalletHistoryLimit
+	}
+
 	if req.Page < 1 {
 		req.Page = 1
 	}
 
-	if req.Limit < 1 {
-		req.Limit = 10
-	}
 }
 
 func (req *WalletHistoryRequest) Offset() int {

@@ -23,3 +23,21 @@ func (h *Handler) GetCategories(c *gin.Context) {
 
 	response.Success(c, http.StatusOK, code.OK, "success", categories)
 }
+
+func (h *Handler) AddCategory(c *gin.Context) {
+	var categoryDTO dto.CategoryDTO
+	err := c.ShouldBindJSON(&categoryDTO)
+	if err != nil {
+		response.ErrorValidator(c, http.StatusBadRequest, err)
+		return
+	}
+	category := categoryDTO.ToModel()
+	err = h.categoryService.AddCategory(category)
+	if err != nil {
+		response.Error(c, http.StatusInternalServerError, code.INTERNAL_SERVER_ERROR, err.Error())
+		return
+	}
+
+	response.Success(c, http.StatusOK, code.OK, "success", nil)
+
+}

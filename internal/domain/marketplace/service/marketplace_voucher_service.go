@@ -1,6 +1,7 @@
 package service
 
 import (
+	commonDto "kedai/backend/be-kedai/internal/common/dto"
 	"kedai/backend/be-kedai/internal/domain/marketplace/dto"
 	"kedai/backend/be-kedai/internal/domain/marketplace/model"
 	"kedai/backend/be-kedai/internal/domain/marketplace/repository"
@@ -8,8 +9,11 @@ import (
 
 type MarketplaceVoucherService interface {
 	GetMarketplaceVoucher(req *dto.GetMarketplaceVoucherRequest) ([]*model.MarketplaceVoucher, error)
+	GetMarketplaceVoucherAdminByCode(voucherCode string) (*dto.AdminMarketplaceVoucher, error)
+	GetMarketplaceVoucherAdmin(request *dto.AdminVoucherFilterRequest) (*commonDto.PaginationResponse, error)
 	GetValidByUserID(req *dto.GetMarketplaceVoucherRequest) ([]*model.MarketplaceVoucher, error)
 	GetValidForCheckout(id, userID, PaymentMethodID int) (*model.MarketplaceVoucher, error)
+	CreateMarketplaceVoucher(req *dto.CreateMarketplaceVoucherRequest) (*model.MarketplaceVoucher, error)
 }
 
 type marketplaceVoucherServiceImpl struct {
@@ -30,10 +34,34 @@ func (s *marketplaceVoucherServiceImpl) GetMarketplaceVoucher(req *dto.GetMarket
 	return s.marketplaceVoucherRepository.GetMarketplaceVoucher(req)
 }
 
+func (s *marketplaceVoucherServiceImpl) GetMarketplaceVoucherAdminByCode(voucherCode string) (*dto.AdminMarketplaceVoucher, error) {
+	return s.marketplaceVoucherRepository.GetMarketplaceVoucherAdminByCode(voucherCode)
+}
+
+func (s *marketplaceVoucherServiceImpl) GetMarketplaceVoucherAdmin(req *dto.AdminVoucherFilterRequest) (*commonDto.PaginationResponse, error) {
+	vouchers, totalRows, totalPages, err := s.marketplaceVoucherRepository.GetMarketplaceVoucherAdmin(req)
+	if err != nil {
+		return nil, err
+	}
+
+	return &commonDto.PaginationResponse{
+		TotalRows:  totalRows,
+		TotalPages: totalPages,
+		Page:       req.Page,
+		Limit:      req.Limit,
+		Data:       vouchers,
+	}, nil
+}
+
 func (s *marketplaceVoucherServiceImpl) GetValidByUserID(req *dto.GetMarketplaceVoucherRequest) ([]*model.MarketplaceVoucher, error) {
 	return s.marketplaceVoucherRepository.GetValidByUserID(req)
 }
 
 func (s *marketplaceVoucherServiceImpl) GetValidForCheckout(id, userID, PaymentMethodID int) (*model.MarketplaceVoucher, error) {
 	return s.marketplaceVoucherRepository.GetValid(id, userID, PaymentMethodID)
+}
+
+func (s *marketplaceVoucherServiceImpl) CreateMarketplaceVoucher(req *dto.CreateMarketplaceVoucherRequest) (*model.MarketplaceVoucher, error) {
+	voucher := req.ToVoucher()
+	return s.marketplaceVoucherRepository.CreateMarketplaceVoucher(voucher)
 }

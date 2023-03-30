@@ -58,7 +58,7 @@ func (s *userWishlistServiceImpl) GetUserWishlist(req *dto.UserWishlistRequest) 
 		return nil, err
 	}
 
-	product, err := s.productService.GetByID(req.ProductId)
+	product, err := s.productService.GetActiveByID(req.ProductId)
 	if err != nil {
 		return nil, err
 	}
@@ -77,7 +77,7 @@ func (s *userWishlistServiceImpl) AddUserWishlist(req *dto.UserWishlistRequest) 
 		return nil, err
 	}
 
-	product, err := s.productService.GetByID(req.ProductId)
+	product, err := s.productService.GetActiveByID(req.ProductId)
 	if err != nil {
 		return nil, err
 	}
@@ -96,7 +96,7 @@ func (s *userWishlistServiceImpl) RemoveUserWishlist(req *dto.UserWishlistReques
 		return err
 	}
 
-	product, err := s.productService.GetByID(req.ProductId)
+	product, err := s.productService.GetActiveByID(req.ProductId)
 	if err != nil {
 		return err
 	}
