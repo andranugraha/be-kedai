@@ -4,7 +4,6 @@ import (
 	"errors"
 	commonErr "kedai/backend/be-kedai/internal/common/error"
 	"kedai/backend/be-kedai/internal/domain/order/dto"
-	refundModel "kedai/backend/be-kedai/internal/domain/order/model"
 	"kedai/backend/be-kedai/internal/domain/order/service"
 	"kedai/backend/be-kedai/internal/domain/shop/model"
 	"kedai/backend/be-kedai/mocks"
@@ -160,7 +159,7 @@ func TestRefundAdmin(t *testing.T) {
 
 func TestGetRefund(t *testing.T) {
 	type input struct {
-		req *refundModel.GetRefundReq
+		req *dto.GetRefundReq
 	}
 
 	type expected struct {
@@ -175,7 +174,7 @@ func TestGetRefund(t *testing.T) {
 		{
 			description: "should return error when fails to get refund",
 			input: input{
-				req: &refundModel.GetRefundReq{
+				req: &dto.GetRefundReq{
 					Limit: 0,
 					Page:  0,
 				},
@@ -187,7 +186,7 @@ func TestGetRefund(t *testing.T) {
 		{
 			description: "should return success when refund found",
 			input: input{
-				req: &refundModel.GetRefundReq{
+				req: &dto.GetRefundReq{
 					Limit: 0,
 					Page:  0,
 				},

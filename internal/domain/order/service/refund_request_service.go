@@ -2,7 +2,7 @@ package service
 
 import (
 	"kedai/backend/be-kedai/internal/common/dto"
-	"kedai/backend/be-kedai/internal/domain/order/model"
+	orderDto "kedai/backend/be-kedai/internal/domain/order/dto"
 	"kedai/backend/be-kedai/internal/domain/order/repository"
 	"kedai/backend/be-kedai/internal/domain/shop/service"
 )
@@ -10,7 +10,7 @@ import (
 type RefundRequestService interface {
 	UpdateRefundStatus(userId int, invoiceId int, refundStatus string) error
 	RefundAdmin(requestRefundId int) error
-	GetRefund(req *model.GetRefundReq) (*dto.PaginationResponse, error)
+	GetRefund(req *orderDto.GetRefundReq) (*dto.PaginationResponse, error)
 }
 
 type refundRequestServiceImpl struct {
@@ -52,7 +52,7 @@ func (s *refundRequestServiceImpl) RefundAdmin(requestRefundId int) error {
 
 }
 
-func (s *refundRequestServiceImpl) GetRefund(req *model.GetRefundReq) (*dto.PaginationResponse, error) {
+func (s *refundRequestServiceImpl) GetRefund(req *orderDto.GetRefundReq) (*dto.PaginationResponse, error) {
 
 	data, totalRows, totalPage, err := s.refundRequestRepo.GetRefund(req)
 

@@ -4,11 +4,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"kedai/backend/be-kedai/internal/common/code"
+	commonDto "kedai/backend/be-kedai/internal/common/dto"
 	commonErr "kedai/backend/be-kedai/internal/common/error"
 	"kedai/backend/be-kedai/internal/domain/order/dto"
-	commonDto "kedai/backend/be-kedai/internal/common/dto"
 	"kedai/backend/be-kedai/internal/domain/order/handler"
-	"kedai/backend/be-kedai/internal/domain/order/model"
 	"kedai/backend/be-kedai/internal/utils/response"
 	"kedai/backend/be-kedai/internal/utils/test"
 	"kedai/backend/be-kedai/mocks"
@@ -253,7 +252,7 @@ func TestRefundAdmin(t *testing.T) {
 			c, _ := gin.CreateTestContext(rec)
 
 			c.AddParam("refundId", "1")
-			c.Request, _ = http.NewRequest(http.MethodPut, fmt.Sprintf("/admins/refund/{%d}", tc.input.refundId), nil)
+			c.Request, _ = http.NewRequest(http.MethodPut, fmt.Sprintf("/admins/orders/refund/{%d}", tc.input.refundId), nil)
 			handler := handler.New(&handler.Config{
 				RefundRequestService: refundRequestService,
 			})
@@ -304,7 +303,7 @@ func TestGetRefund(t *testing.T) {
 				response: response.Response{
 					Code:    code.OK,
 					Message: "refund request found",
-					Data: 	&commonDto.PaginationResponse{},
+					Data:    &commonDto.PaginationResponse{},
 				},
 			},
 		},
@@ -314,11 +313,11 @@ func TestGetRefund(t *testing.T) {
 		t.Run(tc.description, func(t *testing.T) {
 			expectedJson, _ := json.Marshal(tc.expected.response)
 			refundRequestService := mocks.NewRefundRequestService(t)
-			refundRequestService.On("GetRefund", &model.GetRefundReq{}).Return(&commonDto.PaginationResponse{}, tc.input.err)
+			refundRequestService.On("GetRefund", &dto.GetRefundReq{}).Return(&commonDto.PaginationResponse{}, tc.input.err)
 			rec := httptest.NewRecorder()
 			c, _ := gin.CreateTestContext(rec)
 
-			c.Request, _ = http.NewRequest(http.MethodGet, "/admins/refund?limit=0&page=0", nil)
+			c.Request, _ = http.NewRequest(http.MethodGet, "/admins/orders/refund?limit=0&page=0", nil)
 			handler := handler.New(&handler.Config{
 				RefundRequestService: refundRequestService,
 			})

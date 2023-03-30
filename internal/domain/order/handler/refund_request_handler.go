@@ -5,7 +5,6 @@ import (
 	"kedai/backend/be-kedai/internal/common/code"
 	commonErr "kedai/backend/be-kedai/internal/common/error"
 	"kedai/backend/be-kedai/internal/domain/order/dto"
-	"kedai/backend/be-kedai/internal/domain/order/model"
 	"kedai/backend/be-kedai/internal/utils/response"
 	"net/http"
 	"strconv"
@@ -67,14 +66,13 @@ func (h *Handler) RefundAdmin(c *gin.Context) {
 }
 
 func (h *Handler) GetRefund(c *gin.Context) {
-	var req model.GetRefundReq
+	var req dto.GetRefundReq
 
 	limit, _ := strconv.Atoi(c.Query("limit"))
 	page, _ := strconv.Atoi(c.Query("page"))
 
 	req.Limit = limit
 	req.Page = page
-
 
 	refundRequest, err := h.refundRequestService.GetRefund(&req)
 

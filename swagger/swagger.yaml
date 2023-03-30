@@ -7799,7 +7799,7 @@ paths:
                   message:
                     type: string
                     example: "error message"
-  /v1/admins/refund:
+  /v1/admins/orders/refund:
     get:
       security:
         - BearerAuth: []
@@ -7880,7 +7880,7 @@ paths:
                     type: string
                     example: "invalid credential"    
                       
-  /v1/admins/refund/{refundRequestId}:
+  /v1/admins/orders/refund/{refundRequestId}:
     post:
       security:
         - BearerAuth: []
