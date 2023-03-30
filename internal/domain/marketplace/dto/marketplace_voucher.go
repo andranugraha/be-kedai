@@ -1,5 +1,7 @@
 package dto
 
+import "time"
+
 type GetMarketplaceVoucherRequest struct {
 	UserId          int
 	CategoryId      int    `form:"categoryId"`
@@ -17,4 +19,16 @@ func (r *GetMarketplaceVoucherRequest) Validate() {
 		r.PaymentMethodId = 0
 	}
 
+}
+
+type UpdateVoucherRequest struct {
+	Name            string    `json:"name" binding:"omitempty,min=1,max=100"`
+	Amount          float64   `json:"amount" binding:"omitempty,min=0,max=500000000"`
+	Type            string    `json:"type" binding:"omitempty"`
+	IsHidden        *bool     `json:"isHidden" binding:"omitempty"`
+	Description     string    `json:"description" binding:"omitempty,min=5,max=1000"`
+	MinimumSpend    float64   `json:"minimumSpend" binding:"omitempty,min=0,max=500000000"`
+	ExpiredAt       time.Time `json:"expiredAt" binding:"omitempty"`
+	CategoryId      int       `json:"categoryId" binding:"omitempty"`
+	PaymentMethodId int       `json:"paymentMethodId" binding:"omitempty"`
 }
