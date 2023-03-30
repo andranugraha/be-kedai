@@ -238,6 +238,7 @@ func NewRouter(cfg *RouterConfig) *gin.Engine {
 				marketplace := authenticated.Group("/marketplaces")
 				{
 					marketplace.POST("/banners", cfg.MarketplaceHandler.AddMarketplaceBanner)
+					marketplace.POST("/vouchers", cfg.MarketplaceHandler.CreateMarketplaceVoucher)
 				}
 			}
 		}
