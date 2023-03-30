@@ -4278,6 +4278,59 @@ paths:
                   message:
                     type: string
                     example: "error message"
+  /v1/products/recommended:
+    get:
+      tags:
+        - Product
+      summary: Get recommended products
+      description: Get product recommendation for products sorted by amount sold and rating
+      responses:
+        '200':
+          description: successful opearation
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Response'
+                  - type: object
+                    properties:
+                      code:
+                        example: "OK"
+                      message:
+                        example: "ok"
+                      data:
+                        allOf:
+                          - $ref: '#/components/schemas/PaginationResponse'
+                          - type: object
+                            properties:
+                              data:
+                                type: array
+                                items:
+                                  allOf:
+                                    - $ref: '#/components/schemas/Product'
+                                    - type: object
+                                      properties:
+                                        imageUrl:
+                                          type: string
+                                          example: http://example/image.png
+                                    - type: object
+                                      properties:
+                                        defaultSkuId:
+                                          type: integer
+                                          example: 1
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "INTERNAL_SERVER_ERROR"
+                  message:
+                    type: string
+                    example: "error message"
   /v1/products/recommendations/categories:
     get:
       tags:
