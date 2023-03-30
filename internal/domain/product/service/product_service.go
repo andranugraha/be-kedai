@@ -24,7 +24,7 @@ type ProductService interface {
 	AddViewCount(id int) error
 	UpdateProductActivation(userID int, code string, request *dto.UpdateProductActivationRequest) error
 	CreateProduct(userID int, request *dto.CreateProductRequest) (*model.Product, error)
-	GetRecommendedProducts(limit int) ([]*dto.ProductResponse, error)
+	GetRecommendedProducts(req *dto.GetRecommendedProductRequest) (*commonDto.PaginationResponse, error)
 	UpdateProduct(userID int, code string, request *dto.CreateProductRequest) (*model.Product, error)
 }
 
@@ -242,14 +242,24 @@ func (s *productServiceImpl) CreateProduct(userID int, request *dto.CreateProduc
 	return product, nil
 }
 
-func (s *productServiceImpl) GetRecommendedProducts(limit int) ([]*dto.ProductResponse, error) {
+func (s *productServiceImpl) GetRecommendedProducts(request *dto.GetRecommendedProductRequest) (*commonDto.PaginationResponse, error) {
 
-	recommendedProducts, err := s.productRepository.GetRecommended(limit)
+	var resp commonDto.PaginationResponse
+
+	recommendedProducts, totalRows, totalPages, err := s.productRepository.GetRecommended(request)
 	if err != nil {
 		return nil, err
 	}
 
-	return recommendedProducts, nil
+	resp = commonDto.PaginationResponse{
+		TotalRows:  totalRows,
+		TotalPages: totalPages,
+		Page:       request.Page,
+		Limit:      request.Limit,
+		Data:       recommendedProducts,
+	}
+
+	return &resp, nil
 }
 
 func (s *productServiceImpl) UpdateProduct(userID int, code string, request *dto.CreateProductRequest) (*model.Product, error) {
