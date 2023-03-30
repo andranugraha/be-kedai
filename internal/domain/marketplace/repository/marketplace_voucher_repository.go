@@ -17,6 +17,7 @@ import (
 
 type MarketplaceVoucherRepository interface {
 	GetMarketplaceVoucher(req *dto.GetMarketplaceVoucherRequest) ([]*model.MarketplaceVoucher, error)
+	GetMarketplaceVoucherAdminByCode(voucherCode string) (*dto.AdminMarketplaceVoucher, error)
 	GetMarketplaceVoucherAdmin(request *dto.AdminVoucherFilterRequest) ([]*dto.AdminMarketplaceVoucher, int64, int, error)
 	GetValidByUserID(req *dto.GetMarketplaceVoucherRequest) ([]*model.MarketplaceVoucher, error)
 	GetValid(id, userID, PaymentMethodID int) (*model.MarketplaceVoucher, error)
@@ -58,6 +59,28 @@ func (r *marketplaceVoucherRepositoryImpl) GetMarketplaceVoucher(req *dto.GetMar
 	}
 
 	return marketplaceVoucher, nil
+}
+
+func (r *marketplaceVoucherRepositoryImpl) GetMarketplaceVoucherAdminByCode(voucherCode string) (*dto.AdminMarketplaceVoucher, error) {
+	var voucher dto.AdminMarketplaceVoucher
+
+	now := time.Now()
+	query := r.db.Where("code = ?", voucherCode)
+
+	query = query.Select("marketplace_vouchers.*, "+
+		"CASE WHEN expired_at >= ? THEN ? "+
+		"ELSE ? "+
+		"END as status", now, constant.VoucherPromotionStatusOngoing, constant.VoucherPromotionStatusExpired)
+
+	err := query.First(&voucher).Error
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, commonErr.ErrVoucherNotFound
+		}
+		return nil, err
+	}
+
+	return &voucher, nil
 }
 
 func (r *marketplaceVoucherRepositoryImpl) GetMarketplaceVoucherAdmin(request *dto.AdminVoucherFilterRequest) ([]*dto.AdminMarketplaceVoucher, int64, int, error) {
