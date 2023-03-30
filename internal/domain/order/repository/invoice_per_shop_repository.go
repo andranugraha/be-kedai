@@ -198,11 +198,15 @@ func (r *invoicePerShopRepositoryImpl) GetShopFinanceToRelease(shopID int) (floa
 		Select(`
 			SUM(CASE WHEN is_released = true THEN total ELSE 0 END)`).
 		Where("shop_id = ?", shopID).
-		Where("status = ?", constant.TransactionStatusCompleted)
+		Where("status = ?", constant.TransactionStatusCompleted).
+		Group("shop_id")
 
 	err := query.Find(&toRelease).Error
 	if err != nil {
-		return toRelease, err
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return toRelease, nil
+		}
+		return 0, err
 	}
 
 	return toRelease, nil
