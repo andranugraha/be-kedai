@@ -2,10 +2,13 @@ package repository
 
 import (
 	"errors"
+	"fmt"
 	"kedai/backend/be-kedai/internal/domain/marketplace/dto"
 	"kedai/backend/be-kedai/internal/domain/marketplace/model"
+	"math"
 	"time"
 
+	"kedai/backend/be-kedai/internal/common/constant"
 	commonErr "kedai/backend/be-kedai/internal/common/error"
 	userRepo "kedai/backend/be-kedai/internal/domain/user/repository"
 
@@ -14,7 +17,7 @@ import (
 
 type MarketplaceVoucherRepository interface {
 	GetMarketplaceVoucher(req *dto.GetMarketplaceVoucherRequest) ([]*model.MarketplaceVoucher, error)
-	GetMarketplaceVoucherAdmin(req *dto.GetMarketplaceVoucherRequest) ([]*model.MarketplaceVoucher, error)
+	GetMarketplaceVoucherAdmin(request *dto.AdminVoucherFilterRequest) ([]*dto.AdminMarketplaceVoucher, int64, int, error)
 	GetValidByUserID(req *dto.GetMarketplaceVoucherRequest) ([]*model.MarketplaceVoucher, error)
 	GetValid(id, userID, PaymentMethodID int) (*model.MarketplaceVoucher, error)
 }
@@ -57,24 +60,51 @@ func (r *marketplaceVoucherRepositoryImpl) GetMarketplaceVoucher(req *dto.GetMar
 	return marketplaceVoucher, nil
 }
 
-func (r *marketplaceVoucherRepositoryImpl) GetMarketplaceVoucherAdmin(req *dto.GetMarketplaceVoucherRequest) ([]*model.MarketplaceVoucher, error) {
-	var marketplaceVoucher []*model.MarketplaceVoucher
+func (r *marketplaceVoucherRepositoryImpl) GetMarketplaceVoucherAdmin(request *dto.AdminVoucherFilterRequest) ([]*dto.AdminMarketplaceVoucher, int64, int, error) {
+	var (
+		marketplaceVoucher []*dto.AdminMarketplaceVoucher
+		totalRows          int64
+		totalPages         int
+	)
 
-	db := r.db
+	now := time.Now()
+	query := r.db
 
-	if req.CategoryId != 0 {
-		db = db.Where("category_id = ?", req.CategoryId)
+	if request.Name != "" {
+		query = query.Where("marketplace_vouchers.name ILIKE ?", fmt.Sprintf("%%%s%%", request.Name))
 	}
-	if req.PaymentMethodId != 0 {
-		db = db.Where("payment_method_id = ?", req.PaymentMethodId)
+	if request.Code != "" {
+		query = query.Where("marketplace_vouchers.code ILIKE ?", fmt.Sprintf("%%%s%%", request.Code))
 	}
 
-	err := db.Find(&marketplaceVoucher).Error
+	switch request.Status {
+	case constant.VoucherPromotionStatusOngoing:
+		query = query.Where("? <= marketplace_vouchers.expired_at", now)
+	case constant.VoucherPromotionStatusExpired:
+		query = query.Where("? > marketplace_vouchers.expired_at", now)
+	}
+
+	query = query.Select("marketplace_vouchers.*, "+
+		"CASE WHEN expired_at >= ? THEN ? "+
+		"ELSE ? "+
+		"END as status", now, constant.VoucherPromotionStatusOngoing, constant.VoucherPromotionStatusExpired)
+
+	query = query.Session(&gorm.Session{})
+
+	err := query.Model(&model.MarketplaceVoucher{}).Distinct("marketplace_vouchers.id").Count(&totalRows).Error
 	if err != nil {
-		return nil, err
+		return nil, 0, 0, err
 	}
 
-	return marketplaceVoucher, nil
+	totalPages = int(math.Ceil(float64(totalRows) / float64(request.Limit)))
+
+	err = query.
+		Order("marketplace_vouchers.created_at desc").Limit(request.Limit).Offset(request.Offset()).Find(&marketplaceVoucher).Error
+	if err != nil {
+		return nil, 0, 0, err
+	}
+
+	return marketplaceVoucher, totalRows, totalPages, nil
 }
 
 func (r *marketplaceVoucherRepositoryImpl) GetValidByUserID(req *dto.GetMarketplaceVoucherRequest) ([]*model.MarketplaceVoucher, error) {

@@ -26,7 +26,7 @@ func (h *Handler) GetMarketplaceVoucher(c *gin.Context) {
 }
 
 func (h *Handler) GetMarketplaceVoucherAdmin(c *gin.Context) {
-	var req dto.GetMarketplaceVoucherRequest
+	var req dto.AdminVoucherFilterRequest
 	_ = c.ShouldBindQuery(&req)
 	req.Validate()
 
