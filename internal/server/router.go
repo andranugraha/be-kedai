@@ -241,7 +241,7 @@ func NewRouter(cfg *RouterConfig) *gin.Engine {
 					voucher := marketplace.Group("/vouchers")
 					{
 						voucher.GET("", cfg.MarketplaceHandler.GetMarketplaceVoucherAdmin)
-						voucher.GET("/:code", cfg.MarketplaceHandler.GetMarketplaceVoucherAdmin)
+						voucher.GET("/:code", cfg.MarketplaceHandler.GetMarketplaceVoucherAdminByCode)
 					}
 				}
 			}
