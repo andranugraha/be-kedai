@@ -1,6 +1,7 @@
 package credential_test
 
 import (
+	"fmt"
 	"kedai/backend/be-kedai/internal/utils/credential"
 	"testing"
 
@@ -85,4 +86,44 @@ func TestContainsUsername(t *testing.T) {
 		})
 	}
 
+}
+
+func BenchmarkVerifyPassword(b *testing.B) {
+	var table = []struct {
+		name string
+		pw   string
+	}{
+		{name: "valid", pw: "Password123"},
+		{name: "invalid_length", pw: "pw1"},
+		{name: "invalid_no_upper", pw: "password123"},
+		{name: "invalid_no_lower", pw: "PASSWORD123"},
+		{name: "invalid_no_numeric", pw: "Password"},
+		{name: "invalid_contains_username", pw: "Passworduser123"},
+		{name: "invalid_contains_emoji", pw: "😊Password123"},
+	}
+	for _, v := range table {
+		b.Run(fmt.Sprintf("password_"+v.name), func(b *testing.B) {
+			for i := 0; i < b.N; i++ {
+				credential.VerifyPassword(v.pw)
+			}
+		})
+	}
+}
+
+func BenchmarkContainsUsername(b *testing.B) {
+	var table = []struct {
+		name     string
+		password string
+		username string
+	}{
+		{name: "match", password: "myPassword", username: "pass"},
+		{name: "no_match", password: "myPassword", username: "foo"},
+	}
+	for _, v := range table {
+		b.Run(fmt.Sprintf("contains_username_"+v.name), func(b *testing.B) {
+			for i := 0; i < b.N; i++ {
+				credential.ContainsUsername(v.password, v.username)
+			}
+		})
+	}
 }

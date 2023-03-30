@@ -18,3 +18,6 @@ profile:
 	go tool pprof -http=:8081 http://localhost:8080/debug/pprof/profile
 # PROD
 # go tool pprof -http=:8081 https://dev-kedai-y3gq8.ondigitalocean.app/debug/pprof/profile
+
+benchmark:
+	go test -bench=Benchmark ./...
