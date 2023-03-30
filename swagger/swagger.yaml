@@ -5754,6 +5754,24 @@ paths:
           schema:
             type: string
             example: product name
+        - in: query
+          name: isPromoted
+          description: will return unpromoted products if the value is false
+          schema:
+            type: boolean
+            example: false
+        - in: query
+          name: startPeriod
+          description: will return unpromoted products with a range of period. the default is current time. `must be used with isPromoted`
+          schema:
+            type: string
+            example: 2023-12-12T00:00:00Z
+        - in: query
+          name: endPeriod
+          description: will return unpromoted products with a range of period. the default is current time. `must be used with isPromoted`
+          schema:
+            type: string
+            example: 2023-12-12T00:00:00Z
       responses:
         '200':
           description: successful operation
