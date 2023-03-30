@@ -146,9 +146,9 @@ func (s *invoiceServiceImpl) Checkout(req dto.CheckoutRequest) (*dto.CheckoutRes
 			if cartItem.Sku.Promotion != nil {
 				switch cartItem.Sku.Promotion.Type {
 				case shopModel.PromotionTypePercent:
-					price = cartItem.Sku.Price - (cartItem.Sku.Price * cartItem.Sku.Promotion.Amount)
+					price = price - (price * cartItem.Sku.Promotion.Amount)
 				case shopModel.PromotionTypeNominal:
-					price = cartItem.Sku.Price - cartItem.Sku.Promotion.Amount
+					price = price - cartItem.Sku.Promotion.Amount
 				}
 				if product.Quantity > cartItem.Sku.Promotion.PurchaseLimit || product.Quantity > cartItem.Sku.Promotion.Stock {
 					if cartItem.Sku.Promotion.PurchaseLimit < cartItem.Sku.Promotion.Stock {
