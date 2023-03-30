@@ -95,6 +95,81 @@ func TestGetMarketplaceVoucher(t *testing.T) {
 
 }
 
+func TestGetMarketplaceVoucherAdmin(t *testing.T) {
+	type input struct {
+		err        error
+		req        dto.GetMarketplaceVoucherRequest
+		beforeTest func(*mocks.MarketplaceVoucherService)
+	}
+	type expected struct {
+		response   response.Response
+		statusCode int
+	}
+	cases := []struct {
+		description string
+		input       input
+		expected    expected
+	}{
+		{
+			description: "should return response error internal server error and status code 500",
+			input: input{
+				err: errs.ErrInternalServerError,
+				req: dto.GetMarketplaceVoucherRequest{},
+				beforeTest: func(m *mocks.MarketplaceVoucherService) {
+					m.On("GetMarketplaceVoucherAdmin", &dto.GetMarketplaceVoucherRequest{}).Return(nil, errs.ErrInternalServerError)
+				},
+			},
+			expected: expected{
+				response: response.Response{
+					Code:    code.INTERNAL_SERVER_ERROR,
+					Message: errs.ErrInternalServerError.Error(),
+				},
+				statusCode: http.StatusInternalServerError,
+			},
+		},
+		{
+			description: "should return response marketplace vouchers, code ok and status code 200",
+			input: input{
+				err: nil,
+				req: dto.GetMarketplaceVoucherRequest{},
+				beforeTest: func(m *mocks.MarketplaceVoucherService) {
+					m.On("GetMarketplaceVoucherAdmin", &dto.GetMarketplaceVoucherRequest{}).Return([]*model.MarketplaceVoucher{}, nil)
+				},
+			},
+			expected: expected{
+				response: response.Response{
+					Code:    code.OK,
+					Message: "ok",
+					Data:    []*model.MarketplaceVoucher{},
+				},
+				statusCode: http.StatusOK,
+			},
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.description, func(t *testing.T) {
+			jsonRes, _ := json.Marshal(tc.expected.response)
+			rec := httptest.NewRecorder()
+			c, _ := gin.CreateTestContext(rec)
+			mockMarketplaceVoucherService := mocks.NewMarketplaceVoucherService(t)
+			tc.input.beforeTest(mockMarketplaceVoucherService)
+
+			handler := handler.New(&handler.HandlerConfig{
+				MarketplaceVoucherService: mockMarketplaceVoucherService,
+			})
+
+			c.Request, _ = http.NewRequest("GET", "/v1/admins/marketplaces/vouchers", nil)
+
+			handler.GetMarketplaceVoucherAdmin(c)
+
+			assert.Equal(t, tc.expected.statusCode, rec.Code)
+			assert.Equal(t, string(jsonRes), rec.Body.String())
+
+		})
+	}
+}
+
 func TestGetValidMarketplaceVoucher(t *testing.T) {
 	type input struct {
 		err        error
