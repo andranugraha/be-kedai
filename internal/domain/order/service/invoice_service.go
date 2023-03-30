@@ -134,6 +134,11 @@ func (s *invoiceServiceImpl) Checkout(req dto.CheckoutRequest) (*dto.CheckoutRes
 				price = cartItem.Sku.Product.Bulk.Price
 			}
 
+			var (
+				totalPrice    float64
+				totalPromoted int = product.Quantity
+				basePrice         = price
+			)
 			if cartItem.Sku.Promotion != nil {
 				switch cartItem.Sku.Promotion.Type {
 				case shopModel.PromotionTypePercent:
@@ -141,15 +146,34 @@ func (s *invoiceServiceImpl) Checkout(req dto.CheckoutRequest) (*dto.CheckoutRes
 				case shopModel.PromotionTypeNominal:
 					price = cartItem.Sku.Price - cartItem.Sku.Promotion.Amount
 				}
+				if product.Quantity > cartItem.Sku.Promotion.PurchaseLimit || product.Quantity > cartItem.Sku.Promotion.Stock {
+					if cartItem.Sku.Promotion.PurchaseLimit < cartItem.Sku.Promotion.Stock {
+						totalPromoted = cartItem.Sku.Promotion.PurchaseLimit
+						totalPrice = basePrice*float64(product.Quantity-cartItem.Sku.Promotion.PurchaseLimit) + price*float64(cartItem.Sku.Promotion.PurchaseLimit)
+					} else {
+						totalPromoted = cartItem.Sku.Promotion.Stock
+						totalPrice = basePrice*float64(product.Quantity-cartItem.Sku.Promotion.Stock) + price*float64(cartItem.Sku.Promotion.Stock)
+					}
+				} else {
+					totalPrice = price * float64(product.Quantity)
+				}
+			} else {
+				totalPrice = price * float64(product.Quantity)
 			}
 
 			transactions = append(transactions, &model.Transaction{
-				SkuID:      cartItem.SkuId,
-				Price:      price,
-				Quantity:   product.Quantity,
-				TotalPrice: price * float64(product.Quantity),
-				Note:       &cartItem.Notes,
-				UserID:     req.UserID,
+				SkuID: cartItem.SkuId,
+				Price: func() float64 {
+					if cartItem.Sku.Promotion != nil && product.Quantity > cartItem.Sku.Promotion.PurchaseLimit || product.Quantity > cartItem.Sku.Promotion.Stock {
+						return basePrice
+					}
+					return price
+				}(),
+				Quantity:         product.Quantity,
+				PromotedQuantity: totalPromoted,
+				TotalPrice:       totalPrice,
+				Note:             &cartItem.Notes,
+				UserID:           req.UserID,
 			})
 
 			shopTotalPrice += price * float64(product.Quantity)
