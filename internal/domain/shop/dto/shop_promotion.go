@@ -40,10 +40,10 @@ func (p *SellerPromotionFilterRequest) Offset() int {
 }
 
 type UpdateShopPromotionRequest struct {
-	Name              string                               `json:"name" binding:"min=1,max=100"`
-	StartPeriod       time.Time                            `json:"startPeriod"`
-	EndPeriod         time.Time                            `json:"endPeriod"`
-	ProductPromotions []*dto.UpdateProductPromotionRequest `json:"productPromotions"`
+	Name              string                               `json:"name" binding:"omitempty,min=1,max=100"`
+	StartPeriod       time.Time                            `json:"startPeriod" binding:"omitempty"`
+	EndPeriod         time.Time                            `json:"endPeriod" binding:"omitempty"`
+	ProductPromotions []*dto.UpdateProductPromotionRequest `json:"productPromotions" binding:"omitempty"`
 }
 
 func (p *UpdateShopPromotionRequest) ValidateDateRange(startPeriod time.Time, endPeriod time.Time) error {

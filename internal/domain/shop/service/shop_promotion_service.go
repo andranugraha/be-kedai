@@ -106,8 +106,8 @@ func (s *shopPromotionServiceImpl) UpdatePromotion(userId int, promotionId int, 
 		}
 	}
 
-	if shopPromotion.Name == "" {
-		shopPromotion.Name = promotion.Name
+	if req.Name == "" {
+		req.Name = promotion.Name
 	}
 	if err := req.ValidateDateRange(promotion.StartPeriod, promotion.EndPeriod); err != nil {
 		return err
@@ -116,34 +116,36 @@ func (s *shopPromotionServiceImpl) UpdatePromotion(userId int, promotionId int, 
 	var productPromotions []*productModel.ProductPromotion
 	for _, products := range promotion.Product {
 		for _, skus := range products.SKUs {
-			productPromotionID := skus.Promotion.ID
+			if skus.Promotion != nil {
+				productPromotionID := skus.Promotion.ID
 
-			for _, pp := range req.ProductPromotions {
-				if pp.Type == "" {
-					pp.Type = skus.Promotion.Type
-				}
-				if pp.Amount == 0 {
-					pp.Amount = skus.Promotion.Amount
-				}
-				if pp.Stock == 0 {
-					pp.Stock = skus.Promotion.Stock
-				}
-				if pp.PurchaseLimit == 0 {
-					pp.PurchaseLimit = skus.Promotion.PurchaseLimit
-				}
-				if pp.SkuId == 0 {
-					pp.SkuId = skus.Promotion.SkuId
-				}
+				for _, pp := range req.ProductPromotions {
+					if pp.Type == "" {
+						pp.Type = skus.Promotion.Type
+					}
+					if pp.Amount == 0 {
+						pp.Amount = skus.Promotion.Amount
+					}
+					if pp.Stock == 0 {
+						pp.Stock = skus.Promotion.Stock
+					}
+					if pp.PurchaseLimit == 0 {
+						pp.PurchaseLimit = skus.Promotion.PurchaseLimit
+					}
+					if pp.SkuId == 0 {
+						pp.SkuId = skus.Promotion.SkuId
+					}
 
-				productPromotions = append(productPromotions, &productModel.ProductPromotion{
-					ID:            productPromotionID,
-					Type:          pp.Type,
-					Amount:        pp.Amount,
-					Stock:         pp.Stock,
-					PurchaseLimit: pp.PurchaseLimit,
-					SkuId:         pp.SkuId,
-					PromotionId:   promotion.ID,
-				})
+					productPromotions = append(productPromotions, &productModel.ProductPromotion{
+						ID:            productPromotionID,
+						Type:          pp.Type,
+						Amount:        pp.Amount,
+						Stock:         pp.Stock,
+						PurchaseLimit: pp.PurchaseLimit,
+						SkuId:         pp.SkuId,
+						PromotionId:   promotion.ID,
+					})
+				}
 			}
 		}
 	}
