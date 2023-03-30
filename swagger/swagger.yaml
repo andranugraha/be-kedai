@@ -8372,6 +8372,56 @@ paths:
                   message:
                     type: string
                     example: "error message"
+  /v1/admins/marketplaces/vouchers:
+    get:
+      tags:
+        - Admin
+      parameters:
+        - in: query
+          name: categoryId
+          schema:
+            type: integer
+            default: 0
+          description: No default category, will get all if not specified
+        - in: query
+          name: paymentMethodId
+          schema:
+            type: integer
+            default: 0
+          description: No default payment method, will get all if not specified
+      summary: Get marketplace vouchers
+      description: Get list of available marketplace vouchers
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Response'
+                  - type: object
+                    properties:
+                      code:
+                        example: "OK"
+                      message:
+                        example: "ok"
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/MarketplaceVoucher'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "INTERNAL_SERVER_ERROR"
+                  message:
+                    type: string
+                    example: "error message"
   /v1/sellers/ratings:
     get:
       security:

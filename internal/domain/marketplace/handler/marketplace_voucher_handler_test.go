@@ -2,7 +2,10 @@ package handler_test
 
 import (
 	"encoding/json"
+	"errors"
+	"fmt"
 	"kedai/backend/be-kedai/internal/common/code"
+	commonDto "kedai/backend/be-kedai/internal/common/dto"
 	errs "kedai/backend/be-kedai/internal/common/error"
 	"kedai/backend/be-kedai/internal/domain/marketplace/dto"
 	"kedai/backend/be-kedai/internal/domain/marketplace/handler"
@@ -93,6 +96,101 @@ func TestGetMarketplaceVoucher(t *testing.T) {
 		})
 	}
 
+}
+
+func TestGetMarketplaceVoucherAdmin(t *testing.T) {
+	type input struct {
+		userID   int
+		request  *dto.AdminVoucherFilterRequest
+		mockData *commonDto.PaginationResponse
+		mockErr  error
+	}
+	type expected struct {
+		statusCode int
+		response   response.Response
+	}
+
+	var (
+		userID     = 1
+		page       = 2
+		limit      = 10
+		totalRows  = int64(0)
+		vouchers   = []*dto.AdminMarketplaceVoucher{}
+		totalPages = 0
+		request    = &dto.AdminVoucherFilterRequest{
+			Page:  page,
+			Limit: limit,
+		}
+	)
+
+	tests := []struct {
+		description string
+		input
+		expected
+	}{
+		{
+			description: "should return error with status code 500 when something went wrong",
+			input: input{
+				userID:   userID,
+				request:  request,
+				mockData: nil,
+				mockErr:  errors.New("something went wrong"),
+			},
+			expected: expected{
+				statusCode: http.StatusInternalServerError,
+				response: response.Response{
+					Code:    code.INTERNAL_SERVER_ERROR,
+					Message: errs.ErrInternalServerError.Error(),
+				},
+			},
+		},
+		{
+			description: "should return data with status code 200 when succeed fetching vouchers",
+			input: input{
+				userID:  userID,
+				request: request,
+				mockData: &commonDto.PaginationResponse{
+					TotalRows:  totalRows,
+					TotalPages: totalPages,
+					Page:       page,
+					Limit:      limit,
+					Data:       vouchers,
+				},
+				mockErr: nil,
+			},
+			expected: expected{
+				statusCode: http.StatusOK,
+				response: response.Response{
+					Code:    code.OK,
+					Message: "ok",
+					Data: &commonDto.PaginationResponse{
+						TotalRows:  totalRows,
+						TotalPages: totalPages,
+						Page:       page,
+						Limit:      limit,
+						Data:       vouchers,
+					},
+				},
+			},
+		},
+	}
+
+	for _, tc := range tests {
+		expectedRes, _ := json.Marshal(tc.expected.response)
+		marketplaceVoucherService := mocks.NewMarketplaceVoucherService(t)
+		marketplaceVoucherService.On("GetMarketplaceVoucherAdmin", tc.input.request).Return(tc.input.mockData, tc.input.mockErr)
+		rec := httptest.NewRecorder()
+		c, _ := gin.CreateTestContext(rec)
+		h := handler.New(&handler.HandlerConfig{
+			MarketplaceVoucherService: marketplaceVoucherService,
+		})
+		c.Request = httptest.NewRequest("GET", fmt.Sprintf("/v1/admins/marketplaces/vouchers?page=%d&limit=%d", tc.input.request.Page, tc.input.request.Limit), nil)
+
+		h.GetMarketplaceVoucherAdmin(c)
+
+		assert.Equal(t, tc.expected.statusCode, rec.Code)
+		assert.Equal(t, string(expectedRes), rec.Body.String())
+	}
 }
 
 func TestGetValidMarketplaceVoucher(t *testing.T) {
