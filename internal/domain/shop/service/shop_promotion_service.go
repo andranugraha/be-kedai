@@ -106,12 +106,38 @@ func (s *shopPromotionServiceImpl) UpdatePromotion(userId int, promotionId int, 
 		}
 	}
 
+	if shopPromotion.Name == "" {
+		shopPromotion.Name = promotion.Name
+	}
+	if shopPromotion.StartPeriod.IsZero() {
+		shopPromotion.StartPeriod = promotion.StartPeriod
+	}
+	if shopPromotion.EndPeriod.IsZero() {
+		shopPromotion.EndPeriod = promotion.EndPeriod
+	}
+
 	var productPromotions []*productModel.ProductPromotion
 	for _, products := range promotion.Product {
 		for _, skus := range products.SKUs {
 			productPromotionID := skus.Promotion.ID
 
 			for _, pp := range req.ProductPromotions {
+				if pp.Type == "" {
+					pp.Type = skus.Promotion.Type
+				}
+				if pp.Amount == 0 {
+					pp.Amount = skus.Promotion.Amount
+				}
+				if pp.Stock == 0 {
+					pp.Stock = skus.Promotion.Stock
+				}
+				if pp.PurchaseLimit == 0 {
+					pp.PurchaseLimit = skus.Promotion.PurchaseLimit
+				}
+				if pp.SkuId == 0 {
+					pp.SkuId = skus.Promotion.SkuId
+				}
+
 				productPromotions = append(productPromotions, &productModel.ProductPromotion{
 					ID:            productPromotionID,
 					Type:          pp.Type,
