@@ -218,6 +218,8 @@ func TestUpdatePromotion(t *testing.T) {
 		promotionID   = 1
 		promotionName = "promotion name"
 		isActive      = true
+		startPeriod   = time.Now()
+		endPeriod     = time.Now().AddDate(0, 0, 1)
 		promotion     = dto.SellerPromotion{
 			Product: []*productDto.SellerProductPromotionResponse{
 				{
@@ -258,6 +260,7 @@ func TestUpdatePromotion(t *testing.T) {
 			input: input{
 				userID: userID,
 				request: dto.UpdateShopPromotionRequest{
+					Name:        promotionName,
 					StartPeriod: time.Now(),
 					EndPeriod:   time.Now().AddDate(0, 0, -1),
 				},
@@ -272,7 +275,9 @@ func TestUpdatePromotion(t *testing.T) {
 			input: input{
 				userID: userID,
 				request: dto.UpdateShopPromotionRequest{
-					Name: promotionName,
+					Name:        promotionName,
+					StartPeriod: time.Now(),
+					EndPeriod:   time.Now().AddDate(0, 0, 1),
 				},
 			},
 			beforeTest: func(ss *mocks.ShopService, pr *mocks.ShopPromotionRepository) {
@@ -289,7 +294,9 @@ func TestUpdatePromotion(t *testing.T) {
 				shopID:      shopID,
 				promotionId: promotionID,
 				request: dto.UpdateShopPromotionRequest{
-					Name: promotionName,
+					Name:        promotionName,
+					StartPeriod: time.Now(),
+					EndPeriod:   time.Now().AddDate(0, 0, 1),
 				},
 			},
 			beforeTest: func(ss *mocks.ShopService, pr *mocks.ShopPromotionRepository) {
@@ -308,13 +315,15 @@ func TestUpdatePromotion(t *testing.T) {
 				promotionId: promotionID,
 				request: dto.UpdateShopPromotionRequest{
 					Name:              promotionName,
+					StartPeriod:       startPeriod,
+					EndPeriod:         endPeriod,
 					ProductPromotions: []*productDto.UpdateProductPromotionRequest{},
 				},
 			},
 			beforeTest: func(ss *mocks.ShopService, pr *mocks.ShopPromotionRepository) {
 				ss.On("FindShopByUserId", userID).Return(&model.Shop{ID: shopID}, nil)
 				pr.On("GetSellerPromotionById", shopID, promotionID).Return(&promotion, nil)
-				pr.On("Update", &model.ShopPromotion{Name: promotionName, ShopId: shopID}, mock.Anything).Return(errors.New("failed to update promotion"))
+				pr.On("Update", &model.ShopPromotion{Name: promotionName, ShopId: shopID, StartPeriod: startPeriod, EndPeriod: endPeriod}, mock.Anything).Return(errors.New("failed to update promotion"))
 			},
 			expected: expected{
 				err: errors.New("failed to update promotion"),
@@ -327,7 +336,9 @@ func TestUpdatePromotion(t *testing.T) {
 				shopID:      shopID,
 				promotionId: promotionID,
 				request: dto.UpdateShopPromotionRequest{
-					Name: promotionName,
+					Name:        promotionName,
+					StartPeriod: startPeriod,
+					EndPeriod:   endPeriod,
 					ProductPromotions: []*productDto.UpdateProductPromotionRequest{
 						{
 							Type:          "discount",
@@ -343,7 +354,7 @@ func TestUpdatePromotion(t *testing.T) {
 			beforeTest: func(ss *mocks.ShopService, pr *mocks.ShopPromotionRepository) {
 				ss.On("FindShopByUserId", userID).Return(&model.Shop{ID: shopID}, nil)
 				pr.On("GetSellerPromotionById", shopID, promotionID).Return(&promotion, nil)
-				pr.On("Update", &model.ShopPromotion{Name: promotionName, ShopId: shopID}, mock.Anything).Return(nil)
+				pr.On("Update", &model.ShopPromotion{Name: promotionName, ShopId: shopID, StartPeriod: startPeriod, EndPeriod: endPeriod}, mock.Anything).Return(nil)
 			},
 			expected: expected{
 				err: nil,

@@ -50,7 +50,7 @@ func (p *UpdateShopPromotionRequest) ValidateDateRange() error {
 	now := time.Now().Truncate(24 * time.Hour)
 
 	if p.StartPeriod.After(p.EndPeriod) || (p.StartPeriod.Before(now) && p.EndPeriod.Before(now)) || p.EndPeriod.Before(p.StartPeriod) {
-		return errs.ErrInvalidVoucherDateRange
+		return errs.ErrInvalidPromotionDateRange
 	}
 
 	return nil
