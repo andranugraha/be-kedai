@@ -57,20 +57,28 @@ func (d *discussionRepositoryImpl) GetDiscussionByProductID(productID int, req d
 		}
 
 		discussions[i].Username = discussion.User.Username
-		discussions[i].UserUrl = *discussion.User.Profile.PhotoUrl
+		if discussion.User.Profile.PhotoUrl != nil {
+			discussions[i].UserUrl = *discussion.User.Profile.PhotoUrl
+		}
 		if discussions[i].ShopId != 0 {
 			discussions[i].ShopName = discussion.Shop.Name
-			discussions[i].ShopUrl = *discussion.Shop.PhotoUrl
+			if discussion.Shop.PhotoUrl != nil {
+				discussions[i].ShopUrl = *discussion.Shop.PhotoUrl
+			}
 		}
 		repliesCount = len(replies)
 
 		if repliesCount >= 1 {
 			discussions[i].Reply = replies[0]
 			discussions[i].Reply.Username = replies[0].User.Username
-			discussions[i].Reply.UserUrl = *replies[0].User.Profile.PhotoUrl
+			if replies[0].User.Profile.PhotoUrl != nil {
+				discussions[i].Reply.UserUrl = *replies[0].User.Profile.PhotoUrl
+			}
 			if discussions[i].Reply.ShopId != 0 {
 				discussions[i].Reply.ShopName = replies[0].Shop.Name
-				discussions[i].Reply.ShopUrl = *replies[0].Shop.PhotoUrl
+				if replies[0].Shop.PhotoUrl != nil {
+					discussions[i].Reply.ShopUrl = *replies[0].Shop.PhotoUrl
+				}
 			}
 		}
 		discussions[i].ReplyCount = repliesCount
