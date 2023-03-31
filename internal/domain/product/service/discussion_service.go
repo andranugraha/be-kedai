@@ -9,6 +9,7 @@ import (
 
 type DiscussionService interface {
 	GetDiscussionByProductID(productID int, req dto.GetDiscussionReq) (*commonDto.PaginationResponse, error)
+	GetUnrepliedDiscussionByShopID(userID int, req dto.GetDiscussionReq) (*commonDto.PaginationResponse, error)
 	GetChildDiscussionByParentID(parentID int) ([]*dto.DiscussionReply, error)
 	PostDiscussion(discussion *dto.DiscussionReq) error
 }
@@ -44,6 +45,27 @@ func (d *discussionServiceImpl) GetDiscussionByProductID(productID int, req dto.
 	res.TotalPages = totalPages
 
 	return &res, err
+}
+
+func (d *discussionServiceImpl) GetUnrepliedDiscussionByShopID(userID int, req dto.GetDiscussionReq) (*commonDto.PaginationResponse, error) {
+	shop, err := d.shopService.FindShopByUserId(userID)
+	if err != nil {
+		return nil, err
+	}
+
+	data, limit, page, totalRows, totalPages, err := d.discussionRepository.GetUnrepliedDiscussionByShopID(shop.ID, req)
+	if err != nil {
+		return nil, err
+	}
+
+	var res commonDto.PaginationResponse
+	res.Data = data
+	res.Limit = limit
+	res.Page = page
+	res.TotalRows = int64(totalRows)
+	res.TotalPages = totalPages
+
+	return &res, nil
 }
 
 func (d *discussionServiceImpl) GetChildDiscussionByParentID(parentID int) ([]*dto.DiscussionReply, error) {

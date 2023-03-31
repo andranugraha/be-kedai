@@ -1,7 +1,9 @@
 package handler
 
 import (
+	"errors"
 	"kedai/backend/be-kedai/internal/common/code"
+	commonError "kedai/backend/be-kedai/internal/common/error"
 	"kedai/backend/be-kedai/internal/domain/product/dto"
 	"kedai/backend/be-kedai/internal/utils/response"
 	"net/http"
@@ -27,6 +29,28 @@ func (h *Handler) GetDiscussionByProductID(c *gin.Context) {
 
 	response.Success(c, http.StatusOK, code.OK, "ok", result)
 
+}
+
+func (h *Handler) GetUnrepliedDiscussionByShopID(c *gin.Context) {
+	userId := c.GetInt("userId")
+
+	var request dto.GetDiscussionReq
+	request.Limit, _ = strconv.Atoi(c.Query("limit"))
+	request.Page, _ = strconv.Atoi(c.Query("page"))
+
+	request.Validate()
+
+	result, err := h.discussionService.GetUnrepliedDiscussionByShopID(userId, request)
+	if err != nil {
+		if errors.Is(err, commonError.ErrShopNotFound) {
+			response.Error(c, http.StatusNotFound, code.SHOP_NOT_REGISTERED, err.Error())
+			return
+		}
+		response.Error(c, http.StatusInternalServerError, code.INTERNAL_SERVER_ERROR, err.Error())
+		return
+	}
+
+	response.Success(c, http.StatusOK, code.OK, "ok", result)
 }
 
 func (h *Handler) GetDiscussionByParentID(c *gin.Context) {
