@@ -16,6 +16,7 @@ import (
 	userModel "kedai/backend/be-kedai/internal/domain/user/model"
 	userService "kedai/backend/be-kedai/internal/domain/user/service"
 	"kedai/backend/be-kedai/internal/utils/random"
+	"log"
 	"strconv"
 	"time"
 )
@@ -286,6 +287,7 @@ func (s *invoiceServiceImpl) Checkout(req dto.CheckoutRequest) (*dto.CheckoutRes
 
 	platformFee, _ := strconv.ParseFloat(config.PlatformFee, 64)
 	grandTotal := totalPrice + totalShippingCost + platformFee
+	log.Println("grandTotal", grandTotal)
 	if grandTotal != req.TotalPrice {
 		return nil, commonError.ErrTotalPriceNotMatch
 	}

@@ -77,6 +77,7 @@ func TestCheckout(t *testing.T) {
 						Product: &productModel.Product{
 							Bulk: &productModel.ProductBulkPrice{
 								MinQuantity: 1,
+								Price:       4000,
 							},
 						},
 						Promotion: &productModel.ProductPromotion{
@@ -443,6 +444,7 @@ func TestCheckout(t *testing.T) {
 						Product: &productModel.Product{
 							Bulk: &productModel.ProductBulkPrice{
 								MinQuantity: 1,
+								Price:       4000,
 							},
 						},
 						Promotion: &productModel.ProductPromotion{
