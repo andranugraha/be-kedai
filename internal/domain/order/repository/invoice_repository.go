@@ -24,6 +24,7 @@ type InvoiceRepository interface {
 	Pay(invoice *model.Invoice, skuIds []int, invoiceStatuses []*model.InvoiceStatus, txnID, token string) (*userDto.Token, error)
 	Delete(invoice *model.Invoice) error
 	UpdateInvoice(tx *gorm.DB, invoice *model.Invoice) error
+	ClearUnusedInvoice() error
 }
 
 type invoiceRepositoryImpl struct {
@@ -236,6 +237,27 @@ func (r *invoiceRepositoryImpl) UpdateInvoice(tx *gorm.DB, invoice *model.Invoic
 	err := tx.Save(invoice).Error
 	if err != nil {
 		return err
+	}
+
+	return nil
+}
+
+func (r *invoiceRepositoryImpl) ClearUnusedInvoice() error {
+	var invoices []*model.Invoice
+	err := r.db.Where("payment_date is null AND created_at <= ?", time.Now().Add(-(15 * time.Minute))).
+		Preload("InvoicePerShops.Transactions").
+		Preload("InvoicePerShops.Voucher").
+		Preload("Voucher").
+		Find(&invoices).Error
+	if err != nil {
+		return err
+	}
+
+	for _, invoice := range invoices {
+		err = r.Delete(invoice)
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil

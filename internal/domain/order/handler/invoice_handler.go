@@ -29,7 +29,6 @@ func (h *Handler) Checkout(c *gin.Context) {
 
 	invoice, err := h.invoiceService.Checkout(req)
 	if err != nil {
-		log.Println(err)
 		if errors.Is(err, commonErr.ErrAddressNotFound) || errors.Is(err, commonErr.ErrShopNotFound) ||
 			errors.Is(err, commonErr.ErrTotalPriceNotMatch) || errors.Is(err, commonErr.ErrCourierNotFound) ||
 			errors.Is(err, commonErr.ErrInvalidVoucher) {
@@ -132,4 +131,9 @@ func (h *Handler) CancelCheckout(c *gin.Context) {
 	}
 
 	response.Success(c, http.StatusOK, code.OK, "cancel checkout success", nil)
+}
+
+func (h *Handler) ClearUnusedInvoice(c *gin.Context) {
+	_ = h.invoiceService.ClearUnusedInvoice()
+	log.Println("CLEAR UNUSED INVOICE CRON JOB")
 }

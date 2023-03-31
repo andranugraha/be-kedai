@@ -476,6 +476,16 @@ func startCron(handler *orderHandlerPackage.Handler) {
 		log.Println(err)
 	}
 
+	_, err = scheduler.Every(1).Minutes().Do(func() {
+		c := gin.Context{}
+
+		handler.ClearUnusedInvoice(&c)
+	})
+
+	if err != nil {
+		log.Println(err)
+	}
+
 	scheduler.StartAsync()
 
 }

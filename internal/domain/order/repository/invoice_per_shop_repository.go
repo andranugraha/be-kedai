@@ -94,6 +94,8 @@ func (r *invoicePerShopRepositoryImpl) GetByUserID(userID int, request *dto.Invo
 
 	if request.Status != "" {
 		query = query.Where("invoice_per_shops.status = ?", request.Status)
+	} else {
+		query = query.Where("invoice_per_shops.status != ?", constant.TransactionStatusWaitingForPayment)
 	}
 
 	if request.StartDate != "" && request.EndDate != "" {
@@ -450,6 +452,8 @@ func (r *invoicePerShopRepositoryImpl) GetShopOrder(shopId int, req *dto.Invoice
 
 	if req.Status != "" {
 		db = db.Where("invoice_per_shops.status = ?", req.Status)
+	} else {
+		db = db.Where("invoice_per_shops.status != ?", constant.TransactionStatusWaitingForPayment)
 	}
 
 	if req.StartDate != "" && req.EndDate != "" {
