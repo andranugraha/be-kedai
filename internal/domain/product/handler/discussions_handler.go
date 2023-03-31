@@ -2,7 +2,7 @@ package handler
 
 import (
 	"kedai/backend/be-kedai/internal/common/code"
-	errs	"kedai/backend/be-kedai/internal/common/error"
+	errs "kedai/backend/be-kedai/internal/common/error"
 	"kedai/backend/be-kedai/internal/domain/product/dto"
 	"kedai/backend/be-kedai/internal/utils/response"
 	"net/http"
