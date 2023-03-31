@@ -97,6 +97,7 @@ func (d *discussionRepositoryImpl) GetUnrepliedDiscussionByShopID(shopID int, re
 		Joins("JOIN products ON discussions.product_id = products.id").
 		Where("products.shop_id = ? AND discussions.parent_id IS NULL", shopID).
 		Where("d.shop_id IS NULL").
+		Group("discussions.id").
 		Count(&count).Error
 	if err != nil {
 		return []*dto.Discussion{}, 0, 0, 0, 0, err
@@ -109,6 +110,7 @@ func (d *discussionRepositoryImpl) GetUnrepliedDiscussionByShopID(shopID int, re
 		Joins("JOIN products ON discussions.product_id = products.id").
 		Where("products.shop_id = ? AND discussions.parent_id IS NULL", shopID).
 		Where("d.shop_id IS NULL").
+		Group("discussions.id").
 		Preload("User").Preload("User.Profile").Preload("Product.Media").
 		Preload("Shop").Limit(req.Limit).Offset(req.Offset()).Order("date desc").Find(&discussions).Error
 	if err != nil {
