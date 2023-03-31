@@ -6,6 +6,7 @@ import (
 	commonErr "kedai/backend/be-kedai/internal/common/error"
 	"kedai/backend/be-kedai/internal/domain/order/dto"
 	"kedai/backend/be-kedai/internal/utils/response"
+	"log"
 	"net/http"
 	"strings"
 
@@ -28,6 +29,7 @@ func (h *Handler) Checkout(c *gin.Context) {
 
 	invoice, err := h.invoiceService.Checkout(req)
 	if err != nil {
+		log.Println(err)
 		if errors.Is(err, commonErr.ErrAddressNotFound) || errors.Is(err, commonErr.ErrShopNotFound) ||
 			errors.Is(err, commonErr.ErrTotalPriceNotMatch) || errors.Is(err, commonErr.ErrCourierNotFound) ||
 			errors.Is(err, commonErr.ErrInvalidVoucher) {
