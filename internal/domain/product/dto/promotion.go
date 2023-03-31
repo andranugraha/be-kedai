@@ -11,7 +11,7 @@ type UpdateProductPromotionRequest struct {
 
 type CreateProductPromotionRequest struct {
 	Type          string  `json:"type" binding:"required"`
-	Amount        float64 `json:"amount" binding:"required"`
+	Amount        float64 `json:"amount"`
 	Stock         int     `json:"stock" binding:"required"`
 	IsActive      *bool   `json:"isActive" binding:"required"`
 	PurchaseLimit int     `json:"purchaseLimit" binding:"required"`
