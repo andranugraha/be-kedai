@@ -8705,6 +8705,10 @@ paths:
         - BearerAuth: []
       tags:
         - Admin
+      summary: Add marketplace voucher
+      description: Add new marketplace voucher
+      requestBody:
+      $ref: '#/components/requestBodies/AddMarketplaceVoucherBody'  
       parameters:
         - in: query
           name: categoryId
