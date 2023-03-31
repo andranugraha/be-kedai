@@ -91,12 +91,9 @@ func (d *discussionRepositoryImpl) GetUnrepliedDiscussionByShopID(shopID int, re
 	var discussions []*dto.Discussion
 	var count int64
 	err = d.db.Model(&dto.Discussion{}).
-		Joins("LEFT JOIN discussions AS d ON discussions.id = d.parent_id", func(db *gorm.DB) *gorm.DB {
-			return db.Order("d.date desc").Limit(1)
-		}).
 		Joins("JOIN products ON discussions.product_id = products.id").
 		Where("products.shop_id = ? AND discussions.parent_id IS NULL", shopID).
-		Where("d.shop_id IS NULL").
+		Where("(select d2.shop_id from discussions d2 where d2.parent_id = discussions.id order by d2.date desc limit 1) is null").
 		Group("discussions.id").
 		Count(&count).Error
 	if err != nil {
@@ -104,12 +101,9 @@ func (d *discussionRepositoryImpl) GetUnrepliedDiscussionByShopID(shopID int, re
 	}
 
 	err = d.db.
-		Joins("LEFT JOIN discussions AS d ON discussions.id = d.parent_id", func(db *gorm.DB) *gorm.DB {
-			return db.Order("d.date desc").Limit(1)
-		}).
 		Joins("JOIN products ON discussions.product_id = products.id").
 		Where("products.shop_id = ? AND discussions.parent_id IS NULL", shopID).
-		Where("d.shop_id IS NULL").
+		Where("(select d2.shop_id from discussions d2 where d2.parent_id = discussions.id order by date desc limit 1) is null").
 		Group("discussions.id").
 		Preload("User").Preload("User.Profile").Preload("Product.Media").
 		Preload("Shop").Limit(req.Limit).Offset(req.Offset()).Order("date desc").Find(&discussions).Error
