@@ -438,7 +438,7 @@ func TestUpdateVoucher(t *testing.T) {
 		{
 			description: "should return invalid product name error when name contain emoji",
 			input: input{
-				req: invalidNameRequest,
+				req:        invalidNameRequest,
 				beforeTest: func(mvr *mocks.MarketplaceVoucherRepository) {},
 			},
 			expected: expected{
