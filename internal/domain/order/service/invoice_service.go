@@ -24,6 +24,7 @@ type InvoiceService interface {
 	Checkout(req dto.CheckoutRequest) (*dto.CheckoutResponse, error)
 	PayInvoice(req dto.PayInvoiceRequest, token string) (*userDto.Token, error)
 	CancelCheckout(req dto.CancelCheckoutRequest) error
+	ClearUnusedInvoice() error
 }
 
 type invoiceServiceImpl struct {
@@ -426,4 +427,8 @@ func (s *invoiceServiceImpl) CancelCheckout(req dto.CancelCheckoutRequest) error
 	}
 
 	return s.invoiceRepo.Delete(invoice)
+}
+
+func (s *invoiceServiceImpl) ClearUnusedInvoice() error {
+	return s.invoiceRepo.ClearUnusedInvoice()
 }
