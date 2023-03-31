@@ -261,6 +261,7 @@ func NewRouter(cfg *RouterConfig) *gin.Engine {
 				authenticated.GET("/stats", cfg.ShopHandler.GetShopStats)
 				authenticated.GET("/insights", cfg.ShopHandler.GetShopInsights)
 				authenticated.GET("/ratings", cfg.ShopHandler.GetShopRating)
+				authenticated.GET("/discussions", cfg.ProductHandler.GetUnrepliedDiscussionByShopID)
 				finance := authenticated.Group("/finances")
 				{
 					income := finance.Group("/incomes")
@@ -298,6 +299,7 @@ func NewRouter(cfg *RouterConfig) *gin.Engine {
 				{
 					promotion.GET("", cfg.ShopHandler.GetSellerPromotions)
 					promotion.GET("/:promotionId", cfg.ShopHandler.GetSellerPromotionById)
+					promotion.PUT("/:promotionId", cfg.ShopHandler.UpdatePromotion)
 					promotion.POST("", cfg.ShopHandler.CreateShopPromotion)
 					promotion.DELETE("/:promotionId", cfg.ShopHandler.DeletePromotion)
 				}

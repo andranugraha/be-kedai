@@ -275,10 +275,10 @@ type CreateProductRequest struct {
 	Name          string                       `json:"name" binding:"required,min=5,max=255"`
 	Description   string                       `json:"description" binding:"required,min=20,max=3000"`
 	IsHazardous   *bool                        `json:"isHazardous" binding:"required"`
-	Weight        float64                      `json:"weight" binding:"required,gt=0"`
-	Length        float64                      `json:"length" binding:"required,gt=0"`
-	Width         float64                      `json:"width" binding:"required,gt=0"`
-	Height        float64                      `json:"height" binding:"required,gt=0"`
+	Weight        float64                      `json:"weight" binding:"gte=0"`
+	Length        float64                      `json:"length" binding:"gte=0"`
+	Width         float64                      `json:"width" binding:"gte=0"`
+	Height        float64                      `json:"height" binding:"gte=0"`
 	IsNew         *bool                        `json:"isNew" binding:"required"`
 	IsActive      *bool                        `json:"isActive" binding:"required"`
 	CategoryID    int                          `json:"categoryId" binding:"required,gte=1"`

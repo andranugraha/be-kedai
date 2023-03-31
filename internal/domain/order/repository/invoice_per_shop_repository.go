@@ -94,6 +94,8 @@ func (r *invoicePerShopRepositoryImpl) GetByUserID(userID int, request *dto.Invo
 
 	if request.Status != "" {
 		query = query.Where("invoice_per_shops.status = ?", request.Status)
+	} else {
+		query = query.Where("invoice_per_shops.status != ?", constant.TransactionStatusWaitingForPayment)
 	}
 
 	if request.StartDate != "" && request.EndDate != "" {
@@ -198,11 +200,15 @@ func (r *invoicePerShopRepositoryImpl) GetShopFinanceToRelease(shopID int) (floa
 		Select(`
 			SUM(CASE WHEN is_released = true THEN total ELSE 0 END)`).
 		Where("shop_id = ?", shopID).
-		Where("status = ?", constant.TransactionStatusCompleted)
+		Where("status = ?", constant.TransactionStatusCompleted).
+		Group("shop_id")
 
 	err := query.Find(&toRelease).Error
 	if err != nil {
-		return toRelease, err
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return toRelease, nil
+		}
+		return 0, err
 	}
 
 	return toRelease, nil
@@ -446,6 +452,8 @@ func (r *invoicePerShopRepositoryImpl) GetShopOrder(shopId int, req *dto.Invoice
 
 	if req.Status != "" {
 		db = db.Where("invoice_per_shops.status = ?", req.Status)
+	} else {
+		db = db.Where("invoice_per_shops.status != ?", constant.TransactionStatusWaitingForPayment)
 	}
 
 	if req.StartDate != "" && req.EndDate != "" {

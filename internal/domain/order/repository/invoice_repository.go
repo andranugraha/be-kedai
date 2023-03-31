@@ -24,6 +24,7 @@ type InvoiceRepository interface {
 	Pay(invoice *model.Invoice, skuIds []int, invoiceStatuses []*model.InvoiceStatus, txnID, token string) (*userDto.Token, error)
 	Delete(invoice *model.Invoice) error
 	UpdateInvoice(tx *gorm.DB, invoice *model.Invoice) error
+	ClearUnusedInvoice() error
 }
 
 type invoiceRepositoryImpl struct {
@@ -67,16 +68,10 @@ func (r *invoiceRepositoryImpl) Create(invoice *model.Invoice) (*model.Invoice, 
 				return nil, err
 			}
 
-			err = tx.Model(&productModel.ProductPromotion{}).Update("stock", gorm.Expr("case when stock > ? then stock - ? else 0 end", transaction.PromotedQuantity)).Where("sku_id = ?", transaction.SkuID).Error
+			err = tx.Model(&productModel.ProductPromotion{}).Where("sku_id = ?", transaction.SkuID).Update("stock", gorm.Expr("case when stock > ? then stock - ? else 0 end", transaction.PromotedQuantity, transaction.PromotedQuantity)).Error
 			if err != nil {
 				tx.Rollback()
 				return nil, err
-			}
-
-			for _, variant := range transaction.Sku.Variants {
-				transaction.Variants = append(transaction.Variants, model.TransactionVariant{
-					Value: variant.Value,
-				})
 			}
 		}
 	}
@@ -179,7 +174,7 @@ func (r *invoiceRepositoryImpl) Delete(invoice *model.Invoice) error {
 				return err
 			}
 
-			err = tx.Model(&productModel.ProductPromotion{}).Update("stock", gorm.Expr("stock + ?", transaction.PromotedQuantity)).Where("sku_id = ?", transaction.SkuID).Error
+			err = tx.Model(&productModel.ProductPromotion{}).Where("sku_id = ?", transaction.SkuID).Update("stock", gorm.Expr("stock + ?", transaction.PromotedQuantity)).Error
 			if err != nil {
 				tx.Rollback()
 				return err
@@ -242,6 +237,27 @@ func (r *invoiceRepositoryImpl) UpdateInvoice(tx *gorm.DB, invoice *model.Invoic
 	err := tx.Save(invoice).Error
 	if err != nil {
 		return err
+	}
+
+	return nil
+}
+
+func (r *invoiceRepositoryImpl) ClearUnusedInvoice() error {
+	var invoices []*model.Invoice
+	err := r.db.Where("payment_date is null AND created_at <= ?", time.Now().Add(-(15 * time.Minute))).
+		Preload("InvoicePerShops.Transactions").
+		Preload("InvoicePerShops.Voucher").
+		Preload("Voucher").
+		Find(&invoices).Error
+	if err != nil {
+		return err
+	}
+
+	for _, invoice := range invoices {
+		err = r.Delete(invoice)
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil
