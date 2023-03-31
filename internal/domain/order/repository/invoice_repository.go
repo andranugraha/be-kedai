@@ -67,16 +67,10 @@ func (r *invoiceRepositoryImpl) Create(invoice *model.Invoice) (*model.Invoice, 
 				return nil, err
 			}
 
-			err = tx.Model(&productModel.ProductPromotion{}).Update("stock", gorm.Expr("case when stock > ? then stock - ? else 0 end", transaction.PromotedQuantity)).Where("sku_id = ?", transaction.SkuID).Error
+			err = tx.Model(&productModel.ProductPromotion{}).Where("sku_id = ?", transaction.SkuID).Update("stock", gorm.Expr("case when stock > ? then stock - ? else 0 end", transaction.PromotedQuantity, transaction.PromotedQuantity)).Error
 			if err != nil {
 				tx.Rollback()
 				return nil, err
-			}
-
-			for _, variant := range transaction.Sku.Variants {
-				transaction.Variants = append(transaction.Variants, model.TransactionVariant{
-					Value: variant.Value,
-				})
 			}
 		}
 	}
@@ -179,7 +173,7 @@ func (r *invoiceRepositoryImpl) Delete(invoice *model.Invoice) error {
 				return err
 			}
 
-			err = tx.Model(&productModel.ProductPromotion{}).Update("stock", gorm.Expr("stock + ?", transaction.PromotedQuantity)).Where("sku_id = ?", transaction.SkuID).Error
+			err = tx.Model(&productModel.ProductPromotion{}).Where("sku_id = ?", transaction.SkuID).Update("stock", gorm.Expr("stock + ?", transaction.PromotedQuantity)).Error
 			if err != nil {
 				tx.Rollback()
 				return err

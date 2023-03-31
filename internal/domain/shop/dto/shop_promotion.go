@@ -40,7 +40,7 @@ func (p *SellerPromotionFilterRequest) Offset() int {
 }
 
 type UpdateShopPromotionRequest struct {
-	Name              string                               `json:"name" binding:"omitempty,min=1,max=100"`
+	Name              string                               `json:"name" binding:"min=1,max=100"`
 	StartPeriod       time.Time                            `json:"startPeriod" binding:"omitempty"`
 	EndPeriod         time.Time                            `json:"endPeriod" binding:"omitempty"`
 	ProductPromotions []*dto.UpdateProductPromotionRequest `json:"productPromotions" binding:"omitempty"`

@@ -178,6 +178,15 @@ func (s *invoiceServiceImpl) Checkout(req dto.CheckoutRequest) (*dto.CheckoutRes
 				TotalPrice:       totalPrice,
 				Note:             &cartItem.Notes,
 				UserID:           req.UserID,
+				Variants: func() []model.TransactionVariant {
+					var variants []model.TransactionVariant
+					for _, variant := range cartItem.Sku.Variants {
+						variants = append(variants, model.TransactionVariant{
+							Value: variant.Value,
+						})
+					}
+					return variants
+				}(),
 			})
 
 			shopTotalPrice += totalPrice
@@ -236,7 +245,7 @@ func (s *invoiceServiceImpl) Checkout(req dto.CheckoutRequest) (*dto.CheckoutRes
 			Voucher: func() *userModel.UserVoucher {
 				if voucher != nil {
 					return &userModel.UserVoucher{
-						IsUsed:        true,
+						IsUsed:        false,
 						ShopVoucherId: &voucher.ID,
 						UserId:        req.UserID,
 						ExpiredAt:     voucher.ExpiredAt,
@@ -310,7 +319,7 @@ func (s *invoiceServiceImpl) Checkout(req dto.CheckoutRequest) (*dto.CheckoutRes
 		Voucher: func() *userModel.UserVoucher {
 			if marketplaceVoucher != nil {
 				return &userModel.UserVoucher{
-					IsUsed:               true,
+					IsUsed:               false,
 					MarketplaceVoucherId: &marketplaceVoucher.ID,
 					UserId:               req.UserID,
 					ExpiredAt:            marketplaceVoucher.ExpiredAt,
@@ -367,6 +376,10 @@ func (s *invoiceServiceImpl) PayInvoice(req dto.PayInvoiceRequest, token string)
 		return nil, err
 	}
 
+	if invoice.Voucher != nil {
+		invoice.Voucher.IsUsed = true
+	}
+
 	var (
 		skuIds          []int
 		invoiceStatuses []*model.InvoiceStatus
@@ -377,6 +390,9 @@ func (s *invoiceServiceImpl) PayInvoice(req dto.PayInvoiceRequest, token string)
 		}
 
 		shopInvoice.Status = constant.TransactionStatusCreated
+		if shopInvoice.Voucher != nil {
+			shopInvoice.Voucher.IsUsed = true
+		}
 
 		invoiceStatuses = append(invoiceStatuses, &model.InvoiceStatus{
 			Status:           shopInvoice.Status,
