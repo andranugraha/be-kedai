@@ -78,6 +78,9 @@ func (s *marketplaceVoucherServiceImpl) UpdateVoucher(voucherCode string, reques
 	if voucher.Status == constant.VoucherPromotionStatusExpired {
 		return commonErr.ErrVoucherStatusConflict
 	}
+	if err := request.ValidateDateRange(voucher.ExpiredAt); err != nil {
+		return err
+	}
 
 	isZero := 0
 
@@ -90,13 +93,10 @@ func (s *marketplaceVoucherServiceImpl) UpdateVoucher(voucherCode string, reques
 	if request.Description == "" {
 		request.Description = voucher.Description
 	}
-	if err := request.ValidateDateRange(voucher.ExpiredAt); err != nil {
-		return err
-	}
-	if request.CategoryId == &isZero {
+	if *request.CategoryId == isZero {
 		request.CategoryId = voucher.CategoryID
 	}
-	if request.PaymentMethodId == &isZero {
+	if *request.PaymentMethodId == isZero {
 		request.PaymentMethodId = voucher.PaymentMethodID
 	}
 
