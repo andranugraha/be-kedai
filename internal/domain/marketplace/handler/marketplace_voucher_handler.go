@@ -5,7 +5,6 @@ import (
 	"kedai/backend/be-kedai/internal/common/code"
 	"kedai/backend/be-kedai/internal/domain/marketplace/dto"
 	"kedai/backend/be-kedai/internal/utils/response"
-	"log"
 	"net/http"
 
 	commonErr "kedai/backend/be-kedai/internal/common/error"
@@ -105,7 +104,6 @@ func (h *Handler) UpdateVoucher(c *gin.Context) {
 			return
 		}
 
-		log.Println("err", err)
 		response.Error(c, http.StatusInternalServerError, code.INTERNAL_SERVER_ERROR, commonErr.ErrInternalServerError.Error())
 		return
 	}
