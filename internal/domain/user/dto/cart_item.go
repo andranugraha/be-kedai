@@ -75,6 +75,7 @@ type CartItemResponse struct {
 	BulkPrice       *productModel.ProductBulkPrice `json:"bulkPrice,omitempty"`
 	PurchaseLimit   int                            `json:"purchaseLimit"`
 	PromotionStock  int                            `json:"promotionStock"`
+	MediaUrl        []*productModel.ProductMedia   `json:"mediaUrl"`
 	IsModified      bool                           `json:"isModified"`
 }
 
@@ -136,6 +137,10 @@ func (d *CartItemResponse) ToCartItemResponse(cartItem model.CartItem) {
 
 	if cartItem.Sku.Product.Bulk != nil {
 		d.BulkPrice = cartItem.Sku.Product.Bulk
+	}
+
+	if cartItem.Sku.Product.Media != nil {
+		d.MediaUrl = cartItem.Sku.Product.Media
 	}
 
 	if cartItem.Sku.Promotion != nil {
