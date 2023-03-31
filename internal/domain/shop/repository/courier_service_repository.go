@@ -8,7 +8,7 @@ import (
 
 type CourierServiceRepository interface {
 	GetByCourierIDs(courierIDs []int) ([]*model.CourierService, error)
-	CreateCourierService(tx *gorm.DB ,courierService []*model.CourierService) error
+	CreateCourierService(tx *gorm.DB, courierService []*model.CourierService) error
 }
 
 type courierServiceRepositoryImpl struct {
@@ -35,7 +35,6 @@ func (r *courierServiceRepositoryImpl) GetByCourierIDs(courierIDs []int) ([]*mod
 
 	return courierServices, nil
 }
-
 
 func (r *courierServiceRepositoryImpl) CreateCourierService(tx *gorm.DB, courierService []*model.CourierService) error {
 	err := tx.Create(&courierService).Error

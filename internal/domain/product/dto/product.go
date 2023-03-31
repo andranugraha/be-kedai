@@ -69,17 +69,17 @@ func ConvertSellerProductPromotions(sellerProductPromotions []*SellerProductProm
 }
 
 type SellerProductFilterRequest struct {
-	Limit       int    `form:"limit"`
-	Page        int    `form:"page"`
-	Sales       int    `form:"sales"`
-	Stock       int    `form:"stock"`
-	Sort        string `form:"sort"`
-	Status      string `form:"status"`
-	Sku         string `form:"sku"`
-	Name        string `form:"name"`
-	IsPromoted  *bool  `form:"isPromoted"`
-	StartPeriod string `form:"startPeriod"`
-	EndPeriod   string `form:"endPeriod"`
+	Limit       int       `form:"limit"`
+	Page        int       `form:"page"`
+	Sales       int       `form:"sales"`
+	Stock       int       `form:"stock"`
+	Sort        string    `form:"sort"`
+	Status      string    `form:"status"`
+	Sku         string    `form:"sku"`
+	Name        string    `form:"name"`
+	IsPromoted  *bool     `form:"isPromoted"`
+	StartPeriod time.Time `form:"startPeriod"`
+	EndPeriod   time.Time `form:"endPeriod"`
 }
 
 func (r *SellerProductFilterRequest) Validate() {
@@ -93,6 +93,12 @@ func (r *SellerProductFilterRequest) Validate() {
 
 	if r.Page < 1 {
 		r.Page = 1
+	}
+
+	if r.StartPeriod.After(r.EndPeriod) {
+		r.StartPeriod = r.EndPeriod
+	} else if r.EndPeriod.Before(r.StartPeriod) {
+		r.EndPeriod = r.StartPeriod
 	}
 }
 
@@ -269,10 +275,10 @@ type CreateProductRequest struct {
 	Name          string                       `json:"name" binding:"required,min=5,max=255"`
 	Description   string                       `json:"description" binding:"required,min=20,max=3000"`
 	IsHazardous   *bool                        `json:"isHazardous" binding:"required"`
-	Weight        float64                      `json:"weight" binding:"required,gt=0"`
-	Length        float64                      `json:"length" binding:"required,gt=0"`
-	Width         float64                      `json:"width" binding:"required,gt=0"`
-	Height        float64                      `json:"height" binding:"required,gt=0"`
+	Weight        float64                      `json:"weight" binding:"gte=0"`
+	Length        float64                      `json:"length" binding:"gte=0"`
+	Width         float64                      `json:"width" binding:"gte=0"`
+	Height        float64                      `json:"height" binding:"gte=0"`
 	IsNew         *bool                        `json:"isNew" binding:"required"`
 	IsActive      *bool                        `json:"isActive" binding:"required"`
 	CategoryID    int                          `json:"categoryId" binding:"required,gte=1"`
@@ -320,6 +326,7 @@ func (d *CreateProductRequest) GenerateProduct() *model.Product {
 
 type GetRecommendedProductRequest struct {
 	Limit int `json:"limit"`
+	Page  int `json:"page"`
 }
 
 func (p *GetRecommendedProductRequest) Validate() {
@@ -330,4 +337,12 @@ func (p *GetRecommendedProductRequest) Validate() {
 	if p.Limit > 100 {
 		p.Limit = constant.MaxRecommendedProductLimit
 	}
+
+	if p.Page < 1 {
+		p.Page = 1
+	}
+}
+
+func (p *GetRecommendedProductRequest) Offset() int {
+	return (p.Page - 1) * p.Limit
 }

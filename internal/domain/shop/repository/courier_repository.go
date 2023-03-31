@@ -182,7 +182,7 @@ func (r *courierRepositoryImpl) GetMatchingCouriersByShopIDAndProductIDs(req *dt
 		HAVING COUNT(DISTINCT product_id) = ?)
 		pc ON sc.courier_service_id = pc.courier_service_id`, req.ProductIDs, len(req.ProductIDs)).
 		Where("sc.shop_id = ?", req.ShopID).
-		Distinct().
+		Group("couriers.id").
 		Find(&couriers).
 		Error
 

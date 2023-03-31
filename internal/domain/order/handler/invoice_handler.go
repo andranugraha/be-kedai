@@ -6,6 +6,7 @@ import (
 	commonErr "kedai/backend/be-kedai/internal/common/error"
 	"kedai/backend/be-kedai/internal/domain/order/dto"
 	"kedai/backend/be-kedai/internal/utils/response"
+	"log"
 	"net/http"
 	"strings"
 
@@ -40,7 +41,7 @@ func (h *Handler) Checkout(c *gin.Context) {
 			return
 		}
 
-		if errors.Is(err, commonErr.ErrCartItemNotFound) || errors.Is(err, commonErr.ErrQuantityNotMatch) {
+		if errors.Is(err, commonErr.ErrCartItemNotFound) || errors.Is(err, commonErr.ErrQuantityNotMatch) || errors.Is(err, commonErr.ErrProductDoesNotExist) {
 			response.Error(c, http.StatusBadRequest, code.CART_ITEM_MISMATCH, err.Error())
 			return
 		}
@@ -130,4 +131,9 @@ func (h *Handler) CancelCheckout(c *gin.Context) {
 	}
 
 	response.Success(c, http.StatusOK, code.OK, "cancel checkout success", nil)
+}
+
+func (h *Handler) ClearUnusedInvoice(c *gin.Context) {
+	_ = h.invoiceService.ClearUnusedInvoice()
+	log.Println("CLEAR UNUSED INVOICE CRON JOB")
 }

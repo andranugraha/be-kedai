@@ -77,10 +77,13 @@ func TestCheckout(t *testing.T) {
 						Product: &productModel.Product{
 							Bulk: &productModel.ProductBulkPrice{
 								MinQuantity: 1,
+								Price:       4000,
 							},
 						},
 						Promotion: &productModel.ProductPromotion{
-							Type: shopModel.PromotionTypePercent,
+							Type:          shopModel.PromotionTypePercent,
+							PurchaseLimit: 1,
+							Stock:         1,
 						},
 					},
 				}, nil).Once()
@@ -129,7 +132,9 @@ func TestCheckout(t *testing.T) {
 						Price:   4000,
 						Product: &productModel.Product{},
 						Promotion: &productModel.ProductPromotion{
-							Type: shopModel.PromotionTypeNominal,
+							Type:          shopModel.PromotionTypeNominal,
+							Stock:         0,
+							PurchaseLimit: 1,
 						},
 					},
 				}, nil).Once()
@@ -171,9 +176,6 @@ func TestCheckout(t *testing.T) {
 						Stock:   1,
 						Price:   4000,
 						Product: &productModel.Product{},
-						Promotion: &productModel.ProductPromotion{
-							Type: shopModel.PromotionTypeNominal,
-						},
 					},
 				}, nil).Once()
 				shopVoucherService.On("GetValidShopVoucherByIdAndUserId", mock.Anything, mock.Anything).Return(&shopModel.ShopVoucher{
@@ -442,10 +444,13 @@ func TestCheckout(t *testing.T) {
 						Product: &productModel.Product{
 							Bulk: &productModel.ProductBulkPrice{
 								MinQuantity: 1,
+								Price:       4000,
 							},
 						},
 						Promotion: &productModel.ProductPromotion{
-							Type: shopModel.PromotionTypePercent,
+							Type:          shopModel.PromotionTypePercent,
+							Stock:         1,
+							PurchaseLimit: 1,
 						},
 					},
 				}, nil).Once()

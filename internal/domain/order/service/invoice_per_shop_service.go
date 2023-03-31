@@ -18,8 +18,10 @@ type InvoicePerShopService interface {
 	GetInvoicesByUserIDAndCode(userID int, code string) (*dto.InvoicePerShopDetail, error)
 	WithdrawFromInvoice(invoicePerShopIds []int, userId int) error
 	GetInvoiceByUserIdAndId(userId int, id int) (*dto.InvoicePerShopDetail, error)
+	GetInvoiceByUserIdAndCode(userId int, code string) (*dto.InvoicePerShopDetail, error)
 	GetShopOrder(userId int, req *dto.InvoicePerShopFilterRequest) (*commonDto.PaginationResponse, error)
 	RefundRequest(invoiceCode string, userId int) (*model.RefundRequest, error)
+	UpdateStatusToProcessing(userId int, orderId int) error
 	UpdateStatusToDelivery(userId int, orderId int) error
 	UpdateStatusToRefundPendingSellerCancel(userId int, orderId int) error
 	UpdateStatusToCanceled(orderId int) error
@@ -118,6 +120,15 @@ func (s *invoicePerShopServiceImpl) GetInvoiceByUserIdAndId(userId int, id int) 
 	return s.invoicePerShopRepo.GetByShopIdAndId(shop.ID, id)
 }
 
+func (s *invoicePerShopServiceImpl) GetInvoiceByUserIdAndCode(userId int, code string) (*dto.InvoicePerShopDetail, error) {
+	shop, err := s.shopService.FindShopByUserId(userId)
+	if err != nil {
+		return nil, err
+	}
+
+	return s.invoicePerShopRepo.GetByShopIdAndCode(shop.ID, code)
+}
+
 func (s *invoicePerShopServiceImpl) GetShopOrder(userId int, req *dto.InvoicePerShopFilterRequest) (*commonDto.PaginationResponse, error) {
 	shop, err := s.shopService.FindShopByUserId(userId)
 	if err != nil {
@@ -165,6 +176,28 @@ func (s *invoicePerShopServiceImpl) RefundRequest(invoiceCode string, userId int
 	}
 
 	return result, nil
+}
+
+func (s *invoicePerShopServiceImpl) UpdateStatusToProcessing(userId int, orderId int) error {
+	shop, err := s.shopService.FindShopByUserId(userId)
+	if err != nil {
+		return err
+	}
+
+	var invoiceStatuses []*model.InvoiceStatus
+	var status = constant.TransactionStatusProcessing
+
+	invoiceStatuses = append(invoiceStatuses, &model.InvoiceStatus{
+		InvoicePerShopID: orderId,
+		Status:           status,
+	})
+
+	err = s.invoicePerShopRepo.UpdateStatusToProcessing(shop.ID, orderId, invoiceStatuses)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (s *invoicePerShopServiceImpl) UpdateStatusToDelivery(userId int, orderId int) error {

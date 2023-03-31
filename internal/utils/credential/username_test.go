@@ -43,3 +43,23 @@ func TestVerifyUsername(t *testing.T) {
 		})
 	}
 }
+
+func BenchmarkVerifyUsername(b *testing.B) {
+	testCases := []struct {
+		name     string
+		username string
+	}{
+		{"valid_username", "john_doe.123"},
+		{"invalid_username_contains_special_char", "john_doe!123"},
+		{"invalid_username_contains_space", "john doe"},
+		{"invalid_username_contains_emoji", "john_doe😀"},
+	}
+
+	for _, tc := range testCases {
+		b.Run(tc.name, func(b *testing.B) {
+			for i := 0; i < b.N; i++ {
+				credential.VerifyUsername(tc.username)
+			}
+		})
+	}
+}

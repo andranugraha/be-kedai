@@ -9,7 +9,6 @@ import (
 	"kedai/backend/be-kedai/internal/domain/shop/model"
 	"kedai/backend/be-kedai/internal/domain/shop/repository"
 	productUtils "kedai/backend/be-kedai/internal/utils/product"
-	"time"
 )
 
 type ShopVoucherService interface {
@@ -137,65 +136,68 @@ func (s *shopVoucherServiceImpl) UpdateVoucher(userID int, voucherCode string, r
 		if err := s.shopVoucherRepository.ValidateVoucherDateRange(request.StartFrom, request.ExpiredAt); err != nil {
 			return nil, err
 		}
-
-		payload := &model.ShopVoucher{
-			ID:           voucher.ID,
-			Name:         request.Name,
-			Code:         voucher.Code,
-			Amount:       request.Amount,
-			Type:         request.Type,
-			IsHidden:     *request.IsHidden,
-			Description:  request.Description,
-			MinimumSpend: request.MinimumSpend,
-			UsedQuota:    voucher.UsedQuota,
-			TotalQuota:   request.TotalQuota,
-			StartFrom:    request.StartFrom,
-			ExpiredAt:    request.ExpiredAt,
-			ShopId:       shop.ID,
-		}
-
-		res, err := s.shopVoucherRepository.Update(payload)
-		if err != nil {
-			return nil, err
-		}
-
-		return res, nil
-	}
-
-	if voucher.Status == constant.VoucherPromotionStatusOngoing {
-		if request.Amount != 0 || request.Type != "" || request.Description != "" || request.MinimumSpend != 0 || !request.StartFrom.IsZero() {
+	} else if voucher.Status == constant.VoucherPromotionStatusOngoing {
+		if request.Amount != 0 || request.Type != "" || request.MinimumSpend != 0 || !request.StartFrom.IsZero() {
 			return nil, commonErr.ErrVoucherFieldsCantBeEdited
 		}
-
-		if err := s.shopVoucherRepository.ValidateVoucherDateRange(time.Now(), request.ExpiredAt); err != nil {
-			return nil, err
-		}
-
-		payload := &model.ShopVoucher{
-			ID:           voucher.ID,
-			Name:         request.Name,
-			IsHidden:     *request.IsHidden,
-			TotalQuota:   request.TotalQuota,
-			ExpiredAt:    request.ExpiredAt,
-			Code:         voucher.Code,
-			Amount:       voucher.Amount,
-			Type:         voucher.Type,
-			Description:  voucher.Description,
-			MinimumSpend: voucher.MinimumSpend,
-			UsedQuota:    voucher.UsedQuota,
-			StartFrom:    voucher.StartFrom,
-			ShopId:       shop.ID,
-		}
-
-		res, err := s.shopVoucherRepository.Update(payload)
-		if err != nil {
-			return nil, err
-		}
-
-		return res, nil
+	} else {
+		return nil, commonErr.ErrVoucherStatusConflict
 	}
 
-	return nil, commonErr.ErrVoucherStatusConflict
+	if request.Name == "" {
+		request.Name = voucher.Name
+	}
+	if request.Amount == 0 {
+		request.Amount = voucher.Amount
+	}
+	if request.Type == "" {
+		request.Type = voucher.Type
+	}
+	if request.IsHidden == nil {
+		request.IsHidden = &voucher.IsHidden
+	}
+	if request.Description == "" {
+		request.Description = voucher.Description
+	}
+	if request.MinimumSpend == 0 {
+		request.MinimumSpend = voucher.MinimumSpend
+	}
+	if request.TotalQuota == 0 {
+		request.TotalQuota = voucher.TotalQuota
+	}
+	if request.StartFrom.IsZero() {
+		request.StartFrom = voucher.StartFrom
+	}
+	if request.ExpiredAt.IsZero() {
+		request.ExpiredAt = voucher.ExpiredAt
+	}
+
+	if err := s.shopVoucherRepository.ValidateVoucherDateRange(request.StartFrom, request.ExpiredAt); err != nil {
+		return nil, err
+	}
+
+	payload := &model.ShopVoucher{
+		ID:           voucher.ID,
+		Name:         request.Name,
+		Code:         voucher.Code,
+		Amount:       request.Amount,
+		Type:         request.Type,
+		IsHidden:     *request.IsHidden,
+		Description:  request.Description,
+		MinimumSpend: request.MinimumSpend,
+		UsedQuota:    voucher.UsedQuota,
+		TotalQuota:   request.TotalQuota,
+		StartFrom:    request.StartFrom,
+		ExpiredAt:    request.ExpiredAt,
+		ShopId:       shop.ID,
+	}
+
+	res, err := s.shopVoucherRepository.Update(payload)
+	if err != nil {
+		return nil, err
+	}
+
+	return res, nil
 }
 
 func (s *shopVoucherServiceImpl) DeleteVoucher(userID int, voucherCode string) error {

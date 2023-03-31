@@ -5,6 +5,7 @@ go 1.18
 require (
 	github.com/forPelevin/gomoji v1.1.8
 	github.com/gin-contrib/cors v1.4.0
+	github.com/gin-contrib/pprof v1.4.0
 	github.com/gin-gonic/gin v1.8.2
 	github.com/go-co-op/gocron v1.18.1
 	github.com/go-playground/validator/v10 v10.11.1

@@ -1159,15 +1159,25 @@ func TestCreateProduct(t *testing.T) {
 
 func TestGetRecommendedProducts(t *testing.T) {
 	type input struct {
-		limit int
+		request dto.GetRecommendedProductRequest
 	}
 	type expected struct {
 		statusCode int
 		response   response.Response
 	}
 	var (
-		defaultLimit        = 18
-		recommendedProducts = []*dto.ProductResponse{}
+		defaultLimit                = 18
+		recommendedProductsResponse = &commonDto.PaginationResponse{
+			Data:       []*dto.ProductResponse{},
+			Limit:      defaultLimit,
+			Page:       1,
+			TotalRows:  1,
+			TotalPages: 1,
+		}
+		request = dto.GetRecommendedProductRequest{
+			Limit: defaultLimit,
+			Page:  1,
+		}
 	)
 	test := []struct {
 		description string
@@ -1178,10 +1188,12 @@ func TestGetRecommendedProducts(t *testing.T) {
 		{
 			description: "should return error with status code 500 when server fails to fetch recommended products",
 			input: input{
-				limit: defaultLimit,
+				request: dto.GetRecommendedProductRequest{
+					Limit: defaultLimit,
+				},
 			},
 			beforeTest: func(ps *mocks.ProductService) {
-				ps.On("GetRecommendedProducts", defaultLimit).Return(nil, errors.New("failed to fetch recommended products"))
+				ps.On("GetRecommendedProducts", &request).Return(nil, errors.New("failed to fetch recommended products"))
 			},
 			expected: expected{
 				statusCode: http.StatusInternalServerError,
@@ -1194,17 +1206,19 @@ func TestGetRecommendedProducts(t *testing.T) {
 		{
 			description: "should return success with status code 200 when server succeed to fetch recommended products",
 			input: input{
-				limit: defaultLimit,
+				request: dto.GetRecommendedProductRequest{
+					Limit: defaultLimit,
+				},
 			},
 			beforeTest: func(ps *mocks.ProductService) {
-				ps.On("GetRecommendedProducts", defaultLimit).Return(recommendedProducts, nil)
+				ps.On("GetRecommendedProducts", &request).Return(recommendedProductsResponse, nil)
 			},
 			expected: expected{
 				statusCode: http.StatusOK,
 				response: response.Response{
 					Code:    code.OK,
 					Message: "success",
-					Data:    recommendedProducts,
+					Data:    recommendedProductsResponse,
 				},
 			},
 		},
@@ -1216,12 +1230,261 @@ func TestGetRecommendedProducts(t *testing.T) {
 			tc.beforeTest(productService)
 			rec := httptest.NewRecorder()
 			c, _ := gin.CreateTestContext(rec)
-			c.AddParam("limit", strconv.Itoa(tc.input.limit))
-			c.Request = httptest.NewRequest(http.MethodGet, fmt.Sprintf("/v1/products/recommended?limit=%d", tc.input.limit), nil)
+			c.AddParam("limit", strconv.Itoa(tc.input.request.Limit))
+			c.AddParam("page", strconv.Itoa(tc.input.request.Page))
+			c.Request = httptest.NewRequest(http.MethodGet, fmt.Sprintf("/v1/products/recommended?limit=%d&page=%d", tc.input.request.Limit, tc.input.request.Page), nil)
 			h := handler.New(&handler.Config{
 				ProductService: productService,
 			})
 			h.GetRecommendedProducts(c)
+			assert.Equal(t, tc.expected.statusCode, rec.Code)
+			assert.Equal(t, string(expectedRes), rec.Body.String())
+		})
+	}
+}
+
+func TestUpdateProduct(t *testing.T) {
+	var (
+		userID      = 1
+		productCode = "product-code"
+		isHazardous = false
+		isNew       = true
+		isActive    = true
+		bulkPrice   = dto.ProductBulkPriceRequest{
+			MinQuantity: 10,
+			Price:       10000,
+		}
+		invalidMedia   = []string{"media1", "media2"}
+		validMedia     = []string{"https://image.png", "https://image2.png"}
+		courierIDs     = []int{1, 2, 3}
+		variantGroups  = []*dto.CreateVariantGroupRequest{}
+		invalidRequest = dto.CreateProductRequest{
+			Name:        "product-name",
+			Description: "product-description",
+		}
+		skus              = []*dto.CreateSKURequest{}
+		invalidUrlRequest = dto.CreateProductRequest{
+			Name:          "product-name",
+			Description:   "product-description here is more than 20 words",
+			Price:         10000,
+			IsHazardous:   &isHazardous,
+			Weight:        1000,
+			Length:        1000,
+			Width:         1000,
+			Height:        1000,
+			IsNew:         &isNew,
+			IsActive:      &isActive,
+			CategoryID:    1,
+			BulkPrice:     &bulkPrice,
+			Media:         invalidMedia,
+			CourierIDs:    courierIDs,
+			Stock:         100,
+			VariantGroups: variantGroups,
+			SKU:           skus,
+		}
+		invalidNameRequest = dto.CreateProductRequest{
+			Name:          "127.0.0.1",
+			Description:   "product-description here is more than 20 words",
+			Price:         10000,
+			IsHazardous:   &isHazardous,
+			Weight:        1000,
+			Length:        1000,
+			Width:         1000,
+			Height:        1000,
+			IsNew:         &isNew,
+			IsActive:      &isActive,
+			CategoryID:    1,
+			BulkPrice:     &bulkPrice,
+			Media:         validMedia,
+			CourierIDs:    courierIDs,
+			Stock:         100,
+			VariantGroups: variantGroups,
+			SKU:           skus,
+		}
+		request = dto.CreateProductRequest{
+			Name:          "product-name",
+			Description:   "product-description here is more than 20 words",
+			Price:         10000,
+			IsHazardous:   &isHazardous,
+			Weight:        1000,
+			Length:        1000,
+			Width:         1000,
+			Height:        1000,
+			IsNew:         &isNew,
+			IsActive:      &isActive,
+			CategoryID:    1,
+			BulkPrice:     &bulkPrice,
+			Media:         validMedia,
+			CourierIDs:    courierIDs,
+			Stock:         100,
+			VariantGroups: variantGroups,
+			SKU:           skus,
+		}
+		updatedProduct = &model.Product{
+			ID:          1,
+			Code:        productCode,
+			Name:        "product-name",
+			Description: "product-description here is more than 20 words",
+		}
+	)
+	type input struct {
+		userID  int
+		code    string
+		request *dto.CreateProductRequest
+	}
+	type expected struct {
+		statusCode int
+		response   response.Response
+	}
+	cases := []struct {
+		description string
+		input
+		beforeTest func(*mocks.ProductService)
+		expected
+	}{
+		{
+			description: "should return error with status code 400 when request binding fails",
+			input: input{
+				userID:  userID,
+				code:    productCode,
+				request: &invalidRequest,
+			},
+			beforeTest: func(ps *mocks.ProductService) {},
+			expected: expected{
+				statusCode: http.StatusBadRequest,
+				response: response.Response{
+					Code:    code.BAD_REQUEST,
+					Message: "Price is required",
+				},
+			},
+		},
+		{
+			description: "should return error with status code 400 when product url is not valid",
+			input: input{
+				userID:  userID,
+				code:    productCode,
+				request: &invalidUrlRequest,
+			},
+			beforeTest: func(ps *mocks.ProductService) {
+			},
+			expected: expected{
+				statusCode: http.StatusBadRequest,
+				response: response.Response{
+					Code:    code.BAD_REQUEST,
+					Message: "Media[1] must be a URL",
+				},
+			},
+		},
+		{
+			description: "should return error with status code 404 when product does not exist in user's shop",
+			input: input{
+				userID:  userID,
+				code:    productCode,
+				request: &request,
+			},
+			beforeTest: func(ps *mocks.ProductService) {
+				ps.On("UpdateProduct", userID, productCode, &request).Return(nil, errs.ErrProductDoesNotExist)
+			},
+			expected: expected{
+				statusCode: http.StatusNotFound,
+				response: response.Response{
+					Code:    code.PRODUCT_NOT_EXISTS,
+					Message: errs.ErrProductDoesNotExist.Error(),
+				},
+			},
+		},
+		{
+			description: "should return error with status code 404 when user does not own a shop",
+			input: input{
+				userID:  userID,
+				code:    productCode,
+				request: &request,
+			},
+			beforeTest: func(ps *mocks.ProductService) {
+				ps.On("UpdateProduct", userID, productCode, &request).Return(nil, errs.ErrShopNotFound)
+			},
+			expected: expected{
+				statusCode: http.StatusNotFound,
+				response: response.Response{
+					Code:    code.SHOP_NOT_REGISTERED,
+					Message: errs.ErrShopNotFound.Error(),
+				},
+			},
+		},
+		{
+			description: "should return error with status code 422 when product name is invalid",
+			input: input{
+				userID:  userID,
+				code:    productCode,
+				request: &invalidNameRequest,
+			},
+			beforeTest: func(ps *mocks.ProductService) {
+				ps.On("UpdateProduct", userID, productCode, &invalidNameRequest).Return(nil, errs.ErrInvalidProductNamePattern)
+			},
+			expected: expected{
+				statusCode: http.StatusUnprocessableEntity,
+				response: response.Response{
+					Code:    code.INVALID_PRODUCT_NAME,
+					Message: errs.ErrInvalidProductNamePattern.Error(),
+				},
+			},
+		},
+		{
+			description: "should return error with status code 500 when server errors",
+			input: input{
+				userID:  userID,
+				code:    productCode,
+				request: &request,
+			},
+			beforeTest: func(ps *mocks.ProductService) {
+				ps.On("UpdateProduct", userID, productCode, &request).Return(nil, errs.ErrInternalServerError)
+			},
+			expected: expected{
+				statusCode: http.StatusInternalServerError,
+				response: response.Response{
+					Code:    code.INTERNAL_SERVER_ERROR,
+					Message: errs.ErrInternalServerError.Error(),
+				},
+			},
+		},
+		{
+			description: "should return updated product with status code 200 on success",
+			input: input{
+				userID:  userID,
+				code:    productCode,
+				request: &request,
+			},
+			beforeTest: func(ps *mocks.ProductService) {
+				ps.On("UpdateProduct", userID, productCode, &request).Return(updatedProduct, nil)
+			},
+			expected: expected{
+				statusCode: http.StatusOK,
+				response: response.Response{
+					Code:    code.OK,
+					Message: "product updated",
+					Data:    updatedProduct,
+				},
+			},
+		},
+	}
+	for _, tc := range cases {
+		t.Run(tc.description, func(t *testing.T) {
+
+			payload := test.MakeRequestBody(tc.input.request)
+			expectedRes, _ := json.Marshal(tc.expected.response)
+			productService := mocks.NewProductService(t)
+			tc.beforeTest(productService)
+
+			rec := httptest.NewRecorder()
+			c, _ := gin.CreateTestContext(rec)
+			c.Set("userId", tc.input.userID)
+			c.AddParam("code", tc.input.code)
+			c.Request = httptest.NewRequest(http.MethodPut, fmt.Sprintf("/v1/products/%s", tc.input.code), payload)
+			h := handler.New(&handler.Config{
+				ProductService: productService,
+			})
+			h.UpdateProduct(c)
+
 			assert.Equal(t, tc.expected.statusCode, rec.Code)
 			assert.Equal(t, string(expectedRes), rec.Body.String())
 		})
