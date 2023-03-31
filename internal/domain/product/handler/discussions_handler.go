@@ -2,6 +2,7 @@ package handler
 
 import (
 	"kedai/backend/be-kedai/internal/common/code"
+	errs	"kedai/backend/be-kedai/internal/common/error"
 	"kedai/backend/be-kedai/internal/domain/product/dto"
 	"kedai/backend/be-kedai/internal/utils/response"
 	"net/http"
@@ -21,7 +22,7 @@ func (h *Handler) GetDiscussionByProductID(c *gin.Context) {
 
 	result, err := h.discussionService.GetDiscussionByProductID(productId, request)
 	if err != nil {
-		response.Error(c, http.StatusInternalServerError, code.INTERNAL_SERVER_ERROR, err.Error())
+		response.Error(c, http.StatusInternalServerError, code.INTERNAL_SERVER_ERROR, errs.ErrInternalServerError.Error())
 		return
 	}
 
@@ -34,7 +35,7 @@ func (h *Handler) GetDiscussionByParentID(c *gin.Context) {
 
 	result, err := h.discussionService.GetChildDiscussionByParentID(parentId)
 	if err != nil {
-		response.Error(c, http.StatusInternalServerError, code.INTERNAL_SERVER_ERROR, err.Error())
+		response.Error(c, http.StatusInternalServerError, code.INTERNAL_SERVER_ERROR, errs.ErrInternalServerError.Error())
 		return
 	}
 
@@ -54,7 +55,7 @@ func (h *Handler) PostDiscussion(c *gin.Context) {
 
 	err := h.discussionService.PostDiscussion(&discussionDto)
 	if err != nil {
-		response.Error(c, http.StatusInternalServerError, code.INTERNAL_SERVER_ERROR, err.Error())
+		response.Error(c, http.StatusInternalServerError, code.INTERNAL_SERVER_ERROR, errs.ErrInternalServerError.Error())
 		return
 	}
 
