@@ -1,6 +1,7 @@
 package dto
 
 import (
+	productModel "kedai/backend/be-kedai/internal/domain/product/model"
 	shopModel "kedai/backend/be-kedai/internal/domain/shop/model"
 	userModel "kedai/backend/be-kedai/internal/domain/user/model"
 	"time"
@@ -11,20 +12,21 @@ import (
 )
 
 type Discussion struct {
-	ID         int              `json:"id"`
-	UserID     int              `json:"-"`
-	Username   string           `json:"username"`
-	UserUrl    string           `json:"userUrl"`
-	User       *userModel.User  `json:"-"`
-	ShopId     int              `json:"-"`
-	Shop       *shopModel.Shop  `json:"-" gorm:"foreignKey:ShopId"`
-	ShopName   string           `json:"shopName,omitempty"`
-	ShopUrl    string           `json:"shopUrl,omitempty"`
-	ProductID  int              `json:"productId"`
-	Message    string           `json:"message"`
-	Date       time.Time        `json:"date"`
-	Reply      *DiscussionReply `json:"reply" gorm:"foreignKey:ID"`
-	ReplyCount int              `json:"replyCount"`
+	ID         int                   `json:"id"`
+	UserID     int                   `json:"-"`
+	Username   string                `json:"username" gorm:"-"`
+	UserUrl    string                `json:"userUrl" gorm:"-"`
+	User       *userModel.User       `json:"-"`
+	ShopId     int                   `json:"-"`
+	Shop       *shopModel.Shop       `json:"-" gorm:"foreignKey:ShopId"`
+	ShopName   string                `json:"shopName,omitempty" gorm:"-"`
+	ShopUrl    string                `json:"shopUrl,omitempty" gorm:"-"`
+	ProductID  int                   `json:"productId"`
+	Product    *productModel.Product `json:"product,omitempty"`
+	Message    string                `json:"message"`
+	Date       time.Time             `json:"date"`
+	Reply      *DiscussionReply      `json:"reply" gorm:"foreignKey:ID"`
+	ReplyCount int                   `json:"replyCount" gorm:"-"`
 
 	gorm.Model `json:"-"`
 }

@@ -260,6 +260,7 @@ func NewRouter(cfg *RouterConfig) *gin.Engine {
 				authenticated.GET("/stats", cfg.ShopHandler.GetShopStats)
 				authenticated.GET("/insights", cfg.ShopHandler.GetShopInsights)
 				authenticated.GET("/ratings", cfg.ShopHandler.GetShopRating)
+				authenticated.GET("/discussions", cfg.ProductHandler.GetUnrepliedDiscussionByShopID)
 				finance := authenticated.Group("/finances")
 				{
 					income := finance.Group("/incomes")
