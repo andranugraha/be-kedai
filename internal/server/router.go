@@ -318,6 +318,10 @@ func NewRouter(cfg *RouterConfig) *gin.Engine {
 					chat.GET("/:username", cfg.ChatHandler.SellerGetChat)
 					chat.POST("/:username", cfg.ChatHandler.SellerAddChat)
 				}
+				category := authenticated.Group("/categories")
+				{
+					category.GET("", cfg.ShopHandler.GetSellerCategories)
+				}
 			}
 		}
 	}
