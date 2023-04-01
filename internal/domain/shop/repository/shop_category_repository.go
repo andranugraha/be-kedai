@@ -1,6 +1,8 @@
 package repository
 
 import (
+	"errors"
+	commonErr "kedai/backend/be-kedai/internal/common/error"
 	"kedai/backend/be-kedai/internal/domain/shop/dto"
 	"kedai/backend/be-kedai/internal/domain/shop/model"
 	"math"
@@ -10,6 +12,7 @@ import (
 
 type ShopCategoryRepository interface {
 	GetByShopID(shopID int, req dto.GetSellerCategoriesRequest) ([]*dto.ShopCategory, int64, int, error)
+	GetByIDAndShopID(id, shopID int) (*dto.ShopCategory, error)
 }
 
 type shopCategoryRepositoryImpl struct {
@@ -47,6 +50,27 @@ func (r *shopCategoryRepositoryImpl) GetByShopID(shopID int, req dto.GetSellerCa
 	if err != nil {
 		return
 	}
+
+	return
+}
+
+func (r *shopCategoryRepositoryImpl) GetByIDAndShopID(id, shopID int) (res *dto.ShopCategory, err error) {
+	err = r.db.Model(&model.ShopCategory{}).Where("shop_categories.id = ?", id).Where("shop_categories.shop_id = ?", shopID).
+		Joins("left join shop_category_products scp on scp.shop_category_id = shop_categories.id").
+		Select("shop_categories.id, shop_categories.name, shop_categories.shop_id, shop_categories.is_active, count(scp.id) as total_product").
+		Group("shop_categories.id").
+		First(&res).Error
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		err = commonErr.ErrCategoryNotFound
+		return
+	}
+
+	err = r.db.Table("shop_category_products").Where("shop_category_id = ?", id).
+		Select("products.id, products.code, products.name, (select url from product_medias pm where pm.product_id = products.id and deleted_at is null limit 1) as image_url, min(skus.price) as min_price, max(skus.price) as max_price, sum(skus.stock) as stock").
+		Joins("join products on products.id = shop_category_products.product_id").
+		Joins("join skus on skus.product_id = products.id").
+		Group("products.id").
+		Find(&res.Products).Error
 
 	return
 }

@@ -25,9 +25,20 @@ func (r *GetSellerCategoriesRequest) Offset() int {
 }
 
 type ShopCategory struct {
-	ID           int    `json:"id"`
-	Name         string `json:"name"`
-	ShopId       int    `json:"shopId"`
-	IsActive     bool   `json:"isActive"`
-	TotalProduct int    `json:"totalProduct"`
+	ID           int                    `json:"id"`
+	Name         string                 `json:"name"`
+	ShopId       int                    `json:"shopId"`
+	IsActive     bool                   `json:"isActive"`
+	TotalProduct int                    `json:"totalProduct"`
+	Products     []*ShopCategoryProduct `json:"products,omitempty" gorm:"-"`
+}
+
+type ShopCategoryProduct struct {
+	ID       int     `json:"id"`
+	Code     string  `json:"code"`
+	Name     string  `json:"name"`
+	MinPrice float64 `json:"minPrice"`
+	MaxPrice float64 `json:"maxPrice"`
+	ImageUrl string  `json:"imageUrl"`
+	Stock    int     `json:"stock"`
 }

@@ -8,6 +8,7 @@ import (
 
 type ShopCategoryService interface {
 	GetSellerCategories(userID int, req dto.GetSellerCategoriesRequest) (*commonDto.PaginationResponse, error)
+	GetSellerCategoryDetail(userID int, id int) (*dto.ShopCategory, error)
 }
 
 type shopCategoryServiceImpl struct {
@@ -45,4 +46,18 @@ func (s *shopCategoryServiceImpl) GetSellerCategories(userID int, req dto.GetSel
 		Page:       req.Page,
 		Limit:      req.Limit,
 	}, nil
+}
+
+func (s *shopCategoryServiceImpl) GetSellerCategoryDetail(userID int, id int) (*dto.ShopCategory, error) {
+	shop, err := s.shopService.FindShopById(userID)
+	if err != nil {
+		return nil, err
+	}
+
+	shopCategory, err := s.shopCategoryRepo.GetByIDAndShopID(id, shop.ID)
+	if err != nil {
+		return nil, err
+	}
+
+	return shopCategory, nil
 }

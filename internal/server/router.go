@@ -325,6 +325,7 @@ func NewRouter(cfg *RouterConfig) *gin.Engine {
 				category := authenticated.Group("/categories")
 				{
 					category.GET("", cfg.ShopHandler.GetSellerCategories)
+					category.GET(":categoryId", cfg.ShopHandler.GetSellerCategoryDetail)
 				}
 			}
 		}
