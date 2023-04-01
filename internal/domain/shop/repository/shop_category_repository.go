@@ -2,6 +2,7 @@ package repository
 
 import (
 	"errors"
+	"fmt"
 	commonErr "kedai/backend/be-kedai/internal/common/error"
 	productRepo "kedai/backend/be-kedai/internal/domain/product/repository"
 	"kedai/backend/be-kedai/internal/domain/shop/dto"
@@ -42,6 +43,10 @@ func (r *shopCategoryRepositoryImpl) GetByShopID(shopID int, req dto.GetSellerCa
 
 	if req.Status != "" {
 		db = db.Where("is_active = ?", req.Status == "enabled")
+	}
+
+	if req.Search != "" {
+		db = db.Where("name ilike ?", fmt.Sprintf("%%%s%%", req.Search))
 	}
 
 	err = db.Count(&totalRows).Error

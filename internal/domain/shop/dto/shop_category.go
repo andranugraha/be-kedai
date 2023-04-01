@@ -3,6 +3,7 @@ package dto
 import "kedai/backend/be-kedai/internal/domain/shop/model"
 
 type GetSellerCategoriesRequest struct {
+	Search string `form:"search"`
 	Status string `form:"status"`
 	Page   int    `form:"page"`
 	Limit  int    `form:"limit"`
