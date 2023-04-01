@@ -7,6 +7,10 @@ import (
 )
 
 func ValidateProductName(productName string) bool {
+	if productName == "" {
+		return true
+	}
+
 	if containEmoji := gomoji.ContainsEmoji(productName); containEmoji {
 		return false
 	}

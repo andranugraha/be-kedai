@@ -8475,6 +8475,188 @@ paths:
                   message:
                     type: string
                     example: "error message"
+  /v1/admins/orders/refund:
+    get:
+      security:
+        - BearerAuth: []
+      tags:
+        - Admin
+      summary: Get refund request list
+      description: Get refund request list
+      parameters:
+        - in: query
+          name: limit
+          required: false
+          schema:
+            type: integer
+        - in: query
+          name: page
+          required: false
+          schema:
+            type: integer
+        - in: query
+          name: status
+          required: false
+          schema:
+            type: string
+            enum:
+              - PENDING
+              - REJECTED
+              - SELLER_APPROVED
+              - REFUNDED
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Response'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            requestRefundId:
+                              type: integer
+                              example: 1
+                            requestRefundStatus:
+                              type: string
+                              example: "PENDING"
+                            requestRefundType:
+                              type: string
+                              example: "CANCEL"
+                            invoicePerShopId:
+                              type: integer
+                              example: 1
+                            refundAmount:
+                              type: integer
+                              example: 10000
+                            invoiceCode:
+                              type: string
+                              example: "INV-0001"
+                            invoiceTotal:
+                              type: integer
+                              example: 10000
+                            shippingCost:
+                              type: integer
+                              example: 10000
+                            productName:
+                              type: string
+                              example: "product name"
+                            productMedia:
+                              type: string
+                              example: "https://www.google.com"
+                            username:
+                              type: string
+                              example: "username"
+        '401':
+          description: unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "UNAUTHORIZED"
+                  message:
+                    type: string
+                    example: "invalid credential"   
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "INTERNAL_SERVER_ERROR"
+                  message:
+                    type: string
+                    example: "error message" 
+                      
+  /v1/admins/orders/refund/{refundRequestId}:
+    post:
+      security:
+        - BearerAuth: []
+      tags:
+        - Admin
+      summary: Refund request
+      description: Refund request
+      parameters:
+        - in: path
+          name: refundRequestId
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Response'
+                  - type: object
+                    properties:
+                      data:
+                        example: null
+        '400':
+          description: bad request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "REFUNDED"
+                  message:
+                    type: string
+                    example: "refund request already refunded"
+        '404':
+          description: Record not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "NOT_FOUND"
+                  message:
+                    type: string
+                    example: "Record not found"
+        '401':
+          description: unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "UNAUTHORIZED"
+                  message:
+                    type: string
+                    example: "invalid credential"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "INTERNAL_SERVER_ERROR"
+                  message:
+                    type: string
+                    example: "error message"
   /v1/admins/login:
     post:
       tags:
@@ -8708,7 +8890,20 @@ paths:
       summary: Add marketplace voucher
       description: Add new marketplace voucher
       requestBody:
-        $ref: '#/components/requestBodies/AddMarketplaceVoucherBody'
+        $ref: '#/components/requestBodies/AddMarketplaceVoucherBody'  
+      parameters:
+        - in: query
+          name: categoryId
+          schema:
+            type: integer
+            default: 0
+          description: No default category, will get all if not specified
+        - in: query
+          name: paymentMethodId
+          schema:
+            type: integer
+            default: 0
+          description: No default payment method, will get all if not specified
       responses:
         '201':
           description: successful operation
@@ -8750,6 +8945,55 @@ paths:
                   message:
                     type: string
                     example: "error message"   
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "INTERNAL_SERVER_ERROR"
+                  message:
+                    type: string
+                    example: "error message"
+    get:
+      tags:
+        - Admin
+      parameters:
+        - in: query
+          name: categoryId
+          schema:
+            type: integer
+            default: 0
+          description: No default category, will get all if not specified
+        - in: query
+          name: paymentMethodId
+          schema:
+            type: integer
+            default: 0
+          description: No default payment method, will get all if not specified
+      summary: Get marketplace vouchers
+      description: Get list of available marketplace vouchers
+      responses:
+        '201':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Response'
+                  - type: object
+                    properties:
+                      code:
+                        example: "OK"
+                      message:
+                        example: "ok"
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/MarketplaceVoucher'
         '500':
           description: Internal server error
           content:
@@ -12705,6 +12949,43 @@ components:
         promotionId:
           type: integer
           example: 1
+    UpdateMarketplaceVoucherBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - name
+              - isHidden
+              - description
+              - expiredAt
+              - categoryId
+              - paymentMethodId
+            properties:
+              name:
+                type: string
+                minLength: 1
+                maxLength: 100
+                example: voucher name
+              isHidden:
+                type: boolean
+                example: false
+              description:
+                type: string
+                minLength: 5
+                maxLength: 1000
+                example: voucher bakmi kejaksaan enak
+              expiredAt:
+                type: string
+                format: datetime
+                example: "2006-01-02T00:00:00.000Z"
+              categoryId:
+                type: integer
+                example: 1
+              paymentMethodId:
+                type: string
+                example: 2
   securitySchemes:
     BearerAuth:
       type: http
