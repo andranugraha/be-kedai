@@ -649,12 +649,11 @@ func (r *productRepositoryImpl) Update(shopID int, code string, payload *dto.Cre
 	}
 
 	var newVarGroup []*model.VariantGroup
-	if variantGroups != nil {
-		newVarGroup, err = r.variantGroupRepo.Update(tx, product.ID, variantGroups)
-		if err != nil {
-			tx.Rollback()
-			return nil, err
-		}
+
+	newVarGroup, err = r.variantGroupRepo.Update(tx, product.ID, variantGroups)
+	if err != nil {
+		tx.Rollback()
+		return nil, err
 	}
 
 	skus := payload.GenerateSKU(variantGroups)
