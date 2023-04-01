@@ -9643,14 +9643,95 @@ paths:
                   message:
                     type: string
                     example: "error message"
+    post:
+      security:
+        - BearerAuth: []
+      tags:
+        - Seller
+      summary: As a seller, create new shop category
+      description: As a seller, create new shop category and its products
+      requestBody:
+        $ref: '#/components/requestBodies/CreateSellerCategoryBody'
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Response'
+                  - type: object
+                    properties:
+                      code:
+                        example: 'SUCCESS'
+                      message:
+                        example: 'success'
+                      data:
+                        type: object
+                        properties:
+                          id:
+                            type: integer
+                            example: 1
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "BAD_REQUEST"
+                  message:
+                    type: string
+                    example: "error message"
+        '401':
+          description: unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "UNAUTHORIZED"
+                  message:
+                    type: string
+                    example: "error message"      
+        '409':
+          description: category already exists
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "DUPLOCATE_CATEGORY"
+                  message:
+                    type: string
+                    example: "category already exists"      
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "INTERNAL_SERVER_ERROR"
+                  message:
+                    type: string
+                    example: "error message"
   /v1/sellers/categories/{categoryId}:
     get:
       security:
         - BearerAuth: []
       tags:
         - Seller
-      summary: As a seller, retrieve shop categories
-      description: As a seller, retrieve categories with all statuses and total product
+      summary: As a seller, retrieve shop category
+      description: As a seller, retrieve category by id
       parameters:
         - in: path
           name: categoryId
@@ -13087,6 +13168,30 @@ components:
               paymentMethodId:
                 type: string
                 example: 2
+    CreateSellerCategoryBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - name
+              - isHidden
+              - description
+              - expiredAt
+              - categoryId
+              - paymentMethodId
+            properties:
+              name:
+                type: string
+                minLength: 1
+                maxLength: 100
+                example: voucher name
+              productIds:
+                type: array
+                items:
+                  type: integer
+                  example: [1,2]
   securitySchemes:
     BearerAuth:
       type: http
