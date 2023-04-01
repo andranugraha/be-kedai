@@ -121,10 +121,12 @@ func (r *walletRepositoryImpl) TopUpTransaction(tx *gorm.DB, history *model.Wall
 	history.Date = time.Now()
 
 	if err := tx.Model(&model.Wallet{}).Where("id = ?", wallet.ID).Update("balance", gorm.Expr("balance + ?", history.Amount)).Error; err != nil {
+		tx.Rollback()
 		return nil, err
 	}
 
 	if err := r.walletHistoryRepo.Create(tx, history); err != nil {
+		tx.Rollback()
 		return nil, err
 	}
 

@@ -191,29 +191,50 @@ func (r *refundRequestRepositoryImpl) RefundAdmin(requestRefundId int) error {
 	}
 
 	if refundRequests.ShopVoucherId != 0 {
-		err = tx.Table("shop_vouchers").Where("id = ?", refundRequests.ShopVoucherId).Update("used_quota", gorm.Expr("used_quota - ?", 1)).Error
-		if err != nil {
+		r := tx.Table("shop_vouchers").Where("id = ?", refundRequests.ShopVoucherId).Update("used_quota", gorm.Expr("used_quota - ?", 1))
+		if r.Error != nil {
 			tx.Rollback()
-			return err
+			return r.Error
 		}
-		err = tx.Table("user_vouchers").Where("shop_voucher_id = ?", refundRequests.ShopVoucherId).Update("is_used", false).Error
-		if err != nil {
+
+		if r.RowsAffected == 0 {
 			tx.Rollback()
-			return err
+			return commonErr.ErrRefundRequestNotFound
+		}
+
+		r = tx.Table("user_vouchers").Where("shop_voucher_id = ?", refundRequests.ShopVoucherId).Update("is_used", false)
+		if r.Error != nil {
+			tx.Rollback()
+			return r.Error
+		}
+
+		if r.RowsAffected == 0 {
+			tx.Rollback()
+			return commonErr.ErrRefundRequestNotFound
 		}
 	}
 
 	if invoiceCount == 1 && refundRequests.MarketplaceVoucherId != 0 {
-		err = tx.Table("user_vouchers").Where("marketplace_voucher_id = ?", refundRequests.MarketplaceVoucherId).Update("is_used", false).Error
+		r := tx.Table("user_vouchers").Where("marketplace_voucher_id = ?", refundRequests.MarketplaceVoucherId).Update("is_used", false)
 		if err != nil {
 			tx.Rollback()
 			return err
 		}
+		if r.RowsAffected == 0 {
+			tx.Rollback()
+			return commonErr.ErrRefundRequestNotFound
+		}
 	}
 
-	if err = tx.Table("refund_requests").Where("id = ?", requestRefundId).Update("status", status).Error; err != nil {
+	r1 := tx.Table("refund_requests").Where("id = ?", requestRefundId).Update("status", status)
+	if r1.Error != nil {
 		tx.Rollback()
-		return err
+		return r1.Error
+	}
+
+	if r1.RowsAffected == 0 {
+		tx.Rollback()
+		return commonErr.ErrRefundRequestNotFound
 	}
 
 	return nil
