@@ -12,6 +12,7 @@ type ShopCategoryService interface {
 	GetSellerCategoryDetail(userID int, id int) (*dto.ShopCategory, error)
 	CreateSellerCategory(userID int, req dto.CreateSellerCategoryRequest) (*dto.CreateSellerCategoryResponse, error)
 	UpdateSellerCategory(userID int, id int, req dto.UpdateSellerCategoryRequest) (*dto.CreateSellerCategoryResponse, error)
+	DeleteSellerCategory(userID int, id int) error
 }
 
 type shopCategoryServiceImpl struct {
@@ -113,4 +114,13 @@ func (s *shopCategoryServiceImpl) UpdateSellerCategory(userID int, id int, req d
 	return &dto.CreateSellerCategoryResponse{
 		ID: category.ID,
 	}, nil
+}
+
+func (s *shopCategoryServiceImpl) DeleteSellerCategory(userID int, id int) error {
+	shop, err := s.shopService.FindShopById(userID)
+	if err != nil {
+		return err
+	}
+
+	return s.shopCategoryRepo.Delete(id, shop.ID)
 }

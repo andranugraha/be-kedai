@@ -388,3 +388,78 @@ func TestUpdateSellerCategory(t *testing.T) {
 		})
 	}
 }
+
+func TestDeleteSellerCategory(t *testing.T) {
+	tests := []struct {
+		name       string
+		want       response.Response
+		code       int
+		beforeTest func(*mocks.ShopCategoryService)
+	}{
+		{
+			name: "should return 200 when request is valid",
+			want: response.Response{
+				Code:    code.OK,
+				Message: "success",
+			},
+			code: http.StatusOK,
+			beforeTest: func(shopCategoryService *mocks.ShopCategoryService) {
+				shopCategoryService.On("DeleteSellerCategory", 1, 1).Return(nil)
+			},
+		},
+		{
+			name: "should return 500 when get shop categories failed",
+			want: response.Response{
+				Code:    code.INTERNAL_SERVER_ERROR,
+				Message: errs.ErrInternalServerError.Error(),
+			},
+			code: http.StatusInternalServerError,
+			beforeTest: func(shopCategoryService *mocks.ShopCategoryService) {
+				shopCategoryService.On("DeleteSellerCategory", 1, 1).Return(errs.ErrInternalServerError)
+			},
+		},
+		{
+			name: "should return 400 when shop not registered",
+			want: response.Response{
+				Code:    code.SHOP_NOT_REGISTERED,
+				Message: errs.ErrShopNotFound.Error(),
+			},
+			code: http.StatusBadRequest,
+			beforeTest: func(shopCategoryService *mocks.ShopCategoryService) {
+				shopCategoryService.On("DeleteSellerCategory", 1, 1).Return(errs.ErrShopNotFound)
+			},
+		},
+		{
+			name: "should return 404 when category not found",
+			want: response.Response{
+				Code:    code.NOT_FOUND,
+				Message: errs.ErrCategoryNotFound.Error(),
+			},
+			code: http.StatusNotFound,
+			beforeTest: func(shopCategoryService *mocks.ShopCategoryService) {
+				shopCategoryService.On("DeleteSellerCategory", 1, 1).Return(errs.ErrCategoryNotFound)
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			expectedBody, _ := json.Marshal(tt.want)
+			shopCategoryService := new(mocks.ShopCategoryService)
+			tt.beforeTest(shopCategoryService)
+			rec := httptest.NewRecorder()
+			c, _ := gin.CreateTestContext(rec)
+			c.Set("userId", 1)
+			c.AddParam("categoryId", "1")
+			handler := handler.New(&handler.HandlerConfig{
+				ShopCategoryService: shopCategoryService,
+			})
+
+			c.Request = httptest.NewRequest("DELETE", "/sellers/categories/1", nil)
+			handler.DeleteSellerCategory(c)
+
+			assert.Equal(t, tt.code, rec.Code)
+			assert.Equal(t, string(expectedBody), rec.Body.String())
+		})
+	}
+}

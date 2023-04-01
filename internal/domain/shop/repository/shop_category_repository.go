@@ -18,6 +18,7 @@ type ShopCategoryRepository interface {
 	GetCategoryByIDAndShopID(id, shopID int) (*model.ShopCategory, error)
 	Create(shopCategory *model.ShopCategory) error
 	Update(shopCategory *model.ShopCategory) error
+	Delete(id, shopId int) error
 }
 
 type shopCategoryRepositoryImpl struct {
@@ -164,6 +165,28 @@ func (r *shopCategoryRepositoryImpl) Update(shopCategory *model.ShopCategory) er
 			return commonErr.ErrProductDoesNotExist
 		}
 
+		return err
+	}
+
+	return nil
+}
+
+func (r *shopCategoryRepositoryImpl) Delete(id, shopId int) error {
+	tx := r.db.Begin()
+	defer tx.Commit()
+
+	res := tx.Where("id = ?", id).Where("shop_id = ?", shopId).Delete(&model.ShopCategory{})
+	if res.Error != nil {
+		tx.Rollback()
+		return res.Error
+	}
+
+	if res.RowsAffected == 0 {
+		return commonErr.ErrCategoryNotFound
+	}
+
+	if err := tx.Where("shop_category_id = ?", id).Unscoped().Delete(&model.ShopCategoryProduct{}).Error; err != nil {
+		tx.Rollback()
 		return err
 	}
 
