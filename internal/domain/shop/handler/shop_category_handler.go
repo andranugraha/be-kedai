@@ -130,3 +130,27 @@ func (h *Handler) UpdateSellerCategory(c *gin.Context) {
 
 	response.Success(c, http.StatusOK, code.OK, "success", category)
 }
+
+func (h *Handler) DeleteSellerCategory(c *gin.Context) {
+	userId := c.GetInt("userId")
+	categoryId := c.Param("categoryId")
+	intCategoryId, _ := strconv.Atoi(categoryId)
+
+	err := h.shopCategoryService.DeleteSellerCategory(userId, intCategoryId)
+	if err != nil {
+		if errors.Is(err, errs.ErrShopNotFound) {
+			response.Error(c, http.StatusBadRequest, code.SHOP_NOT_REGISTERED, err.Error())
+			return
+		}
+
+		if errors.Is(err, errs.ErrCategoryNotFound) {
+			response.Error(c, http.StatusNotFound, code.NOT_FOUND, err.Error())
+			return
+		}
+
+		response.Error(c, http.StatusInternalServerError, code.INTERNAL_SERVER_ERROR, errs.ErrInternalServerError.Error())
+		return
+	}
+
+	response.Success(c, http.StatusOK, code.OK, "success", nil)
+}
