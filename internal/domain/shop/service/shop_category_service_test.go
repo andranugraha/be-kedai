@@ -40,7 +40,7 @@ func TestGetSellerCategories(t *testing.T) {
 			},
 			err: nil,
 			beforeTest: func(shopService *mocks.ShopService, shopCategoryRepo *mocks.ShopCategoryRepository) {
-				shopService.On("FindShopById", userId).Return(&model.Shop{
+				shopService.On("FindShopByUserId", userId).Return(&model.Shop{
 					ID: 1,
 				}, nil)
 
@@ -53,7 +53,7 @@ func TestGetSellerCategories(t *testing.T) {
 			want: nil,
 			err:  commonErr.ErrShopNotFound,
 			beforeTest: func(shopService *mocks.ShopService, shopCategoryRepo *mocks.ShopCategoryRepository) {
-				shopService.On("FindShopById", userId).Return(nil, commonErr.ErrShopNotFound)
+				shopService.On("FindShopByUserId", userId).Return(nil, commonErr.ErrShopNotFound)
 			},
 		},
 		{
@@ -62,7 +62,7 @@ func TestGetSellerCategories(t *testing.T) {
 			want: nil,
 			err:  commonErr.ErrInternalServerError,
 			beforeTest: func(shopService *mocks.ShopService, shopCategoryRepo *mocks.ShopCategoryRepository) {
-				shopService.On("FindShopById", userId).Return(&model.Shop{
+				shopService.On("FindShopByUserId", userId).Return(&model.Shop{
 					ID: 1,
 				}, nil)
 
@@ -110,7 +110,7 @@ func TestGetSellerCategoryDetail(t *testing.T) {
 			},
 			err: nil,
 			beforeTest: func(shopService *mocks.ShopService, shopCategoryRepo *mocks.ShopCategoryRepository) {
-				shopService.On("FindShopById", userId).Return(&model.Shop{
+				shopService.On("FindShopByUserId", userId).Return(&model.Shop{
 					ID: 1,
 				}, nil)
 
@@ -124,7 +124,7 @@ func TestGetSellerCategoryDetail(t *testing.T) {
 			want: nil,
 			err:  commonErr.ErrShopNotFound,
 			beforeTest: func(shopService *mocks.ShopService, shopCategoryRepo *mocks.ShopCategoryRepository) {
-				shopService.On("FindShopById", userId).Return(nil, commonErr.ErrShopNotFound)
+				shopService.On("FindShopByUserId", userId).Return(nil, commonErr.ErrShopNotFound)
 			},
 		},
 		{
@@ -132,7 +132,7 @@ func TestGetSellerCategoryDetail(t *testing.T) {
 			want: nil,
 			err:  commonErr.ErrCategoryNotFound,
 			beforeTest: func(shopService *mocks.ShopService, shopCategoryRepo *mocks.ShopCategoryRepository) {
-				shopService.On("FindShopById", userId).Return(&model.Shop{
+				shopService.On("FindShopByUserId", userId).Return(&model.Shop{
 					ID: 1,
 				}, nil)
 
@@ -184,7 +184,7 @@ func TestCreateSellerCategory(t *testing.T) {
 			},
 			err: nil,
 			beforeTest: func(shopService *mocks.ShopService, shopCategoryRepo *mocks.ShopCategoryRepository) {
-				shopService.On("FindShopById", userId).Return(&model.Shop{
+				shopService.On("FindShopByUserId", userId).Return(&model.Shop{
 					ID: 1,
 				}, nil)
 
@@ -197,7 +197,7 @@ func TestCreateSellerCategory(t *testing.T) {
 			want: nil,
 			err:  commonErr.ErrShopNotFound,
 			beforeTest: func(shopService *mocks.ShopService, shopCategoryRepo *mocks.ShopCategoryRepository) {
-				shopService.On("FindShopById", userId).Return(nil, commonErr.ErrShopNotFound)
+				shopService.On("FindShopByUserId", userId).Return(nil, commonErr.ErrShopNotFound)
 			},
 		},
 		{
@@ -206,7 +206,7 @@ func TestCreateSellerCategory(t *testing.T) {
 			want: nil,
 			err:  commonErr.ErrInternalServerError,
 			beforeTest: func(shopService *mocks.ShopService, shopCategoryRepo *mocks.ShopCategoryRepository) {
-				shopService.On("FindShopById", userId).Return(&model.Shop{
+				shopService.On("FindShopByUserId", userId).Return(&model.Shop{
 					ID: 1,
 				}, nil)
 
@@ -262,7 +262,7 @@ func TestUpdateSellerCategory(t *testing.T) {
 			},
 			err: nil,
 			beforeTest: func(shopService *mocks.ShopService, shopCategoryRepo *mocks.ShopCategoryRepository) {
-				shopService.On("FindShopById", userId).Return(&model.Shop{
+				shopService.On("FindShopByUserId", userId).Return(&model.Shop{
 					ID: 1,
 				}, nil)
 
@@ -279,7 +279,7 @@ func TestUpdateSellerCategory(t *testing.T) {
 			want: nil,
 			err:  commonErr.ErrShopNotFound,
 			beforeTest: func(shopService *mocks.ShopService, shopCategoryRepo *mocks.ShopCategoryRepository) {
-				shopService.On("FindShopById", userId).Return(nil, commonErr.ErrShopNotFound)
+				shopService.On("FindShopByUserId", userId).Return(nil, commonErr.ErrShopNotFound)
 			},
 		},
 		{
@@ -288,7 +288,7 @@ func TestUpdateSellerCategory(t *testing.T) {
 			want: nil,
 			err:  commonErr.ErrCategoryNotFound,
 			beforeTest: func(shopService *mocks.ShopService, shopCategoryRepo *mocks.ShopCategoryRepository) {
-				shopService.On("FindShopById", userId).Return(&model.Shop{
+				shopService.On("FindShopByUserId", userId).Return(&model.Shop{
 					ID: 1,
 				}, nil)
 
@@ -301,7 +301,7 @@ func TestUpdateSellerCategory(t *testing.T) {
 			want: nil,
 			err:  commonErr.ErrInternalServerError,
 			beforeTest: func(shopService *mocks.ShopService, shopCategoryRepo *mocks.ShopCategoryRepository) {
-				shopService.On("FindShopById", userId).Return(&model.Shop{
+				shopService.On("FindShopByUserId", userId).Return(&model.Shop{
 					ID: 1,
 				}, nil)
 
@@ -349,7 +349,7 @@ func TestDeleteSellerCategory(t *testing.T) {
 			name: "should return shop category detail when request is valid",
 			err:  nil,
 			beforeTest: func(shopService *mocks.ShopService, shopCategoryRepo *mocks.ShopCategoryRepository) {
-				shopService.On("FindShopById", userId).Return(&model.Shop{
+				shopService.On("FindShopByUserId", userId).Return(&model.Shop{
 					ID: 1,
 				}, nil)
 
@@ -360,14 +360,14 @@ func TestDeleteSellerCategory(t *testing.T) {
 			name: "should return error when shop not found",
 			err:  commonErr.ErrShopNotFound,
 			beforeTest: func(shopService *mocks.ShopService, shopCategoryRepo *mocks.ShopCategoryRepository) {
-				shopService.On("FindShopById", userId).Return(nil, commonErr.ErrShopNotFound)
+				shopService.On("FindShopByUserId", userId).Return(nil, commonErr.ErrShopNotFound)
 			},
 		},
 		{
 			name: "should return error when shop category not found",
 			err:  commonErr.ErrCategoryNotFound,
 			beforeTest: func(shopService *mocks.ShopService, shopCategoryRepo *mocks.ShopCategoryRepository) {
-				shopService.On("FindShopById", userId).Return(&model.Shop{
+				shopService.On("FindShopByUserId", userId).Return(&model.Shop{
 					ID: 1,
 				}, nil)
 
@@ -378,7 +378,7 @@ func TestDeleteSellerCategory(t *testing.T) {
 			name: "should return error when delete shop category failed",
 			err:  commonErr.ErrInternalServerError,
 			beforeTest: func(shopService *mocks.ShopService, shopCategoryRepo *mocks.ShopCategoryRepository) {
-				shopService.On("FindShopById", userId).Return(&model.Shop{
+				shopService.On("FindShopByUserId", userId).Return(&model.Shop{
 					ID: 1,
 				}, nil)
 
