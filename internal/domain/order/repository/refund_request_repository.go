@@ -245,8 +245,6 @@ func (r *refundRequestRepositoryImpl) GetRefund(req *dto.GetRefundReq) ([]*dto.G
 	var totalRows int64
 	var totalPage int
 
-	req.Validate()
-
 	var refundRequests []*dto.GetRefund
 
 	query := r.db.Table("refund_requests rr").

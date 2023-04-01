@@ -76,6 +76,8 @@ func (h *Handler) GetRefund(c *gin.Context) {
 	req.Page = page
 	req.Status = status
 
+	req.Validate()
+
 	refundRequest, err := h.refundRequestService.GetRefund(&req)
 
 	if err != nil {
