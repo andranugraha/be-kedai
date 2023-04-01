@@ -199,6 +199,7 @@ func (r *refundRequestRepositoryImpl) RefundAdmin(requestRefundId int) error {
 		err = tx.Table("user_vouchers").Where("shop_voucher_id = ?", refundRequests.ShopVoucherId).Update("is_used", false).Error
 		if err != nil {
 			tx.Rollback()
+			return err
 		}
 	}
 
@@ -206,6 +207,7 @@ func (r *refundRequestRepositoryImpl) RefundAdmin(requestRefundId int) error {
 		err = tx.Table("user_vouchers").Where("marketplace_voucher_id = ?", refundRequests.MarketplaceVoucherId).Update("is_used", false).Error
 		if err != nil {
 			tx.Rollback()
+			return err
 		}
 	}
 
