@@ -10,6 +10,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 )
 
 func TestGetSellerCategories(t *testing.T) {
@@ -153,6 +154,80 @@ func TestGetSellerCategoryDetail(t *testing.T) {
 			})
 
 			got, err := shopCategoryService.GetSellerCategoryDetail(userId, categoryId)
+
+			assert.Equal(t, test.want, got)
+			assert.ErrorIs(t, test.err, err)
+		})
+	}
+}
+
+func TestCreateSellerCategory(t *testing.T) {
+	var (
+		userId = 1
+		req    = dto.CreateSellerCategoryRequest{
+			Name: "test",
+		}
+	)
+
+	tests := []struct {
+		name       string
+		req        dto.CreateSellerCategoryRequest
+		want       *dto.CreateSellerCategoryResponse
+		err        error
+		beforeTest func(*mocks.ShopService, *mocks.ShopCategoryRepository)
+	}{
+		{
+			name: "should return shop category detail when request is valid",
+			req:  req,
+			want: &dto.CreateSellerCategoryResponse{
+				ID: 0,
+			},
+			err: nil,
+			beforeTest: func(shopService *mocks.ShopService, shopCategoryRepo *mocks.ShopCategoryRepository) {
+				shopService.On("FindShopById", userId).Return(&model.Shop{
+					ID: 1,
+				}, nil)
+
+				shopCategoryRepo.On("Create", mock.Anything).Return(nil)
+			},
+		},
+		{
+			name: "should return error when shop not found",
+			req:  req,
+			want: nil,
+			err:  commonErr.ErrShopNotFound,
+			beforeTest: func(shopService *mocks.ShopService, shopCategoryRepo *mocks.ShopCategoryRepository) {
+				shopService.On("FindShopById", userId).Return(nil, commonErr.ErrShopNotFound)
+			},
+		},
+		{
+			name: "should return error when create shop category failed",
+			req:  req,
+			want: nil,
+			err:  commonErr.ErrInternalServerError,
+			beforeTest: func(shopService *mocks.ShopService, shopCategoryRepo *mocks.ShopCategoryRepository) {
+				shopService.On("FindShopById", userId).Return(&model.Shop{
+					ID: 1,
+				}, nil)
+
+				shopCategoryRepo.On("Create", mock.Anything).Return(commonErr.ErrInternalServerError)
+			},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			shopService := new(mocks.ShopService)
+			shopCategoryRepo := new(mocks.ShopCategoryRepository)
+
+			test.beforeTest(shopService, shopCategoryRepo)
+
+			shopCategoryService := service.NewShopCategoryService(&service.ShopCategorySConfig{
+				ShopService:      shopService,
+				ShopCategoryRepo: shopCategoryRepo,
+			})
+
+			got, err := shopCategoryService.CreateSellerCategory(userId, test.req)
 
 			assert.Equal(t, test.want, got)
 			assert.ErrorIs(t, test.err, err)

@@ -47,7 +47,7 @@ type ShopCategoryProduct struct {
 
 type CreateSellerCategoryRequest struct {
 	Name       string `json:"name" binding:"required"`
-	ProductIDs []int  `json:"productIds" binding:"required"`
+	ProductIDs []int  `json:"productIds" binding:"required,min=1"`
 }
 
 func (r *CreateSellerCategoryRequest) ComposeModel(shopId int) *model.ShopCategory {
