@@ -9629,6 +9629,81 @@ paths:
                     example: "UNAUTHORIZED"
                   message:
                     type: string
+                    example: "error message"      
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "INTERNAL_SERVER_ERROR"
+                  message:
+                    type: string
+                    example: "error message"
+  /v1/sellers/categories/{categoryId}:
+    get:
+      security:
+        - BearerAuth: []
+      tags:
+        - Seller
+      summary: As a seller, retrieve shop categories
+      description: As a seller, retrieve categories with all statuses and total product
+      parameters:
+        - in: path
+          name: categoryId
+          required: true
+          schema:
+            type: integer
+            default: 1
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Response'
+                  - type: object
+                    properties:
+                      code:
+                        example: 'SUCCESS'
+                      message:
+                        example: 'success'
+                      data:
+                        allOf:
+                          - $ref: '#/components/schemas/SellerCategory'
+                          - type: object
+                            properties:
+                              products:
+                                $ref: '#/components/schemas/SellerCategoryProduct'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "BAD_REQUEST"
+                  message:
+                    type: string
+                    example: "error message"
+        '401':
+          description: unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "UNAUTHORIZED"
+                  message:
+                    type: string
                     example: "error message"    
         '404':
           description: Not Found
@@ -9639,7 +9714,7 @@ paths:
                 properties:
                   code:
                     type: string
-                    example: "SHOP_NOT_REGISTERED"
+                    example: "NOT_FOUND"
                   message:
                     type: string
                     example: "error message"       
@@ -11714,6 +11789,32 @@ components:
           type: boolean
           example: true
         totalProduct:
+          type: integer
+          example: 1
+    SellerCategoryProduct:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        name:
+          type: string
+          example: Laptop
+        code:
+          type: string
+          example: LAPTOP-001
+        minPrice:
+          type: number
+          format: float
+          example: 1000000
+        maxPrice:
+          type: number
+          format: float
+          example: 1000000
+        imageUrl:
+          type: string
+          example: https://example.com/image.jpg
+        stock:
           type: integer
           example: 1
   requestBodies:
