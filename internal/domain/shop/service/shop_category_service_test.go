@@ -89,3 +89,73 @@ func TestGetSellerCategories(t *testing.T) {
 		})
 	}
 }
+
+func TestGetSellerCategoryDetail(t *testing.T) {
+	var (
+		userId     = 1
+		categoryId = 1
+	)
+
+	tests := []struct {
+		name       string
+		want       *dto.ShopCategory
+		err        error
+		beforeTest func(*mocks.ShopService, *mocks.ShopCategoryRepository)
+	}{
+		{
+			name: "should return shop category detail when request is valid",
+			want: &dto.ShopCategory{
+				ID: 1,
+			},
+			err: nil,
+			beforeTest: func(shopService *mocks.ShopService, shopCategoryRepo *mocks.ShopCategoryRepository) {
+				shopService.On("FindShopById", userId).Return(&model.Shop{
+					ID: 1,
+				}, nil)
+
+				shopCategoryRepo.On("GetByIDAndShopID", categoryId, 1).Return(&dto.ShopCategory{
+					ID: 1,
+				}, nil)
+			},
+		},
+		{
+			name: "should return error when shop not found",
+			want: nil,
+			err:  commonErr.ErrShopNotFound,
+			beforeTest: func(shopService *mocks.ShopService, shopCategoryRepo *mocks.ShopCategoryRepository) {
+				shopService.On("FindShopById", userId).Return(nil, commonErr.ErrShopNotFound)
+			},
+		},
+		{
+			name: "should return error when shop category not found",
+			want: nil,
+			err:  commonErr.ErrCategoryNotFound,
+			beforeTest: func(shopService *mocks.ShopService, shopCategoryRepo *mocks.ShopCategoryRepository) {
+				shopService.On("FindShopById", userId).Return(&model.Shop{
+					ID: 1,
+				}, nil)
+
+				shopCategoryRepo.On("GetByIDAndShopID", categoryId, 1).Return(nil, commonErr.ErrCategoryNotFound)
+			},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			shopService := new(mocks.ShopService)
+			shopCategoryRepo := new(mocks.ShopCategoryRepository)
+
+			test.beforeTest(shopService, shopCategoryRepo)
+
+			shopCategoryService := service.NewShopCategoryService(&service.ShopCategorySConfig{
+				ShopService:      shopService,
+				ShopCategoryRepo: shopCategoryRepo,
+			})
+
+			got, err := shopCategoryService.GetSellerCategoryDetail(userId, categoryId)
+
+			assert.Equal(t, test.want, got)
+			assert.ErrorIs(t, test.err, err)
+		})
+	}
+}

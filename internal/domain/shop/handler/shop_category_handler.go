@@ -41,8 +41,13 @@ func (h *Handler) GetSellerCategoryDetail(c *gin.Context) {
 
 	shopCategory, err := h.shopCategoryService.GetSellerCategoryDetail(userId, intCategoryId)
 	if err != nil {
+		if errors.Is(err, errs.ErrShopNotFound) {
+			response.Error(c, http.StatusBadRequest, code.SHOP_NOT_REGISTERED, err.Error())
+			return
+		}
+
 		if errors.Is(err, errs.ErrCategoryNotFound) {
-			response.Error(c, http.StatusBadRequest, code.NOT_FOUND, err.Error())
+			response.Error(c, http.StatusNotFound, code.NOT_FOUND, err.Error())
 			return
 		}
 
