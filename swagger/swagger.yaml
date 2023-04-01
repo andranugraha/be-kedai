@@ -8475,6 +8475,188 @@ paths:
                   message:
                     type: string
                     example: "error message"
+  /v1/admins/orders/refund:
+    get:
+      security:
+        - BearerAuth: []
+      tags:
+        - Admin
+      summary: Get refund request list
+      description: Get refund request list
+      parameters:
+        - in: query
+          name: limit
+          required: false
+          schema:
+            type: integer
+        - in: query
+          name: page
+          required: false
+          schema:
+            type: integer
+        - in: query
+          name: status
+          required: false
+          schema:
+            type: string
+            enum:
+              - PENDING
+              - REJECTED
+              - SELLER_APPROVED
+              - REFUNDED
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Response'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            requestRefundId:
+                              type: integer
+                              example: 1
+                            requestRefundStatus:
+                              type: string
+                              example: "PENDING"
+                            requestRefundType:
+                              type: string
+                              example: "CANCEL"
+                            invoicePerShopId:
+                              type: integer
+                              example: 1
+                            refundAmount:
+                              type: integer
+                              example: 10000
+                            invoiceCode:
+                              type: string
+                              example: "INV-0001"
+                            invoiceTotal:
+                              type: integer
+                              example: 10000
+                            shippingCost:
+                              type: integer
+                              example: 10000
+                            productName:
+                              type: string
+                              example: "product name"
+                            productMedia:
+                              type: string
+                              example: "https://www.google.com"
+                            username:
+                              type: string
+                              example: "username"
+        '401':
+          description: unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "UNAUTHORIZED"
+                  message:
+                    type: string
+                    example: "invalid credential"   
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "INTERNAL_SERVER_ERROR"
+                  message:
+                    type: string
+                    example: "error message" 
+                      
+  /v1/admins/orders/refund/{refundRequestId}:
+    post:
+      security:
+        - BearerAuth: []
+      tags:
+        - Admin
+      summary: Refund request
+      description: Refund request
+      parameters:
+        - in: path
+          name: refundRequestId
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Response'
+                  - type: object
+                    properties:
+                      data:
+                        example: null
+        '400':
+          description: bad request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "REFUNDED"
+                  message:
+                    type: string
+                    example: "refund request already refunded"
+        '404':
+          description: Record not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "NOT_FOUND"
+                  message:
+                    type: string
+                    example: "Record not found"
+        '401':
+          description: unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "UNAUTHORIZED"
+                  message:
+                    type: string
+                    example: "invalid credential"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "INTERNAL_SERVER_ERROR"
+                  message:
+                    type: string
+                    example: "error message"
   /v1/admins/login:
     post:
       tags:
