@@ -34,7 +34,7 @@ func (h *Handler) AddCategory(c *gin.Context) {
 	category := categoryDTO.ToModel()
 	err = h.categoryService.AddCategory(category)
 	if err != nil {
-		response.Error(c, http.StatusInternalServerError, code.INTERNAL_SERVER_ERROR, err.Error())
+		response.Error(c, http.StatusInternalServerError, code.INTERNAL_SERVER_ERROR, error.ErrInternalServerError.Error())
 		return
 	}
 

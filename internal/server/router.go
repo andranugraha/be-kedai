@@ -247,6 +247,7 @@ func NewRouter(cfg *RouterConfig) *gin.Engine {
 						voucher.POST("", cfg.MarketplaceHandler.CreateMarketplaceVoucher)
 						voucher.GET("", cfg.MarketplaceHandler.GetMarketplaceVoucherAdmin)
 						voucher.GET("/:code", cfg.MarketplaceHandler.GetMarketplaceVoucherAdminByCode)
+						voucher.PUT("/:code", cfg.MarketplaceHandler.UpdateVoucher)
 					}
 				}
 			}
