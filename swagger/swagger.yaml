@@ -8564,7 +8564,20 @@ paths:
                     example: "UNAUTHORIZED"
                   message:
                     type: string
-                    example: "invalid credential"    
+                    example: "invalid credential"   
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "INTERNAL_SERVER_ERROR"
+                  message:
+                    type: string
+                    example: "error message" 
                       
   /v1/admins/orders/refund/{refundRequestId}:
     post:

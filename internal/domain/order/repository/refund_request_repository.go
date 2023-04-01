@@ -270,7 +270,10 @@ func (r *refundRequestRepositoryImpl) GetRefund(req *dto.GetRefundReq) ([]*dto.G
 		query = query.Where("rr.status = ?", req.Status)
 	}
 
-	query.Count(&totalRows)
+	if err := query.Count(&totalRows).Error; err != nil {
+		return nil, 0, 0, err
+	}
+
 	err := query.Limit(req.Limit).Offset(req.Limit * (req.Page - 1)).Find(&refundRequests).Error
 	if err != nil {
 		return nil, 0, 0, err
