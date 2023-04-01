@@ -2,6 +2,7 @@ package service_test
 
 import (
 	"errors"
+	"kedai/backend/be-kedai/internal/common/constant"
 	commonDto "kedai/backend/be-kedai/internal/common/dto"
 	errs "kedai/backend/be-kedai/internal/common/error"
 	"kedai/backend/be-kedai/internal/domain/marketplace/dto"
@@ -9,6 +10,7 @@ import (
 	"kedai/backend/be-kedai/internal/domain/marketplace/service"
 	"kedai/backend/be-kedai/mocks"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -244,6 +246,47 @@ func TestGetValidForCheckout(t *testing.T) {
 	}
 }
 
+func TestGetMarketplaceVoucherAdminByCode(t *testing.T) {
+	type input struct {
+		code string
+	}
+	type expected struct {
+		result *dto.AdminMarketplaceVoucher
+		err    error
+	}
+	type cases struct {
+		description string
+		input
+		expected
+	}
+
+	for _, tc := range []cases{
+		{
+			description: "should return created voucher or error when called",
+			input: input{
+				code: "Code",
+			},
+			expected: expected{
+				result: &dto.AdminMarketplaceVoucher{},
+				err:    errs.ErrInternalServerError,
+			},
+		},
+	} {
+		t.Run(tc.description, func(t *testing.T) {
+			mockRepo := new(mocks.MarketplaceVoucherRepository)
+			mockRepo.On("GetMarketplaceVoucherAdminByCode", tc.input.code).Return(tc.expected.result, tc.expected.err)
+			service := service.NewMarketplaceVoucherService(&service.MarketplaceVoucherSConfig{
+				MarketplaceVoucherRepository: mockRepo,
+			})
+
+			result, err := service.GetMarketplaceVoucherAdminByCode(tc.input.code)
+
+			assert.Equal(t, tc.expected.result, result)
+			assert.Equal(t, tc.expected.err, err)
+		})
+	}
+}
+
 func TestCreateMarketplaceVoucher(t *testing.T) {
 	var (
 		val   = true
@@ -303,6 +346,165 @@ func TestCreateMarketplaceVoucher(t *testing.T) {
 
 			assert.Equal(t, tc.expected.result, result)
 			assert.Equal(t, tc.expected.err, err)
+		})
+	}
+}
+
+func TestUpdateVoucher(t *testing.T) {
+	var (
+		value          = 1
+		zeroValue      = 0
+		code           = "Voucher"
+		nameWithEmoji  = "Voucher 🤌"
+		validTime, _   = time.Parse("2006-01-02", "2023-05-25")
+		invalidTime, _ = time.Parse("2006-01-02", "2022-05-25")
+		voucher        = &dto.AdminMarketplaceVoucher{
+			MarketplaceVoucher: model.MarketplaceVoucher{
+				ID:              1,
+				Name:            "Voucher",
+				Code:            "Voucher",
+				IsHidden:        false,
+				Description:     "Desc",
+				CategoryID:      &value,
+				PaymentMethodID: &value,
+			},
+			Status: constant.VoucherPromotionStatusOngoing,
+		}
+		expiredVoucher = &dto.AdminMarketplaceVoucher{
+			Status: constant.VoucherPromotionStatusExpired,
+		}
+		request = &dto.UpdateVoucherRequest{
+			Name:            "",
+			IsHidden:        nil,
+			Description:     "",
+			CategoryId:      &zeroValue,
+			PaymentMethodId: &zeroValue,
+			ExpiredAt:       validTime,
+		}
+		invalidNameRequest = &dto.UpdateVoucherRequest{
+			Name:            nameWithEmoji,
+			IsHidden:        nil,
+			Description:     "",
+			CategoryId:      &zeroValue,
+			PaymentMethodId: &zeroValue,
+			ExpiredAt:       validTime,
+		}
+		invalidRequest = &dto.UpdateVoucherRequest{
+			Name:            "",
+			IsHidden:        nil,
+			Description:     "",
+			CategoryId:      &zeroValue,
+			PaymentMethodId: &zeroValue,
+			ExpiredAt:       invalidTime,
+		}
+		payload = &model.MarketplaceVoucher{
+			ID:              1,
+			Name:            "Voucher",
+			Code:            "Voucher",
+			IsHidden:        false,
+			Description:     "Desc",
+			ExpiredAt:       validTime,
+			CategoryID:      &value,
+			PaymentMethodID: &value,
+		}
+	)
+	type input struct {
+		req        *dto.UpdateVoucherRequest
+		beforeTest func(*mocks.MarketplaceVoucherRepository)
+	}
+	type expected struct {
+		err error
+	}
+	type cases struct {
+		description string
+		input
+		expected
+	}
+
+	for _, tc := range []cases{
+		{
+			description: "should return nil error when success",
+			input: input{
+				req: request,
+				beforeTest: func(mvr *mocks.MarketplaceVoucherRepository) {
+					mvr.On("GetMarketplaceVoucherAdminByCode", code).Return(voucher, nil)
+					mvr.On("Update", payload).Return(nil)
+				},
+			},
+			expected: expected{
+				err: nil,
+			},
+		},
+		{
+			description: "should return invalid product name error when name contain emoji",
+			input: input{
+				req:        invalidNameRequest,
+				beforeTest: func(mvr *mocks.MarketplaceVoucherRepository) {},
+			},
+			expected: expected{
+				err: errs.ErrInvalidVoucherNamePattern,
+			},
+		},
+		{
+			description: "should return error when voucher not found",
+			input: input{
+				req: request,
+				beforeTest: func(mvr *mocks.MarketplaceVoucherRepository) {
+					mvr.On("GetMarketplaceVoucherAdminByCode", code).Return(nil, errs.ErrVoucherNotFound)
+				},
+			},
+			expected: expected{
+				err: errs.ErrVoucherNotFound,
+			},
+		},
+		{
+			description: "should return error when voucher expired",
+			input: input{
+				req: request,
+				beforeTest: func(mvr *mocks.MarketplaceVoucherRepository) {
+					mvr.On("GetMarketplaceVoucherAdminByCode", code).Return(expiredVoucher, nil)
+				},
+			},
+			expected: expected{
+				err: errs.ErrVoucherStatusConflict,
+			},
+		},
+		{
+			description: "should return error when date is invalid",
+			input: input{
+				req: invalidRequest,
+				beforeTest: func(mvr *mocks.MarketplaceVoucherRepository) {
+					mvr.On("GetMarketplaceVoucherAdminByCode", code).Return(voucher, nil)
+				},
+			},
+			expected: expected{
+				err: errs.ErrInvalidVoucherDateRange,
+			},
+		},
+		{
+			description: "should return error when internal server error",
+			input: input{
+				req: request,
+				beforeTest: func(mvr *mocks.MarketplaceVoucherRepository) {
+					mvr.On("GetMarketplaceVoucherAdminByCode", code).Return(voucher, nil)
+					mvr.On("Update", payload).Return(errs.ErrInternalServerError)
+				},
+			},
+			expected: expected{
+				err: errs.ErrInternalServerError,
+			},
+		},
+	} {
+		t.Run(tc.description, func(t *testing.T) {
+			mockRepo := new(mocks.MarketplaceVoucherRepository)
+			tc.beforeTest(mockRepo)
+			service := service.NewMarketplaceVoucherService(&service.MarketplaceVoucherSConfig{
+				MarketplaceVoucherRepository: mockRepo,
+			})
+
+			err := service.UpdateVoucher(code, tc.req)
+
+			assert.Equal(t, tc.err, err)
 		})
 	}
 }
