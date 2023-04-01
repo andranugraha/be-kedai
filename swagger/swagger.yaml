@@ -8904,8 +8904,6 @@ paths:
             type: integer
             default: 0
           description: No default payment method, will get all if not specified
-      summary: Get marketplace vouchers
-      description: Get list of available marketplace vouchers
       responses:
         '201':
           description: successful operation
@@ -8960,7 +8958,6 @@ paths:
                   message:
                     type: string
                     example: "error message"
-  /v1/admins/marketplaces/vouchers:
     get:
       tags:
         - Admin
