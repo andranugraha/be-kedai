@@ -11,7 +11,7 @@ func (r *GetSellerCategoriesRequest) Validate() {
 		r.Page = 1
 	}
 
-	if r.Limit < 1 {
+	if r.Limit < 1 || r.Limit > 10 {
 		r.Limit = 10
 	}
 
