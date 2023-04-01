@@ -33,7 +33,7 @@ func NewShopCategoryService(cfg *ShopCategorySConfig) ShopCategoryService {
 }
 
 func (s *shopCategoryServiceImpl) GetSellerCategories(userID int, req dto.GetSellerCategoriesRequest) (*commonDto.PaginationResponse, error) {
-	shop, err := s.shopService.FindShopById(userID)
+	shop, err := s.shopService.FindShopByUserId(userID)
 	if err != nil {
 		return nil, err
 	}
@@ -53,7 +53,7 @@ func (s *shopCategoryServiceImpl) GetSellerCategories(userID int, req dto.GetSel
 }
 
 func (s *shopCategoryServiceImpl) GetSellerCategoryDetail(userID int, id int) (*dto.ShopCategory, error) {
-	shop, err := s.shopService.FindShopById(userID)
+	shop, err := s.shopService.FindShopByUserId(userID)
 	if err != nil {
 		return nil, err
 	}
@@ -67,7 +67,7 @@ func (s *shopCategoryServiceImpl) GetSellerCategoryDetail(userID int, id int) (*
 }
 
 func (s *shopCategoryServiceImpl) CreateSellerCategory(userID int, req dto.CreateSellerCategoryRequest) (*dto.CreateSellerCategoryResponse, error) {
-	shop, err := s.shopService.FindShopById(userID)
+	shop, err := s.shopService.FindShopByUserId(userID)
 	if err != nil {
 		return nil, err
 	}
@@ -85,7 +85,7 @@ func (s *shopCategoryServiceImpl) CreateSellerCategory(userID int, req dto.Creat
 }
 
 func (s *shopCategoryServiceImpl) UpdateSellerCategory(userID int, id int, req dto.UpdateSellerCategoryRequest) (*dto.CreateSellerCategoryResponse, error) {
-	shop, err := s.shopService.FindShopById(userID)
+	shop, err := s.shopService.FindShopByUserId(userID)
 	if err != nil {
 		return nil, err
 	}
@@ -117,7 +117,7 @@ func (s *shopCategoryServiceImpl) UpdateSellerCategory(userID int, id int, req d
 }
 
 func (s *shopCategoryServiceImpl) DeleteSellerCategory(userID int, id int) error {
-	shop, err := s.shopService.FindShopById(userID)
+	shop, err := s.shopService.FindShopByUserId(userID)
 	if err != nil {
 		return err
 	}
