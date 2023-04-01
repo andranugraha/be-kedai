@@ -9653,7 +9653,7 @@ paths:
       requestBody:
         $ref: '#/components/requestBodies/CreateSellerCategoryBody'
       responses:
-        '200':
+        '201':
           description: successful operation
           content:
             application/json:
@@ -9707,7 +9707,7 @@ paths:
                 properties:
                   code:
                     type: string
-                    example: "DUPLOCATE_CATEGORY"
+                    example: "DUPLICATE_CATEGORY"
                   message:
                     type: string
                     example: "category already exists"      
@@ -9799,6 +9799,94 @@ paths:
                   message:
                     type: string
                     example: "error message"       
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "INTERNAL_SERVER_ERROR"
+                  message:
+                    type: string
+                    example: "error message"
+    put:
+      security:
+        - BearerAuth: []
+      tags:
+        - Seller
+      summary: As a seller, update existing shop category
+      description: As a seller, update existing category and its products
+      parameters:
+        - in: path
+          name: categoryId
+          required: true
+          schema:
+            type: integer
+            default: 1
+      requestBody:
+        $ref: '#/components/requestBodies/UpdateSellerCategoryBody'
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Response'
+                  - type: object
+                    properties:
+                      code:
+                        example: 'SUCCESS'
+                      message:
+                        example: 'success'
+                      data:
+                        type: object
+                        properties:
+                          id:
+                            type: integer
+                            example: 1
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "BAD_REQUEST"
+                  message:
+                    type: string
+                    example: "error message"
+        '401':
+          description: unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "UNAUTHORIZED"
+                  message:
+                    type: string
+                    example: "error message"      
+        '409':
+          description: category already exists
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "DUPLICATE_CATEGORY"
+                  message:
+                    type: string
+                    example: "category already exists"      
         '500':
           description: Internal server error
           content:
@@ -13176,22 +13264,42 @@ components:
             type: object
             required:
               - name
-              - isHidden
-              - description
-              - expiredAt
-              - categoryId
-              - paymentMethodId
+              - productIds
             properties:
               name:
                 type: string
                 minLength: 1
                 maxLength: 100
-                example: voucher name
+                example: category name
               productIds:
                 type: array
                 items:
                   type: integer
                   example: [1,2]
+    UpdateSellerCategoryBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - name
+              - productIds
+              - isActive
+            properties:
+              name:
+                type: string
+                minLength: 1
+                maxLength: 100
+                example: category name
+              productIds:
+                type: array
+                items:
+                  type: integer
+                  example: [1,2]
+              isActive:
+                type: boolean
+                example: true
   securitySchemes:
     BearerAuth:
       type: http
