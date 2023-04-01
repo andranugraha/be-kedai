@@ -181,6 +181,15 @@ func createRouter() *gin.Engine {
 		CourierServiceService: courierServiceService,
 	})
 
+	shopCategoryRepo := shopRepoPackage.NewShopCategoryRepository(&shopRepoPackage.ShopCategoryRConfig{
+		DB: db,
+	})
+
+	shopCategoryService := shopServicePackage.NewShopCategoryService(&shopServicePackage.ShopCategorySConfig{
+		ShopCategoryRepo: shopCategoryRepo,
+		ShopService:      shopService,
+	})
+
 	courierService := shopServicePackage.NewCourierService(&shopServicePackage.CourierSConfig{
 		CourierRepository: courierRepo,
 		ShopService:       shopService,
@@ -263,6 +272,7 @@ func createRouter() *gin.Engine {
 		ShopPromotionService: shopPromotionService,
 		CourierService:       courierService,
 		ShopGuestService:     shopGuestService,
+		ShopCategoryService:  shopCategoryService,
 	})
 
 

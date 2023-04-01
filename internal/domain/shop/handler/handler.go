@@ -8,6 +8,7 @@ type Handler struct {
 	shopPromotionService service.ShopPromotionService
 	courierService       service.CourierService
 	shopGuestService     service.ShopGuestService
+	shopCategoryService  service.ShopCategoryService
 }
 
 type HandlerConfig struct {
@@ -16,6 +17,7 @@ type HandlerConfig struct {
 	ShopPromotionService service.ShopPromotionService
 	CourierService       service.CourierService
 	ShopGuestService     service.ShopGuestService
+	ShopCategoryService  service.ShopCategoryService
 }
 
 func New(cfg *HandlerConfig) *Handler {
@@ -25,5 +27,6 @@ func New(cfg *HandlerConfig) *Handler {
 		shopPromotionService: cfg.ShopPromotionService,
 		courierService:       cfg.CourierService,
 		shopGuestService:     cfg.ShopGuestService,
+		shopCategoryService:  cfg.ShopCategoryService,
 	}
 }
