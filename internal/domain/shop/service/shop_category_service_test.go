@@ -241,6 +241,9 @@ func TestUpdateSellerCategory(t *testing.T) {
 		categoryId = 1
 		req        = dto.UpdateSellerCategoryRequest{
 			Name: "test",
+			ProductIDs: []int{
+				1,
+			},
 		}
 	)
 
@@ -326,6 +329,78 @@ func TestUpdateSellerCategory(t *testing.T) {
 			got, err := shopCategoryService.UpdateSellerCategory(userId, categoryId, test.req)
 
 			assert.Equal(t, test.want, got)
+			assert.ErrorIs(t, test.err, err)
+		})
+	}
+}
+
+func TestDeleteSellerCategory(t *testing.T) {
+	var (
+		userId     = 1
+		categoryId = 1
+	)
+
+	tests := []struct {
+		name       string
+		err        error
+		beforeTest func(*mocks.ShopService, *mocks.ShopCategoryRepository)
+	}{
+		{
+			name: "should return shop category detail when request is valid",
+			err:  nil,
+			beforeTest: func(shopService *mocks.ShopService, shopCategoryRepo *mocks.ShopCategoryRepository) {
+				shopService.On("FindShopById", userId).Return(&model.Shop{
+					ID: 1,
+				}, nil)
+
+				shopCategoryRepo.On("Delete", categoryId, 1).Return(nil)
+			},
+		},
+		{
+			name: "should return error when shop not found",
+			err:  commonErr.ErrShopNotFound,
+			beforeTest: func(shopService *mocks.ShopService, shopCategoryRepo *mocks.ShopCategoryRepository) {
+				shopService.On("FindShopById", userId).Return(nil, commonErr.ErrShopNotFound)
+			},
+		},
+		{
+			name: "should return error when shop category not found",
+			err:  commonErr.ErrCategoryNotFound,
+			beforeTest: func(shopService *mocks.ShopService, shopCategoryRepo *mocks.ShopCategoryRepository) {
+				shopService.On("FindShopById", userId).Return(&model.Shop{
+					ID: 1,
+				}, nil)
+
+				shopCategoryRepo.On("Delete", categoryId, 1).Return(commonErr.ErrCategoryNotFound)
+			},
+		},
+		{
+			name: "should return error when delete shop category failed",
+			err:  commonErr.ErrInternalServerError,
+			beforeTest: func(shopService *mocks.ShopService, shopCategoryRepo *mocks.ShopCategoryRepository) {
+				shopService.On("FindShopById", userId).Return(&model.Shop{
+					ID: 1,
+				}, nil)
+
+				shopCategoryRepo.On("Delete", categoryId, 1).Return(commonErr.ErrInternalServerError)
+			},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			shopService := new(mocks.ShopService)
+			shopCategoryRepo := new(mocks.ShopCategoryRepository)
+
+			test.beforeTest(shopService, shopCategoryRepo)
+
+			shopCategoryService := service.NewShopCategoryService(&service.ShopCategorySConfig{
+				ShopService:      shopService,
+				ShopCategoryRepo: shopCategoryRepo,
+			})
+
+			err := shopCategoryService.DeleteSellerCategory(userId, categoryId)
+
 			assert.ErrorIs(t, test.err, err)
 		})
 	}
