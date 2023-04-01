@@ -8,6 +8,7 @@ import (
 	"kedai/backend/be-kedai/internal/domain/shop/dto"
 	"kedai/backend/be-kedai/internal/domain/shop/handler"
 	"kedai/backend/be-kedai/internal/utils/response"
+	"kedai/backend/be-kedai/internal/utils/test"
 	"kedai/backend/be-kedai/mocks"
 	"net/http"
 	"net/http/httptest"
@@ -171,6 +172,105 @@ func TestGetSellerCategoryDetail(t *testing.T) {
 
 			c.Request = httptest.NewRequest("GET", "/sellers/categories/1", nil)
 			handler.GetSellerCategoryDetail(c)
+
+			assert.Equal(t, tt.code, rec.Code)
+			assert.Equal(t, string(expectedBody), rec.Body.String())
+		})
+	}
+}
+
+func TestCreateSellerCategory(t *testing.T) {
+	var (
+		createSellerCategoryRequest = dto.CreateSellerCategoryRequest{
+			Name: "test",
+			ProductIDs: []int{
+				1,
+			},
+		}
+	)
+	tests := []struct {
+		name       string
+		want       response.Response
+		code       int
+		beforeTest func(*mocks.ShopCategoryService)
+	}{
+		{
+			name: "should return 201 when request is valid",
+			want: response.Response{
+				Code:    code.CREATED,
+				Message: "success",
+				Data: &dto.CreateSellerCategoryResponse{
+					ID: 0,
+				},
+			},
+			code: http.StatusCreated,
+			beforeTest: func(shopCategoryService *mocks.ShopCategoryService) {
+				shopCategoryService.On("CreateSellerCategory", 1, createSellerCategoryRequest).Return(&dto.CreateSellerCategoryResponse{
+					ID: 0,
+				}, nil)
+			},
+		},
+		{
+			name: "should return 500 when get shop categories failed",
+			want: response.Response{
+				Code:    code.INTERNAL_SERVER_ERROR,
+				Message: errs.ErrInternalServerError.Error(),
+			},
+			code: http.StatusInternalServerError,
+			beforeTest: func(shopCategoryService *mocks.ShopCategoryService) {
+				shopCategoryService.On("CreateSellerCategory", 1, createSellerCategoryRequest).Return(nil, errs.ErrInternalServerError)
+			},
+		},
+		{
+			name: "should return 400 when shop not registered",
+			want: response.Response{
+				Code:    code.SHOP_NOT_REGISTERED,
+				Message: errs.ErrShopNotFound.Error(),
+			},
+			code: http.StatusBadRequest,
+			beforeTest: func(shopCategoryService *mocks.ShopCategoryService) {
+				shopCategoryService.On("CreateSellerCategory", 1, createSellerCategoryRequest).Return(nil, errs.ErrShopNotFound)
+			},
+		},
+		{
+			name: "should return 400 when product not found",
+			want: response.Response{
+				Code:    code.BAD_REQUEST,
+				Message: errs.ErrProductDoesNotExist.Error(),
+			},
+			code: http.StatusBadRequest,
+			beforeTest: func(shopCategoryService *mocks.ShopCategoryService) {
+				shopCategoryService.On("CreateSellerCategory", 1, createSellerCategoryRequest).Return(nil, errs.ErrProductDoesNotExist)
+			},
+		},
+		{
+			name: "should return 409 when category already exists",
+			want: response.Response{
+				Code:    code.DUPLICATE_CATEGORY,
+				Message: errs.ErrCategoryAlreadyExist.Error(),
+			},
+			code: http.StatusConflict,
+			beforeTest: func(shopCategoryService *mocks.ShopCategoryService) {
+				shopCategoryService.On("CreateSellerCategory", 1, createSellerCategoryRequest).Return(nil, errs.ErrCategoryAlreadyExist)
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			expectedBody, _ := json.Marshal(tt.want)
+			payload := test.MakeRequestBody(createSellerCategoryRequest)
+			shopCategoryService := new(mocks.ShopCategoryService)
+			tt.beforeTest(shopCategoryService)
+			rec := httptest.NewRecorder()
+			c, _ := gin.CreateTestContext(rec)
+			c.Set("userId", 1)
+			handler := handler.New(&handler.HandlerConfig{
+				ShopCategoryService: shopCategoryService,
+			})
+
+			c.Request = httptest.NewRequest("POST", "/sellers/categories", payload)
+			handler.CreateSellerCategory(c)
 
 			assert.Equal(t, tt.code, rec.Code)
 			assert.Equal(t, string(expectedBody), rec.Body.String())

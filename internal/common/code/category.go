@@ -1,0 +1,5 @@
+package code
+
+const (
+	DUPLICATE_CATEGORY = "DUPLICATE_CATEGORY"
+)

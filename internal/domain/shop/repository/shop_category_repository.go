@@ -2,7 +2,9 @@ package repository
 
 import (
 	"errors"
+	"fmt"
 	commonErr "kedai/backend/be-kedai/internal/common/error"
+	productRepo "kedai/backend/be-kedai/internal/domain/product/repository"
 	"kedai/backend/be-kedai/internal/domain/shop/dto"
 	"kedai/backend/be-kedai/internal/domain/shop/model"
 	"math"
@@ -13,19 +15,23 @@ import (
 type ShopCategoryRepository interface {
 	GetByShopID(shopID int, req dto.GetSellerCategoriesRequest) ([]*dto.ShopCategory, int64, int, error)
 	GetByIDAndShopID(id, shopID int) (*dto.ShopCategory, error)
+	Create(shopCategory *model.ShopCategory) error
 }
 
 type shopCategoryRepositoryImpl struct {
-	db *gorm.DB
+	db          *gorm.DB
+	productRepo productRepo.ProductRepository
 }
 
 type ShopCategoryRConfig struct {
-	DB *gorm.DB
+	DB          *gorm.DB
+	ProductRepo productRepo.ProductRepository
 }
 
 func NewShopCategoryRepository(cfg *ShopCategoryRConfig) ShopCategoryRepository {
 	return &shopCategoryRepositoryImpl{
-		db: cfg.DB,
+		db:          cfg.DB,
+		productRepo: cfg.ProductRepo,
 	}
 }
 
@@ -37,6 +43,10 @@ func (r *shopCategoryRepositoryImpl) GetByShopID(shopID int, req dto.GetSellerCa
 
 	if req.Status != "" {
 		db = db.Where("is_active = ?", req.Status == "enabled")
+	}
+
+	if req.Search != "" {
+		db = db.Where("name ilike ?", fmt.Sprintf("%%%s%%", req.Search))
 	}
 
 	err = db.Count(&totalRows).Error
@@ -73,4 +83,35 @@ func (r *shopCategoryRepositoryImpl) GetByIDAndShopID(id, shopID int) (res *dto.
 		Find(&res.Products).Error
 
 	return
+}
+
+func (r *shopCategoryRepositoryImpl) Create(shopCategory *model.ShopCategory) error {
+	for _, categoryProduct := range shopCategory.Products {
+		product, err := r.productRepo.GetByID(categoryProduct.ProductId)
+		if err != nil {
+			return err
+		}
+
+		if product.ShopID != shopCategory.ShopId {
+			return commonErr.ErrProductDoesNotExist
+		}
+	}
+
+	tx := r.db.Begin()
+	defer tx.Commit()
+
+	if err := tx.Create(&shopCategory).Error; err != nil {
+		tx.Rollback()
+		if commonErr.IsDuplicateKeyError(err) {
+			return commonErr.ErrCategoryAlreadyExist
+		}
+
+		if commonErr.IsForeignKeyError(err) {
+			return commonErr.ErrProductDoesNotExist
+		}
+
+		return err
+	}
+
+	return nil
 }
