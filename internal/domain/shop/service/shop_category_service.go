@@ -9,6 +9,7 @@ import (
 type ShopCategoryService interface {
 	GetSellerCategories(userID int, req dto.GetSellerCategoriesRequest) (*commonDto.PaginationResponse, error)
 	GetSellerCategoryDetail(userID int, id int) (*dto.ShopCategory, error)
+	CreateSellerCategory(userID int, req dto.CreateSellerCategoryRequest) (*dto.CreateSellerCategoryResponse, error)
 }
 
 type shopCategoryServiceImpl struct {
@@ -60,4 +61,22 @@ func (s *shopCategoryServiceImpl) GetSellerCategoryDetail(userID int, id int) (*
 	}
 
 	return shopCategory, nil
+}
+
+func (s *shopCategoryServiceImpl) CreateSellerCategory(userID int, req dto.CreateSellerCategoryRequest) (*dto.CreateSellerCategoryResponse, error) {
+	shop, err := s.shopService.FindShopById(userID)
+	if err != nil {
+		return nil, err
+	}
+
+	shopCategory := req.ComposeModel(shop.ID)
+
+	err = s.shopCategoryRepo.Create(shopCategory)
+	if err != nil {
+		return nil, err
+	}
+
+	return &dto.CreateSellerCategoryResponse{
+		ID: shopCategory.ID,
+	}, nil
 }

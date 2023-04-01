@@ -181,15 +181,6 @@ func createRouter() *gin.Engine {
 		CourierServiceService: courierServiceService,
 	})
 
-	shopCategoryRepo := shopRepoPackage.NewShopCategoryRepository(&shopRepoPackage.ShopCategoryRConfig{
-		DB: db,
-	})
-
-	shopCategoryService := shopServicePackage.NewShopCategoryService(&shopServicePackage.ShopCategorySConfig{
-		ShopCategoryRepo: shopCategoryRepo,
-		ShopService:      shopService,
-	})
-
 	courierService := shopServicePackage.NewCourierService(&shopServicePackage.CourierSConfig{
 		CourierRepository: courierRepo,
 		ShopService:       shopService,
@@ -266,6 +257,16 @@ func createRouter() *gin.Engine {
 		ShopService:             shopService,
 	})
 
+	shopCategoryRepo := shopRepoPackage.NewShopCategoryRepository(&shopRepoPackage.ShopCategoryRConfig{
+		DB:          db,
+		ProductRepo: productRepo,
+	})
+
+	shopCategoryService := shopServicePackage.NewShopCategoryService(&shopServicePackage.ShopCategorySConfig{
+		ShopCategoryRepo: shopCategoryRepo,
+		ShopService:      shopService,
+	})
+
 	shopHandler := shopHandlerPackage.New(&shopHandlerPackage.HandlerConfig{
 		ShopService:          shopService,
 		ShopVoucherService:   shopVoucherService,
@@ -274,8 +275,6 @@ func createRouter() *gin.Engine {
 		ShopGuestService:     shopGuestService,
 		ShopCategoryService:  shopCategoryService,
 	})
-
-
 
 	userProfileRepo := userRepoPackage.NewUserProfileRepository(&userRepoPackage.UserProfileRConfig{
 		DB: db,
