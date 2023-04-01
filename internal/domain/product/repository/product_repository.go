@@ -600,12 +600,24 @@ func (r *productRepositoryImpl) Update(shopID int, code string, payload *dto.Cre
 	updatedProduct.CreatedAt = product.CreatedAt
 	updatedProduct.Rating = product.Rating
 	updatedProduct.Sold = product.Sold
-	updatedProduct.Bulk.ID = product.Bulk.ID
+
+	if payload.BulkPrice == nil {
+		errBulk := tx.Where("product_id=?", product.ID).Delete(&model.ProductBulkPrice{}).Error
+		if errBulk != nil {
+			tx.Rollback()
+			return nil, errBulk
+		}
+	} else {
+		if product.Bulk != nil {
+			updatedProduct.Bulk.ID = product.Bulk.ID
+		}
+	}
 
 	var media []*model.ProductMedia
 
 	errDelete := r.productMediaRepository.Delete(tx, product.ID)
 	if errDelete != nil {
+		tx.Rollback()
 		return nil, errDelete
 	}
 
