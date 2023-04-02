@@ -265,6 +265,12 @@ func (h *Handler) UpdateProduct(c *gin.Context) {
 		return
 	}
 
+	duplicateErr := request.Validate()
+	if duplicateErr != nil {
+		response.Error(c, http.StatusBadRequest, code.DUPLICATE_VARIANT, duplicateErr.Error())
+		return
+	}
+
 	userID := c.GetInt("userId")
 	productCode := c.Param("code")
 
