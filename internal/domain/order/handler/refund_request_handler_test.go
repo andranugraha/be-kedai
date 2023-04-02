@@ -17,6 +17,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 )
 
 func TestUpdateRefundStatus(t *testing.T) {
@@ -313,11 +314,11 @@ func TestGetRefund(t *testing.T) {
 		t.Run(tc.description, func(t *testing.T) {
 			expectedJson, _ := json.Marshal(tc.expected.response)
 			refundRequestService := mocks.NewRefundRequestService(t)
-			refundRequestService.On("GetRefund", &dto.GetRefundReq{}).Return(&commonDto.PaginationResponse{}, tc.input.err)
+			refundRequestService.On("GetRefund", mock.Anything).Return(&commonDto.PaginationResponse{}, tc.input.err)
 			rec := httptest.NewRecorder()
 			c, _ := gin.CreateTestContext(rec)
 
-			c.Request, _ = http.NewRequest(http.MethodGet, "/admins/orders/refund?limit=0&page=0", nil)
+			c.Request, _ = http.NewRequest(http.MethodGet, "/admins/orders/refund", nil)
 			handler := handler.New(&handler.Config{
 				RefundRequestService: refundRequestService,
 			})
