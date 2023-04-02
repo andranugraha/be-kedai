@@ -3,6 +3,7 @@ package dto
 import (
 	"fmt"
 	"kedai/backend/be-kedai/internal/common/constant"
+	errs "kedai/backend/be-kedai/internal/common/error"
 	"kedai/backend/be-kedai/internal/domain/product/model"
 	shopModel "kedai/backend/be-kedai/internal/domain/shop/model"
 	stringUtils "kedai/backend/be-kedai/internal/utils/strings"
@@ -322,6 +323,23 @@ func (d *CreateProductRequest) GenerateProduct() *model.Product {
 	}
 
 	return &product
+}
+
+func (d *CreateProductRequest) Validate() error {
+	freq := make(map[string]int)
+	for _, group := range d.VariantGroups {
+		freq[group.Name]++
+		if freq[group.Name] > 1 {
+			return errs.ErrDuplicateVariantGroup
+		}
+		for _, variant := range group.Variant {
+			freq[variant.Name]++
+			if freq[variant.Name] > 1 {
+				return errs.ErrDuplicateVariant
+			}
+		}
+	}
+	return nil
 }
 
 type GetRecommendedProductRequest struct {

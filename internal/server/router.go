@@ -328,6 +328,7 @@ func NewRouter(cfg *RouterConfig) *gin.Engine {
 					category.POST("", cfg.ShopHandler.CreateSellerCategory)
 					category.GET(":categoryId", cfg.ShopHandler.GetSellerCategoryDetail)
 					category.PUT(":categoryId", cfg.ShopHandler.UpdateSellerCategory)
+					category.DELETE(":categoryId", cfg.ShopHandler.DeleteSellerCategory)
 				}
 			}
 		}
