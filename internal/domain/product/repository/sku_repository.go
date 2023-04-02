@@ -196,6 +196,17 @@ func (r *skuRepositoryImpl) Update(tx *gorm.DB, productId int, skus []*model.Sku
 		return nil
 	}
 
+	err = tx.Clauses(clause.OnConflict{
+		OnConstraint: ("skus_sku_key"),
+		UpdateAll:    true,
+	}).Clauses(clause.Returning{
+		Columns: []clause.Column{{Name: "id"}},
+	}).Save(&union).Error
+	if err != nil {
+		tx.Rollback()
+		return err
+	}
+
 	for _, sku := range union {
 		for _, variant := range sku.Variants {
 			if err := tx.Model(&model.ProductVariant{}).Clauses(clause.OnConflict{
@@ -208,15 +219,6 @@ func (r *skuRepositoryImpl) Update(tx *gorm.DB, productId int, skus []*model.Sku
 				return err
 			}
 		}
-	}
-
-	err = tx.Clauses(clause.OnConflict{
-		OnConstraint: ("skus_sku_key"),
-		UpdateAll:    true,
-	}).Save(&union).Error
-	if err != nil {
-		tx.Rollback()
-		return err
 	}
 
 	return nil

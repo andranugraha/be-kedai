@@ -672,14 +672,11 @@ func (r *productRepositoryImpl) Update(shopID int, code string, payload *dto.Cre
 
 	for _, s := range skus {
 		s.ProductId = product.ID
-		for _, pSKU := range product.SKUs {
-			for idx, sVariant := range s.Variants {
-				for _, varGroup := range newVarGroup {
-					for _, variant := range varGroup.Variant {
-						if variant.ID == sVariant.ID {
-							s.ID = pSKU.ID
-							s.Variants[idx].ID = variant.ID
-						}
+		for idx, sVariant := range s.Variants {
+			for _, varGroup := range newVarGroup {
+				for _, variant := range varGroup.Variant {
+					if variant.Value == sVariant.Value {
+						s.Variants[idx].ID = variant.ID
 					}
 				}
 			}
