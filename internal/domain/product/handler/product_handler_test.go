@@ -1254,10 +1254,25 @@ func TestUpdateProduct(t *testing.T) {
 			MinQuantity: 10,
 			Price:       10000,
 		}
-		invalidMedia   = []string{"media1", "media2"}
-		validMedia     = []string{"https://image.png", "https://image2.png"}
-		courierIDs     = []int{1, 2, 3}
-		variantGroups  = []*dto.CreateVariantGroupRequest{}
+		invalidMedia         = []string{"media1", "media2"}
+		validMedia           = []string{"https://image.png", "https://image2.png"}
+		courierIDs           = []int{1, 2, 3}
+		variantGroups        = []*dto.CreateVariantGroupRequest{}
+		invalidVariantGroups = []*dto.CreateVariantGroupRequest{
+			{
+				Name: "variant-group",
+				Variant: []*dto.AddVariantRequest{
+					{
+						Name:     "variant",
+						MediaUrl: "https://image.png",
+					},
+					{
+						Name:     "variant",
+						MediaUrl: "https://image.png",
+					},
+				},
+			},
+		}
 		invalidRequest = dto.CreateProductRequest{
 			Name:        "product-name",
 			Description: "product-description",
@@ -1320,6 +1335,25 @@ func TestUpdateProduct(t *testing.T) {
 			VariantGroups: variantGroups,
 			SKU:           skus,
 		}
+		invalidVariantRequest = dto.CreateProductRequest{
+			Name:          "product-name",
+			Description:   "product-description here is more than 20 words",
+			Price:         10000,
+			IsHazardous:   &isHazardous,
+			Weight:        1000,
+			Length:        1000,
+			Width:         1000,
+			Height:        1000,
+			IsNew:         &isNew,
+			IsActive:      &isActive,
+			CategoryID:    1,
+			BulkPrice:     &bulkPrice,
+			Media:         validMedia,
+			CourierIDs:    courierIDs,
+			Stock:         100,
+			VariantGroups: invalidVariantGroups,
+			SKU:           skus,
+		}
 		updatedProduct = &model.Product{
 			ID:          1,
 			Code:        productCode,
@@ -1355,6 +1389,22 @@ func TestUpdateProduct(t *testing.T) {
 				response: response.Response{
 					Code:    code.BAD_REQUEST,
 					Message: "Price is required",
+				},
+			},
+		},
+		{
+			description: "should return error with status code 400 when duplicate variant name found in payload",
+			input: input{
+				userID:  userID,
+				code:    productCode,
+				request: &invalidVariantRequest,
+			},
+			beforeTest: func(ps *mocks.ProductService) {},
+			expected: expected{
+				statusCode: http.StatusBadRequest,
+				response: response.Response{
+					Code:    code.DUPLICATE_VARIANT,
+					Message: "duplicate variant",
 				},
 			},
 		},
