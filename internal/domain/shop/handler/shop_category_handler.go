@@ -93,10 +93,7 @@ func (h *Handler) CreateSellerCategory(c *gin.Context) {
 
 func (h *Handler) UpdateSellerCategory(c *gin.Context) {
 	var req dto.UpdateSellerCategoryRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
-		response.ErrorValidator(c, http.StatusBadRequest, err)
-		return
-	}
+	_ = c.ShouldBindJSON(&req)
 
 	userId := c.GetInt("userId")
 	categoryId := c.Param("categoryId")
