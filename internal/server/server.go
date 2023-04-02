@@ -151,11 +151,6 @@ func createRouter() *gin.Engine {
 		InvoiceRepo:       invoiceRepo,
 	})
 
-	refundRequestRepo = orderRepoPackage.NewRefundRequestRepository(&orderRepoPackage.RefundRequestRConfig{
-		DB:                 db,
-		InvoicePerShopRepo: invoicePerShopRepo,
-	})
-
 	shopGuestRepo := shopRepoPackage.NewShopGuestRepository(&shopRepoPackage.ShopGuestRConfig{
 		DB: db,
 	})
@@ -184,15 +179,6 @@ func createRouter() *gin.Engine {
 	shopService := shopServicePackage.NewShopService(&shopServicePackage.ShopSConfig{
 		ShopRepository:        shopRepo,
 		CourierServiceService: courierServiceService,
-	})
-
-	shopCategoryRepo := shopRepoPackage.NewShopCategoryRepository(&shopRepoPackage.ShopCategoryRConfig{
-		DB: db,
-	})
-
-	shopCategoryService := shopServicePackage.NewShopCategoryService(&shopServicePackage.ShopCategorySConfig{
-		ShopCategoryRepo: shopCategoryRepo,
-		ShopService:      shopService,
 	})
 
 	courierService := shopServicePackage.NewCourierService(&shopServicePackage.CourierSConfig{
@@ -271,6 +257,16 @@ func createRouter() *gin.Engine {
 		ShopService:             shopService,
 	})
 
+	shopCategoryRepo := shopRepoPackage.NewShopCategoryRepository(&shopRepoPackage.ShopCategoryRConfig{
+		DB:          db,
+		ProductRepo: productRepo,
+	})
+
+	shopCategoryService := shopServicePackage.NewShopCategoryService(&shopServicePackage.ShopCategorySConfig{
+		ShopCategoryRepo: shopCategoryRepo,
+		ShopService:      shopService,
+	})
+
 	shopHandler := shopHandlerPackage.New(&shopHandlerPackage.HandlerConfig{
 		ShopService:          shopService,
 		ShopVoucherService:   shopVoucherService,
@@ -278,11 +274,6 @@ func createRouter() *gin.Engine {
 		CourierService:       courierService,
 		ShopGuestService:     shopGuestService,
 		ShopCategoryService:  shopCategoryService,
-	})
-
-	refundRequestService := orderServicePackage.NewRefundRequestService(&orderServicePackage.RefundRequestSConfig{
-		RefundRequestRepo: refundRequestRepo,
-		ShopService:       shopService,
 	})
 
 	userProfileRepo := userRepoPackage.NewUserProfileRepository(&userRepoPackage.UserProfileRConfig{
@@ -295,6 +286,18 @@ func createRouter() *gin.Engine {
 		UserProfileRepo: userProfileRepo,
 	})
 
+	refundRequestRepo = orderRepoPackage.NewRefundRequestRepository(&orderRepoPackage.RefundRequestRConfig{
+		DB:                 db,
+		InvoicePerShopRepo: invoicePerShopRepo,
+		InvoiceStatusRepo:  invoiceStatusRepo,
+		UserRepo:           walletRepo,
+		ProductRepo:        skuRepo,
+	})
+
+	refundRequestService := orderServicePackage.NewRefundRequestService(&orderServicePackage.RefundRequestSConfig{
+		RefundRequestRepo: refundRequestRepo,
+		ShopService:       shopService,
+	})
 	userService := userServicePackage.NewUserService(&userServicePackage.UserSConfig{
 		Repository:  userRepo,
 		Redis:       userCache,

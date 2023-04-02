@@ -235,9 +235,12 @@ func NewRouter(cfg *RouterConfig) *gin.Engine {
 				{
 					category.POST("", cfg.ProductHandler.AddCategory)
 				}
+
 				order := authenticated.Group("/orders")
 				{
+					order.GET("/refund", cfg.OrderHandler.GetRefund)
 					order.POST("/:orderId/cancel-commit", cfg.OrderHandler.UpdateToCanceled)
+					order.POST("/refund/:refundId", cfg.OrderHandler.RefundAdmin)
 				}
 				marketplace := authenticated.Group("/marketplaces")
 				{
@@ -247,6 +250,7 @@ func NewRouter(cfg *RouterConfig) *gin.Engine {
 						voucher.POST("", cfg.MarketplaceHandler.CreateMarketplaceVoucher)
 						voucher.GET("", cfg.MarketplaceHandler.GetMarketplaceVoucherAdmin)
 						voucher.GET("/:code", cfg.MarketplaceHandler.GetMarketplaceVoucherAdminByCode)
+						voucher.PUT("/:code", cfg.MarketplaceHandler.UpdateVoucher)
 					}
 				}
 			}
@@ -321,6 +325,10 @@ func NewRouter(cfg *RouterConfig) *gin.Engine {
 				category := authenticated.Group("/categories")
 				{
 					category.GET("", cfg.ShopHandler.GetSellerCategories)
+					category.POST("", cfg.ShopHandler.CreateSellerCategory)
+					category.GET(":categoryId", cfg.ShopHandler.GetSellerCategoryDetail)
+					category.PUT(":categoryId", cfg.ShopHandler.UpdateSellerCategory)
+					category.DELETE(":categoryId", cfg.ShopHandler.DeleteSellerCategory)
 				}
 			}
 		}

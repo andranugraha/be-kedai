@@ -23,7 +23,7 @@ func (h *Handler) GetDiscussionByProductID(c *gin.Context) {
 
 	result, err := h.discussionService.GetDiscussionByProductID(productId, request)
 	if err != nil {
-		response.Error(c, http.StatusInternalServerError, code.INTERNAL_SERVER_ERROR, err.Error())
+		response.Error(c, http.StatusInternalServerError, code.INTERNAL_SERVER_ERROR, commonError.ErrInternalServerError.Error())
 		return
 	}
 
@@ -46,7 +46,7 @@ func (h *Handler) GetUnrepliedDiscussionByShopID(c *gin.Context) {
 			response.Error(c, http.StatusNotFound, code.SHOP_NOT_REGISTERED, err.Error())
 			return
 		}
-		response.Error(c, http.StatusInternalServerError, code.INTERNAL_SERVER_ERROR, err.Error())
+		response.Error(c, http.StatusInternalServerError, code.INTERNAL_SERVER_ERROR, commonError.ErrInternalServerError.Error())
 		return
 	}
 
@@ -58,7 +58,7 @@ func (h *Handler) GetDiscussionByParentID(c *gin.Context) {
 
 	result, err := h.discussionService.GetChildDiscussionByParentID(parentId)
 	if err != nil {
-		response.Error(c, http.StatusInternalServerError, code.INTERNAL_SERVER_ERROR, err.Error())
+		response.Error(c, http.StatusInternalServerError, code.INTERNAL_SERVER_ERROR, commonError.ErrInternalServerError.Error())
 		return
 	}
 
@@ -78,7 +78,7 @@ func (h *Handler) PostDiscussion(c *gin.Context) {
 
 	err := h.discussionService.PostDiscussion(&discussionDto)
 	if err != nil {
-		response.Error(c, http.StatusInternalServerError, code.INTERNAL_SERVER_ERROR, err.Error())
+		response.Error(c, http.StatusInternalServerError, code.INTERNAL_SERVER_ERROR, commonError.ErrInternalServerError.Error())
 		return
 	}
 

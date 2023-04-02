@@ -602,12 +602,24 @@ func (r *productRepositoryImpl) Update(shopID int, code string, payload *dto.Cre
 	updatedProduct.CreatedAt = product.CreatedAt
 	updatedProduct.Rating = product.Rating
 	updatedProduct.Sold = product.Sold
-	updatedProduct.Bulk.ID = product.Bulk.ID
+
+	if payload.BulkPrice == nil {
+		errBulk := tx.Where("product_id=?", product.ID).Delete(&model.ProductBulkPrice{}).Error
+		if errBulk != nil {
+			tx.Rollback()
+			return nil, errBulk
+		}
+	} else {
+		if product.Bulk != nil {
+			updatedProduct.Bulk.ID = product.Bulk.ID
+		}
+	}
 
 	var media []*model.ProductMedia
 
 	errDelete := r.productMediaRepository.Delete(tx, product.ID)
 	if errDelete != nil {
+		tx.Rollback()
 		return nil, errDelete
 	}
 
@@ -651,26 +663,22 @@ func (r *productRepositoryImpl) Update(shopID int, code string, payload *dto.Cre
 	}
 
 	var newVarGroup []*model.VariantGroup
-	if variantGroups != nil {
-		newVarGroup, err = r.variantGroupRepo.Update(tx, product.ID, variantGroups)
-		if err != nil {
-			tx.Rollback()
-			return nil, err
-		}
+
+	newVarGroup, err = r.variantGroupRepo.Update(tx, product.ID, variantGroups)
+	if err != nil {
+		tx.Rollback()
+		return nil, err
 	}
 
 	skus := payload.GenerateSKU(variantGroups)
 
 	for _, s := range skus {
 		s.ProductId = product.ID
-		for _, pSKU := range product.SKUs {
-			for idx, sVariant := range s.Variants {
-				for _, varGroup := range newVarGroup {
-					for _, variant := range varGroup.Variant {
-						if variant.ID == sVariant.ID {
-							s.ID = pSKU.ID
-							s.Variants[idx].ID = variant.ID
-						}
+		for idx, sVariant := range s.Variants {
+			for _, varGroup := range newVarGroup {
+				for _, variant := range varGroup.Variant {
+					if variant.Value == sVariant.Value {
+						s.Variants[idx].ID = variant.ID
 					}
 				}
 			}

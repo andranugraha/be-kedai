@@ -45,6 +45,7 @@ func NewShopVoucherRepository(cfg *ShopVoucherRConfig) ShopVoucherRepository {
 	}
 }
 
+
 func (r *shopVoucherRepositoryImpl) GetShopVoucher(shopId int) ([]*model.ShopVoucher, error) {
 	var shopVoucher []*model.ShopVoucher
 	publicVoucher := true

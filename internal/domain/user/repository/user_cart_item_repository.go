@@ -113,9 +113,9 @@ func (r *userCartItemRepository) GetAllCartItem(req *dto.GetCartItemsRequest) (c
 		Preload("Sku.Variants.Group").
 		Preload("Sku.Promotion").
 		Preload("Sku.Product.Bulk").
-		Preload("Sku.Product.Media")
+		Preload("Sku.Product.Media").Session(&gorm.Session{})
 
-	db.Model(&model.CartItem{}).Count(&totalRows)
+	db.Distinct("cart_items.id").Model(&model.CartItem{}).Count(&totalRows)
 
 	totalPages = 1
 	if req.Limit > 0 {

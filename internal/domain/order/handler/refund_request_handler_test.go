@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"kedai/backend/be-kedai/internal/common/code"
+	commonDto "kedai/backend/be-kedai/internal/common/dto"
 	commonErr "kedai/backend/be-kedai/internal/common/error"
 	"kedai/backend/be-kedai/internal/domain/order/dto"
 	"kedai/backend/be-kedai/internal/domain/order/handler"
@@ -16,6 +17,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 )
 
 func TestUpdateRefundStatus(t *testing.T) {
@@ -161,6 +163,167 @@ func TestUpdateRefundStatus(t *testing.T) {
 			})
 
 			handler.UpdateRefundStatus(c)
+
+			assert.Equal(t, tc.expected.statusCode, rec.Code)
+			assert.Equal(t, string(expectedJson), rec.Body.String())
+		})
+	}
+}
+
+func TestRefundAdmin(t *testing.T) {
+	type input struct {
+		refundId int
+		err      error
+	}
+
+	type expected struct {
+		statusCode int
+		response   response.Response
+	}
+
+	tests := []struct {
+		description string
+		input       input
+		expected    expected
+	}{
+		{
+			description: "should return error with status code 404 when refund request does not exist",
+			input: input{
+				refundId: 1,
+				err:      commonErr.ErrRefundRequestNotFound,
+			},
+			expected: expected{
+				statusCode: http.StatusNotFound,
+				response: response.Response{
+					Code:    code.REFUND_REQUEST_NOT_FOUND,
+					Message: commonErr.ErrRefundRequestNotFound.Error(),
+				},
+			},
+		},
+		{
+			description: "should return error with status code 400 when refund request is already refunded",
+			input: input{
+				err:      commonErr.ErrRefunded,
+				refundId: 1,
+			},
+			expected: expected{
+				statusCode: http.StatusBadRequest,
+				response: response.Response{
+					Code:    code.REFUNDED,
+					Message: commonErr.ErrRefunded.Error(),
+				},
+			},
+		},
+		{
+			description: "should return error with status code 500 when refund request fails",
+			input: input{
+				refundId: 1,
+				err:      commonErr.ErrInternalServerError,
+			},
+			expected: expected{
+				statusCode: http.StatusInternalServerError,
+				response: response.Response{
+					Code:    code.INTERNAL_SERVER_ERROR,
+					Message: commonErr.ErrInternalServerError.Error(),
+				},
+			},
+		},
+		{
+			description: "should return success with status code 200 when refund request is successfully refunded",
+			input: input{
+				refundId: 1,
+				err:      nil,
+			},
+			expected: expected{
+				statusCode: http.StatusOK,
+				response: response.Response{
+					Code:    code.OK,
+					Message: "refund completed",
+				},
+			},
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.description, func(t *testing.T) {
+			expectedJson, _ := json.Marshal(tc.expected.response)
+			refundRequestService := mocks.NewRefundRequestService(t)
+			refundRequestService.On("RefundAdmin", tc.input.refundId).Return(tc.input.err)
+			rec := httptest.NewRecorder()
+			c, _ := gin.CreateTestContext(rec)
+
+			c.AddParam("refundId", "1")
+			c.Request, _ = http.NewRequest(http.MethodPut, fmt.Sprintf("/admins/orders/refund/{%d}", tc.input.refundId), nil)
+			handler := handler.New(&handler.Config{
+				RefundRequestService: refundRequestService,
+			})
+
+			handler.RefundAdmin(c)
+
+			assert.Equal(t, tc.expected.statusCode, rec.Code)
+			assert.Equal(t, string(expectedJson), rec.Body.String())
+		})
+	}
+}
+
+func TestGetRefund(t *testing.T) {
+	type input struct {
+		err error
+	}
+
+	type expected struct {
+		statusCode int
+		response   response.Response
+	}
+
+	tests := []struct {
+		description string
+		input       input
+		expected    expected
+	}{
+		{
+			description: "should return error with status code 500 when refund request fails",
+			input: input{
+				err: commonErr.ErrInternalServerError,
+			},
+			expected: expected{
+				statusCode: http.StatusInternalServerError,
+				response: response.Response{
+					Code:    code.INTERNAL_SERVER_ERROR,
+					Message: commonErr.ErrInternalServerError.Error(),
+				},
+			},
+		},
+		{
+			description: "should return success with status code 200 when refund request is successfully refunded",
+			input: input{
+				err: nil,
+			},
+			expected: expected{
+				statusCode: http.StatusOK,
+				response: response.Response{
+					Code:    code.OK,
+					Message: "refund request found",
+					Data:    &commonDto.PaginationResponse{},
+				},
+			},
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.description, func(t *testing.T) {
+			expectedJson, _ := json.Marshal(tc.expected.response)
+			refundRequestService := mocks.NewRefundRequestService(t)
+			refundRequestService.On("GetRefund", mock.Anything).Return(&commonDto.PaginationResponse{}, tc.input.err)
+			rec := httptest.NewRecorder()
+			c, _ := gin.CreateTestContext(rec)
+
+			c.Request, _ = http.NewRequest(http.MethodGet, "/admins/orders/refund", nil)
+			handler := handler.New(&handler.Config{
+				RefundRequestService: refundRequestService,
+			})
+
+			handler.GetRefund(c)
 
 			assert.Equal(t, tc.expected.statusCode, rec.Code)
 			assert.Equal(t, string(expectedJson), rec.Body.String())

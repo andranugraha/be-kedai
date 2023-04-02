@@ -29,5 +29,5 @@ var (
 		SENDER:          GetEnv("MAILGUN_SENDER", ""),
 	}
 	Origin                = GetArrayENV("ORIGIN", []string{"http://localhost:3000"})
-	DefaultProfilePicture = GetEnv("DEFAULT_PROFILE_PICTURE", "https://awsimages.detik.net.id/community/media/visual/2022/12/31/meme-logo-mixue_43.jpeg")
+	DefaultProfilePicture = GetEnv("DEFAULT_PROFILE_PICTURE", "")
 )
