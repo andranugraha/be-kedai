@@ -141,10 +141,11 @@ func (s *invoiceServiceImpl) Checkout(req dto.CheckoutRequest) (*dto.CheckoutRes
 
 			var (
 				totalPrice    float64
-				totalPromoted int = product.Quantity
-				basePrice         = price
+				totalPromoted int
+				basePrice     = price
 			)
 			if cartItem.Sku.Promotion != nil {
+				totalPromoted = product.Quantity
 				switch cartItem.Sku.Promotion.Type {
 				case shopModel.PromotionTypePercent:
 					price = price - (price * cartItem.Sku.Promotion.Amount)
