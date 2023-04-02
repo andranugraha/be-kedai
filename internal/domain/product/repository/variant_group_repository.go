@@ -143,10 +143,8 @@ func (r *variantGroupRepositoryImpl) Update(tx *gorm.DB, productId int, variantG
 				if err := tx.
 					Clauses(clause.Returning{}).
 					Clauses(clause.OnConflict{
-						Columns: []clause.Column{{Name: "value"}, {Name: "group_id"}},
-						DoUpdates: clause.AssignmentColumns([]string{
-							"media_url",
-						}),
+						Columns:   []clause.Column{{Name: "value"}, {Name: "group_id"}},
+						UpdateAll: true,
 					}).
 					Save(&vg.Variant).Error; err != nil {
 					tx.Rollback()
