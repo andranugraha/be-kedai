@@ -239,9 +239,7 @@ func TestUpdateSellerCategory(t *testing.T) {
 	var (
 		userId     = 1
 		categoryId = 1
-		req        = dto.UpdateSellerCategoryRequest{
-			Name: "test",
-		}
+		req        = dto.UpdateSellerCategoryRequest{}
 	)
 
 	tests := []struct {

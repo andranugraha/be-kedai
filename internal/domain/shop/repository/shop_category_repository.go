@@ -138,12 +138,12 @@ func (r *shopCategoryRepositoryImpl) Update(shopCategory *model.ShopCategory) er
 	tx := r.db.Begin()
 	defer tx.Commit()
 
-	if err := tx.Where("shop_category_id = ?", shopCategory.ID).Unscoped().Delete(&model.ShopCategoryProduct{}).Error; err != nil {
-		tx.Rollback()
-		return err
-	}
-
+	updateWithNewProducts := false
 	for _, categoryProduct := range shopCategory.Products {
+		if categoryProduct.ID == 0 {
+			updateWithNewProducts = true
+		}
+
 		product, err := r.productRepo.GetByID(categoryProduct.ProductId)
 		if err != nil {
 			return err
@@ -151,6 +151,13 @@ func (r *shopCategoryRepositoryImpl) Update(shopCategory *model.ShopCategory) er
 
 		if product.ShopID != shopCategory.ShopId {
 			return commonErr.ErrProductDoesNotExist
+		}
+	}
+
+	if updateWithNewProducts {
+		if err := tx.Where("shop_category_id = ?", shopCategory.ID).Unscoped().Delete(&model.ShopCategoryProduct{}).Error; err != nil {
+			tx.Rollback()
+			return err
 		}
 	}
 

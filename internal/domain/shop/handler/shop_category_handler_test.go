@@ -280,12 +280,7 @@ func TestCreateSellerCategory(t *testing.T) {
 
 func TestUpdateSellerCategory(t *testing.T) {
 	var (
-		updateSellerCategoryRequest = dto.UpdateSellerCategoryRequest{
-			Name: "test",
-			ProductIDs: []int{
-				1,
-			},
-		}
+		updateSellerCategoryRequest = dto.UpdateSellerCategoryRequest{}
 	)
 	tests := []struct {
 		name       string

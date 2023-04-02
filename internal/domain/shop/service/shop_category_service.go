@@ -94,18 +94,24 @@ func (s *shopCategoryServiceImpl) UpdateSellerCategory(userID int, id int, req d
 		return nil, err
 	}
 
-	category.Name = req.Name
-	category.IsActive = req.IsActive
-	category.Products = func() []*model.ShopCategoryProduct {
-		var products []*model.ShopCategoryProduct
-		for _, productId := range req.ProductIDs {
-			products = append(products, &model.ShopCategoryProduct{
-				ProductId:      productId,
-				ShopCategoryId: category.ID,
-			})
-		}
-		return products
-	}()
+	if req.Name != nil {
+		category.Name = *req.Name
+	}
+	if req.IsActive != nil {
+		category.IsActive = *req.IsActive
+	}
+	if req.ProductIDs != nil {
+		category.Products = func() []*model.ShopCategoryProduct {
+			var products []*model.ShopCategoryProduct
+			for _, productId := range req.ProductIDs {
+				products = append(products, &model.ShopCategoryProduct{
+					ProductId:      *productId,
+					ShopCategoryId: category.ID,
+				})
+			}
+			return products
+		}()
+	}
 
 	err = s.shopCategoryRepo.Update(category)
 	if err != nil {
