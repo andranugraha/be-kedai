@@ -211,13 +211,8 @@ func (r *skuRepositoryImpl) Update(tx *gorm.DB, productId int, skus []*model.Sku
 	}
 
 	err = tx.Clauses(clause.OnConflict{
-		Columns: []clause.Column{
-			{Name: "sku"},
-		},
-		DoUpdates: clause.AssignmentColumns([]string{"price", "stock"}),
-	}).Clauses(clause.OnConflict{
-		Columns:   []clause.Column{{Name: "id"}},
-		DoUpdates: clause.AssignmentColumns([]string{"sku", "price", "stock", "product_id"}),
+		OnConstraint: ("skus_sku_key"),
+		UpdateAll:    true,
 	}).Save(&union).Error
 	if err != nil {
 		tx.Rollback()
