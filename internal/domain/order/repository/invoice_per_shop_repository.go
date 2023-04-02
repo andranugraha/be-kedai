@@ -439,7 +439,7 @@ func (r *invoicePerShopRepositoryImpl) GetShopOrder(shopId int, req *dto.Invoice
 	}
 
 	if req.OrderId != "" {
-		db = db.Where("i.code ILIKE ?", "%"+req.OrderId+"%")
+		db = db.Where("invoice_per_shops.code ILIKE ?", "%"+req.OrderId+"%")
 	}
 
 	if req.TrackingNumber != "" {
