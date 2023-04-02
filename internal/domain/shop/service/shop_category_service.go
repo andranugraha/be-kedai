@@ -94,6 +94,8 @@ func (s *shopCategoryServiceImpl) UpdateSellerCategory(userID int, id int, req d
 		return nil, err
 	}
 
+	category.Name = req.Name
+	category.IsActive = req.IsActive
 	category.Products = func() []*model.ShopCategoryProduct {
 		var products []*model.ShopCategoryProduct
 		for _, productId := range req.ProductIDs {
