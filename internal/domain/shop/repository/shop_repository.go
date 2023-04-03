@@ -4,6 +4,7 @@ import (
 	"errors"
 	"kedai/backend/be-kedai/internal/common/constant"
 	errs "kedai/backend/be-kedai/internal/common/error"
+	locationModel "kedai/backend/be-kedai/internal/domain/location/model"
 	orderRepo "kedai/backend/be-kedai/internal/domain/order/repository"
 	"kedai/backend/be-kedai/internal/domain/shop/dto"
 	"kedai/backend/be-kedai/internal/domain/shop/model"
@@ -310,9 +311,20 @@ func (r *shopRepositoryImpl) UpdateShop(shop *model.Shop) error {
 }
 
 func (r *shopRepositoryImpl) Create(shop *model.Shop) error {
+	var address locationModel.UserAddress
 	shop.JoinedDate = time.Now()
 
-	res := r.db.Clauses(clause.OnConflict{DoNothing: true}).Create(shop)
+	res := r.db.Where("user_id = ?", shop.UserID).
+		Where("id = ?", shop.AddressID).
+		First(&address)
+
+	if res.Error != nil {
+		if errors.Is(res.Error, gorm.ErrRecordNotFound) {
+			return errs.ErrAddressNotFound
+		}
+	}
+
+	res = r.db.Clauses(clause.OnConflict{DoNothing: true}).Create(shop)
 	if res.Error != nil {
 		return res.Error
 	}

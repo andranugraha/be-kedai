@@ -264,8 +264,12 @@ func (r *invoiceRepositoryImpl) UpdateInvoice(tx *gorm.DB, invoice *model.Invoic
 }
 
 func (r *invoiceRepositoryImpl) ClearUnusedInvoice() error {
-	var invoices []*model.Invoice
-	err := r.db.Where("payment_date is null AND created_at <= ?", time.Now().Add(-(15 * time.Minute))).
+	var (
+		invoices []*model.Invoice
+		now      = time.Now()
+		duration = 15 * time.Minute
+	)
+	err := r.db.Where("payment_date is null AND (created_at + ?) < ?", duration, now).
 		Preload("InvoicePerShops.Transactions").
 		Preload("InvoicePerShops.Voucher").
 		Preload("Voucher").
