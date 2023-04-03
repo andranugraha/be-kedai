@@ -168,13 +168,18 @@ func (r *shopPromotionRepositoryImpl) Create(shopID int, request *dto.CreateShop
 		return nil, err
 	}
 
+	hasPromotedProduct, _, _, err := r.GetSellerPromotions(shopID, &dto.SellerPromotionFilterRequest{})
+	if err != nil {
+		return nil, err
+	}
+
 	tx := r.db.Begin()
 	defer tx.Commit()
 
 	shopPromotion := request.GenerateShopPromotion()
 	shopPromotion.ShopId = shopID
 
-	err := tx.Create(shopPromotion).Error
+	err = tx.Create(shopPromotion).Error
 	if err != nil {
 		tx.Rollback()
 		return nil, err
@@ -183,15 +188,28 @@ func (r *shopPromotionRepositoryImpl) Create(shopID int, request *dto.CreateShop
 	productPromotions := []*productModel.ProductPromotion{}
 
 	for _, pp := range request.ProductPromotions {
-		productPromotions = append(productPromotions, &productModel.ProductPromotion{
-			Type:          pp.Type,
-			Amount:        pp.Amount,
-			Stock:         pp.Stock,
-			IsActive:      *pp.IsActive,
-			PurchaseLimit: pp.PurchaseLimit,
-			SkuId:         pp.SkuId,
-			PromotionId:   shopPromotion.ID,
-		})
+		for _, promotions := range hasPromotedProduct {
+			for _, products := range promotions.Product {
+				for _, skus := range products.SKUs {
+					if pp.SkuId == skus.ID &&
+						(promotions.StartPeriod.Equal(shopPromotion.StartPeriod) ||
+							promotions.StartPeriod.After(shopPromotion.StartPeriod)) &&
+						(promotions.EndPeriod.Equal(shopPromotion.EndPeriod) &&
+							promotions.EndPeriod.Before(shopPromotion.EndPeriod)) {
+						return nil, errs.ErrProductHasBeenPromoted
+					}
+				}
+			}
+			productPromotions = append(productPromotions, &productModel.ProductPromotion{
+				Type:          pp.Type,
+				Amount:        pp.Amount,
+				Stock:         pp.Stock,
+				IsActive:      *pp.IsActive,
+				PurchaseLimit: pp.PurchaseLimit,
+				SkuId:         pp.SkuId,
+				PromotionId:   shopPromotion.ID,
+			})
+		}
 	}
 
 	err = tx.Create(productPromotions).Error
