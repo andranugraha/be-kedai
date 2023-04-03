@@ -43,7 +43,7 @@ func (r *userWishlistRepositoryImpl) GetUserWishlists(req dto.GetUserWishlistsRe
 			max(case when pp.type = 'nominal' then pp.amount / s.price else pp.amount end) as promotion_percent, 
 			(select url from product_medias pm where products.id = pm.product_id limit 1) as image_url,
 			(select id from skus s where products.id = s.product_id limit 1) as default_sku_id`).
-			Joins("join skus s ON s.product_id = products.id").
+			Joins("join skus s ON s.product_id = products.id AND s.deleted_at IS NULL").
 			Joins("join shops sh ON sh.id = products.shop_id").
 			Joins("join user_addresses ua ON ua.id = sh.address_id").
 			Joins("join cities c ON c.id = ua.city_id").
