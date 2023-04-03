@@ -30,4 +30,5 @@ var (
 	}
 	Origin                = GetArrayENV("ORIGIN", []string{"http://localhost:3000"})
 	DefaultProfilePicture = GetEnv("DEFAULT_PROFILE_PICTURE", "")
+	AES16SecretKey        = []byte(GetEnv("AES_16_SECRET_KEY", "wzbtr8xSIacDrhVO"))
 )

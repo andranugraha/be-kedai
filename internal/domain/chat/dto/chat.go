@@ -1,7 +1,9 @@
 package dto
 
 import (
+	"kedai/backend/be-kedai/config"
 	chatModel "kedai/backend/be-kedai/internal/domain/chat/model"
+	"kedai/backend/be-kedai/internal/utils/encrypt"
 	"time"
 )
 
@@ -74,6 +76,12 @@ func ConvertChatToOutput(c *chatModel.Chat, role string) *ChatResponse {
 	if c == nil {
 		return nil
 	}
+
+	decryptedMsg, err := encrypt.DecryptMessage(c.Message, config.AES16SecretKey)
+	if err == nil {
+		c.Message = decryptedMsg
+	}
+
 	return &ChatResponse{
 		ID:      c.ID,
 		Message: c.Message,
