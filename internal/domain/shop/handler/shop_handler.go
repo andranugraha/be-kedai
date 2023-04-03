@@ -177,6 +177,11 @@ func (h *Handler) CreateShop(c *gin.Context) {
 			return
 		}
 
+		if errors.Is(err, errs.ErrAddressNotFound) {
+			response.Error(c, http.StatusNotFound, code.NOT_FOUND, err.Error())
+			return
+		}
+
 		response.Error(c, http.StatusInternalServerError, code.INTERNAL_SERVER_ERROR, errs.ErrInternalServerError.Error())
 		return
 	}

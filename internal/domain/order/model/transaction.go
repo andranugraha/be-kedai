@@ -26,3 +26,8 @@ type Transaction struct {
 
 	gorm.Model `json:"-"`
 }
+
+func (t *Transaction) BeforeDelete(tx *gorm.DB) error {
+	_ = tx.Model(&TransactionVariant{}).Where("transaction_id = ?", t.ID).Delete(&TransactionVariant{})
+	return nil
+}

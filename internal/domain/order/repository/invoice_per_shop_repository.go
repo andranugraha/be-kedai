@@ -506,7 +506,7 @@ func (r *invoicePerShopRepositoryImpl) RefundRequest(ref *model.RefundRequest, i
 			return err
 		}
 
-		if err := tx.Model(&model.InvoicePerShop{}).Where("id = ? AND status = ?", ref.InvoiceID, constant.TransactionStatusReceived).Update("status", constant.TransactionStatusComplained); err.Error != nil || err.RowsAffected == 0 {
+		if err := tx.Model(&model.InvoicePerShop{}).Where("id = ? AND (status = ? OR status = ?)", ref.InvoiceID, constant.TransactionStatusReceived, constant.TransactionStatusComplaintRejected).Update("status", constant.TransactionStatusComplained); err.Error != nil || err.RowsAffected == 0 {
 			if err.RowsAffected == 0 {
 				return commonErr.ErrInvoiceNotFound
 			}
@@ -773,10 +773,22 @@ func (r *invoicePerShopRepositoryImpl) UpdateStatusToRefundPending(shopId int, o
 func (r *invoicePerShopRepositoryImpl) UpdateRefundStatus(tx *gorm.DB, shopId int, orderId int, refundStatus string, invoiceStatuses []*model.InvoiceStatus) error {
 	var invoiceStatus string
 	var invoicePerShop model.InvoicePerShop
+
+	currInvoiceStats, err := r.invoiceStatusRepo.Get(orderId)
+	if err != nil {
+		return err
+	}
+
 	if refundStatus == constant.RequestStatusSellerApproved {
 		invoiceStatus = constant.TransactionStatusRefundPending
 	} else {
 		invoiceStatus = constant.TransactionStatusComplaintRejected
+		for _, invoiceStat := range currInvoiceStats {
+			if invoiceStat.Status == constant.TransactionStatusComplaintRejected {
+				invoiceStatus = constant.TransactionStatusCompleted
+				break
+			}
+		}
 	}
 
 	if res := tx.
