@@ -83,7 +83,7 @@ func (r *shopCategoryRepositoryImpl) GetByIDAndShopID(id, shopID int) (res *dto.
 	err = r.db.Table("shop_category_products").Where("shop_category_id = ?", id).
 		Select("products.id, products.code, products.name, (select url from product_medias pm where pm.product_id = products.id and deleted_at is null limit 1) as image_url, min(skus.price) as min_price, max(skus.price) as max_price, sum(skus.stock) as stock").
 		Joins("join products on products.id = shop_category_products.product_id").
-		Joins("join skus on skus.product_id = products.id").
+		Joins("join skus on skus.product_id = products.id AND skus.deleted_at IS NULL").
 		Group("products.id").
 		Find(&res.Products).Error
 

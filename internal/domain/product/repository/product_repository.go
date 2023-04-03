@@ -99,7 +99,7 @@ func (r *productRepositoryImpl) GetByCode(code string) (*dto.ProductDetail, erro
 	query := r.db.Select(`products.*, min(s.price) as min_price, max(s.price) as max_price, sum(s.stock) as total_stock,
 	max(case when pp.type = 'nominal' then pp.amount / s.price else pp.amount end) as promotion_percent
 	`).
-		Joins("join skus s on s.product_id = products.id").
+		Joins("join skus s on s.product_id = products.id AND s.deleted_at IS NULL").
 		Joins("left join product_promotions pp on pp.sku_id = s.id and (select count(id) from shop_promotions sp where pp.promotion_id = sp.id and now() between sp.start_period and sp.end_period) > 0").
 		Group("products.id")
 
@@ -131,7 +131,7 @@ func (r *productRepositoryImpl) GetRecommendationByCategory(productId int, categ
 	db := r.db.Select(`products.*, min(s.price) as min_price, max(s.price) as max_price,
 	max(case when pp.type = 'nominal' then pp.amount / s.price else pp.amount end) as promotion_percent,
 	(select url from product_medias pm where pm.product_id = products.id limit 1) as image_url`).
-		Joins("join skus s on s.product_id = products.id").
+		Joins("join skus s on s.product_id = products.id AND s.deleted_at IS NULL").
 		Joins("left join product_promotions pp on pp.sku_id = s.id and (select count(id) from shop_promotions sp where pp.promotion_id = sp.id and now() between sp.start_period and sp.end_period) > 0").
 		Group("products.id")
 
@@ -158,7 +158,7 @@ func (r *productRepositoryImpl) GetByShopID(shopID int, request *dto.ShopProduct
 	max(case when pp.type = 'nominal' then pp.amount / s.price else pp.amount end) as promotion_percent,
 	(select url from product_medias pm where pm.product_id = products.id limit 1) as image_url
 	`).
-		Joins("join skus s on s.product_id = products.id").
+		Joins("join skus s on s.product_id = products.id AND s.deleted_at IS NULL").
 		Joins("left join product_promotions pp on pp.sku_id = s.id and (select count(id) from shop_promotions sp where pp.promotion_id = sp.id and now() between sp.start_period and sp.end_period) > 0")
 
 	if request.ShopProductCategoryID > 0 {
@@ -224,7 +224,7 @@ func (r *productRepositoryImpl) ProductSearchFiltering(req dto.ProductSearchFilt
 	concat(c.name, ', ', p.name) as address, 
 	max(case when pp.type = 'nominal' then pp.amount / s.price else pp.amount end) as promotion_percent, 
 	(select url from product_medias pm where products.id = pm.product_id limit 1) as image_url`).
-		Joins("join skus s ON s.product_id = products.id").
+		Joins("join skus s ON s.product_id = products.id AND s.deleted_at IS NULL").
 		Joins("join shops sh ON sh.id = products.shop_id").
 		Joins("join user_addresses ua ON ua.id = sh.address_id").
 		Joins("join cities c ON c.id = ua.city_id").
@@ -300,7 +300,7 @@ func (r *productRepositoryImpl) GetBySellerID(shopID int, request *dto.SellerPro
 		SUM(skus.stock) AS total_stock,
 		(SELECT url FROM product_medias pm WHERE pm.product_id = products.id LIMIT 1) AS image_url
 	`).
-		Joins("JOIN skus ON skus.product_id = products.id").
+		Joins("JOIN skus ON skus.product_id = products.id AND skus.deleted_at IS NULL").
 		Group("products.id")
 
 	query = query.Where("products.shop_id = ?", shopID)
@@ -554,7 +554,7 @@ func (r *productRepositoryImpl) GetRecommended(req *dto.GetRecommendedProductReq
 		max(case when pp.type = 'nominal' then pp.amount / s.price else pp.amount end) as promotion_percent,
 		(select url from product_medias pm where pm.product_id = products.id limit 1) as image_url,
 		(select id from skus s where products.id = s.product_id limit 1) as default_sku_id`).
-		Joins("join skus s on s.product_id = products.id").
+		Joins("join skus s on s.product_id = products.id AND s.deleted_at IS NULL").
 		Joins("join shops sh ON sh.id = products.shop_id").
 		Joins("join user_addresses ua ON ua.id = sh.address_id").
 		Joins("join cities c ON c.id = ua.city_id").
