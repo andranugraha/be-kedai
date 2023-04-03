@@ -84,7 +84,7 @@ func (r *invoiceRepositoryImpl) Create(invoice *model.Invoice) (*model.Invoice, 
 		}
 
 		if shop.Voucher != nil {
-			res := tx.Model(&shopModel.ShopVoucher{}).Where("id = ?", shop.VoucherID).Where("used_quota < total_quota").Update("used_quota", gorm.Expr("used_quota + 1"))
+			res := tx.Model(&shopModel.ShopVoucher{}).Where("id = ?", shop.Voucher.ShopVoucherId).Where("used_quota < total_quota").Update("used_quota", gorm.Expr("used_quota + 1"))
 			if res.Error != nil {
 				tx.Rollback()
 				return nil, res.Error
