@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"kedai/backend/be-kedai/connection"
+	locationRedisCache "kedai/backend/be-kedai/internal/domain/location/cache"
 	locationHandlerPackage "kedai/backend/be-kedai/internal/domain/location/handler"
 	locationRepoPackage "kedai/backend/be-kedai/internal/domain/location/repository"
 	locationServicePackage "kedai/backend/be-kedai/internal/domain/location/service"
@@ -18,6 +19,7 @@ import (
 	orderRepoPackage "kedai/backend/be-kedai/internal/domain/order/repository"
 	orderServicePackage "kedai/backend/be-kedai/internal/domain/order/service"
 
+	productRedisCache "kedai/backend/be-kedai/internal/domain/product/cache"
 	productHandlerPackage "kedai/backend/be-kedai/internal/domain/product/handler"
 	productRepoPackage "kedai/backend/be-kedai/internal/domain/product/repository"
 	productServicePackage "kedai/backend/be-kedai/internal/domain/product/service"
@@ -50,6 +52,12 @@ func createRouter() *gin.Engine {
 	walletCache := userRedisCache.NewWalletCache(&userRedisCache.WalletCConfig{
 		RDC: redis,
 	})
+	categoryCache := productRedisCache.NewCategoryCache(&productRedisCache.CategoryCConfig{
+		RDC: redis,
+	})
+	locationCache := locationRedisCache.NewLocationCache(&locationRedisCache.LocationCConfig{
+		RDC: redis,
+	})
 
 	userVoucherRepo := userRepoPackage.NewUserVoucherRepository(&userRepoPackage.UserVoucherRConfig{
 		DB: db,
@@ -77,29 +85,33 @@ func createRouter() *gin.Engine {
 	randomUtils := random.NewRandomUtils(&random.RandomUtilsConfig{})
 	maps := connection.GetGoogleMaps()
 
-	districtRepo := locationRepoPackage.NewDistrictRepository(&locationRepoPackage.DistrictRConfig{
-		DB: db,
-	})
-	districtService := locationServicePackage.NewDistrictService(&locationServicePackage.DistrictSConfig{
-		DistrictRepo: districtRepo,
-	})
 	subdistrictRepo := locationRepoPackage.NewSubdistrictRepository(&locationRepoPackage.SubdistrictRConfig{
 		DB: db,
 	})
 	subdistrictService := locationServicePackage.NewSubdistrictService(&locationServicePackage.SubdistrictSConfig{
 		SubdistrictRepo: subdistrictRepo,
+		Cache:           locationCache,
+	})
+	districtRepo := locationRepoPackage.NewDistrictRepository(&locationRepoPackage.DistrictRConfig{
+		DB: db,
+	})
+	districtService := locationServicePackage.NewDistrictService(&locationServicePackage.DistrictSConfig{
+		DistrictRepo: districtRepo,
+		Cache:        locationCache,
 	})
 	cityRepo := locationRepoPackage.NewCityRepository(&locationRepoPackage.CityRConfig{
 		DB: db,
 	})
 	cityService := locationServicePackage.NewCityService(&locationServicePackage.CitySConfig{
 		CityRepo: cityRepo,
+		Cache:    locationCache,
 	})
 	provinceRepo := locationRepoPackage.NewProvinceRepository(&locationRepoPackage.ProvinceRConfig{
 		DB: db,
 	})
 	provinceService := locationServicePackage.NewProvinceService(&locationServicePackage.ProvinceSConfig{
 		ProvinceRepo: provinceRepo,
+		Cache:        locationCache,
 	})
 
 	walletHistoryRepo := userRepoPackage.NewWalletHistoryRepository(&userRepoPackage.WalletHistoryRConfig{
@@ -205,7 +217,8 @@ func createRouter() *gin.Engine {
 	})
 
 	categoryService := productServicePackage.NewCategoryService(&productServicePackage.CategorySConfig{
-		CategoryRepo: categoryRepo,
+		CategoryRepo:  categoryRepo,
+		CategoryCache: categoryCache,
 	})
 
 	variantGroupRepo := productRepoPackage.NewVariantGroupRepository(&productRepoPackage.VariantGroupRConfig{
