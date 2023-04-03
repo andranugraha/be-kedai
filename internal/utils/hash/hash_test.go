@@ -60,7 +60,7 @@ func BenchmarkHashAndSalt(b *testing.B) {
 	for _, v := range table {
 		b.Run(fmt.Sprintf("input_type_%s", v.name), func(b *testing.B) {
 			for i := 0; i < b.N; i++ {
-				hash.HashAndSalt(v.pwd)
+				_, _ = hash.HashAndSalt(v.pwd)
 			}
 		})
 	}
