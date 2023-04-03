@@ -35,6 +35,19 @@ func TestGetCategories(t *testing.T) {
 				},
 			},
 		}
+		req = categoryDto.GetCategoriesRequest{
+			Depth:     1,
+			WithPrice: true,
+			Limit:     10,
+			Page:      1,
+		}
+		res = &dto.PaginationResponse{
+			Data:       categories,
+			Limit:      10,
+			Page:       1,
+			TotalRows:  1,
+			TotalPages: 1,
+		}
 	)
 
 	tests := []struct {
@@ -43,56 +56,48 @@ func TestGetCategories(t *testing.T) {
 		wantGetAllResponse *dto.PaginationResponse
 		want               *dto.PaginationResponse
 		wantErr            error
+		beforeTest         func(*mocks.CategoryRepository, *mocks.CategoryCache)
 	}{
 		{
-			name: "should return categories with pagination when get all success",
-			request: categoryDto.GetCategoriesRequest{
-				Depth:     1,
-				WithPrice: true,
-				Limit:     10,
-				Page:      1,
-			},
-			wantGetAllResponse: &dto.PaginationResponse{
-				Data:       categories,
-				Limit:      10,
-				Page:       1,
-				TotalRows:  1,
-				TotalPages: 1,
-			},
-			want: &dto.PaginationResponse{
-				Data:       categories,
-				Limit:      10,
-				Page:       1,
-				TotalRows:  1,
-				TotalPages: 1,
-			},
+			name:    "should return categories with pagination when get all success",
+			want:    res,
 			wantErr: nil,
+			beforeTest: func(mockCategoryRepository *mocks.CategoryRepository, mockCategoryCache *mocks.CategoryCache) {
+				mockCategoryCache.On("GetAll", req).Return(nil)
+				mockCategoryRepository.On("GetAll", req).Return(categories, res.TotalRows, 1, nil)
+				mockCategoryCache.On("StoreCategories", req, res).Return()
+			},
 		},
 		{
-			name: "should return error when get all failed",
-			request: categoryDto.GetCategoriesRequest{
-				Limit: 10,
-				Page:  1,
+			name:    "should return categories with pagination when data is cached",
+			want:    res,
+			wantErr: nil,
+			beforeTest: func(mockCategoryRepository *mocks.CategoryRepository, mockCategoryCache *mocks.CategoryCache) {
+				mockCategoryCache.On("GetAll", req).Return(res)
 			},
-			wantGetAllResponse: &dto.PaginationResponse{
-				Data:       []*model.Category{},
-				TotalRows:  0,
-				TotalPages: 0,
-			},
+		},
+		{
+			name:    "should return error when get all failed",
 			want:    nil,
 			wantErr: errorResponse.ErrInternalServerError,
+			beforeTest: func(mockCategoryRepository *mocks.CategoryRepository, mockCategoryCache *mocks.CategoryCache) {
+				mockCategoryCache.On("GetAll", req).Return(nil)
+				mockCategoryRepository.On("GetAll", req).Return([]*model.Category{}, int64(0), 0, errorResponse.ErrInternalServerError)
+			},
 		},
 	}
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			mockCategoryRepository := mocks.NewCategoryRepository(t)
-			mockCategoryRepository.On("GetAll", test.request).Return(test.wantGetAllResponse.Data, test.wantGetAllResponse.TotalRows, test.wantGetAllResponse.TotalPages, test.wantErr)
+			mockCategoryCache := mocks.NewCategoryCache(t)
+			test.beforeTest(mockCategoryRepository, mockCategoryCache)
 			categoryService := service.NewCategoryService(&service.CategorySConfig{
-				CategoryRepo: mockCategoryRepository,
+				CategoryRepo:  mockCategoryRepository,
+				CategoryCache: mockCategoryCache,
 			})
 
-			got, err := categoryService.GetCategories(test.request)
+			got, err := categoryService.GetCategories(req)
 
 			assert.Equal(t, test.want, got)
 			assert.Equal(t, test.wantErr, err)
