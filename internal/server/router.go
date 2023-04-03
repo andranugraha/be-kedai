@@ -122,7 +122,7 @@ func NewRouter(cfg *RouterConfig) *gin.Engine {
 				}
 				chat := userAuthenticated.Group("/chats")
 				{
-					chat.GET("/", cfg.ChatHandler.UserGetListOfChats)
+					chat.GET("", cfg.ChatHandler.UserGetListOfChats)
 					chat.GET("/:shopSlug", cfg.ChatHandler.UserGetChat)
 					chat.POST("/:shopSlug", cfg.ChatHandler.UserAddChat)
 				}
@@ -318,7 +318,7 @@ func NewRouter(cfg *RouterConfig) *gin.Engine {
 				}
 				chat := authenticated.Group("/chats")
 				{
-					chat.GET("/", cfg.ChatHandler.SellerGetListOfChats)
+					chat.GET("", cfg.ChatHandler.SellerGetListOfChats)
 					chat.GET("/:username", cfg.ChatHandler.SellerGetChat)
 					chat.POST("/:username", cfg.ChatHandler.SellerAddChat)
 				}
