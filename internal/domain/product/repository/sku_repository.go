@@ -207,19 +207,5 @@ func (r *skuRepositoryImpl) Update(tx *gorm.DB, productId int, skus []*model.Sku
 		return err
 	}
 
-	for _, sku := range union {
-		for _, variant := range sku.Variants {
-			if err := tx.Model(&model.ProductVariant{}).Clauses(clause.OnConflict{
-				DoNothing: true,
-			}).Create(&model.ProductVariant{
-				SkuId:     sku.ID,
-				VariantId: variant.ID,
-			}).Error; err != nil {
-				tx.Rollback()
-				return err
-			}
-		}
-	}
-
 	return nil
 }
