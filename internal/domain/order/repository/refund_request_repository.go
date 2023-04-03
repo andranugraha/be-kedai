@@ -137,8 +137,7 @@ func (r *refundRequestRepositoryImpl) RefundAdmin(requestRefundId int) error {
 		refundAmount += refundRequests.ShippingCost
 	}
 
-	if refundRequests.RequestRefundStatus != constant.RequestStatusSellerApproved {
-
+	if refundRequests.RequestRefundStatus != constant.RefundStatusPending {
 		return commonErr.ErrRefunded
 	}
 
@@ -188,6 +187,11 @@ func (r *refundRequestRepositoryImpl) RefundAdmin(requestRefundId int) error {
 			tx.Rollback()
 			return err
 		}
+	}
+
+	if err := r.invoicePerShopRepo.UpdateStatusToRefunded(tx, refundRequests.ShopId, refundRequests.InvoicePerShopId); err != nil {
+		tx.Rollback()
+		return err
 	}
 
 	if refundRequests.ShopVoucherId != 0 {
