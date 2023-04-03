@@ -782,12 +782,12 @@ func (r *invoicePerShopRepositoryImpl) UpdateRefundStatus(tx *gorm.DB, shopId in
 	if refundStatus == constant.RequestStatusSellerApproved {
 		invoiceStatus = constant.TransactionStatusRefundPending
 	} else {
+		invoiceStatus = constant.TransactionStatusComplaintRejected
 		for _, invoiceStat := range currInvoiceStats {
 			if invoiceStat.Status == constant.TransactionStatusComplaintRejected {
 				invoiceStatus = constant.TransactionStatusCompleted
-				continue
+				break
 			}
-			invoiceStatus = constant.TransactionStatusComplaintRejected
 		}
 	}
 
