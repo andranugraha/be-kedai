@@ -171,10 +171,10 @@ func (r *skuRepositoryImpl) Update(tx *gorm.DB, productId int, skus []*model.Sku
 				return errDeletePromotion
 			}
 
-			if errDelete := tx.Model(sku).Unscoped().Association("Variants").Clear(); errDelete != nil {
-				tx.Rollback()
-				return errDelete
-			}
+		}
+		if errDelete := tx.Unscoped().Where("sku_id = ?", sku.ID).Delete(&model.ProductVariant{}).Error; errDelete != nil {
+			tx.Rollback()
+			return errDelete
 		}
 	}
 
