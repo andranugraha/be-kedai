@@ -20,7 +20,7 @@ type ProductRepository interface {
 	GetByCode(code string) (*dto.ProductDetail, error)
 	GetByShopID(shopID int, request *dto.ShopProductFilterRequest) ([]*dto.ProductDetail, int64, int, error)
 	GetRecommendationByCategory(productId int, categoryId int) ([]*dto.ProductResponse, error)
-	ProductSearchFiltering(req dto.ProductSearchFilterRequest, shopId int) ([]*dto.ProductResponse, int64, int, error)
+	ProductSearchFiltering(req dto.ProductSearchFilterRequest, shopId int, categoryIDs []int) ([]*dto.ProductResponse, int64, int, error)
 	GetBySellerID(shopID int, request *dto.SellerProductFilterRequest) ([]*dto.SellerProduct, int64, int, error)
 	GetWithPromotions(shopID int, promotionID int) ([]*dto.SellerProductPromotionResponse, error)
 	SearchAutocomplete(req dto.ProductSearchAutocomplete) ([]*dto.ProductResponse, error)
@@ -212,7 +212,7 @@ func (r *productRepositoryImpl) GetByShopID(shopID int, request *dto.ShopProduct
 	return products, totalRows, totalPages, nil
 }
 
-func (r *productRepositoryImpl) ProductSearchFiltering(req dto.ProductSearchFilterRequest, shopId int) ([]*dto.ProductResponse, int64, int, error) {
+func (r *productRepositoryImpl) ProductSearchFiltering(req dto.ProductSearchFilterRequest, shopId int, categoryIDs []int) ([]*dto.ProductResponse, int64, int, error) {
 	var (
 		productList []*dto.ProductResponse
 		totalRows   int64
@@ -235,7 +235,7 @@ func (r *productRepositoryImpl) ProductSearchFiltering(req dto.ProductSearchFilt
 	db = db.Where("products.is_active = ?", active).Where("products.name ILIKE ?", "%"+req.Keyword+"%")
 
 	if req.CategoryId > 0 {
-		db = db.Where("products.category_id = ?", req.CategoryId)
+		db = db.Where("products.category_id IN ?", categoryIDs)
 	}
 
 	if req.MinRating > 0 {

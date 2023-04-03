@@ -162,3 +162,61 @@ func TestGetCategoryLineAgesFromBottom(t *testing.T) {
 		})
 	}
 }
+
+func TestGetCategoryIDLineAgesFromTop(t *testing.T) {
+	type input struct {
+		categoryID int
+		mockData   []int
+		mockErr    error
+	}
+	type expected struct {
+		data []int
+		err  error
+	}
+
+	tests := []struct {
+		description string
+		input
+		expected
+	}{
+		{
+			description: "should return error when failed to get categories",
+			input: input{
+				categoryID: 1,
+				mockData:   []int{},
+				mockErr:    errors.New("failed to get categories"),
+			},
+			expected: expected{
+				data: []int{},
+				err:  errors.New("failed to get categories"),
+			},
+		},
+		{
+			description: "should return categories data when succeed to get categories",
+			input: input{
+				categoryID: 1,
+				mockData:   []int{1, 2},
+				mockErr:    nil,
+			},
+			expected: expected{
+				data: []int{1, 2},
+				err:  nil,
+			},
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.description, func(t *testing.T) {
+			categoryRepo := mocks.NewCategoryRepository(t)
+			categoryRepo.On("GetLineageFromTop", tc.input.categoryID).Return(tc.input.mockData, tc.input.mockErr)
+			categoryService := service.NewCategoryService(&service.CategorySConfig{
+				CategoryRepo: categoryRepo,
+			})
+
+			data, err := categoryService.GetCategoryIDLineAgesFromTop(tc.categoryID)
+
+			assert.Equal(t, tc.expected.data, data)
+			assert.Equal(t, tc.expected.err, err)
+		})
+	}
+}

@@ -11,6 +11,7 @@ import (
 type CategoryRepository interface {
 	GetAll(dto.GetCategoriesRequest) ([]*model.Category, int64, int, error)
 	GetLineageFromBottom(categoryID int) ([]*model.Category, error)
+	GetLineageFromTop(categoryID int) ([]int, error)
 	AddCategory(category *model.Category) error
 }
 
@@ -74,6 +75,32 @@ func (r *categoryRepositoryImpl) GetLineageFromBottom(categoryID int) ([]*model.
 	}
 
 	return categories, nil
+}
+
+func (r *categoryRepositoryImpl) GetLineageFromTop(categoryID int) ([]int, error) {
+	var categoryIDs []int
+
+	query := `
+		WITH RECURSIVE category_tree AS (
+			SELECT id, parent_id
+			FROM categories
+			WHERE id = ?
+		
+			UNION ALL
+		
+			SELECT c.id, c.parent_id
+			FROM categories c
+			JOIN category_tree ct ON c.parent_id = ct.id
+		)
+		SELECT id
+		FROM category_tree;
+	`
+	err := r.db.Raw(query, categoryID).Find(&categoryIDs).Error
+	if err != nil {
+		return nil, err
+	}
+
+	return categoryIDs, nil
 }
 
 func nestedPreload(db *gorm.DB, query dto.GetCategoriesRequest) *gorm.DB {

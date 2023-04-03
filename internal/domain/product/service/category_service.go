@@ -11,6 +11,7 @@ import (
 type CategoryService interface {
 	GetCategories(categoryDto.GetCategoriesRequest) (*dto.PaginationResponse, error)
 	GetCategoryLineAgesFromBottom(categoryID int) ([]*model.Category, error)
+	GetCategoryIDLineAgesFromTop(categoryID int) ([]int, error)
 	AddCategory(category *model.Category) error
 }
 
@@ -67,6 +68,10 @@ func (c *categoryServiceImpl) GetCategories(query categoryDto.GetCategoriesReque
 
 func (c *categoryServiceImpl) GetCategoryLineAgesFromBottom(categoryID int) ([]*model.Category, error) {
 	return c.categoryRepo.GetLineageFromBottom(categoryID)
+}
+
+func (c *categoryServiceImpl) GetCategoryIDLineAgesFromTop(categoryID int) ([]int, error) {
+	return c.categoryRepo.GetLineageFromTop(categoryID)
 }
 
 func removeChildren(category *model.Category, depth int) {

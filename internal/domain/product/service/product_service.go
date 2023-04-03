@@ -112,7 +112,17 @@ func (s *productServiceImpl) ProductSearchFiltering(req dto.ProductSearchFilterR
 		shopId = shop.ID
 	}
 
-	res, rows, pages, err := s.productRepository.ProductSearchFiltering(req, shopId)
+	var categoryIDs []int
+	if req.CategoryId > 0 {
+		cIDs, err := s.categoryService.GetCategoryIDLineAgesFromTop(req.CategoryId)
+		if err != nil {
+			return nil, err
+		}
+
+		categoryIDs = cIDs
+	}
+
+	res, rows, pages, err := s.productRepository.ProductSearchFiltering(req, shopId, categoryIDs)
 	if err != nil {
 		return nil, err
 	}
