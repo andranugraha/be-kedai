@@ -8,7 +8,7 @@ import (
 	marketplaceModel "kedai/backend/be-kedai/internal/domain/marketplace/model"
 	"kedai/backend/be-kedai/internal/domain/order/dto"
 	"kedai/backend/be-kedai/internal/domain/order/model"
-	productRepo "kedai/backend/be-kedai/internal/domain/product/repository"
+	productDomainRepo "kedai/backend/be-kedai/internal/domain/product/repository"
 	userModel "kedai/backend/be-kedai/internal/domain/user/model"
 	userRepo "kedai/backend/be-kedai/internal/domain/user/repository"
 	"math"
@@ -34,7 +34,7 @@ type InvoicePerShopRepository interface {
 	UpdateStatusToDelivery(shopId int, orderId int, invoiceStatuses []*model.InvoiceStatus) error
 	UpdateStatusToCanceled(orderId int, invoiceStatuses []*model.InvoiceStatus) error
 	UpdateStatusToReceived(shopId int, orderId int, invoiceStatuses []*model.InvoiceStatus) error
-	UpdateStatusToCompleted(shopId int, orderId int, invoiceStatuses []*model.InvoiceStatus) error
+	UpdateStatusToCompleted(shopId int, orderId int, items []*dto.TransactionItem, invoiceStatuses []*model.InvoiceStatus) error
 	UpdateStatusToRefundPending(shopId int, orderId int, invoiceStatuses []*model.InvoiceStatus, refundType string) error
 	UpdateStatusToRefunded(tx *gorm.DB, shopId int, orderId int) error
 	UpdateRefundStatus(tx *gorm.DB, shopId int, orderId int, refundStatus string, invoiceStatuses []*model.InvoiceStatus) error
@@ -48,7 +48,8 @@ type invoicePerShopRepositoryImpl struct {
 	walletRepo        userRepo.WalletRepository
 	invoiceStatusRepo InvoiceStatusRepository
 	refundRequestRepo RefundRequestRepository
-	skuRepo           productRepo.SkuRepository
+	skuRepo           productDomainRepo.SkuRepository
+	productRepo       productDomainRepo.ProductRepository
 	userVoucherRepo   userRepo.UserVoucherRepository
 	invoiceRepo       InvoiceRepository
 }
@@ -58,7 +59,8 @@ type InvoicePerShopRConfig struct {
 	WalletRepo        userRepo.WalletRepository
 	InvoiceStatusRepo InvoiceStatusRepository
 	RefundRequestRepo RefundRequestRepository
-	SkuRepo           productRepo.SkuRepository
+	SkuRepo           productDomainRepo.SkuRepository
+	ProductRepo       productDomainRepo.ProductRepository
 	UserVoucherRepo   userRepo.UserVoucherRepository
 	InvoiceRepo       InvoiceRepository
 }
@@ -70,6 +72,7 @@ func NewInvoicePerShopRepository(cfg *InvoicePerShopRConfig) InvoicePerShopRepos
 		invoiceStatusRepo: cfg.InvoiceStatusRepo,
 		refundRequestRepo: cfg.RefundRequestRepo,
 		skuRepo:           cfg.SkuRepo,
+		productRepo:       cfg.ProductRepo,
 		userVoucherRepo:   cfg.UserVoucherRepo,
 		invoiceRepo:       cfg.InvoiceRepo,
 	}
@@ -710,7 +713,7 @@ func (r *invoicePerShopRepositoryImpl) UpdateStatusToReceived(shopId int, orderI
 	return nil
 }
 
-func (r *invoicePerShopRepositoryImpl) UpdateStatusToCompleted(shopId int, orderId int, invoiceStatuses []*model.InvoiceStatus) error {
+func (r *invoicePerShopRepositoryImpl) UpdateStatusToCompleted(shopId int, orderId int, items []*dto.TransactionItem, invoiceStatuses []*model.InvoiceStatus) error {
 	err := r.db.Transaction(func(tx *gorm.DB) error {
 		if err := tx.Model(&model.InvoicePerShop{}).Where("shop_id = ? AND id = ? AND status = ?", shopId, orderId, constant.TransactionStatusReceived).Update("status", constant.TransactionStatusCompleted); err.Error != nil || err.RowsAffected == 0 {
 			if errors.Is(err.Error, gorm.ErrRecordNotFound) {
@@ -723,6 +726,10 @@ func (r *invoicePerShopRepositoryImpl) UpdateStatusToCompleted(shopId int, order
 		}
 
 		if err := r.invoiceStatusRepo.Create(tx, invoiceStatuses); err != nil {
+			return err
+		}
+
+		if err := r.productRepo.AddSoldCount(tx, items); err != nil {
 			return err
 		}
 

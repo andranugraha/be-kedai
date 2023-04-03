@@ -278,7 +278,7 @@ func (s *invoicePerShopServiceImpl) UpdateStatusToCompleted(userId int, orderCod
 		Status:           status,
 	})
 
-	err = s.invoicePerShopRepo.UpdateStatusToCompleted(order.ShopID, order.ID, invoiceStatuses)
+	err = s.invoicePerShopRepo.UpdateStatusToCompleted(order.ShopID, order.ID, order.TransactionItems, invoiceStatuses)
 	if err != nil {
 		return err
 	}

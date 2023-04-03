@@ -985,6 +985,7 @@ func TestUpdateStatusToCompleted(t *testing.T) {
 		orderCode = "code"
 		order     = &dto.InvoicePerShopDetail{
 			InvoicePerShop: model.InvoicePerShop{ID: 1, ShopID: 1},
+			TransactionItems: []*dto.TransactionItem{},
 		}
 		userId        = 1
 		invoiceStatus = []*model.InvoiceStatus{
@@ -1016,7 +1017,7 @@ func TestUpdateStatusToCompleted(t *testing.T) {
 				code: orderCode,
 				beforeTest: func(ipsr *mocks.InvoicePerShopRepository) {
 					ipsr.On("GetByUserIDAndCode", userId, orderCode).Return(order, nil)
-					ipsr.On("UpdateStatusToCompleted", order.ShopID, order.ID, invoiceStatus).Return(nil)
+					ipsr.On("UpdateStatusToCompleted", order.ShopID, order.ID, order.TransactionItems, invoiceStatus).Return(nil)
 				},
 			},
 			expected: expected{
@@ -1043,7 +1044,7 @@ func TestUpdateStatusToCompleted(t *testing.T) {
 				code: orderCode,
 				beforeTest: func(ipsr *mocks.InvoicePerShopRepository) {
 					ipsr.On("GetByUserIDAndCode", userId, orderCode).Return(order, nil)
-					ipsr.On("UpdateStatusToCompleted", order.ShopID, order.ID, invoiceStatus).Return(commonErr.ErrInternalServerError)
+					ipsr.On("UpdateStatusToCompleted", order.ShopID, order.ID, order.TransactionItems, invoiceStatus).Return(commonErr.ErrInternalServerError)
 				},
 			},
 			expected: expected{
