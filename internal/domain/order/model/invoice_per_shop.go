@@ -46,7 +46,7 @@ func (i *InvoicePerShop) BeforeCreate(tx *gorm.DB) (err error) {
 	tx.Model(&InvoicePerShop{}).Where("shop_id = ?", i.ShopID).Count(&currentTotal)
 
 	now := time.Now()
-	i.Code = fmt.Sprintf("INV/%d%d%d/%d", now.Year(), now.Month(), now.Day(), currentTotal+1)
+	i.Code = fmt.Sprintf("INV/%d%d%d/700%d01/%d", now.Year(), now.Month(), now.Day(), i.ShopID, currentTotal+1)
 
 	randomGenerator := random.NewRandomUtils(&random.RandomUtilsConfig{})
 	i.TrackingNumber = randomGenerator.GenerateNumericString(10)

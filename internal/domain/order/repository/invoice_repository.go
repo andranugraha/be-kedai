@@ -83,7 +83,7 @@ func (r *invoiceRepositoryImpl) Create(invoice *model.Invoice) (*model.Invoice, 
 			}
 		}
 
-		if shop.VoucherID != nil {
+		if shop.Voucher != nil {
 			res := tx.Model(&shopModel.ShopVoucher{}).Where("id = ?", shop.VoucherID).Where("used_quota < total_quota").Update("used_quota", gorm.Expr("used_quota + 1"))
 			if res.Error != nil {
 				tx.Rollback()
@@ -208,7 +208,13 @@ func (r *invoiceRepositoryImpl) Delete(invoice *model.Invoice) error {
 			}
 		}
 
-		if invoicePerShop.VoucherID != nil {
+		if invoicePerShop.Voucher != nil {
+			err := tx.Model(&shopModel.ShopVoucher{}).Where("id = ?", invoicePerShop.Voucher.ShopVoucherId).Update("used_quota", gorm.Expr("used_quota - 1")).Error
+			if err != nil {
+				tx.Rollback()
+				return err
+			}
+
 			shopVouchers = append(shopVouchers, invoicePerShop.Voucher)
 		}
 	}
@@ -219,7 +225,7 @@ func (r *invoiceRepositoryImpl) Delete(invoice *model.Invoice) error {
 		return err
 	}
 
-	if invoice.VoucherID != nil {
+	if invoice.Voucher != nil {
 		err = tx.Unscoped().Model(&userModel.UserVoucher{}).Delete(invoice.Voucher).Error
 		if err != nil {
 			tx.Rollback()
