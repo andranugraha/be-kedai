@@ -36,6 +36,7 @@ type InvoicePerShopRepository interface {
 	UpdateStatusToReceived(shopId int, orderId int, invoiceStatuses []*model.InvoiceStatus) error
 	UpdateStatusToCompleted(shopId int, orderId int, invoiceStatuses []*model.InvoiceStatus) error
 	UpdateStatusToRefundPending(shopId int, orderId int, invoiceStatuses []*model.InvoiceStatus, refundType string) error
+	UpdateStatusToRefunded(tx *gorm.DB, shopId int, orderId int) error
 	UpdateRefundStatus(tx *gorm.DB, shopId int, orderId int, refundStatus string, invoiceStatuses []*model.InvoiceStatus) error
 	UpdateStatusCRONJob() error
 	AutoReceivedCRONJob() error
@@ -365,6 +366,22 @@ func (r *invoicePerShopRepositoryImpl) GetByShopIdAndId(shopId int, id int) (*dt
 	}
 
 	return &invoice, nil
+}
+
+func (r *invoicePerShopRepositoryImpl) UpdateStatusToRefunded(tx *gorm.DB, shopId int, orderId int) error {
+	if res := tx.Model(&model.InvoicePerShop{}).Where("shop_id = ? AND id = ? AND status = ?", shopId, orderId, constant.TransactionStatusRefundPending).Update("status", constant.TransactionStatusRefunded); res.Error != nil || res.RowsAffected == 0 {
+		if errors.Is(res.Error, gorm.ErrRecordNotFound) {
+			return commonErr.ErrInvoiceNotFound
+		}
+
+		if res.RowsAffected == 0 {
+			return commonErr.ErrInvoiceNotFound
+		}
+
+		return res.Error
+	}
+
+	return nil
 }
 
 func (r *invoicePerShopRepositoryImpl) GetByShopIdAndCode(shopId int, code string) (*dto.InvoicePerShopDetail, error) {
