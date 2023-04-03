@@ -1,7 +1,6 @@
 package service_test
 
 import (
-	"errors"
 	"kedai/backend/be-kedai/internal/domain/location/model"
 	"kedai/backend/be-kedai/internal/domain/location/service"
 	"kedai/backend/be-kedai/mocks"
@@ -12,9 +11,10 @@ import (
 
 func TestGetProvinces(t *testing.T) {
 	tests := []struct {
-		name    string
-		want    []*model.Province
-		wantErr error
+		name       string
+		want       []*model.Province
+		wantErr    error
+		beforeTest func(mockProvinceRepo *mocks.ProvinceRepository, mockLocationCache *mocks.LocationCache)
 	}{
 		{
 			name: "should return provinces when get all success",
@@ -25,21 +25,59 @@ func TestGetProvinces(t *testing.T) {
 				},
 			},
 			wantErr: nil,
+			beforeTest: func(mockProvinceRepo *mocks.ProvinceRepository, mockLocationCache *mocks.LocationCache) {
+				mockLocationCache.On("GetProvinces").Return(nil)
+				mockProvinceRepo.On("GetAll").Return([]*model.Province{
+					{
+						ID:   1,
+						Name: "DKI Jakarta",
+					},
+				}, nil)
+				mockLocationCache.On("StoreProvinces", []*model.Province{
+					{
+						ID:   1,
+						Name: "DKI Jakarta",
+					},
+				})
+			},
+		},
+		{
+			name: "should return provinces when cache hit",
+			want: []*model.Province{
+				{
+					ID:   1,
+					Name: "DKI Jakarta",
+				},
+			},
+			wantErr: nil,
+			beforeTest: func(mockProvinceRepo *mocks.ProvinceRepository, mockLocationCache *mocks.LocationCache) {
+				mockLocationCache.On("GetProvinces").Return([]*model.Province{
+					{
+						ID:   1,
+						Name: "DKI Jakarta",
+					},
+				})
+			},
 		},
 		{
 			name:    "should return error when get all failed",
 			want:    nil,
-			wantErr: errors.New("error"),
+			wantErr: assert.AnError,
+			beforeTest: func(mockProvinceRepo *mocks.ProvinceRepository, mockLocationCache *mocks.LocationCache) {
+				mockLocationCache.On("GetProvinces").Return(nil)
+				mockProvinceRepo.On("GetAll").Return(nil, assert.AnError)
+			},
 		},
 	}
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			mockProvinceRepo := mocks.NewProvinceRepository(t)
-			mockProvinceRepo.On("GetAll").Return(test.want, test.wantErr)
-
+			mockLocationCache := mocks.NewLocationCache(t)
+			test.beforeTest(mockProvinceRepo, mockLocationCache)
 			provinceService := service.NewProvinceService(&service.ProvinceSConfig{
 				ProvinceRepo: mockProvinceRepo,
+				Cache:        mockLocationCache,
 			})
 
 			got, err := provinceService.GetProvinces()

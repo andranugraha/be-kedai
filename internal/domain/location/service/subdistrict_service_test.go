@@ -68,7 +68,7 @@ func TestGetSubdistricts(t *testing.T) {
 	type input struct {
 		data        dto.GetSubdistrictsRequest
 		err         error
-		beforeTests func(mockSubdistrictRepo *mocks.SubdistrictRepository)
+		beforeTests func(mockSubdistrictRepo *mocks.SubdistrictRepository, mockCache *mocks.LocationCache)
 	}
 	type expected struct {
 		data []*model.Subdistrict
@@ -81,21 +81,89 @@ func TestGetSubdistricts(t *testing.T) {
 		expected
 	}{
 		{
-			description: "should return subdistricts and error",
+			description: "should return subdistricts when cache is empty",
 			input: input{
 				data: dto.GetSubdistrictsRequest{
 					DistrictID: 1,
 				},
 				err: nil,
-				beforeTests: func(mockSubdistrictRepo *mocks.SubdistrictRepository) {
+				beforeTests: func(mockSubdistrictRepo *mocks.SubdistrictRepository, mockCache *mocks.LocationCache) {
+					mockCache.On("GetSubdistricts", dto.GetSubdistrictsRequest{
+						DistrictID: 1,
+					}).Return(nil)
+
 					mockSubdistrictRepo.On("GetAll", dto.GetSubdistrictsRequest{
 						DistrictID: 1,
-					}).Return([]*model.Subdistrict{}, nil)
+					}).Return([]*model.Subdistrict{
+						{
+							ID: 1,
+						},
+					}, nil)
+
+					mockCache.On("StoreSubdistricts", dto.GetSubdistrictsRequest{
+						DistrictID: 1,
+					}, []*model.Subdistrict{
+						{
+							ID: 1,
+						},
+					})
 				},
 			},
 			expected: expected{
-				data: []*model.Subdistrict{},
-				err:  nil,
+				data: []*model.Subdistrict{
+					{
+						ID: 1,
+					},
+				},
+				err: nil,
+			},
+		},
+		{
+			description: "should return subdistricts when cache hit",
+			input: input{
+				data: dto.GetSubdistrictsRequest{
+					DistrictID: 1,
+				},
+				err: nil,
+				beforeTests: func(mockSubdistrictRepo *mocks.SubdistrictRepository, mockCache *mocks.LocationCache) {
+					mockCache.On("GetSubdistricts", dto.GetSubdistrictsRequest{
+						DistrictID: 1,
+					}).Return([]*model.Subdistrict{
+						{
+							ID: 1,
+						},
+					})
+				},
+			},
+			expected: expected{
+				data: []*model.Subdistrict{
+					{
+						ID: 1,
+					},
+				},
+				err: nil,
+			},
+		},
+		{
+			description: "should return error when cache is empty and subdistrict repo return error",
+			input: input{
+				data: dto.GetSubdistrictsRequest{
+					DistrictID: 1,
+				},
+				err: nil,
+				beforeTests: func(mockSubdistrictRepo *mocks.SubdistrictRepository, mockCache *mocks.LocationCache) {
+					mockCache.On("GetSubdistricts", dto.GetSubdistrictsRequest{
+						DistrictID: 1,
+					}).Return(nil)
+
+					mockSubdistrictRepo.On("GetAll", dto.GetSubdistrictsRequest{
+						DistrictID: 1,
+					}).Return(nil, assert.AnError)
+				},
+			},
+			expected: expected{
+				data: nil,
+				err:  assert.AnError,
 			},
 		},
 	}
@@ -103,10 +171,11 @@ func TestGetSubdistricts(t *testing.T) {
 	for _, c := range cases {
 		t.Run(c.description, func(t *testing.T) {
 			mockSubdistrictRepo := mocks.NewSubdistrictRepository(t)
-			c.beforeTests(mockSubdistrictRepo)
-
+			mockCache := mocks.NewLocationCache(t)
+			c.beforeTests(mockSubdistrictRepo, mockCache)
 			subdistrictService := service.NewSubdistrictService(&service.SubdistrictSConfig{
 				SubdistrictRepo: mockSubdistrictRepo,
+				Cache:           mockCache,
 			})
 
 			got, err := subdistrictService.GetSubdistricts(c.input.data)
