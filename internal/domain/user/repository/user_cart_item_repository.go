@@ -93,13 +93,15 @@ func (r *userCartItemRepository) GetAllCartItem(req *dto.GetCartItemsRequest) (c
 		Joins("left join product_bulk_prices bp on p.id = bp.product_id").
 		Joins("left join product_promotions pp on s.id = pp.sku_id").
 		Joins("left join product_medias pm on p.id = pm.product_id").
-		Group("sh.id, cart_items.id").
+		Group("sh.name").
+		Group("cart_items.id").
 		Where(`sh.id IN (SELECT DISTINCT sh.id from shops sh 
 			JOIN products p on p.shop_id = sh.id 
 			JOIN skus s on s.product_id = p.id 
 			JOIN cart_items ci on ci.sku_id = s.id
 			WHERE ci.user_id = ?
-			ORDER BY sh.id LIMIT ? OFFSET ?)`, req.UserId, req.Limit, req.Offset()).
+			ORDER BY sh.id desc LIMIT ? OFFSET ?)`, req.UserId, req.Limit, req.Offset()).
+		Order("sh.name asc").
 		Order("cart_items.created_at desc").
 		Preload("Sku", func(db *gorm.DB) *gorm.DB {
 			return db.Unscoped()
