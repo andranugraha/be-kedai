@@ -188,6 +188,8 @@ func (r *chatRepositoryImpl) UserGetChat(param *dto.ChatParamRequest, userId int
 		chatsResponse = append(chatsResponse, dto.ConvertChatToOutput(chat, "user"))
 	}
 
+	dto.AssignFirstMessagesOfDay(chatsResponse)
+
 	paginatedChats := &commonDto.PaginationResponse{
 		Data:       chatsResponse,
 		Page:       param.Page,
@@ -226,6 +228,8 @@ func (r *chatRepositoryImpl) SellerGetChat(param *dto.ChatParamRequest, shop *sh
 	for _, chat := range chats {
 		chatsResponse = append(chatsResponse, dto.ConvertChatToOutput(chat, "seller"))
 	}
+
+	dto.AssignFirstMessagesOfDay(chatsResponse)
 
 	paginatedChats := &commonDto.PaginationResponse{
 		Data:       chatsResponse,
