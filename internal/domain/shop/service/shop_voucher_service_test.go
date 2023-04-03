@@ -684,32 +684,6 @@ func TestUpdateVoucher(t *testing.T) {
 			},
 		},
 		{
-			description: "should return error when fields cant be edited is filled",
-			input: input{
-				userID:      userID,
-				shopID:      shopID,
-				voucherCode: voucherCode,
-				request: &dto.UpdateVoucherRequest{
-					Name:       voucherName,
-					IsHidden:   &isHidden,
-					Amount:     1000,
-					TotalQuota: 100,
-					ExpiredAt:  expiredAt,
-				},
-			},
-			beforeTest: func(ss *mocks.ShopService, vr *mocks.ShopVoucherRepository) {
-				ss.On("FindShopByUserId", userID).Return(&model.Shop{ID: shopID}, nil)
-				vr.On("GetVoucherByCodeAndShopId", voucherCode, shopID).Return(&dto.SellerVoucher{
-					ShopVoucher: model.ShopVoucher{Name: voucherName},
-					Status:      "ongoing",
-				}, nil)
-			},
-			expected: expected{
-				data: nil,
-				err:  errors.New("voucher fields cant be edited"),
-			},
-		},
-		{
 			description: "should return error when voucher date range is invalid  when voucher status is upcoming",
 			input: input{
 				userID:      userID,

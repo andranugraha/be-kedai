@@ -138,7 +138,10 @@ func (s *shopVoucherServiceImpl) UpdateVoucher(userID int, voucherCode string, r
 		}
 	} else if voucher.Status == constant.VoucherPromotionStatusOngoing {
 		if request.Amount != 0 || request.Type != "" || request.MinimumSpend != 0 || !request.StartFrom.IsZero() {
-			return nil, commonErr.ErrVoucherFieldsCantBeEdited
+			request.Amount = voucher.Amount
+			request.Type = voucher.Type
+			request.MinimumSpend = voucher.MinimumSpend
+			request.StartFrom = voucher.StartFrom
 		}
 	} else {
 		return nil, commonErr.ErrVoucherStatusConflict
