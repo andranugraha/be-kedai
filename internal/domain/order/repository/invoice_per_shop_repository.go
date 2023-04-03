@@ -199,7 +199,7 @@ func (r *invoicePerShopRepositoryImpl) GetShopFinanceToRelease(shopID int) (floa
 	query := r.db.
 		Model(&model.InvoicePerShop{}).
 		Select(`
-			SUM(CASE WHEN is_released = true THEN total ELSE 0 END)`).
+			SUM(CASE WHEN is_released = ? THEN total ELSE 0 END)`, false).
 		Where("shop_id = ?", shopID).
 		Where("status = ?", constant.TransactionStatusCompleted).
 		Group("shop_id")
