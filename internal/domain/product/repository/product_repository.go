@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"kedai/backend/be-kedai/internal/common/constant"
 	errs "kedai/backend/be-kedai/internal/common/error"
+	orderDto "kedai/backend/be-kedai/internal/domain/order/dto"
 	"kedai/backend/be-kedai/internal/domain/product/dto"
 	model "kedai/backend/be-kedai/internal/domain/product/model"
 	shopModel "kedai/backend/be-kedai/internal/domain/shop/model"
@@ -30,6 +31,7 @@ type ProductRepository interface {
 	Create(shopID int, request *dto.CreateProductRequest, courierServices []*shopModel.CourierService) (*model.Product, error)
 	GetRecommended(req *dto.GetRecommendedProductRequest) ([]*dto.ProductResponse, int64, int, error)
 	Update(shopID int, code string, payload *dto.CreateProductRequest, courierServices []*shopModel.CourierService) (*model.Product, error)
+	AddSoldCount(tx *gorm.DB, items []*orderDto.TransactionItem) error
 }
 
 type productRepositoryImpl struct {
@@ -119,6 +121,17 @@ func (r *productRepositoryImpl) GetByCode(code string) (*dto.ProductDetail, erro
 	}
 
 	return &product, nil
+}
+
+func (r *productRepositoryImpl) AddSoldCount(tx *gorm.DB, items []*orderDto.TransactionItem) error {
+	for _, ti := range items {
+		err := tx.Model(&model.Product{}).Where("id = ?", ti.Sku.ProductId).Update("sold", gorm.Expr("sold + ?", ti.Quantity)).Error
+		if err != nil {
+			continue
+		}
+	}
+
+	return nil
 }
 
 func (r *productRepositoryImpl) GetRecommendationByCategory(productId int, categoryId int) ([]*dto.ProductResponse, error) {

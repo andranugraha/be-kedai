@@ -153,16 +153,6 @@ func createRouter() *gin.Engine {
 		DB: db,
 	})
 
-	invoicePerShopRepo := orderRepoPackage.NewInvoicePerShopRepository(&orderRepoPackage.InvoicePerShopRConfig{
-		DB:                db,
-		WalletRepo:        walletRepo,
-		InvoiceStatusRepo: invoiceStatusRepo,
-		RefundRequestRepo: refundRequestRepo,
-		SkuRepo:           skuRepo,
-		UserVoucherRepo:   userVoucherRepo,
-		InvoiceRepo:       invoiceRepo,
-	})
-
 	shopGuestRepo := shopRepoPackage.NewShopGuestRepository(&shopRepoPackage.ShopGuestRConfig{
 		DB: db,
 	})
@@ -182,30 +172,9 @@ func createRouter() *gin.Engine {
 		CourierServiceRepository: courierServiceRepo,
 	})
 
-	shopRepo := shopRepoPackage.NewShopRepository(&shopRepoPackage.ShopRConfig{
-		DB:                 db,
-		WalletHistoryRepo:  walletHistoryRepo,
-		InvoicePerShopRepo: invoicePerShopRepo,
-	})
-
-	shopService := shopServicePackage.NewShopService(&shopServicePackage.ShopSConfig{
-		ShopRepository:        shopRepo,
-		CourierServiceService: courierServiceService,
-	})
-
-	courierService := shopServicePackage.NewCourierService(&shopServicePackage.CourierSConfig{
-		CourierRepository: courierRepo,
-		ShopService:       shopService,
-	})
-
 	shopVoucherRepo := shopRepoPackage.NewShopVoucherRepository(&shopRepoPackage.ShopVoucherRConfig{
 		DB:                    db,
 		UserVoucherRepository: userVoucherRepo,
-	})
-
-	shopVoucherService := shopServicePackage.NewShopVoucherService(&shopServicePackage.ShopVoucherSConfig{
-		ShopVoucherRepository: shopVoucherRepo,
-		ShopService:           shopService,
 	})
 
 	skuService := productServicePackage.NewSkuService(&productServicePackage.SkuSConfig{
@@ -232,10 +201,6 @@ func createRouter() *gin.Engine {
 	discussionRepo := productRepoPackage.NewDiscussionRepository(&productRepoPackage.DiscussionRConfig{
 		DB: db,
 	})
-	discussionService := productServicePackage.NewDiscussionService(&productServicePackage.DiscussionSConfig{
-		DiscussionRepository: discussionRepo,
-		ShopService:          shopService,
-	})
 
 	productMediaRepo := productRepoPackage.NewProductMediaRepository(&productRepoPackage.ProductMediaRConfig{
 		DB: db,
@@ -248,6 +213,43 @@ func createRouter() *gin.Engine {
 		ProductVariantRepository: productVariantRepo,
 		DiscussionRepository:     discussionRepo,
 		ProductMediaRepository:   productMediaRepo,
+	})
+
+	invoicePerShopRepo := orderRepoPackage.NewInvoicePerShopRepository(&orderRepoPackage.InvoicePerShopRConfig{
+		DB:                db,
+		WalletRepo:        walletRepo,
+		InvoiceStatusRepo: invoiceStatusRepo,
+		RefundRequestRepo: refundRequestRepo,
+		SkuRepo:           skuRepo,
+		ProductRepo:       productRepo,
+		UserVoucherRepo:   userVoucherRepo,
+		InvoiceRepo:       invoiceRepo,
+	})
+
+	shopRepo := shopRepoPackage.NewShopRepository(&shopRepoPackage.ShopRConfig{
+		DB:                 db,
+		WalletHistoryRepo:  walletHistoryRepo,
+		InvoicePerShopRepo: invoicePerShopRepo,
+	})
+
+	shopService := shopServicePackage.NewShopService(&shopServicePackage.ShopSConfig{
+		ShopRepository:        shopRepo,
+		CourierServiceService: courierServiceService,
+	})
+
+	shopVoucherService := shopServicePackage.NewShopVoucherService(&shopServicePackage.ShopVoucherSConfig{
+		ShopVoucherRepository: shopVoucherRepo,
+		ShopService:           shopService,
+	})
+
+	courierService := shopServicePackage.NewCourierService(&shopServicePackage.CourierSConfig{
+		CourierRepository: courierRepo,
+		ShopService:       shopService,
+	})
+
+	discussionService := productServicePackage.NewDiscussionService(&productServicePackage.DiscussionSConfig{
+		DiscussionRepository: discussionRepo,
+		ShopService:          shopService,
 	})
 
 	productService := productServicePackage.NewProductService(&productServicePackage.ProductSConfig{
