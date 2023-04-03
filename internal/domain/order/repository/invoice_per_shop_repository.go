@@ -486,7 +486,7 @@ func (r *invoicePerShopRepositoryImpl) GetShopOrder(shopId int, req *dto.Invoice
 
 func (r *invoicePerShopRepositoryImpl) RefundRequest(ref *model.RefundRequest, invoiceStatus []*model.InvoiceStatus) (*model.RefundRequest, error) {
 	now := time.Now()
-	refundType := constant.RefundTypeComplain
+	refundType := constant.RefundStatusPending
 	ref.RequestDate = now
 	ref.Type = refundType
 
