@@ -14,7 +14,7 @@ func TestGetDistricts(t *testing.T) {
 	type input struct {
 		data        dto.GetDistrictsRequest
 		err         error
-		beforeTests func(mockDistrictRepo *mocks.DistrictRepository)
+		beforeTests func(mockDistrictRepo *mocks.DistrictRepository, mockCache *mocks.LocationCache)
 	}
 	type expected struct {
 		data []*model.District
@@ -27,29 +27,94 @@ func TestGetDistricts(t *testing.T) {
 		expected
 	}{
 		{
-			description: "should return districts and error",
+			description: "should return districts when cache is empty",
 			input: input{
 				data: dto.GetDistrictsRequest{
 					CityID: 1,
 				},
 				err: nil,
-				beforeTests: func(mockDistrictRepo *mocks.DistrictRepository) {
+				beforeTests: func(mockDistrictRepo *mocks.DistrictRepository, mockCache *mocks.LocationCache) {
+					mockCache.On("GetDistricts", dto.GetDistrictsRequest{
+						CityID: 1,
+					}).Return(nil)
+
 					mockDistrictRepo.On("GetAll", dto.GetDistrictsRequest{
 						CityID: 1,
 					}).Return([]*model.District{
 						{
-							ID: 1,
+							ID:   1,
+							Name: "test district",
 						},
 					}, nil)
+
+					mockCache.On("StoreDistricts", dto.GetDistrictsRequest{
+						CityID: 1,
+					}, []*model.District{
+						{
+							ID:   1,
+							Name: "test district",
+						},
+					})
 				},
 			},
 			expected: expected{
 				data: []*model.District{
 					{
-						ID: 1,
+						ID:   1,
+						Name: "test district",
 					},
 				},
 				err: nil,
+			},
+		},
+		{
+			description: "should return districts when cache hit",
+			input: input{
+				data: dto.GetDistrictsRequest{
+					CityID: 1,
+				},
+				err: nil,
+				beforeTests: func(mockDistrictRepo *mocks.DistrictRepository, mockCache *mocks.LocationCache) {
+					mockCache.On("GetDistricts", dto.GetDistrictsRequest{
+						CityID: 1,
+					}).Return([]*model.District{
+						{
+							ID:   1,
+							Name: "test district",
+						},
+					})
+				},
+			},
+			expected: expected{
+				data: []*model.District{
+					{
+						ID:   1,
+						Name: "test district",
+					},
+				},
+				err: nil,
+			},
+		},
+		{
+			description: "should return error when district repo return error",
+			input: input{
+				data: dto.GetDistrictsRequest{
+					CityID: 1,
+				},
+				err: nil,
+				beforeTests: func(mockDistrictRepo *mocks.DistrictRepository, mockCache *mocks.LocationCache) {
+					mockCache.On("GetDistricts", dto.GetDistrictsRequest{
+						CityID: 1,
+					}).Return(nil)
+
+					mockDistrictRepo.On("GetAll", dto.GetDistrictsRequest{
+						CityID: 1,
+					}).Return(nil, assert.AnError)
+				},
+			},
+			expected: expected{
+				data: nil,
+				err:  assert.AnError,
 			},
 		},
 	}
@@ -57,10 +122,11 @@ func TestGetDistricts(t *testing.T) {
 	for _, c := range cases {
 		t.Run(c.description, func(t *testing.T) {
 			mockDistrictRepo := mocks.NewDistrictRepository(t)
-			c.beforeTests(mockDistrictRepo)
-
+			mockCache := mocks.NewLocationCache(t)
+			c.beforeTests(mockDistrictRepo, mockCache)
 			districtService := service.NewDistrictService(&service.DistrictSConfig{
 				DistrictRepo: mockDistrictRepo,
+				Cache:        mockCache,
 			})
 
 			data, err := districtService.GetDistricts(c.input.data)

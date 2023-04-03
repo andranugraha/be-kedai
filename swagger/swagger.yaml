@@ -7138,6 +7138,144 @@ paths:
                   message:
                     type: string
                     example: "error message"
+    put:
+      security:
+        - BearerAuth: []
+      tags:
+        - Product
+      summary: Update product
+      description: Edit an existing product
+      parameters:
+        - in: path
+          name: code
+          required: true
+          schema:
+            type: string
+            example: product_code
+      requestBody:
+        $ref: '#/components/requestBodies/CreateProductBody'
+      responses:
+        '200':
+          description: product updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: OK
+                  message:
+                    type: string
+                    example: product updated
+                  data:
+                    allOf:
+                      - $ref: '#/components/schemas/Product'
+                      - type: object
+                        properties:
+                          bulk:
+                            $ref: '#/components/schemas/ProductBulkPrice'
+                      - type: object
+                        properties:
+                          media:
+                            $ref: '#/components/schemas/ProductMedia'
+                      - type: object
+                        properties:
+                          skus:
+                            type: array
+                            items:
+                              allOf:
+                                - $ref: '#/components/schemas/SKU'
+                                - type: object
+                                  properties:
+                                    variants:
+                                      type: array
+                                      items:
+                                        $ref: '#/components/schemas/Variant'
+                      - type: object
+                        properties:
+                          courierServices:
+                            type: array
+                            items:
+                              $ref: '#/components/schemas/CourierService'
+                      - type: object
+                        properties:
+                          variantGroups:
+                            type: array
+                            items:
+                              allOf:
+                                - $ref: '#/components/schemas/GroupVariant'
+                                - type: object
+                                  properties:
+                                    variant:
+                                      type: array
+                                      items:
+                                        $ref: '#/components/schemas/Variant'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "BAD_REQUEST"
+                  message:
+                    type: string
+                    example: "error message"
+        '401':
+          description: unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "UNAUTHORIZED"
+                  message:
+                    type: string
+                    example: "invalid credential"
+        '404':
+          description: not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "NOT_FOUND"
+                  message:
+                    type: string
+                    example: "error message"
+        '422':
+          description: invalid product name pattern
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "INVALID_PRODUCT_NAME"
+                  message:
+                    type: string
+                    example: "error message"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "INTERNAL_SERVER_ERROR"
+                  message:
+                    type: string
+                    example: "error message"                
   /v1/sellers/products/{code}/activations:
     put:
       security:
@@ -8337,6 +8475,188 @@ paths:
                   message:
                     type: string
                     example: "error message"
+  /v1/admins/orders/refund:
+    get:
+      security:
+        - BearerAuth: []
+      tags:
+        - Admin
+      summary: Get refund request list
+      description: Get refund request list
+      parameters:
+        - in: query
+          name: limit
+          required: false
+          schema:
+            type: integer
+        - in: query
+          name: page
+          required: false
+          schema:
+            type: integer
+        - in: query
+          name: status
+          required: false
+          schema:
+            type: string
+            enum:
+              - PENDING
+              - REJECTED
+              - SELLER_APPROVED
+              - REFUNDED
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Response'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            requestRefundId:
+                              type: integer
+                              example: 1
+                            requestRefundStatus:
+                              type: string
+                              example: "PENDING"
+                            requestRefundType:
+                              type: string
+                              example: "CANCEL"
+                            invoicePerShopId:
+                              type: integer
+                              example: 1
+                            refundAmount:
+                              type: integer
+                              example: 10000
+                            invoiceCode:
+                              type: string
+                              example: "INV-0001"
+                            invoiceTotal:
+                              type: integer
+                              example: 10000
+                            shippingCost:
+                              type: integer
+                              example: 10000
+                            productName:
+                              type: string
+                              example: "product name"
+                            productMedia:
+                              type: string
+                              example: "https://www.google.com"
+                            username:
+                              type: string
+                              example: "username"
+        '401':
+          description: unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "UNAUTHORIZED"
+                  message:
+                    type: string
+                    example: "invalid credential"   
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "INTERNAL_SERVER_ERROR"
+                  message:
+                    type: string
+                    example: "error message" 
+                      
+  /v1/admins/orders/refund/{refundRequestId}:
+    post:
+      security:
+        - BearerAuth: []
+      tags:
+        - Admin
+      summary: Refund request
+      description: Refund request
+      parameters:
+        - in: path
+          name: refundRequestId
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Response'
+                  - type: object
+                    properties:
+                      data:
+                        example: null
+        '400':
+          description: bad request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "REFUNDED"
+                  message:
+                    type: string
+                    example: "refund request already refunded"
+        '404':
+          description: Record not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "NOT_FOUND"
+                  message:
+                    type: string
+                    example: "Record not found"
+        '401':
+          description: unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "UNAUTHORIZED"
+                  message:
+                    type: string
+                    example: "invalid credential"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "INTERNAL_SERVER_ERROR"
+                  message:
+                    type: string
+                    example: "error message"
   /v1/admins/login:
     post:
       tags:
@@ -8570,7 +8890,20 @@ paths:
       summary: Add marketplace voucher
       description: Add new marketplace voucher
       requestBody:
-        $ref: '#/components/requestBodies/AddMarketplaceVoucherBody'
+        $ref: '#/components/requestBodies/AddMarketplaceVoucherBody'  
+      parameters:
+        - in: query
+          name: categoryId
+          schema:
+            type: integer
+            default: 0
+          description: No default category, will get all if not specified
+        - in: query
+          name: paymentMethodId
+          schema:
+            type: integer
+            default: 0
+          description: No default payment method, will get all if not specified
       responses:
         '201':
           description: successful operation
@@ -8612,6 +8945,55 @@ paths:
                   message:
                     type: string
                     example: "error message"   
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "INTERNAL_SERVER_ERROR"
+                  message:
+                    type: string
+                    example: "error message"
+    get:
+      tags:
+        - Admin
+      parameters:
+        - in: query
+          name: categoryId
+          schema:
+            type: integer
+            default: 0
+          description: No default category, will get all if not specified
+        - in: query
+          name: paymentMethodId
+          schema:
+            type: integer
+            default: 0
+          description: No default payment method, will get all if not specified
+      summary: Get marketplace vouchers
+      description: Get list of available marketplace vouchers
+      responses:
+        '201':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Response'
+                  - type: object
+                    properties:
+                      code:
+                        example: "OK"
+                      message:
+                        example: "ok"
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/MarketplaceVoucher'
         '500':
           description: Internal server error
           content:
@@ -9173,7 +9555,442 @@ paths:
                     example: "INTERNAL_SERVER_ERROR"
                   message:
                     type: string
-                    example: "error message"                               
+                    example: "error message"  
+  /v1/sellers/categories:
+    get:
+      security:
+        - BearerAuth: []
+      tags:
+        - Seller
+      summary: As a seller, retrieve shop categories
+      description: As a seller, retrieve categories with all statuses and total product
+      parameters:
+        - in: query
+          name: page
+          schema:
+            type: integer
+            default: 1
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            default: 10
+        - in: query
+          name: status
+          schema:
+            type: string
+            enum: [enabled, disabled]
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Response'
+                  - type: object
+                    properties:
+                      code:
+                        example: 'SUCCESS'
+                      message:
+                        example: 'success'
+                      data:
+                        allOf:
+                          - $ref: '#/components/schemas/PaginationResponse'
+                          - type: object
+                            properties:
+                              data:
+                                type: array
+                                items:
+                                  allOf:
+                                    - $ref: '#/components/schemas/SellerCategory'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "BAD_REQUEST"
+                  message:
+                    type: string
+                    example: "error message"
+        '401':
+          description: unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "UNAUTHORIZED"
+                  message:
+                    type: string
+                    example: "error message"      
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "INTERNAL_SERVER_ERROR"
+                  message:
+                    type: string
+                    example: "error message"
+    post:
+      security:
+        - BearerAuth: []
+      tags:
+        - Seller
+      summary: As a seller, create new shop category
+      description: As a seller, create new shop category and its products
+      requestBody:
+        $ref: '#/components/requestBodies/CreateSellerCategoryBody'
+      responses:
+        '201':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Response'
+                  - type: object
+                    properties:
+                      code:
+                        example: 'SUCCESS'
+                      message:
+                        example: 'success'
+                      data:
+                        type: object
+                        properties:
+                          id:
+                            type: integer
+                            example: 1
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "BAD_REQUEST"
+                  message:
+                    type: string
+                    example: "error message"
+        '401':
+          description: unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "UNAUTHORIZED"
+                  message:
+                    type: string
+                    example: "error message"      
+        '409':
+          description: category already exists
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "DUPLICATE_CATEGORY"
+                  message:
+                    type: string
+                    example: "category already exists"      
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "INTERNAL_SERVER_ERROR"
+                  message:
+                    type: string
+                    example: "error message"
+  /v1/sellers/categories/{categoryId}:
+    get:
+      security:
+        - BearerAuth: []
+      tags:
+        - Seller
+      summary: As a seller, retrieve shop category
+      description: As a seller, retrieve category by id
+      parameters:
+        - in: path
+          name: categoryId
+          required: true
+          schema:
+            type: integer
+            default: 1
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Response'
+                  - type: object
+                    properties:
+                      code:
+                        example: 'SUCCESS'
+                      message:
+                        example: 'success'
+                      data:
+                        allOf:
+                          - $ref: '#/components/schemas/SellerCategory'
+                          - type: object
+                            properties:
+                              products:
+                                $ref: '#/components/schemas/SellerCategoryProduct'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "BAD_REQUEST"
+                  message:
+                    type: string
+                    example: "error message"
+        '401':
+          description: unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "UNAUTHORIZED"
+                  message:
+                    type: string
+                    example: "error message"    
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "NOT_FOUND"
+                  message:
+                    type: string
+                    example: "error message"       
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "INTERNAL_SERVER_ERROR"
+                  message:
+                    type: string
+                    example: "error message"
+    put:
+      security:
+        - BearerAuth: []
+      tags:
+        - Seller
+      summary: As a seller, update existing shop category
+      description: As a seller, update existing category and its products
+      parameters:
+        - in: path
+          name: categoryId
+          required: true
+          schema:
+            type: integer
+            default: 1
+      requestBody:
+        $ref: '#/components/requestBodies/UpdateSellerCategoryBody'
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Response'
+                  - type: object
+                    properties:
+                      code:
+                        example: 'SUCCESS'
+                      message:
+                        example: 'success'
+                      data:
+                        type: object
+                        properties:
+                          id:
+                            type: integer
+                            example: 1
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "BAD_REQUEST"
+                  message:
+                    type: string
+                    example: "error message"
+        '401':
+          description: unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "UNAUTHORIZED"
+                  message:
+                    type: string
+                    example: "error message" 
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "NOT_FOUND"
+                  message:
+                    type: string
+                    example: "error message"      
+        '409':
+          description: category already exists
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "DUPLICATE_CATEGORY"
+                  message:
+                    type: string
+                    example: "category already exists"      
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "INTERNAL_SERVER_ERROR"
+                  message:
+                    type: string
+                    example: "error message"
+    delete:
+      security:
+        - BearerAuth: []
+      tags:
+        - Seller
+      summary: As a seller, update existing shop category
+      description: As a seller, update existing category and its products
+      parameters:
+        - in: path
+          name: categoryId
+          required: true
+          schema:
+            type: integer
+            default: 1
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    example: 'SUCCESS'
+                  message:
+                    example: 'success'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "BAD_REQUEST"
+                  message:
+                    type: string
+                    example: "error message"
+        '401':
+          description: unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "UNAUTHORIZED"
+                  message:
+                    type: string
+                    example: "error message"  
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "NOT_FOUND"
+                  message:
+                    type: string
+                    example: "error message"    
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "INTERNAL_SERVER_ERROR"
+                  message:
+                    type: string
+                    example: "error message"
   /v1/orders/invoices:
     post:
       security:
@@ -11216,6 +12033,50 @@ components:
         promotionId:
           type: integer
           example: 1
+    SellerCategory:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        name:
+          type: string
+          example: Laptop
+        shopId:
+          type: integer
+          example: 1
+        isActive:
+          type: boolean
+          example: true
+        totalProduct:
+          type: integer
+          example: 1
+    SellerCategoryProduct:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        name:
+          type: string
+          example: Laptop
+        code:
+          type: string
+          example: LAPTOP-001
+        minPrice:
+          type: number
+          format: float
+          example: 1000000
+        maxPrice:
+          type: number
+          format: float
+          example: 1000000
+        imageUrl:
+          type: string
+          example: https://example.com/image.jpg
+        stock:
+          type: integer
+          example: 1
   requestBodies:
     AddProductCategoryRequestBody:
       required: true
@@ -12449,6 +13310,87 @@ components:
         promotionId:
           type: integer
           example: 1
+    UpdateMarketplaceVoucherBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - name
+              - isHidden
+              - description
+              - expiredAt
+              - categoryId
+              - paymentMethodId
+            properties:
+              name:
+                type: string
+                minLength: 1
+                maxLength: 100
+                example: voucher name
+              isHidden:
+                type: boolean
+                example: false
+              description:
+                type: string
+                minLength: 5
+                maxLength: 1000
+                example: voucher bakmi kejaksaan enak
+              expiredAt:
+                type: string
+                format: datetime
+                example: "2006-01-02T00:00:00.000Z"
+              categoryId:
+                type: integer
+                example: 1
+              paymentMethodId:
+                type: string
+                example: 2
+    CreateSellerCategoryBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - name
+              - productIds
+            properties:
+              name:
+                type: string
+                minLength: 1
+                maxLength: 100
+                example: category name
+              productIds:
+                type: array
+                items:
+                  type: integer
+                  example: [1,2]
+    UpdateSellerCategoryBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - name
+              - productIds
+              - isActive
+            properties:
+              name:
+                type: string
+                minLength: 1
+                maxLength: 100
+                example: category name
+              productIds:
+                type: array
+                items:
+                  type: integer
+                  example: [1,2]
+              isActive:
+                type: boolean
+                example: true
   securitySchemes:
     BearerAuth:
       type: http

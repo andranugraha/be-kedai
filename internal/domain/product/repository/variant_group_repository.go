@@ -49,6 +49,28 @@ func (r *variantGroupRepositoryImpl) Update(tx *gorm.DB, productId int, variantG
 	if err != nil {
 		return nil, err
 	}
+	if variantGroups == nil {
+		for _, variantGroup := range retrievedVarGroups {
+			for _, variant := range variantGroup.Variant {
+
+				if err := tx.Delete(variantGroup).Error; err != nil {
+					tx.Rollback()
+					return nil, err
+				}
+
+				if err := tx.Delete(variant).Error; err != nil {
+					tx.Rollback()
+					return nil, err
+				}
+
+				if errClear := tx.Unscoped().Where("variant_id=?", variant.ID).Delete(&model.ProductVariant{}).Error; errClear != nil {
+					tx.Rollback()
+					return nil, errClear
+				}
+			}
+		}
+		return nil, nil
+	}
 
 	var (
 		union        []model.VariantGroup
@@ -121,10 +143,8 @@ func (r *variantGroupRepositoryImpl) Update(tx *gorm.DB, productId int, variantG
 				if err := tx.
 					Clauses(clause.Returning{}).
 					Clauses(clause.OnConflict{
-						Columns: []clause.Column{{Name: "value"}, {Name: "group_id"}},
-						DoUpdates: clause.AssignmentColumns([]string{
-							"media_url",
-						}),
+						Columns:   []clause.Column{{Name: "value"}, {Name: "group_id"}},
+						UpdateAll: true,
 					}).
 					Save(&vg.Variant).Error; err != nil {
 					tx.Rollback()

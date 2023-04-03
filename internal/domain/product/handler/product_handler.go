@@ -120,7 +120,7 @@ func (h *Handler) SearchAutocomplete(c *gin.Context) {
 
 	result, err := h.productService.SearchAutocomplete(req)
 	if err != nil {
-		response.Error(c, http.StatusInternalServerError, code.INTERNAL_SERVER_ERROR, err.Error())
+		response.Error(c, http.StatusInternalServerError, code.INTERNAL_SERVER_ERROR, errs.ErrInternalServerError.Error())
 		return
 	}
 
@@ -164,7 +164,7 @@ func (h *Handler) AddProductView(c *gin.Context) {
 			response.Error(c, http.StatusNotFound, code.PRODUCT_NOT_EXISTS, err.Error())
 			return
 		}
-		response.Error(c, http.StatusInternalServerError, code.INTERNAL_SERVER_ERROR, err.Error())
+		response.Error(c, http.StatusInternalServerError, code.INTERNAL_SERVER_ERROR, errs.ErrInternalServerError.Error())
 		return
 	}
 
@@ -262,6 +262,12 @@ func (h *Handler) UpdateProduct(c *gin.Context) {
 	err := c.ShouldBindJSON(&request)
 	if err != nil {
 		response.ErrorValidator(c, http.StatusBadRequest, err)
+		return
+	}
+
+	duplicateErr := request.Validate()
+	if duplicateErr != nil {
+		response.Error(c, http.StatusBadRequest, code.DUPLICATE_VARIANT, duplicateErr.Error())
 		return
 	}
 

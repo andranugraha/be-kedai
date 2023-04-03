@@ -8,6 +8,7 @@ import (
 
 type InvoiceStatusRepository interface {
 	Create(*gorm.DB, []*model.InvoiceStatus) error
+	Get(id int) ([]*model.InvoiceStatus, error)
 }
 
 type invoiceStatusRepositoryImpl struct {
@@ -32,4 +33,15 @@ func (r *invoiceStatusRepositoryImpl) Create(tx *gorm.DB, status []*model.Invoic
 	}
 
 	return nil
+}
+
+func (r *invoiceStatusRepositoryImpl) Get(id int) ([]*model.InvoiceStatus, error) {
+	var status []*model.InvoiceStatus
+
+	err := r.db.Where("invoice_per_shop_id = ?", id).Find(&status).Error
+	if err != nil {
+		return nil, err
+	}
+
+	return status, nil
 }

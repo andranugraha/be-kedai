@@ -4,6 +4,7 @@ import (
 	"kedai/backend/be-kedai/internal/common/constant"
 	commonDto "kedai/backend/be-kedai/internal/common/dto"
 	errs "kedai/backend/be-kedai/internal/common/error"
+	productDto "kedai/backend/be-kedai/internal/domain/product/dto"
 	productModel "kedai/backend/be-kedai/internal/domain/product/model"
 	"kedai/backend/be-kedai/internal/domain/shop/dto"
 	"kedai/backend/be-kedai/internal/domain/shop/model"
@@ -75,10 +76,6 @@ func (s *shopPromotionServiceImpl) UpdatePromotion(userId int, promotionId int, 
 		return errs.ErrInvalidPromotionNamePattern
 	}
 
-	if err := req.ValidateDateRange(); err != nil {
-		return err
-	}
-
 	shop, err := s.shopService.FindShopByUserId(userId)
 	if err != nil {
 		return err
@@ -92,14 +89,13 @@ func (s *shopPromotionServiceImpl) UpdatePromotion(userId int, promotionId int, 
 	var shopPromotion *model.ShopPromotion
 	if promotion.Status == constant.VoucherPromotionStatusOngoing {
 		if !req.StartPeriod.IsZero() {
-			return errs.ErrPromotionFieldsCantBeEdited
-		}
-		shopPromotion = &model.ShopPromotion{
-			ID:          promotion.ID,
-			Name:        req.Name,
-			StartPeriod: promotion.StartPeriod,
-			EndPeriod:   req.EndPeriod,
-			ShopId:      shop.ID,
+			shopPromotion = &model.ShopPromotion{
+				ID:          promotion.ID,
+				Name:        req.Name,
+				StartPeriod: promotion.StartPeriod,
+				EndPeriod:   req.EndPeriod,
+				ShopId:      shop.ID,
+			}
 		}
 	} else {
 		shopPromotion = &model.ShopPromotion{
@@ -111,45 +107,32 @@ func (s *shopPromotionServiceImpl) UpdatePromotion(userId int, promotionId int, 
 		}
 	}
 
-	if shopPromotion.Name == "" {
-		shopPromotion.Name = promotion.Name
+	if req.Name == "" {
+		req.Name = promotion.Name
 	}
-	if shopPromotion.StartPeriod.IsZero() {
-		shopPromotion.StartPeriod = promotion.StartPeriod
-	}
-	if shopPromotion.EndPeriod.IsZero() {
-		shopPromotion.EndPeriod = promotion.EndPeriod
+	if err := req.ValidateDateRange(promotion.StartPeriod, promotion.EndPeriod); err != nil {
+		return err
 	}
 
 	var productPromotions []*productModel.ProductPromotion
 	for _, products := range promotion.Product {
 		for _, skus := range products.SKUs {
-			productPromotionID := skus.Promotion.ID
+			var pp *productDto.UpdateProductPromotionRequest
+			for _, p := range req.ProductPromotions {
+				if p.SkuId == skus.Promotion.SkuId {
+					pp = p
+					break
+				}
+			}
 
-			for _, pp := range req.ProductPromotions {
-				if pp.Type == "" {
-					pp.Type = skus.Promotion.Type
-				}
-				if pp.Amount == 0 {
-					pp.Amount = skus.Promotion.Amount
-				}
-				if pp.Stock == 0 {
-					pp.Stock = skus.Promotion.Stock
-				}
-				if pp.PurchaseLimit == 0 {
-					pp.PurchaseLimit = skus.Promotion.PurchaseLimit
-				}
-				if pp.SkuId == 0 {
-					pp.SkuId = skus.Promotion.SkuId
-				}
-
+			if pp != nil {
 				productPromotions = append(productPromotions, &productModel.ProductPromotion{
-					ID:            productPromotionID,
 					Type:          pp.Type,
 					Amount:        pp.Amount,
 					Stock:         pp.Stock,
+					IsActive:      *pp.IsActive,
 					PurchaseLimit: pp.PurchaseLimit,
-					SkuId:         pp.PurchaseLimit,
+					SkuId:         pp.SkuId,
 					PromotionId:   promotion.ID,
 				})
 			}

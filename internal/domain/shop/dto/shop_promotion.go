@@ -41,13 +41,21 @@ func (p *SellerPromotionFilterRequest) Offset() int {
 
 type UpdateShopPromotionRequest struct {
 	Name              string                               `json:"name" binding:"min=1,max=100"`
-	StartPeriod       time.Time                            `json:"startPeriod"`
-	EndPeriod         time.Time                            `json:"endPeriod"`
-	ProductPromotions []*dto.UpdateProductPromotionRequest `json:"productPromotions"`
+	StartPeriod       time.Time                            `json:"startPeriod" binding:"omitempty"`
+	EndPeriod         time.Time                            `json:"endPeriod" binding:"omitempty"`
+	ProductPromotions []*dto.UpdateProductPromotionRequest `json:"productPromotions" binding:"omitempty"`
 }
 
-func (p *UpdateShopPromotionRequest) ValidateDateRange() error {
+func (p *UpdateShopPromotionRequest) ValidateDateRange(startPeriod time.Time, endPeriod time.Time) error {
 	now := time.Now().Truncate(24 * time.Hour)
+
+	if p.StartPeriod.IsZero() {
+		p.StartPeriod = startPeriod
+	}
+
+	if p.EndPeriod.IsZero() {
+		p.EndPeriod = endPeriod
+	}
 
 	if p.StartPeriod.After(p.EndPeriod) || (p.StartPeriod.Before(now) && p.EndPeriod.Before(now)) || p.EndPeriod.Before(p.StartPeriod) {
 		return errs.ErrInvalidPromotionDateRange

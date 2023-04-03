@@ -2,6 +2,7 @@ package service
 
 import (
 	"kedai/backend/be-kedai/internal/common/dto"
+	"kedai/backend/be-kedai/internal/domain/product/cache"
 	categoryDto "kedai/backend/be-kedai/internal/domain/product/dto"
 	"kedai/backend/be-kedai/internal/domain/product/model"
 	"kedai/backend/be-kedai/internal/domain/product/repository"
@@ -14,20 +15,28 @@ type CategoryService interface {
 }
 
 type categoryServiceImpl struct {
-	categoryRepo repository.CategoryRepository
+	categoryRepo  repository.CategoryRepository
+	categoryCache cache.CategoryCache
 }
 
 type CategorySConfig struct {
-	CategoryRepo repository.CategoryRepository
+	CategoryRepo  repository.CategoryRepository
+	CategoryCache cache.CategoryCache
 }
 
 func NewCategoryService(cfg *CategorySConfig) CategoryService {
 	return &categoryServiceImpl{
-		categoryRepo: cfg.CategoryRepo,
+		categoryRepo:  cfg.CategoryRepo,
+		categoryCache: cfg.CategoryCache,
 	}
 }
 
 func (c *categoryServiceImpl) GetCategories(query categoryDto.GetCategoriesRequest) (res *dto.PaginationResponse, err error) {
+	res = c.categoryCache.GetAll(query)
+	if res != nil {
+		return
+	}
+
 	categories, totalRows, totalPages, err := c.categoryRepo.GetAll(query)
 	if err != nil {
 		return
@@ -50,6 +59,8 @@ func (c *categoryServiceImpl) GetCategories(query categoryDto.GetCategoriesReque
 		TotalRows:  totalRows,
 		TotalPages: totalPages,
 	}
+
+	c.categoryCache.StoreCategories(query, res)
 
 	return
 }
@@ -88,5 +99,12 @@ func getCategoryMinPrice(category *model.Category) float64 {
 }
 
 func (s *categoryServiceImpl) AddCategory(category *model.Category) error {
-	return s.categoryRepo.AddCategory(category)
+	err := s.categoryRepo.AddCategory(category)
+	if err != nil {
+		return err
+	}
+
+	s.categoryCache.ResetCategories()
+
+	return nil
 }

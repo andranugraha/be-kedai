@@ -3,6 +3,7 @@ package repository
 import (
 	"errors"
 	"fmt"
+	"kedai/backend/be-kedai/config"
 	errs "kedai/backend/be-kedai/internal/common/error"
 
 	"kedai/backend/be-kedai/internal/domain/user/cache"
@@ -114,7 +115,7 @@ func (r *userRepositoryImpl) SignUp(user *model.User) (*model.User, error) {
 		return nil, errs.ErrUserAlreadyExist
 	}
 
-	_, err = r.userProfileRepo.Create(tx, &model.UserProfile{UserID: user.ID})
+	_, err = r.userProfileRepo.Create(tx, &model.UserProfile{UserID: user.ID, PhotoUrl: &config.DefaultProfilePicture})
 	if err != nil {
 		tx.Rollback()
 		return nil, err

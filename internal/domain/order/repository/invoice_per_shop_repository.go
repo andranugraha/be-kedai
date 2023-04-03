@@ -94,6 +94,8 @@ func (r *invoicePerShopRepositoryImpl) GetByUserID(userID int, request *dto.Invo
 
 	if request.Status != "" {
 		query = query.Where("invoice_per_shops.status = ?", request.Status)
+	} else {
+		query = query.Where("invoice_per_shops.status != ?", constant.TransactionStatusWaitingForPayment)
 	}
 
 	if request.StartDate != "" && request.EndDate != "" {
@@ -198,11 +200,15 @@ func (r *invoicePerShopRepositoryImpl) GetShopFinanceToRelease(shopID int) (floa
 		Select(`
 			SUM(CASE WHEN is_released = true THEN total ELSE 0 END)`).
 		Where("shop_id = ?", shopID).
-		Where("status = ?", constant.TransactionStatusCompleted)
+		Where("status = ?", constant.TransactionStatusCompleted).
+		Group("shop_id")
 
 	err := query.Find(&toRelease).Error
 	if err != nil {
-		return toRelease, err
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return toRelease, nil
+		}
+		return 0, err
 	}
 
 	return toRelease, nil
@@ -433,7 +439,7 @@ func (r *invoicePerShopRepositoryImpl) GetShopOrder(shopId int, req *dto.Invoice
 	}
 
 	if req.OrderId != "" {
-		db = db.Where("i.code ILIKE ?", "%"+req.OrderId+"%")
+		db = db.Where("invoice_per_shops.code ILIKE ?", "%"+req.OrderId+"%")
 	}
 
 	if req.TrackingNumber != "" {
@@ -446,6 +452,8 @@ func (r *invoicePerShopRepositoryImpl) GetShopOrder(shopId int, req *dto.Invoice
 
 	if req.Status != "" {
 		db = db.Where("invoice_per_shops.status = ?", req.Status)
+	} else {
+		db = db.Where("invoice_per_shops.status != ?", constant.TransactionStatusWaitingForPayment)
 	}
 
 	if req.StartDate != "" && req.EndDate != "" {
@@ -478,7 +486,7 @@ func (r *invoicePerShopRepositoryImpl) GetShopOrder(shopId int, req *dto.Invoice
 
 func (r *invoicePerShopRepositoryImpl) RefundRequest(ref *model.RefundRequest, invoiceStatus []*model.InvoiceStatus) (*model.RefundRequest, error) {
 	now := time.Now()
-	refundType := constant.RefundTypeComplain
+	refundType := constant.RefundStatusPending
 	ref.RequestDate = now
 	ref.Type = refundType
 
@@ -765,10 +773,22 @@ func (r *invoicePerShopRepositoryImpl) UpdateStatusToRefundPending(shopId int, o
 func (r *invoicePerShopRepositoryImpl) UpdateRefundStatus(tx *gorm.DB, shopId int, orderId int, refundStatus string, invoiceStatuses []*model.InvoiceStatus) error {
 	var invoiceStatus string
 	var invoicePerShop model.InvoicePerShop
+
+	currInvoiceStats, err := r.invoiceStatusRepo.Get(orderId)
+	if err != nil {
+		return err
+	}
+
 	if refundStatus == constant.RequestStatusSellerApproved {
 		invoiceStatus = constant.TransactionStatusRefundPending
 	} else {
 		invoiceStatus = constant.TransactionStatusComplaintRejected
+		for _, invoiceStat := range currInvoiceStats {
+			if invoiceStat.Status == constant.TransactionStatusComplaintRejected {
+				invoiceStatus = constant.TransactionStatusCompleted
+				break
+			}
+		}
 	}
 
 	if res := tx.

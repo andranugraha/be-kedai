@@ -122,7 +122,7 @@ func NewRouter(cfg *RouterConfig) *gin.Engine {
 				}
 				chat := userAuthenticated.Group("/chats")
 				{
-					chat.GET("/", cfg.ChatHandler.UserGetListOfChats)
+					chat.GET("", cfg.ChatHandler.UserGetListOfChats)
 					chat.GET("/:shopSlug", cfg.ChatHandler.UserGetChat)
 					chat.POST("/:shopSlug", cfg.ChatHandler.UserAddChat)
 				}
@@ -235,9 +235,12 @@ func NewRouter(cfg *RouterConfig) *gin.Engine {
 				{
 					category.POST("", cfg.ProductHandler.AddCategory)
 				}
+
 				order := authenticated.Group("/orders")
 				{
+					order.GET("/refund", cfg.OrderHandler.GetRefund)
 					order.POST("/:orderId/cancel-commit", cfg.OrderHandler.UpdateToCanceled)
+					order.POST("/refund/:refundId", cfg.OrderHandler.RefundAdmin)
 				}
 				marketplace := authenticated.Group("/marketplaces")
 				{
@@ -247,6 +250,7 @@ func NewRouter(cfg *RouterConfig) *gin.Engine {
 						voucher.POST("", cfg.MarketplaceHandler.CreateMarketplaceVoucher)
 						voucher.GET("", cfg.MarketplaceHandler.GetMarketplaceVoucherAdmin)
 						voucher.GET("/:code", cfg.MarketplaceHandler.GetMarketplaceVoucherAdminByCode)
+						voucher.PUT("/:code", cfg.MarketplaceHandler.UpdateVoucher)
 					}
 				}
 			}
@@ -260,6 +264,7 @@ func NewRouter(cfg *RouterConfig) *gin.Engine {
 				authenticated.GET("/stats", cfg.ShopHandler.GetShopStats)
 				authenticated.GET("/insights", cfg.ShopHandler.GetShopInsights)
 				authenticated.GET("/ratings", cfg.ShopHandler.GetShopRating)
+				authenticated.GET("/discussions", cfg.ProductHandler.GetUnrepliedDiscussionByShopID)
 				finance := authenticated.Group("/finances")
 				{
 					income := finance.Group("/incomes")
@@ -313,9 +318,17 @@ func NewRouter(cfg *RouterConfig) *gin.Engine {
 				}
 				chat := authenticated.Group("/chats")
 				{
-					chat.GET("/", cfg.ChatHandler.SellerGetListOfChats)
+					chat.GET("", cfg.ChatHandler.SellerGetListOfChats)
 					chat.GET("/:username", cfg.ChatHandler.SellerGetChat)
 					chat.POST("/:username", cfg.ChatHandler.SellerAddChat)
+				}
+				category := authenticated.Group("/categories")
+				{
+					category.GET("", cfg.ShopHandler.GetSellerCategories)
+					category.POST("", cfg.ShopHandler.CreateSellerCategory)
+					category.GET(":categoryId", cfg.ShopHandler.GetSellerCategoryDetail)
+					category.PUT(":categoryId", cfg.ShopHandler.UpdateSellerCategory)
+					category.DELETE(":categoryId", cfg.ShopHandler.DeleteSellerCategory)
 				}
 			}
 		}

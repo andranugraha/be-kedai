@@ -3,6 +3,7 @@ package dto
 import (
 	"fmt"
 	"kedai/backend/be-kedai/internal/common/constant"
+	errs "kedai/backend/be-kedai/internal/common/error"
 	"kedai/backend/be-kedai/internal/domain/product/model"
 	shopModel "kedai/backend/be-kedai/internal/domain/shop/model"
 	stringUtils "kedai/backend/be-kedai/internal/utils/strings"
@@ -275,10 +276,10 @@ type CreateProductRequest struct {
 	Name          string                       `json:"name" binding:"required,min=5,max=255"`
 	Description   string                       `json:"description" binding:"required,min=20,max=3000"`
 	IsHazardous   *bool                        `json:"isHazardous" binding:"required"`
-	Weight        float64                      `json:"weight" binding:"required,gt=0"`
-	Length        float64                      `json:"length" binding:"required,gt=0"`
-	Width         float64                      `json:"width" binding:"required,gt=0"`
-	Height        float64                      `json:"height" binding:"required,gt=0"`
+	Weight        float64                      `json:"weight" binding:"gte=0"`
+	Length        float64                      `json:"length" binding:"gte=0"`
+	Width         float64                      `json:"width" binding:"gte=0"`
+	Height        float64                      `json:"height" binding:"gte=0"`
 	IsNew         *bool                        `json:"isNew" binding:"required"`
 	IsActive      *bool                        `json:"isActive" binding:"required"`
 	CategoryID    int                          `json:"categoryId" binding:"required,gte=1"`
@@ -322,6 +323,23 @@ func (d *CreateProductRequest) GenerateProduct() *model.Product {
 	}
 
 	return &product
+}
+
+func (d *CreateProductRequest) Validate() error {
+	freq := make(map[string]int)
+	for _, group := range d.VariantGroups {
+		freq[group.Name]++
+		if freq[group.Name] > 1 {
+			return errs.ErrDuplicateVariantGroup
+		}
+		for _, variant := range group.Variant {
+			freq[variant.Name]++
+			if freq[variant.Name] > 1 {
+				return errs.ErrDuplicateVariant
+			}
+		}
+	}
+	return nil
 }
 
 type GetRecommendedProductRequest struct {

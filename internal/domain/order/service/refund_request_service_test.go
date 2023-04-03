@@ -105,3 +105,111 @@ func TestApproveRejectRefund(t *testing.T) {
 		})
 	}
 }
+
+func TestRefundAdmin(t *testing.T) {
+	type input struct {
+		requestRefundId int
+	}
+
+	type expected struct {
+		err error
+	}
+
+	cases := []struct {
+		description string
+		input       input
+		expected    expected
+	}{
+		{
+			description: "should return error when fails to update refund status",
+			input: input{
+				requestRefundId: 1,
+			},
+			expected: expected{
+				err: errors.New("refund request not found"),
+			},
+		},
+		{
+			description: "should return success when refund status updated",
+			input: input{
+				requestRefundId: 1,
+			},
+			expected: expected{
+				err: nil,
+			},
+		},
+	}
+
+	for _, c := range cases {
+		t.Run(c.description, func(t *testing.T) {
+			mockRefundRequestRepo := new(mocks.RefundRequestRepository)
+
+			mockRefundRequestRepo.On("RefundAdmin", 1).Return(c.expected.err)
+
+			refundRequestService := service.NewRefundRequestService(&service.RefundRequestSConfig{
+				RefundRequestRepo: mockRefundRequestRepo,
+			})
+
+			err := refundRequestService.RefundAdmin(c.input.requestRefundId)
+
+			assert.Equal(t, c.expected.err, err)
+		})
+	}
+}
+
+func TestGetRefund(t *testing.T) {
+	type input struct {
+		req *dto.GetRefundReq
+	}
+
+	type expected struct {
+		err error
+	}
+
+	cases := []struct {
+		description string
+		input       input
+		expected    expected
+	}{
+		{
+			description: "should return error when fails to get refund",
+			input: input{
+				req: &dto.GetRefundReq{
+					Limit: 0,
+					Page:  0,
+				},
+			},
+			expected: expected{
+				err: errors.New("refund request not found"),
+			},
+		},
+		{
+			description: "should return success when refund found",
+			input: input{
+				req: &dto.GetRefundReq{
+					Limit: 0,
+					Page:  0,
+				},
+			},
+			expected: expected{
+				err: nil,
+			},
+		},
+	}
+
+	for _, c := range cases {
+		t.Run(c.description, func(t *testing.T) {
+			mockRefundRequestRepo := new(mocks.RefundRequestRepository)
+
+			mockRefundRequestRepo.On("GetRefund", c.input.req).Return(nil, 0, 0, c.expected.err)
+
+			refundRequestService := service.NewRefundRequestService(&service.RefundRequestSConfig{
+				RefundRequestRepo: mockRefundRequestRepo,
+			})
+
+			_, err := refundRequestService.GetRefund(c.input.req)
+
+			assert.Equal(t, c.expected.err, err)
+		})
+	}
+}

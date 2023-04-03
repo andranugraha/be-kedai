@@ -70,7 +70,7 @@ func (h *Handler) TopUp(c *gin.Context) {
 			response.Error(c, http.StatusUnprocessableEntity, code.INVALID_SIGNATURE, err.Error())
 			return
 		}
-		response.Error(c, http.StatusInternalServerError, code.INTERNAL_SERVER_ERROR, err.Error())
+		response.Error(c, http.StatusInternalServerError, code.INTERNAL_SERVER_ERROR, errs.ErrInternalServerError.Error())
 		return
 	}
 
