@@ -106,3 +106,62 @@ func TestUpdateProfile(t *testing.T) {
 		})
 	}
 }
+
+func TestGetProfile(t *testing.T) {
+	type input struct {
+		userId     int
+		mockReturn *model.UserProfile
+		mockErr    error
+	}
+	type expected struct {
+		res *model.UserProfile
+		err error
+	}
+
+	tests := []struct {
+		description string
+		input
+		expected
+	}{
+		{
+			description: "should return error when failed to get user profile",
+			input: input{
+				userId:     1,
+				mockReturn: nil,
+				mockErr:    errors.New("failed to get user"),
+			},
+			expected: expected{
+				res: nil,
+				err: errors.New("failed to get user"),
+			},
+		},
+		{
+			description: "should return user profile when get profile successed",
+			input: input{
+				userId:     1,
+				mockReturn: &model.UserProfile{},
+				mockErr:    nil,
+			},
+			expected: expected{
+				res: &model.UserProfile{},
+				err: nil,
+			},
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.description, func(t *testing.T) {
+			profileRepo := mocks.NewUserProfileRepository(t)
+			profileRepo.On("GetByID", tc.input.userId).Return(tc.input.mockReturn, tc.input.mockErr)
+			profileService := service.NewUserProfileService(&service.UserProfileSConfig{
+				Repository: profileRepo,
+			})
+
+			actualRes, actualErr := profileService.GetProfile(tc.input.userId)
+
+			assert.Equal(t, tc.expected.res, actualRes)
+			assert.Equal(t, tc.expected.err, actualErr)
+		})
+	}
+
+}
