@@ -75,9 +75,17 @@ func ConvertChatToOutput(c *chatModel.Chat, role string) *ChatResponse {
 		return nil
 	}
 	return &ChatResponse{
-		ID:         c.ID,
-		Message:    c.Message,
-		Time:       c.CreatedAt,
+		ID:      c.ID,
+		Message: c.Message,
+		Time: time.Date(
+			c.CreatedAt.Year(),
+			c.CreatedAt.Month(),
+			c.CreatedAt.Day(),
+			c.CreatedAt.Hour(),
+			c.CreatedAt.Minute(),
+			c.CreatedAt.Second(),
+			c.CreatedAt.Nanosecond(),
+			time.FixedZone("WIB", 7*60*60)).Add(7 * time.Hour),
 		Type:       c.Type,
 		IsIncoming: incomingSelector(c.Issuer, role),
 	}
