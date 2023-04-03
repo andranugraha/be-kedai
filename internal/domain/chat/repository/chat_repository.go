@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"kedai/backend/be-kedai/config"
 	commonDto "kedai/backend/be-kedai/internal/common/dto"
 	errs "kedai/backend/be-kedai/internal/common/error"
 	"kedai/backend/be-kedai/internal/domain/chat/dto"
@@ -8,6 +9,7 @@ import (
 	shopModel "kedai/backend/be-kedai/internal/domain/shop/model"
 	userModel "kedai/backend/be-kedai/internal/domain/user/model"
 	"kedai/backend/be-kedai/internal/utils/date"
+	"kedai/backend/be-kedai/internal/utils/encrypt"
 	"kedai/backend/be-kedai/internal/utils/slice"
 	"math"
 	"strings"
@@ -75,6 +77,11 @@ func (r *chatRepositoryImpl) UserGetListOfChats(param *dto.ListOfChatsParamReque
 		Find(&chats)
 	for _, chat := range chats {
 		if !slice.Contains(distinctShopIds, chat.Shop.ID) && strings.Contains(strings.ToLower(chat.Shop.Name), strings.ToLower(param.Search)) {
+			decryptedMsg, err := encrypt.DecryptMessage(chat.Message, config.AES16SecretKey)
+			if err == nil {
+				chat.Message = decryptedMsg
+			}
+
 			listOfChatResponses = append(listOfChatResponses, &dto.UserListOfChatResponse{
 				Shop: &dto.ShopChatProfile{
 					ID:       chat.Shop.ID,
@@ -131,6 +138,11 @@ func (r *chatRepositoryImpl) SellerGetListOfChats(param *dto.ListOfChatsParamReq
 	r.db.Preload("User.Profile").Where("shop_id = ?", shop.ID).Order("created_at DESC").Find(&chats)
 	for _, chat := range chats {
 		if !slice.Contains(distinctUserIds, chat.User.ID) && strings.Contains(strings.ToLower(chat.User.Username), strings.ToLower(param.Search)) {
+			decryptedMsg, err := encrypt.DecryptMessage(chat.Message, config.AES16SecretKey)
+			if err == nil {
+				chat.Message = decryptedMsg
+			}
+
 			listOfChatResponses = append(listOfChatResponses, &dto.SellerListOfChatResponse{
 				User: &dto.UserChatProfile{
 					ID:       chat.User.ID,
@@ -254,6 +266,11 @@ func (r *chatRepositoryImpl) UserAddChat(body *dto.SendChatBodyRequest, userId i
 		body.Type = "text"
 	}
 
+	encryptedMsg, err := encrypt.EncryptMessage(body.Message, config.AES16SecretKey)
+	if err == nil {
+		body.Message = encryptedMsg
+	}
+
 	chat := &model.Chat{
 		Message: body.Message,
 		Type:    body.Type,
@@ -272,6 +289,11 @@ func (r *chatRepositoryImpl) UserAddChat(body *dto.SendChatBodyRequest, userId i
 func (r *chatRepositoryImpl) SellerAddChat(body *dto.SendChatBodyRequest, shop *shopModel.Shop, user *userModel.User) (*dto.ChatResponse, error) {
 	if body.Type == "" {
 		body.Type = "text"
+	}
+
+	encryptedMsg, err := encrypt.EncryptMessage(body.Message, config.AES16SecretKey)
+	if err == nil {
+		body.Message = encryptedMsg
 	}
 
 	chat := &model.Chat{
