@@ -12,6 +12,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 )
 
 func TestGetByID(t *testing.T) {
@@ -321,7 +322,7 @@ func TestProductSearchFiltering(t *testing.T) {
 	type input struct {
 		dto        dto.ProductSearchFilterRequest
 		err        error
-		beforeTest func(*mocks.ProductRepository, *mocks.ShopService)
+		beforeTest func(*mocks.ProductRepository, *mocks.ShopService, *mocks.CategoryService)
 	}
 	type expected struct {
 		result *commonDto.PaginationResponse
@@ -340,9 +341,9 @@ func TestProductSearchFiltering(t *testing.T) {
 			input: input{
 				dto: validReq,
 				err: nil,
-				beforeTest: func(pr *mocks.ProductRepository, sr *mocks.ShopService) {
+				beforeTest: func(pr *mocks.ProductRepository, sr *mocks.ShopService, cs *mocks.CategoryService) {
 					sr.On("FindShopBySlug", validReq.Shop).Return(shop, nil)
-					pr.On("ProductSearchFiltering", validReq, shopId).Return(product, int64(1), 1, nil)
+					pr.On("ProductSearchFiltering", validReq, shopId, mock.Anything).Return(product, int64(1), 1, nil)
 				},
 			},
 			expected: expected{
@@ -355,7 +356,7 @@ func TestProductSearchFiltering(t *testing.T) {
 			input: input{
 				dto: validReq,
 				err: errorResponse.ErrShopNotFound,
-				beforeTest: func(pr *mocks.ProductRepository, sr *mocks.ShopService) {
+				beforeTest: func(pr *mocks.ProductRepository, sr *mocks.ShopService, cs *mocks.CategoryService) {
 					sr.On("FindShopBySlug", validReq.Shop).Return(shop, errorResponse.ErrShopNotFound)
 				},
 			},
@@ -365,13 +366,46 @@ func TestProductSearchFiltering(t *testing.T) {
 			},
 		},
 		{
+			description: "should return error when failed to get categories",
+			input: input{
+				dto: dto.ProductSearchFilterRequest{
+					CategoryId: 1,
+					Keyword:    "test",
+					Shop:       "shop",
+				},
+				err: nil,
+				beforeTest: func(pr *mocks.ProductRepository, sr *mocks.ShopService, cs *mocks.CategoryService) {
+					sr.On("FindShopBySlug", validReq.Shop).Return(shop, nil)
+					cs.On("GetCategoryIDLineAgesFromTop", 1).Return([]int{}, errors.New("failed to get categories"))
+					pr.On("ProductSearchFiltering", dto.ProductSearchFilterRequest{
+						CategoryId: 1,
+						Keyword:    "test",
+						Shop:       "shop",
+					}, shopId, []int{1, 2}).Return(nil, int64(0), 0, errors.New("error"))
+				},
+			},
+			expected: expected{
+				result: nil,
+				err:    errors.New("failed to get categories"),
+			},
+		},
+		{
 			description: "should return error when internal server error",
 			input: input{
-				dto: validReq,
+				dto: dto.ProductSearchFilterRequest{
+					CategoryId: 1,
+					Keyword:    "test",
+					Shop:       "shop",
+				},
 				err: nil,
-				beforeTest: func(pr *mocks.ProductRepository, sr *mocks.ShopService) {
+				beforeTest: func(pr *mocks.ProductRepository, sr *mocks.ShopService, cs *mocks.CategoryService) {
 					sr.On("FindShopBySlug", validReq.Shop).Return(shop, nil)
-					pr.On("ProductSearchFiltering", validReq, shopId).Return(nil, int64(0), 0, errors.New("error"))
+					cs.On("GetCategoryIDLineAgesFromTop", 1).Return([]int{1, 2}, nil)
+					pr.On("ProductSearchFiltering", dto.ProductSearchFilterRequest{
+						CategoryId: 1,
+						Keyword:    "test",
+						Shop:       "shop",
+					}, shopId, []int{1, 2}).Return(nil, int64(0), 0, errors.New("error"))
 				},
 			},
 			expected: expected{
@@ -384,7 +418,7 @@ func TestProductSearchFiltering(t *testing.T) {
 			input: input{
 				dto:        invalidReq,
 				err:        nil,
-				beforeTest: func(pr *mocks.ProductRepository, sr *mocks.ShopService) {},
+				beforeTest: func(pr *mocks.ProductRepository, sr *mocks.ShopService, cs *mocks.CategoryService) {},
 			},
 			expected: expected{
 				result: emptyRes,
@@ -395,10 +429,12 @@ func TestProductSearchFiltering(t *testing.T) {
 		t.Run(tc.description, func(t *testing.T) {
 			mockProductRepo := new(mocks.ProductRepository)
 			mockShopService := new(mocks.ShopService)
-			tc.beforeTest(mockProductRepo, mockShopService)
+			mockCategoryService := new(mocks.CategoryService)
+			tc.beforeTest(mockProductRepo, mockShopService, mockCategoryService)
 			service := service.NewProductService(&service.ProductSConfig{
 				ProductRepository: mockProductRepo,
 				ShopService:       mockShopService,
+				CategoryService:   mockCategoryService,
 			})
 
 			result, err := service.ProductSearchFiltering(tc.dto)
