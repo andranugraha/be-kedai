@@ -126,3 +126,64 @@ func TestGetSealabsPaysByUserID(t *testing.T) {
 		})
 	}
 }
+
+func TestGetValidSealabsPayByCardNumberAndUserID(t *testing.T) {
+	type input struct {
+		userId     int
+		cardNumber string
+		mockReturn *model.SealabsPay
+		mockErr    error
+	}
+	type expected struct {
+		data *model.SealabsPay
+		err  error
+	}
+
+	tests := []struct {
+		description string
+		input
+		expected
+	}{
+		{description: "should return error when failed to fetch user's sealabs pay",
+			input: input{
+				userId:     1,
+				cardNumber: "1234567890123456",
+				mockReturn: nil,
+				mockErr:    errors.New("failed to fetch user sealabs pay"),
+			},
+			expected: expected{
+				data: nil,
+				err:  errors.New("failed to fetch user sealabs pay"),
+			},
+		},
+
+		{
+			description: "should return user sealabs pay data when fetching succeed",
+			input: input{
+				userId:     1,
+				cardNumber: "1234567890123456",
+				mockReturn: &model.SealabsPay{},
+				mockErr:    nil,
+			},
+			expected: expected{
+				data: &model.SealabsPay{},
+				err:  nil,
+			},
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.description, func(t *testing.T) {
+			sealabsRepo := mocks.NewSealabsPayRepository(t)
+			sealabsRepo.On("GetValidByCardNumberAndUserID", tc.input.cardNumber, tc.input.userId).Return(tc.input.mockReturn, tc.input.mockErr)
+			sealabsPayService := service.NewSealabsPayService(&service.SealabsPaySConfig{
+				SealabsPayRepo: sealabsRepo,
+			})
+
+			actualData, actualErr := sealabsPayService.GetValidSealabsPayByCardNumberAndUserID(tc.input.cardNumber, tc.input.userId)
+
+			assert.Equal(t, tc.expected.data, actualData)
+			assert.Equal(t, tc.expected.err, actualErr)
+		})
+	}
+}

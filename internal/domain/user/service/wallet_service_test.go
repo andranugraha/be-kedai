@@ -732,3 +732,165 @@ func TestCompletePinReset(t *testing.T) {
 		})
 	}
 }
+
+func TestStepUp(t *testing.T) {
+	type input struct {
+		userID int
+		req    *dto.StepUpRequest
+	}
+	type expected struct {
+		token *dto.Token
+		err   error
+	}
+
+	var (
+		userID = 1
+		PIN    = "123456"
+	)
+
+	tests := []struct {
+		description string
+		input
+		beforeTest func(*mocks.UserService, *mocks.RandomUtils, *mocks.WalletRepository, *mocks.WalletCache)
+		expected
+	}{
+		{
+			description: "should return error when GetByUserID failed",
+			input: input{
+				userID: userID,
+				req: &dto.StepUpRequest{
+					Pin: PIN,
+				},
+			},
+			beforeTest: func(us *mocks.UserService, ru *mocks.RandomUtils, wr *mocks.WalletRepository, wc *mocks.WalletCache) {
+				wr.On("GetByUserID", userID).Return(nil, errors.New("failed to get wallet"))
+			},
+			expected: expected{
+				err: errors.New("failed to get wallet"),
+			},
+		},
+		{
+			description: "should return error when CheckIsWalletBlocked failed",
+			input: input{
+				userID: userID,
+				req: &dto.StepUpRequest{
+					Pin: PIN,
+				},
+			},
+			beforeTest: func(us *mocks.UserService, ru *mocks.RandomUtils, wr *mocks.WalletRepository, wc *mocks.WalletCache) {
+				wr.On("GetByUserID", userID).Return(&model.Wallet{ID: 1}, nil)
+				wc.On("CheckIsWalletBlocked", 1).Return(errors.New("failed to check wallet blocked"))
+			},
+			expected: expected{
+				err: errors.New("failed to check wallet blocked"),
+			},
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.description, func(t *testing.T) {
+			userService := mocks.NewUserService(t)
+			randomUtils := mocks.NewRandomUtils(t)
+			walletRepo := mocks.NewWalletRepository(t)
+			walletCache := mocks.NewWalletCache(t)
+			tc.beforeTest(userService, randomUtils, walletRepo, walletCache)
+			walletService := service.NewWalletService(&service.WalletSConfig{
+				UserService: userService,
+				RandomUtils: randomUtils,
+				WalletRepo:  walletRepo,
+				WalletCache: walletCache,
+			})
+
+			token, err := walletService.StepUp(tc.input.userID, *tc.input.req)
+
+			assert.Equal(t, tc.expected.err, err)
+			assert.Equal(t, tc.expected.token, token)
+		})
+	}
+}
+
+func TestGetWalletDetailByUserID(t *testing.T) {
+	type input struct {
+		userID int
+	}
+	type expected struct {
+		wallet *dto.GetWalletResponse
+		err    error
+	}
+
+	var (
+		userID = 1
+	)
+
+	tests := []struct {
+		description string
+		input
+		beforeTest func(*mocks.WalletRepository, *mocks.WalletCache)
+		expected
+	}{
+		{
+			description: "should return error when GetByUserID failed",
+			input: input{
+				userID: userID,
+			},
+			beforeTest: func(wr *mocks.WalletRepository, wc *mocks.WalletCache) {
+				wr.On("GetByUserID", userID).Return(nil, errors.New("failed to get wallet"))
+			},
+			expected: expected{
+				err: errors.New("failed to get wallet"),
+			},
+		},
+		{
+			description: "should return wallet response with IsBlocked true when CheckIsWalletBlocked failed",
+			input: input{
+				userID: userID,
+			},
+			beforeTest: func(wr *mocks.WalletRepository, wc *mocks.WalletCache) {
+				wr.On("GetByUserID", userID).Return(&model.Wallet{ID: 1}, nil)
+				wc.On("CheckIsWalletBlocked", 1).Return(errors.New("failed to check wallet blocked"))
+			},
+			expected: expected{
+				wallet: &dto.GetWalletResponse{
+					IsBlocked: true,
+					ID:        1,
+				},
+				err: nil,
+			},
+		},
+		{
+			description: "should return wallet response with IsBlocked false when CheckIsWalletBlocked not error",
+			input: input{
+				userID: userID,
+			},
+			beforeTest: func(wr *mocks.WalletRepository, wc *mocks.WalletCache) {
+				wr.On("GetByUserID", userID).Return(&model.Wallet{ID: 1}, nil)
+				wc.On("CheckIsWalletBlocked", 1).Return(nil)
+			},
+			expected: expected{
+				wallet: &dto.GetWalletResponse{
+					IsBlocked: false,
+					ID:        1,
+				},
+				err: nil,
+			},
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.description, func(t *testing.T) {
+			walletRepo := mocks.NewWalletRepository(t)
+			walletCache := mocks.NewWalletCache(t)
+			tc.beforeTest(walletRepo, walletCache)
+			walletService := service.NewWalletService(&service.WalletSConfig{
+				WalletRepo:  walletRepo,
+				WalletCache: walletCache,
+			})
+
+			wallet, err := walletService.GetWalletDetailByUserID(tc.input.userID)
+
+			assert.Equal(t, tc.expected.err, err)
+			assert.Equal(t, tc.expected.wallet, wallet)
+		})
+	}
+
+}
