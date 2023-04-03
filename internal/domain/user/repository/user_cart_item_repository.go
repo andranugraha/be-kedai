@@ -138,7 +138,10 @@ func (r *userCartItemRepository) GetCartItemByIdAndUserId(id, userId int) (*mode
 		Preload("Sku", func(db *gorm.DB) *gorm.DB {
 			return db.Unscoped()
 		}).
-		Preload("Sku.Product.Bulk").Preload("Sku.Promotion").First(&cartItem).Error
+		Preload("Sku.Product.Bulk").
+		Preload("Sku.Promotion").
+		Preload("Sku.Variants").
+		First(&cartItem).Error
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, errs.ErrCartItemNotFound
