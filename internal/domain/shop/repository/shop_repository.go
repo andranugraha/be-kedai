@@ -84,7 +84,7 @@ func (r *shopRepositoryImpl) FindShopByUserId(userId int) (*model.Shop, error) {
 func (r *shopRepositoryImpl) FindShopBySlug(slug string) (*model.Shop, error) {
 	var shop model.Shop
 
-	err := r.db.Where("slug = ?", slug).Preload("ShopCategory").First(&shop).Error
+	err := r.db.Where("slug = ?", slug).Preload("ShopCategory", "is_active = ?", true).First(&shop).Error
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, errs.ErrShopNotFound

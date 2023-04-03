@@ -171,10 +171,10 @@ func (r *skuRepositoryImpl) Update(tx *gorm.DB, productId int, skus []*model.Sku
 				return errDeletePromotion
 			}
 
-			if errDelete := tx.Model(sku).Unscoped().Association("Variants").Clear(); errDelete != nil {
-				tx.Rollback()
-				return errDelete
-			}
+		}
+		if errDelete := tx.Unscoped().Where("sku_id = ?", sku.ID).Delete(&model.ProductVariant{}).Error; errDelete != nil {
+			tx.Rollback()
+			return errDelete
 		}
 	}
 
@@ -196,23 +196,11 @@ func (r *skuRepositoryImpl) Update(tx *gorm.DB, productId int, skus []*model.Sku
 		return nil
 	}
 
-	for _, sku := range union {
-		for _, variant := range sku.Variants {
-			if err := tx.Model(&model.ProductVariant{}).Clauses(clause.OnConflict{
-				DoNothing: true,
-			}).Create(&model.ProductVariant{
-				SkuId:     sku.ID,
-				VariantId: variant.ID,
-			}).Error; err != nil {
-				tx.Rollback()
-				return err
-			}
-		}
-	}
-
 	err = tx.Clauses(clause.OnConflict{
 		OnConstraint: ("skus_sku_key"),
 		UpdateAll:    true,
+	}).Clauses(clause.Returning{
+		Columns: []clause.Column{{Name: "id"}},
 	}).Save(&union).Error
 	if err != nil {
 		tx.Rollback()
