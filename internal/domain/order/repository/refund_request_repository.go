@@ -109,7 +109,7 @@ func (r *refundRequestRepositoryImpl) ApproveRejectRefund(shopId int, invoiceId 
 }
 
 func (refundRequestRepositoryImpl) PostComplain(tx *gorm.DB, ref *model.RefundRequest) error {
-	err := tx.Create(&ref).Error
+	err := tx.Omit("Invoice").Create(&ref).Error
 	if err != nil {
 		return err
 	}
