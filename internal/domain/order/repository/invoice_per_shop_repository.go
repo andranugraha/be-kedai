@@ -805,6 +805,10 @@ func (r *invoicePerShopRepositoryImpl) UpdateRefundStatus(tx *gorm.DB, shopId in
 		for _, invoiceStat := range currInvoiceStats {
 			if invoiceStat.Status == constant.TransactionStatusComplaintRejected {
 				invoiceStatus = constant.TransactionStatusCompleted
+				invoiceStatuses = append(invoiceStatuses, &model.InvoiceStatus{
+					InvoicePerShopID: orderId,
+					Status:           constant.TransactionStatusCompleted,
+				})
 				break
 			}
 		}
