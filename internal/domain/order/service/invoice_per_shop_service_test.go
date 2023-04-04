@@ -984,7 +984,7 @@ func TestUpdateStatusToCompleted(t *testing.T) {
 	var (
 		orderCode = "code"
 		order     = &dto.InvoicePerShopDetail{
-			InvoicePerShop: model.InvoicePerShop{ID: 1, ShopID: 1},
+			InvoicePerShop:   model.InvoicePerShop{ID: 1, ShopID: 1},
 			TransactionItems: []*dto.TransactionItem{},
 		}
 		userId        = 1
@@ -1082,7 +1082,8 @@ func TestRefundRequest(t *testing.T) {
 			},
 		}
 		req = &model.RefundRequest{
-			Status:    constant.TransactionStatusComplained,
+			Status:    constant.RefundStatusPending,
+			Type:      constant.RefundTypeComplain,
 			InvoiceID: 1,
 			Invoice:   &invoice.InvoicePerShop,
 		}

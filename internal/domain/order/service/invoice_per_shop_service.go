@@ -157,7 +157,8 @@ func (s *invoicePerShopServiceImpl) RefundRequest(invoiceCode string, userId int
 	}
 
 	req := &model.RefundRequest{
-		Status:    constant.TransactionStatusComplained,
+		Status:    constant.RefundStatusPending,
+		Type:      constant.RefundTypeComplain,
 		InvoiceID: invoice.ID,
 		Invoice:   &invoice.InvoicePerShop,
 	}

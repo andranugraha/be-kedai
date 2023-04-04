@@ -505,11 +505,6 @@ func (r *invoicePerShopRepositoryImpl) GetShopOrder(shopId int, req *dto.Invoice
 }
 
 func (r *invoicePerShopRepositoryImpl) RefundRequest(ref *model.RefundRequest, invoiceStatus []*model.InvoiceStatus) (*model.RefundRequest, error) {
-	now := time.Now()
-	refundType := constant.RefundStatusPending
-	ref.RequestDate = now
-	ref.Type = refundType
-
 	invoice, err := r.invoiceRepo.GetByIDAndUserID(ref.Invoice.InvoiceID, ref.Invoice.UserID)
 	if err != nil {
 		return nil, err
