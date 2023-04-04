@@ -30,6 +30,11 @@ func (h *Handler) UpdateRefundStatus(c *gin.Context) {
 	err := h.refundRequestService.UpdateRefundStatus(userId, invoiceId, req.RefundStatus)
 
 	if err != nil {
+		if errors.Is(err, commonErr.ErrInvoiceNotFound) {
+			response.Error(c, http.StatusNotFound, code.INVOICE_NOT_FOUND, err.Error())
+			return
+		}
+
 		if errors.Is(err, commonErr.ErrRefundRequestNotFound) {
 			response.Error(c, http.StatusNotFound, code.REFUND_REQUEST_NOT_FOUND, err.Error())
 			return
