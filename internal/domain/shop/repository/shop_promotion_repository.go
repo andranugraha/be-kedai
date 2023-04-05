@@ -200,16 +200,16 @@ func (r *shopPromotionRepositoryImpl) Create(shopID int, request *dto.CreateShop
 					}
 				}
 			}
-			productPromotions = append(productPromotions, &productModel.ProductPromotion{
-				Type:          pp.Type,
-				Amount:        pp.Amount,
-				Stock:         pp.Stock,
-				IsActive:      *pp.IsActive,
-				PurchaseLimit: pp.PurchaseLimit,
-				SkuId:         pp.SkuId,
-				PromotionId:   shopPromotion.ID,
-			})
 		}
+		productPromotions = append(productPromotions, &productModel.ProductPromotion{
+			Type:          pp.Type,
+			Amount:        pp.Amount,
+			Stock:         pp.Stock,
+			IsActive:      *pp.IsActive,
+			PurchaseLimit: pp.PurchaseLimit,
+			SkuId:         pp.SkuId,
+			PromotionId:   shopPromotion.ID,
+		})
 	}
 
 	err = tx.Create(productPromotions).Error
